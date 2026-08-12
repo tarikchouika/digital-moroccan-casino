@@ -1,0 +1,865 @@
+/* ═══════════════════════════════════════════
+   Digital Moroccan casino — Moroccan Ronda ♦️♠️ Styles
+   تصميم احترافي متماشٍ مع الهوية: ذهبي + كحلي + طاولة كازينو
+   ═══════════════════════════════════════════ */
+/* ── المسرح الرئيسي ── */
+.ronda-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 18px 18px 14px;
+  min-height: 540px;
+  /* إطار ذهبي متدرج */
+  border: 2px solid transparent;
+  background:
+    radial-gradient(ellipse at 50% 26%, #14532D 0%, #0A2B1B 52%, #05120B 100%) padding-box,
+    linear-gradient(160deg, #F5C518, #8B6914 45%, #F5C518 90%) border-box;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55), inset 0 0 60px rgba(0, 0, 0, 0.35);
+}
+/* زخرفة مغربية (زليج) خفيفة */
+.ronda-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(245, 197, 24, 0.035) 0 2px, transparent 2px 42px),
+    repeating-linear-gradient(-45deg, rgba(245, 197, 24, 0.025) 0 2px, transparent 2px 42px);
+  pointer-events: none;
+}
+.ronda-stage::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(245, 197, 24, 0.9), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+/* ── الشريط العلوي ── */
+.ronda-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+.ronda-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(4, 12, 8, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 1px solid rgba(245, 197, 24, 0.4);
+  padding: 6px 14px;
+  border-radius: 24px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--t1);
+}
+.ronda-role b {
+  color: var(--gold);
+  font-weight: 900;
+}
+.ronda-role.dealer {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+.ronda-role.dealer b {
+  color: var(--red2);
+}
+.ronda-role-ic {
+  font-size: 0.95rem;
+}
+.ronda-role .pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+  animation: blink 1.5s infinite;
+}
+.ronda-state {
+  background: rgba(4, 12, 8, 0.72);
+  border: 1px solid var(--bd);
+  padding: 6px 14px;
+  border-radius: 24px;
+  font-size: 0.72rem;
+  color: var(--t2);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.ronda-state b {
+  color: var(--gold);
+}
+.ronda-chips {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ronda-chip {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  border: 1px solid transparent;
+}
+.ronda-chip.win {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+.ronda-chip.lose {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--red2);
+}
+/* ── الطاولة ── */
+.ronda-table {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+.ronda-seat {
+  text-align: center;
+}
+.ronda-label {
+  color: rgba(245, 197, 24, 0.9);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.ronda-label-ic {
+  font-size: 0.85rem;
+}
+.ronda-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 128px;
+}
+/* ── منطقة الوسط: المجموعة + السحب ── */
+.ronda-table-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  min-height: 170px;
+}
+.ronda-deck {
+  position: relative;
+  width: 86px;
+  height: 124px;
+  flex-shrink: 0;
+}
+.ronda-deck-pile {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-4deg);
+}
+.ronda-deck-pile .ronda-card.back.mini {
+  width: 86px;
+  height: 124px;
+  transform: translate(4px, 4px) rotate(2deg);
+}
+.ronda-deck-count {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(4, 12, 8, 0.8);
+  border: 1px solid rgba(245, 197, 24, 0.45);
+  padding: 2px 12px;
+  border-radius: 14px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.ronda-draw-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+}
+.ronda-draw-slot {
+  min-height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ronda-draw-hint {
+  font-size: 0.7rem;
+  color: var(--t2);
+  min-height: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+/* ── البطاقات ── */
+.ronda-card {
+  width: 84px;
+  height: 122px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  cursor: default;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  user-select: none;
+}
+/* ظهر الورقة — صورة الظهر الموحدة بالشعار */
+.ronda-card.back {
+  background: url('../assets/cards/back.webp') center / cover no-repeat;
+  border: 2px solid rgba(245, 197, 24, 0.7);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.6);
+}
+.ronda-card.back::before {
+  display: none;
+}
+.ronda-card.back::after {
+  display: none;
+}
+/* وجه الورقة — قالب موحد (خلفية عاجية + إطار ذهبي + شعار) */
+.ronda-card.face {
+  background: url('../assets/cards/face-template.webp') center / cover no-repeat;
+  border: 1px solid rgba(245, 197, 24, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(194, 120, 3, 0.12);
+}
+.ronda-card.face::before {
+  display: none;
+}
+/* الرمز المركزي الكبير مخفي — الشعار من القالب هو مركز البطاقة */
+.ronda-card .rn-glyph.big {
+  display: none;
+}
+.ronda-card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+  z-index: 1;
+}
+.ronda-card-corner.tl { top: 5px; left: 7px; }
+.ronda-card-corner.br { bottom: 5px; right: 7px; transform: rotate(180deg); }
+.rn-num {
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+.rn-glyph {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.rn-glyph.big {
+  font-size: 2.7rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+/* ألوان الرموز على الوجه الأبيض */
+.ronda-card.face.rn-suit-A .rn-glyph,
+.ronda-card.face.rn-suit-A .rn-num { color: #C27803; }
+.ronda-card.face.rn-suit-B .rn-glyph,
+.ronda-card.face.rn-suit-B .rn-num { color: #DC2626; }
+.ronda-card.face.rn-suit-C .rn-glyph,
+.ronda-card.face.rn-suit-C .rn-num { color: #1E293B; }
+.ronda-card.face.rn-suit-D .rn-glyph,
+.ronda-card.face.rn-suit-D .rn-num { color: #059669; }
+/* حالات الورقة */
+.ronda-card.face.selected {
+  transform: translateY(-10px);
+  box-shadow: 0 0 30px rgba(245, 197, 24, 0.8), 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+.ronda-card.face.matched {
+  border-color: var(--green);
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.85), 0 8px 22px rgba(0, 0, 0, 0.55);
+  animation: matchPulse 0.6s ease 2;
+}
+.ronda-card.face.miss {
+  filter: grayscale(0.5) brightness(0.92);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.45), 0 8px 22px rgba(0, 0, 0, 0.55);
+  transform: scale(0.96);
+}
+@keyframes matchPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.09); }
+}
+/* حركات السحب والقلب */
+.ronda-card.drawn {
+  animation: deckDraw 0.32s ease;
+}
+@keyframes deckDraw {
+  0% { transform: translateY(-12px) scale(0.92); opacity: 0.3; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.ronda-card.drawn-card {
+  animation: cardFlip 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes cardFlip {
+  0% { transform: perspective(600px) rotateY(85deg) translateY(28px) scale(0.72); opacity: 0; }
+  55% { transform: perspective(600px) rotateY(-14deg) translateY(-6px) scale(1.07); opacity: 1; }
+  100% { transform: perspective(600px) rotateY(0deg) translateY(0) scale(1); opacity: 1; }
+}
+/* ── شريط الرهان ── */
+.ronda-betbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 8px;
+  position: relative;
+  z-index: 2;
+}
+.ronda-betbar-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin-inline-end: 4px;
+}
+.ronda-bet-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 197, 24, 0.5);
+  background: rgba(4, 12, 8, 0.75);
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s var(--ease);
+}
+.ronda-bet-btn:hover:not(:disabled) {
+  background: var(--gg);
+  color: #0A0E1A;
+  box-shadow: 0 0 14px rgba(245, 197, 24, 0.5);
+}
+.ronda-bet-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.ronda-bet-amt {
+  min-width: 74px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 12, 8, 0.75);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: var(--t1);
+}
+/* ── لوحة الاختيار ── */
+.ronda-sel-wrap {
+  position: relative;
+  z-index: 3;
+}
+.ronda-sel-panel {
+  background: rgba(4, 12, 8, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(245, 197, 24, 0.35);
+  border-radius: 14px;
+  padding: 12px 14px 14px;
+  margin: 4px 0 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  animation: selIn 0.28s var(--ease);
+}
+@keyframes selIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.ronda-sel-title {
+  font-size: 0.82rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gold);
+}
+/* الأوضاع */
+.ronda-modes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.ronda-mode-btn {
+  position: relative;
+  padding: 14px 12px;
+  background: linear-gradient(145deg, #111827, #0F1524);
+  border: 2px solid var(--bd2);
+  border-radius: 12px;
+  color: var(--t1);
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  transition: all 0.18s var(--ease);
+  overflow: hidden;
+}
+.ronda-mode-btn:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 197, 24, 0.18);
+}
+.ronda-mode-em {
+  display: block;
+  font-size: 1.7rem;
+  margin-bottom: 6px;
+}
+.ronda-mode-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.ronda-mode-desc {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.65;
+  line-height: 1.5;
+}
+.ronda-mode-mult {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  background: var(--gg);
+  color: #0A0E1A;
+  font-size: 0.66rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(245, 197, 24, 0.45);
+}
+/* الأرقام */
+.ronda-nums {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.ronda-num-btn {
+  padding: 8px 0;
+  background: var(--bg3);
+  border: 2px solid var(--bd);
+  border-radius: 8px;
+  color: var(--t1);
+  font-weight: 800;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.15s var(--ease);
+  min-height: 44px;
+  cursor: pointer;
+}
+.ronda-num-btn:hover:not(:disabled):not(.sel) {
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+}
+.ronda-num-btn.sel {
+  background: var(--gg);
+  color: #0A0E1A;
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(245, 197, 24, 0.6);
+  animation: popIn 0.25s var(--ease-bounce);
+}
+.ronda-num-btn:disabled {
+  cursor: not-allowed;
+}
+.ronda-num-btn:disabled:not(.sel) {
+  opacity: 0.35;
+}
+@keyframes popIn {
+  0% { transform: scale(0.8); }
+  100% { transform: scale(1); }
+}
+/* الرموز */
+.ronda-syms {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.ronda-sym-btn {
+  width: 76px;
+  min-height: 74px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #111827, #0F1524);
+  border: 2px solid var(--bd2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s var(--ease);
+}
+.ronda-sym-btn:hover:not(:disabled):not(.sel) {
+  border-color: var(--gold);
+  transform: translateY(-2px) scale(1.04);
+}
+.ronda-sym-btn.sel {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(245, 197, 24, 0.55);
+  background: rgba(245, 197, 24, 0.1);
+  animation: popIn 0.25s var(--ease-bounce);
+}
+.ronda-sym-btn:disabled {
+  cursor: not-allowed;
+}
+.ronda-sym-btn:disabled:not(.sel) {
+  opacity: 0.35;
+}
+.ronda-sym-glyph {
+  font-size: 1.9rem;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.ronda-sym-name {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--t2);
+}
+.ronda-sym-btn.sel .ronda-sym-name {
+  color: var(--gold);
+}
+/* ملخص الاختيار */
+.ronda-sel-recap {
+  font-size: 0.74rem;
+  color: var(--t2);
+  background: rgba(245, 197, 24, 0.08);
+  border: 1px dashed rgba(245, 197, 24, 0.35);
+  border-radius: 8px;
+  padding: 6px 12px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+.ronda-sel-recap b {
+  color: var(--gold);
+}
+/* زر التأكيد */
+.ronda-btn.primary.ronda-confirm {
+  width: 100%;
+  margin-top: 2px;
+}
+.ronda-btn.primary {
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 900;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+  font-family: inherit;
+  min-height: 44px;
+  background: var(--gg);
+  color: #0A0E1A;
+  box-shadow: 0 4px 16px rgba(245, 197, 24, 0.35);
+}
+.ronda-btn.primary:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(245, 197, 24, 0.55);
+  transform: translateY(-1px);
+}
+.ronda-btn.primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+/* لوحة الانتظار */
+.ronda-wait-panel {
+  text-align: center;
+  padding: 16px;
+}
+.ronda-wait-ic {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+  animation: pulseFloat 1.6s ease-in-out infinite;
+}
+@keyframes pulseFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.ronda-wait-text {
+  font-size: 0.78rem;
+  color: var(--t2);
+  font-weight: 600;
+}
+/* ── السجل ── */
+.ronda-log {
+  background: rgba(4, 12, 8, 0.8);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 7px 12px;
+  margin-top: 2px;
+  max-height: 96px;
+  overflow-y: auto;
+  font-size: 0.7rem;
+  color: var(--t2);
+  position: relative;
+  z-index: 2;
+  scrollbar-width: thin;
+}
+.ronda-log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.ronda-log-entry:last-child {
+  border: none;
+}
+.ronda-log-entry.win {
+  color: var(--green2);
+}
+.ronda-log-entry.lose {
+  color: var(--red2);
+}
+.ronda-log-entry.event {
+  color: var(--blue2);
+}
+/* ── لافتة النتيجة ── */
+.ronda-result-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 4, 0.88);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+  border-radius: 18px;
+}
+.ronda-result-banner.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ronda-result-inner {
+  text-align: center;
+  animation: resultPop 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes resultPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ronda-result-ic {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+.ronda-result-inner .big {
+  font-size: 2.6rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+.ronda-result-inner.win .big {
+  background: var(--gg);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 10px rgba(245, 197, 24, 0.4));
+}
+.ronda-result-inner.lose .big {
+  color: var(--red2);
+}
+.ronda-result-sub {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--t1);
+}
+.ronda-result-inner.win .ronda-result-sub {
+  color: var(--gold);
+}
+/* ── Responsive لـ Moroccan Ronda ── */
+@media (max-width: 640px) {
+  .ronda-table-center {
+    gap: 18px;
+  }
+  .ronda-deck,
+  .ronda-deck-pile .ronda-card.back.mini {
+    width: 70px;
+    height: 102px;
+  }
+  .ronda-card {
+    width: 70px;
+    height: 102px;
+  }
+  .rn-glyph.big {
+    font-size: 2.1rem;
+  }
+  .ronda-nums {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .ronda-mode-btn {
+    padding: 11px 8px;
+  }
+}
+@media (max-width: 480px) {
+  .ronda-stage {
+    padding: 12px 10px 10px;
+    min-height: 500px;
+  }
+  .ronda-card {
+    width: 62px;
+    height: 90px;
+  }
+  .ronda-row {
+    min-height: 100px;
+  }
+  .ronda-draw-slot {
+    min-height: 100px;
+  }
+  .ronda-table-center {
+    min-height: 140px;
+    gap: 12px;
+  }
+  .ronda-deck,
+  .ronda-deck-pile .ronda-card.back.mini {
+    width: 62px;
+    height: 90px;
+  }
+  .rn-glyph.big {
+    font-size: 1.8rem;
+  }
+  .rn-num {
+    font-size: 0.75rem;
+  }
+  .ronda-sym-btn {
+    width: 64px;
+    min-height: 64px;
+  }
+  .ronda-sym-glyph {
+    font-size: 1.6rem;
+  }
+  .ronda-modes {
+    grid-template-columns: 1fr;
+  }
+  .ronda-role {
+    font-size: 0.68rem;
+    padding: 4px 10px;
+  }
+  .ronda-result-inner .big {
+    font-size: 2rem;
+  }
+}
+
+/* ═══ وضع الغرفة: شريط ترتيب الأدوار الدائرية ═══ */
+.ronda-rotation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(10, 20, 40, .55), rgba(6, 10, 22, .55));
+  border: 1px solid rgba(245, 197, 24, .18);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  direction: ltr;
+}
+.ronda-rot-title {
+  font-size: .78rem;
+  font-weight: 700;
+  color: #F5C518;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+.ronda-rot-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 700;
+  border: 1px solid rgba(148, 163, 184, .25);
+  background: rgba(30, 41, 59, .7);
+  color: #E2E8F0;
+  white-space: nowrap;
+  transition: box-shadow .25s ease, transform .25s ease;
+}
+.ronda-rot-item.dealer {
+  background: rgba(127, 29, 29, .55);
+  border-color: rgba(248, 113, 113, .55);
+  color: #FECACA;
+}
+.ronda-rot-item.selector {
+  background: rgba(120, 90, 0, .55);
+  border-color: rgba(245, 197, 24, .6);
+  color: #FDE68A;
+}
+.ronda-rot-item.waiting {
+  background: rgba(51, 65, 85, .5);
+  border-color: rgba(148, 163, 184, .3);
+  color: #CBD5E1;
+}
+.ronda-rot-item.me {
+  box-shadow: 0 0 0 2px #F5C518, 0 0 14px rgba(245, 197, 24, .45);
+  transform: scale(1.06);
+}
+.ronda-rot-item i {
+  font-style: normal;
+  font-size: .7rem;
+  opacity: .85;
+}
+.ronda-rot-lbl {
+  font-size: .66rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .35);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.ronda-rot-arrow {
+  color: #F5C518;
+  font-size: .9rem;
+  opacity: .8;
+}
+
+/* شارة الدور للمنتظر/المشاهد */
+.ronda-role.waiting {
+  background: rgba(51, 65, 85, .5);
+  border-color: rgba(148, 163, 184, .35);
+  color: #CBD5E1;
+}
+.ronda-role.spectator {
+  background: rgba(30, 58, 138, .45);
+  border-color: rgba(96, 165, 250, .5);
+  color: #93C5FD;
+}
+
+/* لافتة نهاية الجولة المحايدة (منتظر/مشاهد) */
+.ronda-result-inner.neutral {
+  background: linear-gradient(135deg, rgba(15, 23, 42, .92), rgba(30, 41, 59, .92));
+  border: 1px solid rgba(148, 163, 184, .35);
+}
+.ronda-result-inner.neutral .big {
+  color: var(--blue2, #60A5FA);
+}

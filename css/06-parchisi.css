@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════
+   Digital Moroccan casino — Parchisi Styles
+   ═══════════════════════════════════════════ */
+/* ── Canvas ── */
+#parchisiCanvas {
+  border-radius: 16px;
+  background: #0a0e1a;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  border: 2px solid var(--bd);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+/* ── شاشة الإعدادات ── */
+.setup-screen {
+  text-align: center;
+  padding: 20px;
+}
+.setup-screen .ctitle {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+.setup-screen .bets {
+  margin: 14px 0;
+}
+.setup-screen select {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--bg3);
+  color: var(--t1);
+  border: 1px solid var(--bd);
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  min-height: 44px;
+}
+.setup-screen select:focus-visible {
+  border-color: var(--gold);
+}
+/* ── معلومات اللعبة ── */
+.parchisi-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-radius: 12px;
+  border: 1px solid var(--bd);
+}
+.parchisi-info .btn {
+  padding: 8px 16px;
+}
+/* ── رسالة الحالة ── */
+#parchisiMessage {
+  min-height: 28px;
+  padding: 8px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+#parchisiMessage.win {
+  color: var(--green2);
+  font-weight: 700;
+}
+#parchisiMessage.lose {
+  color: var(--red2);
+}
+/* ── قطع اللاعبين (للاستخدام في UI إن لزم) ── */
+.parchisi-piece {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s var(--ease);
+}
+.parchisi-piece:hover {
+  transform: scale(1.15);
+}
+.parchisi-piece.p0 { background: #EF4444; }
+.parchisi-piece.p1 { background: #3B82F6; }
+.parchisi-piece.p2 { background: #10B981; }
+.parchisi-piece.p3 { background: #F59E0B; }
+/* ── Responsive لـ Parchisi ── */
+@media (max-width: 640px) {
+  .parchisi-info {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .parchisi-info .btn {
+    width: 100%;
+  }
+  #parchisiCanvas {
+    border-radius: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .setup-screen .bets {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .setup-screen select {
+    width: 100%;
+  }
+}

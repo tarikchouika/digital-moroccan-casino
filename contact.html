@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="تواصل معنا — Digital Moroccan Casino: الشحن، السحب، الدعم، والإبلاغ عن المخالفات">
+  <meta name="theme-color" content="#070B12">
+  <title>Digital Moroccan Casino — تواصل معنا</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="css/01-variables.css">
+  <link rel="stylesheet" href="css/02-base.css">
+  <link rel="stylesheet" href="css/03-components.css">
+  <link rel="stylesheet" href="css/07-responsive.css">
+  <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
+  <script>
+    (function () {
+      var t = 'dark';
+      try { t = localStorage.getItem('rc_theme') || 'dark'; } catch (e) {}
+      if (t === 'radiant') {
+        document.documentElement.setAttribute('data-theme', 'radiant');
+      }
+    })();
+  </script>
+  <style>
+    .legal-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 18px;
+      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
+      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .legal-topbar .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--t1);
+      text-decoration: none;
+      font-family: var(--font2, 'Orbitron'), sans-serif;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .legal-topbar .brand b {
+      color: var(--gold);
+    }
+    .legal-topbar .brand .foot-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+    }
+    .legal-topbar .brand .foot-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 9px;
+    }
+    .legal-topbar .tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg2);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .lang-switch button {
+      border: none;
+      background: transparent;
+      color: var(--t2);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 5px 9px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: color 0.2s var(--ease), background 0.2s var(--ease);
+    }
+    .lang-switch button.active {
+      background: var(--gold);
+      color: #0A0E1A;
+    }
+    .lang-switch button:hover:not(.active) {
+      color: var(--gold);
+    }
+    .legal-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 34px 20px 60px;
+    }
+    .legal-wrap .legal-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--gg);
+      color: #0A0E1A;
+      font-size: 1.3rem;
+      margin-bottom: 18px;
+    }
+    .legal-wrap h1 {
+      font-family: var(--font2, 'Orbitron'), sans-serif;
+      font-weight: 900;
+      font-size: 1.55rem;
+      margin: 0 0 8px;
+      background: var(--gg);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .legal-wrap .updated {
+      color: var(--t3);
+      font-size: 0.78rem;
+      margin-bottom: 28px;
+    }
+    .legal-wrap h2 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--gold);
+      margin: 26px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .legal-wrap h2 i {
+      color: var(--gold);
+    }
+    .legal-wrap p,
+    .legal-wrap li {
+      color: var(--t2);
+      font-size: 0.92rem;
+      line-height: 1.85;
+    }
+    .legal-wrap ul {
+      padding-inline-start: 22px;
+      margin: 8px 0;
+    }
+    .legal-wrap .legal-note {
+      background: var(--bg2);
+      border: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 18px 0;
+    }
+    .legal-wrap .legal-note b {
+      color: var(--gold);
+    }
+    .legal-wrap a {
+      color: var(--gold);
+    }
+    .legal-foot {
+      text-align: center;
+      padding: 22px 16px 30px;
+      color: var(--t3);
+      font-size: 0.8rem;
+    }
+    .legal-foot .fb {
+      margin: 0 4px 6px;
+    }
+    .legal-foot a {
+      color: var(--t2);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .legal-foot a:hover {
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <div class="legal-topbar">
+    <a class="brand" href="index.html">
+      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
+      <span><b>Digital Moroccan</b> Casino</span>
+    </a>
+    <div class="tools">
+      <div class="lang-switch" role="group" aria-label="Language / اللغة">
+        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
+        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
+        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
+      </div>
+      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
+        <i class="fa-solid fa-sun" id="themeIco" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <main class="legal-wrap">
+    <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></div>
+    <h1 data-k="c.title">تواصل معنا</h1>
+    <div class="updated" data-k="c.updated">آخر تحديث: 12 أغسطس 2026</div>
+
+    <p data-k="c.intro">فريق Digital Moroccan Casino جاهز لمساعدتك في كل ما يخص الشحن والسحب والإحالة والغرف. اختر الطريقة الأنسب لك.</p>
+
+    <h2><i class="fa-solid fa-comments" aria-hidden="true"></i> <span data-k="c.chatTitle">الدردشة داخل المنصة</span></h2>
+    <p data-k="c.chatP">أسرع طريقة للتواصل معنا هي عبر الدردشة في الموقع الرئيسي، حيث يتواجد فريق الدعم والأدمنز.</p>
+
+    <h2><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i> <span data-k="c.withdrawTitle">طلبات السحب</span></h2>
+    <p data-k="c.withdrawP">لطلب سحب أرباحك، تواصل مع أحد الأدمنز واختر طريقة السحب التي تناسبك:</p>
+    <ul>
+      <li data-k="c.withdraw1">حوالة بنكية — نحوّل المبلغ إلى حسابك البنكي.</li>
+      <li data-k="c.withdraw2">كاش وجه لوجه — لقاء أحد الأدمنز في مكان عام آمن.</li>
+      <li data-k="c.withdraw3">عملات رقمية — نحوّل إلى محفظتك الرقمية.</li>
+    </ul>
+
+    <h2><i class="fa-solid fa-credit-card" aria-hidden="true"></i> <span data-k="c.topupTitle">الشحن</span></h2>
+    <p data-k="c.topupP">لشحن حسابك بمال حقيقي، تواصل مع أحد الأدمنز لإتمام العملية. يُضاف الرصيد فوراً ككوينز (10 كوينز = 1 درهم).</p>
+
+    <h2><i class="fa-solid fa-user-plus" aria-hidden="true"></i> <span data-k="c.referTitle">الإحالة</span></h2>
+    <p data-k="c.referP">ادعُ صديقاً عبر رابط الإحالة الخاص بحسابك، واحصل تلقائياً على 10٪ من قيمة أول عملية شحن له.</p>
+
+    <h2><i class="fa-solid fa-flag" aria-hidden="true"></i> <span data-k="c.reportTitle">الإبلاغ عن مخالفة</span></h2>
+    <p data-k="c.reportP">إذا تعرضت لكلام نابٍ أو هجومي أو خادش للحياء في الدردشة أو الغرف، أبلغ أحد الأدمنز. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة مع كل تكرار، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.</p>
+
+    <h2><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="c.safetyTitle">أمان حسابك</span></h2>
+    <div class="legal-note">
+      <b data-k="c.safetyTitle2">تنبيه أمني:</b>
+      <span data-k="c.safetyP">لن يطلب منك أي أدمن كلمة المرور الخاصة بك أبداً. لا تشارك كلمة مرورك أو رمز التحقق مع أي شخص.</span>
+    </div>
+
+    <p><a class="btn ghost small" href="about.html"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> <span data-k="c.aboutBtn">صفحة من نحن</span></a>
+    <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="c.back">العودة للموقع</span></a></p>
+  </main>
+
+  <footer class="legal-foot">
+    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="c.fb2fa">2FA محمي</span></span>
+    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="c.fbSecure">اتصال آمن</span></span>
+    <br>
+    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="c.footer">جميع الحقوق محفوظة</span>
+  </footer>
+
+  <script>
+    /* ── الترجمة المحلية (ar/fr/en) ── */
+    var D = {
+      'c.title': { ar: 'تواصل معنا', fr: 'Contactez-nous', en: 'Contact Us' },
+      'c.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
+      'c.intro': {
+        ar: 'فريق Digital Moroccan Casino جاهز لمساعدتك في كل ما يخص الشحن والسحب والإحالة والغرف. اختر الطريقة الأنسب لك.',
+        fr: 'L\'équipe de Digital Moroccan Casino est prête à vous aider pour la recharge, le retrait, le parrainage et les salles. Choisissez la méthode la plus adaptée.',
+        en: 'The Digital Moroccan Casino team is ready to help you with top-ups, withdrawals, referrals and rooms. Choose the method that suits you best.'
+      },
+      'c.chatTitle': { ar: 'الدردشة داخل المنصة', fr: 'Chat de la plateforme', en: 'Platform chat' },
+      'c.chatP': {
+        ar: 'أسرع طريقة للتواصل معنا هي عبر الدردشة في الموقع الرئيسي، حيث يتواجد فريق الدعم والأدمنز.',
+        fr: 'Le moyen le plus rapide de nous contacter est le chat du site principal, où se trouvent le support et les admins.',
+        en: 'The fastest way to reach us is through the chat on the main site, where support and admins are available.'
+      },
+      'c.withdrawTitle': { ar: 'طلبات السحب', fr: 'Demandes de retrait', en: 'Withdrawal requests' },
+      'c.withdrawP': {
+        ar: 'لطلب سحب أرباحك، تواصل مع أحد الأدمنز واختر طريقة السحب التي تناسبك:',
+        fr: 'Pour retirer vos gains, contactez l\'un des admins et choisissez la méthode qui vous convient :',
+        en: 'To withdraw your winnings, contact one of the admins and choose the withdrawal method that suits you:'
+      },
+      'c.withdraw1': { ar: 'حوالة بنكية — نحوّل المبلغ إلى حسابك البنكي.', fr: 'Virement bancaire — nous transférons le montant sur votre compte.', en: 'Bank transfer — we send the amount to your bank account.' },
+      'c.withdraw2': { ar: 'كاش وجه لوجه — لقاء أحد الأدمنز في مكان عام آمن.', fr: 'Espèces en face à face — rencontre avec un admin dans un lieu public sûr.', en: 'Face-to-face cash — meeting an admin in a safe public place.' },
+      'c.withdraw3': { ar: 'عملات رقمية — نحوّل إلى محفظتك الرقمية.', fr: 'Cryptomonnaies — transfert vers votre portefeuille numérique.', en: 'Cryptocurrency — we transfer to your digital wallet.' },
+      'c.topupTitle': { ar: 'الشحن', fr: 'Recharge', en: 'Top-up' },
+      'c.topupP': {
+        ar: 'لشحن حسابك بمال حقيقي، تواصل مع أحد الأدمنز لإتمام العملية. يُضاف الرصيد فوراً ككوينز (10 كوينز = 1 درهم).',
+        fr: 'Pour recharger votre compte avec de l\'argent réel, contactez l\'un des admins. Le montant est ajouté immédiatement en pièces (10 pièces = 1 dirham).',
+        en: 'To top up your account with real money, contact one of the admins. The amount is added instantly as coins (10 coins = 1 dirham).'
+      },
+      'c.referTitle': { ar: 'الإحالة', fr: 'Parrainage', en: 'Referral' },
+      'c.referP': {
+        ar: 'ادعُ صديقاً عبر رابط الإحالة الخاص بحسابك، واحصل تلقائياً على 10٪ من قيمة أول عملية شحن له.',
+        fr: 'Parrainez un ami via votre lien de parrainage et recevez automatiquement 10% de la valeur de sa première recharge.',
+        en: 'Invite a friend through your referral link and automatically receive 10% of the value of their first top-up.'
+      },
+      'c.reportTitle': { ar: 'الإبلاغ عن مخالفة', fr: 'Signaler une infraction', en: 'Report a violation' },
+      'c.reportP': {
+        ar: 'إذا تعرضت لكلام نابٍ أو هجومي أو خادش للحياء في الدردشة أو الغرف، أبلغ أحد الأدمنز. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة مع كل تكرار، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.',
+        fr: 'Si vous êtes victime de propos grossiers, agressifs ou indécents dans le chat ou les salles, signalez-le à un admin. Le contrevenant est banni du chat pendant 24 heures, doublé à chaque récidive, et toute atteinte aux bonnes mœurs ou à la vie privée entraîne un bannissement.',
+        en: 'If you are exposed to abusive, aggressive or indecent language in chat or rooms, report it to an admin. The violator is banned from chat for 24 hours, doubled on each repeat, and anyone violating public decency or player privacy is banned.'
+      },
+      'c.safetyTitle': { ar: 'أمان حسابك', fr: 'Sécurité de votre compte', en: 'Account security' },
+      'c.safetyTitle2': { ar: 'تنبيه أمني:', fr: 'Alerte de sécurité :', en: 'Security alert:' },
+      'c.safetyP': {
+        ar: 'لن يطلب منك أي أدمن كلمة المرور الخاصة بك أبداً. لا تشارك كلمة مرورك أو رمز التحقق مع أي شخص.',
+        fr: 'Aucun admin ne vous demandera jamais votre mot de passe. Ne partagez jamais votre mot de passe ou votre code de vérification.',
+        en: 'No admin will ever ask for your password. Never share your password or verification code with anyone.'
+      },
+      'c.aboutBtn': { ar: 'صفحة من نحن', fr: 'Page à propos', en: 'About page' },
+      'c.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' },
+      'c.fb2fa': { ar: '2FA محمي', fr: '2FA protégé', en: '2FA protected' },
+      'c.fbSecure': { ar: 'اتصال آمن', fr: 'Connexion sécurisée', en: 'Secure connection' },
+      'c.footer': { ar: 'جميع الحقوق محفوظة', fr: 'Tous droits réservés', en: 'All rights reserved' }
+    };
+    var curLang = 'ar';
+    try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+    function applyLang() {
+      document.documentElement.setAttribute('lang', curLang);
+      document.documentElement.setAttribute('dir', curLang === 'ar' ? 'rtl' : 'ltr');
+      document.querySelectorAll('[data-k]').forEach(function (el) {
+        var v = D[el.getAttribute('data-k')];
+        if (v && v[curLang]) el.textContent = v[curLang];
+      });
+      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
+      });
+      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — تواصل معنا' : (curLang === 'fr' ? 'Digital Moroccan Casino — Contactez-nous' : 'Digital Moroccan Casino — Contact Us');
+    }
+    function setLang(l) {
+      curLang = l;
+      try { localStorage.setItem('rc_lang', l); } catch (e) {}
+      applyLang();
+    }
+    /* ── تبديل الثيم ── */
+    function themeToggle() {
+      var html = document.documentElement;
+      if (html.getAttribute('data-theme') === 'radiant') {
+        html.removeAttribute('data-theme');
+        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
+      } else {
+        html.setAttribute('data-theme', 'radiant');
+        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
+      }
+      updateThemeIcon();
+    }
+    function updateThemeIcon() {
+      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
+      var ico = document.getElementById('themeIco');
+      var b = document.getElementById('themeBtn');
+      if (ico) ico.className = radiant ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
+    }
+    applyLang();
+    updateThemeIcon();
+  </script>
+</body>
+</html>

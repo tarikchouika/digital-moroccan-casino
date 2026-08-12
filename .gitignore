@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# SQLite transient WAL/SHM (keep the .db itself)
+*.db-wal
+*.db-shm
+
+# Local runtime
+server.log
