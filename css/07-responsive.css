@@ -184,6 +184,13 @@
   .burger {
     display: inline-flex;
   }
+  /* الشعار على الموبايل: أيقونة فقط بدون نص */
+  .brand-name {
+    display: none;
+  }
+  .brand {
+    justify-content: center;
+  }
 }
 /* ── Landscape للهواتف ── */
 @media (max-height: 500px) and (orientation: landscape) {

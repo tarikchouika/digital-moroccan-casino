@@ -1,7 +1,8 @@
 # Dependencies
 node_modules/
 
-# SQLite transient WAL/SHM (keep the .db itself)
+# SQLite — بيانات تشغيل (يخلق المخطط تلقائياً server.cjs عبر CREATE TABLE IF NOT EXISTS)
+*.db
 *.db-wal
 *.db-shm
 

@@ -290,7 +290,7 @@ function updateThemeIcon() {
   if (!b) return;
   const radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
   const ico = document.getElementById('themeIco');
-  if (ico) ico.className = radiant ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
   b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
 }
 if (typeof document !== 'undefined') {

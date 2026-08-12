@@ -69,6 +69,8 @@ html[data-theme="radiant"] {
   --bg2: #F4EFE3;
   --bg3: #FFFFFF;
   --card: #FFFFFF;
+  /* الترويسة العلوية تتكيّف مع الوضع — فاتحة في المشع (الأيقونات تظهر) */
+  --topbar-bg: rgba(251, 249, 244, 0.92);
   /* ── الحدود ── */
   --bd: #E6DCC2;
   --bd2: #D6C9A5;

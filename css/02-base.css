@@ -240,7 +240,8 @@ canvas,
   align-items: center;
   gap: 10px;
   padding: calc(10px + var(--safe-top)) 18px 10px;
-  background: rgba(7, 11, 18, 0.96);
+  /* الخلفية تتكيّف مع الوضع عبر --topbar-bg (افتراضيًا داكنة لتتوافق مع الأيقونات البيضاء) */
+  background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--bd);

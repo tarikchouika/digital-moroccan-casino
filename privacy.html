@@ -201,7 +201,7 @@
         <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
       </div>
       <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-solid fa-sun" id="themeIco" aria-hidden="true"></i>
+        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
       </button>
     </div>
   </div>
@@ -390,7 +390,7 @@
       var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
       var ico = document.getElementById('themeIco');
       var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
       if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
     }
     applyLang();
