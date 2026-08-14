@@ -76,10 +76,6 @@ function buildTopbar() {
 return '<header class="topbar" role="banner">' +
 '<button class="burger" onclick="openSide()" aria-label="فتح القائمة" aria-expanded="false"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>' +
 '<div class="top-actions">' +
-'<div class="chip" role="status" aria-label="الرصيد">' +
-'<i class="fa-solid fa-coins g" aria-hidden="true"></i> <span class="g" id="goldD">1,000</span>' +
-'</div>' +
-'<button class="mute" id="muteBtn" onclick="toggleMute()" aria-label="كتم أو تشغيل الصوت" aria-pressed="false"></button>' +
 '<button class="mute theme-btn" id="themeBtn" onclick="window.themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false"><i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i></button>' +
 '<div class="lang-drop">' +
 '<button class="lang-btn" id="langBtn" onclick="toggleLangMenu()" aria-haspopup="menu" aria-expanded="false" aria-label="اختيار اللغة">' +
@@ -150,6 +146,12 @@ main.appendChild(topbarWrap.childNodes[0]);
 var tickerWrap = document.createElement('div');
 tickerWrap.innerHTML = buildTicker();
 main.appendChild(tickerWrap.childNodes[0]);
+/* الصفحات القانونية بلا تغذية فائزين — أخفِ الشريط إن كان فارغاً */
+var tickerTrack = document.getElementById('ticker');
+if (tickerTrack && !tickerTrack.children.length) {
+var _tEl = tickerTrack.closest('.ticker');
+if (_tEl) _tEl.style.display = 'none';
+}
 
 var content = document.createElement('main');
 content.className = 'content';
