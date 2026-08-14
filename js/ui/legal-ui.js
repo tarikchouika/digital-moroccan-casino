@@ -100,20 +100,16 @@ return '<div class="ticker" role="marquee" aria-label="آخر الفائزين">
 }
 
 function buildFooter() {
-return '<footer role="contentinfo">' +
+return '<footer role="contentinfo" class="watermark">' +
 '<div class="foot-inner">' +
 '<div class="foot-brand">' +
-'<span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>' +
 '<span class="foot-name">Digital Moroccan Casino</span>' +
 '<span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>' +
 '</div>' +
 '<div class="foot-legal" role="navigation" aria-label="روابط قانونية">' +
 '<a href="about.html" data-i18n="ui.about">من نحن</a>' +
-'<span class="sep" aria-hidden="true">|</span>' +
 '<a href="contact.html" data-i18n="ui.contact">تواصل معنا</a>' +
-'<span class="sep" aria-hidden="true">|</span>' +
 '<a href="privacy.html" lang="ar" data-i18n="ui.privacy">الخصوصية</a>' +
-'<span class="sep" aria-hidden="true">|</span>' +
 '<a href="terms.html" lang="ar" data-i18n="ui.terms">الشروط</a>' +
 '</div>' +
 '</div>' +
