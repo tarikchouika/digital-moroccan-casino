@@ -8,3 +8,7 @@ node_modules/
 
 # Local runtime
 server.log
+
+# Screenshots / test artifacts
+*.png
+mobile_*.png
