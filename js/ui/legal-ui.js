@@ -13,7 +13,8 @@ terms: 'ui.terms',
 security: 'ui.security',
 pf: 'ui.pf',
 fairness: 'ui.fairness',
-'2fa': 'ui.security'
+'2fa': 'ui.security',
+transactions: 'ui.transactions'
 };
 
 function buildSidebar() {
@@ -52,6 +53,10 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<button class="nav-item" data-nav="rooms" onclick="nav(\'rooms\', this)">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-users"></i></span>' +
 '<span data-i18n="ui.rooms">غرف اللعب</span>' +
+'</button>' +
+'<button class="nav-item" data-nav="tx" onclick="location.href=\'transactions.html\'">' +
+'<span class="ic" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>' +
+'<span data-i18n="ui.transactions">سجل المعاملات</span>' +
 '</button>' +
 '<div class="side-title" data-i18n="ui.tools">الأدوات</div>' +
 '<button class="nav-item" data-nav="fair" onclick="nav(\'fair\', this)">' +

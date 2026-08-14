@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="سجل المعاملات — شحن، سحب، إحالة ومكافآت في Digital Moroccan Casino">
+<meta name="theme-color" content="#070B12">
+<title>Digital Moroccan Casino — سجل المعاملات</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="css/01-variables.css">
+<link rel="stylesheet" href="css/02-base.css">
+<link rel="stylesheet" href="css/03-components.css">
+<link rel="stylesheet" href="css/07-responsive.css">
+<!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
+<script>
+(function () {
+var t = 'dark';
+try { t = localStorage.getItem('rc_theme') || 'dark'; } catch (e) {}
+if (t === 'radiant') {
+document.documentElement.setAttribute('data-theme', 'radiant');
+}
+})();
+</script>
+<script src="js/i18n/auto-lang.js"></script>
+<style>
+/* ── Legal content layout (header/footer provided by legal-ui.js) ── */
+.legal-wrap {
+max-width: 860px;
+margin: 0 auto;
+padding: 34px 20px 60px;
+}
+.legal-wrap .legal-icon {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 52px;
+height: 52px;
+border-radius: 14px;
+background: var(--gg);
+color: #0A0E1A;
+font-size: 1.3rem;
+margin-bottom: 18px;
+}
+.legal-wrap h1 {
+font-family: var(--font2, 'Orbitron'), sans-serif;
+font-weight: 900;
+font-size: 1.55rem;
+margin: 0 0 8px;
+background: var(--gg);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+}
+.legal-wrap .updated {
+color: var(--t3);
+font-size: 0.78rem;
+margin-bottom: 28px;
+}
+.legal-wrap h2 {
+font-size: 1.05rem;
+font-weight: 800;
+color: var(--gold);
+margin: 26px 0 8px;
+display: flex;
+align-items: center;
+gap: 9px;
+}
+.legal-wrap h2 i {
+color: var(--gold);
+}
+.legal-wrap p,
+.legal-wrap li {
+color: var(--t2);
+font-size: 0.92rem;
+line-height: 1.85;
+}
+.legal-wrap .legal-note {
+background: var(--bg2);
+border: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
+border-radius: 12px;
+padding: 14px 16px;
+margin: 18px 0;
+}
+.legal-wrap .legal-note b {
+color: var(--gold);
+}
+.legal-wrap a {
+color: var(--gold);
+}
+/* ── Transaction table ── */
+.tx-table {
+width: 100%;
+border-collapse: collapse;
+margin: 18px 0 8px;
+font-size: 0.9rem;
+overflow: hidden;
+border-radius: 12px;
+border: 1px solid var(--bd);
+}
+.tx-table th,
+.tx-table td {
+text-align: start;
+padding: 11px 14px;
+border-bottom: 1px solid var(--bd);
+vertical-align: middle;
+}
+.tx-table thead th {
+background: var(--bg2);
+color: var(--gold);
+font-weight: 800;
+font-size: 0.78rem;
+letter-spacing: 0.3px;
+}
+.tx-table tbody tr:last-child td {
+border-bottom: none;
+}
+.tx-table tbody tr:hover {
+background: rgba(255, 210, 63, 0.04);
+}
+.tx-table td {
+color: var(--t2);
+}
+.tx-amt {
+font-weight: 800;
+font-variant-numeric: tabular-nums;
+}
+.tx-amt.pos {
+color: var(--green2);
+}
+.tx-amt.neg {
+color: var(--red2);
+}
+.tx-badge {
+display: inline-block;
+padding: 2px 11px;
+border-radius: 999px;
+font-size: 0.72rem;
+font-weight: 700;
+background: rgba(16, 185, 129, 0.14);
+color: var(--green2);
+border: 1px solid rgba(16, 185, 129, 0.4);
+}
+.tx-badge.pending {
+background: rgba(245, 197, 24, 0.14);
+color: var(--gold2);
+border-color: rgba(245, 197, 24, 0.4);
+}
+.tx-note {
+margin-top: 10px;
+font-size: 0.8rem;
+color: var(--t3);
+}
+@media (max-width: 560px) {
+.tx-table {
+font-size: 0.8rem;
+}
+.tx-table th,
+.tx-table td {
+padding: 9px 10px;
+}
+}
+</style>
+</head>
+<body>
+<article class="legal-content">
+<main class="legal-wrap">
+<div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></div>
+<h1 data-k="tx.title">سجل المعاملات</h1>
+<div class="updated" data-k="tx.updated">آخر تحديث: 14 أغسطس 2026</div>
+
+<p data-k="tx.intro">يعرض هذا السجل عمليات حسابك: الشحن، السحب، الإحالة والمكافآت. الرصيد محسوب بالكوينز (10 كوينز = 1 درهم).</p>
+
+<table class="tx-table">
+<thead>
+<tr>
+<th data-k="tx.colType">النوع</th>
+<th data-k="tx.colDetails">التفاصيل</th>
+<th data-k="tx.colAmount">المبلغ</th>
+<th data-k="tx.colDate">التاريخ</th>
+<th data-k="tx.colStatus">الحالة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-k="tx.r1type">شحن</td>
+<td data-k="tx.r1det">شحن عبر الأدمن — 100 درهم</td>
+<td class="tx-amt pos" data-k="tx.r1amt">+1,000 كوينز</td>
+<td data-k="tx.r1date">12 أغسطس 2026</td>
+<td><span class="tx-badge" data-k="tx.r1status">مكتمل</span></td>
+</tr>
+<tr>
+<td data-k="tx.r2type">سحب</td>
+<td data-k="tx.r2det">سحب عبر حوالة بنكية — 50 درهم</td>
+<td class="tx-amt neg" data-k="tx.r2amt">−500 كوينز</td>
+<td data-k="tx.r2date">10 أغسطس 2026</td>
+<td><span class="tx-badge" data-k="tx.r2status">مكتمل</span></td>
+</tr>
+<tr>
+<td data-k="tx.r3type">إحالة</td>
+<td data-k="tx.r3det">مكافأة إحالة صديق (أول شحن)</td>
+<td class="tx-amt pos" data-k="tx.r3amt">+1,000 كوينز</td>
+<td data-k="tx.r3date">8 أغسطس 2026</td>
+<td><span class="tx-badge" data-k="tx.r3status">مكتمل</span></td>
+</tr>
+<tr>
+<td data-k="tx.r4type">مكافأة</td>
+<td data-k="tx.r4det">مكافأة يومية</td>
+<td class="tx-amt pos" data-k="tx.r4amt">+200 كوينز</td>
+<td data-k="tx.r4date">14 أغسطس 2026</td>
+<td><span class="tx-badge pending" data-k="tx.r4status">قيد المعالجة</span></td>
+</tr>
+</tbody>
+</table>
+<p class="tx-note" data-k="tx.note">هذه بيانات توضيحية — يظهر سجلك الحقيقي بعد تسجيل الدخول.</p>
+
+<p><a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="tx.back">العودة للموقع</span></a></p>
+</main>
+</article>
+
+<!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+<script src="js/core/state.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/i18n/translations.js"></script>
+<script src="js/ui/legal-ui.js"></script>
+<script>
+/* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
+var D = {
+'tx.title': { ar: 'سجل المعاملات', fr: 'Historique des transactions', en: 'Transaction History' },
+'tx.updated': { ar: 'آخر تحديث: 14 أغسطس 2026', fr: 'Dernière mise à jour : 14 août 2026', en: 'Last updated: August 14, 2026' },
+'tx.intro': {
+ar: 'يعرض هذا السجل عمليات حسابك: الشحن، السحب، الإحالة والمكافآت. الرصيد محسوب بالكوينز (10 كوينز = 1 درهم).',
+fr: 'Cet historique affiche les opérations de votre compte : recharges, retraits, parrainages et bonus. Le solde est exprimé en pièces (10 pièces = 1 MAD).',
+en: 'This history shows your account operations: deposits, withdrawals, referrals and bonuses. Balance is counted in coins (10 coins = 1 MAD).'
+},
+'tx.colType': { ar: 'النوع', fr: 'Type', en: 'Type' },
+'tx.colDetails': { ar: 'التفاصيل', fr: 'Détails', en: 'Details' },
+'tx.colAmount': { ar: 'المبلغ', fr: 'Montant', en: 'Amount' },
+'tx.colDate': { ar: 'التاريخ', fr: 'Date', en: 'Date' },
+'tx.colStatus': { ar: 'الحالة', fr: 'Statut', en: 'Status' },
+'tx.r1type': { ar: 'شحن', fr: 'Recharge', en: 'Deposit' },
+'tx.r1det': { ar: 'شحن عبر الأدمن — 100 درهم', fr: 'Recharge via admin — 100 MAD', en: 'Top-up via admin — 100 MAD' },
+'tx.r1amt': { ar: '+1,000 كوينز', fr: '+1 000 pièces', en: '+1,000 coins' },
+'tx.r1date': { ar: '12 أغسطس 2026', fr: '12 août 2026', en: 'August 12, 2026' },
+'tx.r1status': { ar: 'مكتمل', fr: 'Terminé', en: 'Completed' },
+'tx.r2type': { ar: 'سحب', fr: 'Retrait', en: 'Withdrawal' },
+'tx.r2det': { ar: 'سحب عبر حوالة بنكية — 50 درهم', fr: 'Retrait par virement — 50 MAD', en: 'Bank transfer withdrawal — 50 MAD' },
+'tx.r2amt': { ar: '−500 كوينز', fr: '−500 pièces', en: '−500 coins' },
+'tx.r2date': { ar: '10 أغسطس 2026', fr: '10 août 2026', en: 'August 10, 2026' },
+'tx.r2status': { ar: 'مكتمل', fr: 'Terminé', en: 'Completed' },
+'tx.r3type': { ar: 'إحالة', fr: 'Parrainage', en: 'Referral' },
+'tx.r3det': { ar: 'مكافأة إحالة صديق (أول شحن)', fr: 'Bonus de parrainage (première recharge)', en: 'Friend referral bonus (first top-up)' },
+'tx.r3amt': { ar: '+1,000 كوينز', fr: '+1 000 pièces', en: '+1,000 coins' },
+'tx.r3date': { ar: '8 أغسطس 2026', fr: '8 août 2026', en: 'August 8, 2026' },
+'tx.r3status': { ar: 'مكتمل', fr: 'Terminé', en: 'Completed' },
+'tx.r4type': { ar: 'مكافأة', fr: 'Bonus', en: 'Bonus' },
+'tx.r4det': { ar: 'مكافأة يومية', fr: 'Bonus quotidien', en: 'Daily bonus' },
+'tx.r4amt': { ar: '+200 كوينز', fr: '+200 pièces', en: '+200 coins' },
+'tx.r4date': { ar: '14 أغسطس 2026', fr: '14 août 2026', en: 'August 14, 2026' },
+'tx.r4status': { ar: 'قيد المعالجة', fr: 'En cours', en: 'Pending' },
+'tx.note': {
+ar: 'هذه بيانات توضيحية — يظهر سجلك الحقيقي بعد تسجيل الدخول.',
+fr: 'Ces données sont illustratives — votre vrai historique apparaît après connexion.',
+en: 'These are illustrative data — your real history appears after logging in.'
+},
+'tx.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' }
+};
+
+var curLang = 'ar';
+try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+
+function applyLang() {
+document.documentElement.setAttribute('lang', curLang);
+document.documentElement.setAttribute('dir', curLang === 'ar' ? 'rtl' : 'ltr');
+document.querySelectorAll('[data-k]').forEach(function (el) {
+var v = D[el.getAttribute('data-k')];
+if (v && v[curLang]) el.textContent = v[curLang];
+});
+}
+/* دمج applyLang (data-k) مع setLang الأصلي من utils.js (data-i18n) */
+var _origSetLang = (typeof setLang === 'function') ? setLang : null;
+window.setLang = function(l) {
+curLang = l;
+applyLang();
+if (_origSetLang) _origSetLang(l);
+};
+/* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+injectLegalUI('transactions');
+applyLang();
+</script>
+</body>
+</html>

@@ -413,6 +413,7 @@ const TR = {
   'ui.tools': ['الأدوات', 'Outils', 'Tools'],
   'ui.fair': ['Provably Fair', 'Provably Fair', 'Provably Fair'],
   'ui.admin': ['الإدارة', 'Administration', 'Admin'],
+  'ui.transactions': ['سجل المعاملات', 'Historique des transactions', 'Transaction History'],
   'ui.sidefoot': ['2FA • حساب آمن', '2FA • Compte sécurisé', '2FA • Secure account'],
   'ui.heroTitle': ['22 لعبة فريدة <b>بجرافيك وصوتيات</b>',
                    '22 jeux uniques <b>graphismes & sons</b>',
@@ -553,4 +554,5 @@ const TR = {
                         'Digital Moroccan Casino privacy policy — how we collect and use your data. Full transparency and secure protection.'],
  'legal.termsDesc': ['شروط استخدام Digital Moroccan Casino — اقرأ البنود قبل اللعب. منصة مجانية للترفيه فقط، لا رهانات حقيقية.', 'Conditions d\'utilisation de Digital Moroccan Casino — lisez attentivement avant de jouer. Plateforme gratuite pour le divertissement uniquement.', 'Digital Moroccan Casino Terms of Use — read before playing. Free entertainment platform, no real money betting.'],
  'legal.securityDesc': ['الأمان والخصوصية في Digital Moroccan Casino — 2FA، Provably Fair واتصال آمن. حماية متكاملة لحسابك وبياناتك أثناء اللعب.', 'Sécurité et confidentialité chez Digital Moroccan Casino — 2FA, Provably Fair et connexion sécurisée. Protection complète de votre compte et de vos données.', 'Security and Privacy at Digital Moroccan Casino — 2FA, Provably Fair and secure connection. Comprehensive protection for your account and data while playing.'],
+ 'legal.transactionsDesc': ['سجل المعاملات في Digital Moroccan Casino — شحن، سحب، إحالة ومكافآت. منصة مجانية للترفيه فقط، لا رهانات حقيقية.', 'Historique des transactions de Digital Moroccan Casino — recharges, retraits, parrainage et bonus. Plateforme gratuite de divertissement uniquement.', 'Digital Moroccan Casino Transaction History — deposits, withdrawals, referrals and bonuses. Free entertainment platform, no real money betting.'],
 };
