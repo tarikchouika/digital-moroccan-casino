@@ -129,12 +129,10 @@ const SND = {
 function toggleMute() {
   ST.mute = !ST.mute;
   sSet('rc_mute', ST.mute ? '1' : '0');
-  const btn = document.getElementById('muteBtn');
-  if (btn) {
-    const ico = document.getElementById('muteIco');
-    if (ico) ico.className = ST.mute ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+  const btns = document.querySelectorAll('#muteBtn');
+  btns.forEach(function (btn) {
     btn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
-  }
+  });
   if (!ST.mute) SND.click();
 }
 /* ── Export to global ────────────────── */

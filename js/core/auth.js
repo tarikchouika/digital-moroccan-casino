@@ -45,14 +45,18 @@ function renderAuthChip() {
   chip.innerHTML =
     '<div class="acct">' +
       '<button class="uchip" id="userChip" onclick="toggleAcctMenu()" aria-haspopup="menu" aria-expanded="false">' +
-        '<span class="uavatar" aria-hidden="true">' + esc(u.username.slice(0, 1).toUpperCase()) + '</span>' +
-        '<span class="uname">' + esc(u.username) + '</span>' +
-        '<span class="urole ' + esc(u.role) + '">' + roleLabel(u.role) + '</span>' +
-        '<i class="fa-solid fa-chevron-down ucaret" aria-hidden="true"></i>' +
+        '<span class="uavatar" aria-hidden="true"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
       '</button>' +
       '<div class="acct-menu" id="acctMenu" role="menu">' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTrModal()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ' + T('ui.sendCoins') + '</button>' +
+        '<div class="acct-head" role="none">' +
+          '<span class="acct-name">' + esc(u.username) + '</span>' +
+          '<span class="acct-balance"><i class="fa-solid fa-coins g" aria-hidden="true"></i> <span id="acctGoldD">' + fmt(u.gold || 0) + '</span></span>' +
+        '</div>' +
+        '<div class="acct-sep" aria-hidden="true"></div>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTrModal()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ' + T('auth.sendBalance') + '</button>' +
         '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openPwModal()"><i class="fa-solid fa-key" aria-hidden="true"></i> ' + T('auth.changePassword') + '</button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTransactionHistory()"><i class="fa-solid fa-receipt" aria-hidden="true"></i> ' + T('auth.transactionHistory') + '</button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openAccountLog()"><i class="fa-solid fa-user" aria-hidden="true"></i> ' + T('auth.accountLog') + '</button>' +
         '<div class="acct-sep" aria-hidden="true"></div>' +
         '<button class="acct-item danger" role="menuitem" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> ' + T('auth.logout') + '</button>' +
       '</div>' +

@@ -55,8 +55,10 @@ function loadState() {
 }
 /* ── تحديث الواجهة بالرصيد ── */
 function wallet() {
-  const goldEl = document.getElementById('goldD');
-  if (goldEl) goldEl.textContent = fmt(ST.gold);
+  const goldEls = document.querySelectorAll('#goldD');
+  goldEls.forEach(function (el) { el.textContent = fmt(ST.gold); });
+  const acctGoldEl = document.getElementById('acctGoldD');
+  if (acctGoldEl) acctGoldEl.textContent = fmt(ST.gold);
 }
 /* ── عمليات الرصيد ── */
 function takeBet(amount) {

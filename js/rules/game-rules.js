@@ -1536,12 +1536,12 @@ var Tutorial = {
     var html = '<div class="rules-full">';
     /* الهدف */
     html += '<div class="rules-section">';
-    html += '<h4>🎯 الهدف</h4>';
+    html += '<h4>' + T('ui.goal') + '</h4>';
     html += '<p>' + rules.goal[lang] + '</p>';
     html += '</div>';
     /* الخطوات */
     html += '<div class="rules-section">';
-    html += '<h4>📋 خطوات اللعب</h4>';
+    html += '<h4>' + T('ui.steps') + '</h4>';
     html += '<ol class="rules-steps">';
     rules.steps[lang].forEach(function(step) {
       html += '<li>' + step + '</li>';
@@ -1551,9 +1551,9 @@ var Tutorial = {
     /* جدول الدفع */
     if (rules.payouts[lang]) {
       html += '<div class="rules-section">';
-      html += '<h4>💰 جدول الدفع</h4>';
+      html += '<h4>' + T('ui.payouts') + '</h4>';
       html += '<table class="atable">';
-      html += '<thead><tr><th>النتيجة</th><th>المكافأة</th></tr></thead>';
+      html += '<thead><tr><th>'+T('ui.outcome')+'</th><th>'+T('ui.reward')+'</th></tr></thead>';
       html += '<tbody>' + rules.payouts[lang] + '</tbody>';
       html += '</table>';
       html += '</div>';
@@ -1561,7 +1561,7 @@ var Tutorial = {
     /* نصائح */
     if (rules.tips[lang] && rules.tips[lang].length > 0) {
       html += '<div class="rules-section">';
-      html += '<h4>💡 نصائح</h4>';
+      html += '<h4>' + T('ui.tips') + '</h4>';
       html += '<ul class="rules-tips">';
       rules.tips[lang].forEach(function(tip) {
         html += '<li>' + tip + '</li>';

@@ -2208,6 +2208,18 @@ canvas.game {
 #pg-game .gp-head > .btn.ghost.small:last-child {
   order: 3;
 }
+/* ── شريحة الرصيد وزر الكتم في رأس صفحة اللعبة ── */
+#pg-game .gp-head .chip,
+#pg-game .gp-head .mute {
+  order: 4;
+  margin-inline-start: 8px;
+}
+#pg-game .gp-head .chip {
+  border-color: var(--gold);
+}
+#pg-game .gp-head .mute {
+  background: var(--gc);
+}
 /* ── وضع ملء الشاشة للعبة ── */
 #pg-game:fullscreen,
 #pg-game:-webkit-full-screen {
@@ -2223,7 +2235,9 @@ canvas.game {
 }
 /* سجل الجولات لا يظهر في ملء الشاشة — يبقى في صفحة اللعبة فقط */
 #pg-game:fullscreen .ghist,
-#pg-game:-webkit-full-screen .ghist {
+#pg-game:-webkit-full-screen .ghist,
+#pg-game:fullscreen .game-foot,
+#pg-game:-webkit-full-screen .game-foot {
   display: none !important;
 }
 /* منع فيضان مرحلة اللعبة خارج عرض الشاشة */
