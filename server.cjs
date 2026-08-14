@@ -12,7 +12,7 @@ const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const ROOT = __dirname;
-const PORT = 8011;
+const PORT = 8080;
 const DB_DIR = path.join(ROOT, 'data');
 const DB_PATH = path.join(DB_DIR, 'royalcoin.db');
 const SESSION_DAYS = 7;
@@ -121,6 +121,16 @@ CREATE TABLE IF NOT EXISTS transfers (
 );
 CREATE INDEX IF NOT EXISTS idx_transfers_from ON transfers(from_id, id DESC);
 CREATE INDEX IF NOT EXISTS idx_transfers_to ON transfers(to_id, id DESC);
+/* رسائل التواصل مع الدعم (من نموذج صفحة تواصل معنا) — لا يُظهر الإيميل العلني */
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages(created_at DESC);
 /* البطولات: ينشئها لاعب/أدمن → موافقة أدمن → مشاركة لاعبين مسجلين */
 CREATE TABLE IF NOT EXISTS tournaments (
   id TEXT PRIMARY KEY,
@@ -861,6 +871,16 @@ const api = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true });
     }
 
+    /* ── سجل جولات اللاعب (المراهنات) ── */
+    if (p === '/api/rounds' && method === 'GET') {
+      const u = requireAuth();
+      if (!u) return;
+      const rows = db.prepare(
+        'SELECT game_id, bet, won, payout, created_at FROM rounds WHERE username = ? ORDER BY id DESC LIMIT 30'
+      ).all(u.username);
+      return sendJson(res, 200, { ok: true, rounds: rows });
+    }
+
     /* ── الدردشة الحية (لاعب مسجّل، محدود بالمعدل) ── */
     if (p === '/api/chat' && method === 'POST') {
       const u = requireAuth();
@@ -1363,7 +1383,17 @@ const api = http.createServer(async (req, res) => {
         db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(gold, id);
         return sendJson(res, 200, { ok: true, gold, admin_after: u.gold });
       }
-      /* الأدمن: شحن (charge) أو خصم (deduct) مع انعكاس على رصيده */
+      /* ── حاسبة عمولة الأدمن حسب مبلغ الشحن (ماد → كوينز: 1 درهم = 10 كوينز) ── */
+      function calcAdminCommission(amountCoins) {
+        const amountMAD = amountCoins / 10;
+        if (amountMAD > 1_000_000) return 10_000_000;     // 40% من 1,000,000+ درهم = 10,000,000 كوينز
+        if (amountMAD > 100_000) return 1_000_000;         // 35% من 100,000+ درهم = 1,000,000 كوينز
+        if (amountMAD > 10_000) return 100_000;            // 30% من 10,000+ درهم = 100,000 كوينز
+        if (amountMAD > 1_000) return 10_000;              // 25% من 1,000+ درهم = 10,000 كوينز
+        return 0;
+      }
+
+      /* الأدمن: شحن (charge) أو خصم (deduct) مع انعكاس على رصيده + عمولة تلقائية للشحن */
       const action = String(body.action || 'charge');
       const amount = parseInt(body.amount, 10);
       if (Number.isNaN(amount) || amount <= 0 || amount > MAX_SYNC_GOLD)
@@ -1374,8 +1404,15 @@ const api = http.createServer(async (req, res) => {
         if (upd.changes === 0)
           return sendJson(res, 400, { error: 'no_funds', message: 'رصيدك لا يكفي لشحن هذا المبلغ' });
         db.prepare('UPDATE users SET gold = MIN(gold + ?, ?) WHERE id = ?').run(amount, MAX_SYNC_GOLD, id);
+        
+        /* ── احتساب وإضافة عمولة الأدمن تلقائياً ── */
+        const commission = calcAdminCommission(amount);
+        if (commission > 0) {
+          db.prepare('UPDATE users SET gold = MIN(gold + ?, ?) WHERE id = ?').run(commission, MAX_SYNC_GOLD, u.id);
+        }
+        
         const adminAfter = db.prepare('SELECT gold FROM users WHERE id = ?').get(u.id).gold;
-        return sendJson(res, 200, { ok: true, action: 'charge', amount, gold: Math.min(target.gold + amount, MAX_SYNC_GOLD), admin_after: adminAfter });
+        return sendJson(res, 200, { ok: true, action: 'charge', amount, gold: Math.min(target.gold + amount, MAX_SYNC_GOLD), admin_after: adminAfter, commission });
       }
       if (action === 'deduct') {
         const upd = db.prepare('UPDATE users SET gold = gold - ? WHERE id = ? AND gold >= ?').run(amount, id, amount);
@@ -1524,7 +1561,22 @@ const api = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, transfers: rows });
     }
 
-    /* ── البطولات ── */
+    /* ── إرسال رسالة تواصل من نموذج الصفحة (عام، بدون مصادقة) ── */
+    if (p === '/api/contact' && method === 'POST') {
+      if (rateLimit(ip, 10, 60_000, 'contact')) return sendJson(res, 429, { error: 'rate', message: 'طلبات كثيرة — حاول لاحقاً' });
+      const body = await readBody(req);
+      const name = String(body.name || '').trim().slice(0, 100);
+      const email = String(body.email || '').trim().slice(0, 254);
+      const subject = String(body.subject || '').trim().slice(0, 120);
+      const message = String(body.message || '').trim().slice(0, 3000);
+      if (!name || !email || !message)
+        return sendJson(res, 400, { error: 'bad_input', message: 'الاسم، البريد الإلكتروني، والرسالة مطلوبة' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return sendJson(res, 400, { error: 'bad_email', message: 'صيغة البريد الإلكتروني غير صحيحة' });
+      db.prepare('INSERT INTO contact_messages (name, email, subject, message, created_at) VALUES (?,?,?,?,?)')
+        .run(name, email, subject, message, nowS());
+      return sendJson(res, 200, { ok: true, message: 'تم استلام رسالتك بنجاح' });
+    }
     const GAME_IDS_ALLOWED = new Set(['rn', 'rp', 'pn', 'pr', 'ke', 'av', 'rl', 'bj', 'bc']);
     function tourneyState(t) {
       const players = db.prepare(
