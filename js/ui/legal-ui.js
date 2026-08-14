@@ -199,5 +199,6 @@ authRestore().catch(function () { /* no session */ });
 
 window.injectLegalUI = injectLegalUI;
 window.LEGAL_PAGE_KEY = pageKey;
+}
 
 })();
