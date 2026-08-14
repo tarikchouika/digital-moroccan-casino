@@ -301,7 +301,120 @@ function loadTrHistory() {
     list.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
   });
 }
-/* ═══════════ فتح / إغلاق صفحة اللعبة ═══════════ */
+/* ═══════════ صفحة سجل المعاملات ═══════════ */
+function openTransactionHistory() {
+  if (!AUTH.user) { toast(T('tr.needLogin'), 'warn'); return; }
+  closeAcctMenu();
+  nav('transactions', null);
+  renderTransactions();
+}
+function renderTransactions() {
+  const pg = document.getElementById('pg-transactions');
+  if (!pg || !pg.classList.contains('active')) return;
+  const txTransfers = document.getElementById('txTransfers');
+  const txRounds = document.getElementById('txRounds');
+  if (!txTransfers || !txRounds) return;
+  if (!AUTH.user) {
+    txTransfers.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    txRounds.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    return;
+  }
+  /* التحويلات بين اللاعبين */
+  txTransfers.innerHTML = '<div class="note">…</div>';
+  API.get('/api/transfers').then(function (r) {
+    const trs = (r.ok && r.data && r.data.transfers) ? r.data.transfers : [];
+    if (!trs.length) { txTransfers.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
+    const meId = AUTH.user.id;
+    txTransfers.innerHTML =
+      '<table class="atable tr-t">' +
+      '<thead><tr>' +
+        '<th>' + T('tr.type') + '</th>' +
+        '<th>' + T('tr.counterparty') + '</th>' +
+        '<th>' + T('tr.sent') + '</th>' +
+        '<th>' + T('tr.received') + '</th>' +
+        '<th>' + T('tr.time') + '</th>' +
+      '</tr></thead><tbody>' +
+      trs.map(function (tr) {
+        const outgoing = tr.from_id === meId;
+        const who = outgoing ? tr.to_name : tr.from_name;
+        const t = tr.created_at ? new Date(tr.created_at * 1000).toLocaleString() : '—';
+        const sentCell = outgoing ? '<td>− 🪙 ' + fmt(tr.amount) + '</td>' : '<td>—</td>';
+        const recvCell = outgoing ? '<td>—</td>' : '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
+        const spillClass = outgoing ? 'bad' : 'ok';
+        const dirLabel = outgoing ? '→ ' + T('tr.sent') : '← ' + T('tr.received');
+        return '<tr>' +
+          '<td><span class="spill ' + spillClass + '">' + dirLabel + '</span></td>' +
+          '<td>' + esc(who) + '</td>' +
+          sentCell + recvCell +
+          '<td>' + t + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }).catch(function () {
+    txTransfers.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+  /* سجل المراهنات (الألعاب) */
+  txRounds.innerHTML = '<div class="note">…</div>';
+  API.get('/api/rounds').then(function (r) {
+    const rounds = (r.ok && r.data && r.data.rounds) ? r.data.rounds : [];
+    if (!rounds.length) { txRounds.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
+    txRounds.innerHTML =
+      '<table class="atable tr-t">' +
+      '<thead><tr>' +
+        '<th>' + T('tr.game') + '</th>' +
+        '<th>' + T('tr.bet') + '</th>' +
+        '<th>' + T('tr.outcome') + '</th>' +
+        '<th>' + T('tr.time') + '</th>' +
+      '</tr></thead><tbody>' +
+      rounds.map(function (rd) {
+        const g = (typeof GAMES !== 'undefined') ? GAMES.find(function (x) { return x.id === rd.game_id; }) : null;
+        const label = g ? (g.em + ' ' + esc(g.n)) : esc(rd.game_id);
+        const outcome = rd.won
+          ? '<span class="spill ok">+🪙 ' + fmt(rd.payout) + '</span>'
+          : '<span class="spill bad">−🪙 ' + fmt(rd.bet) + '</span>';
+        const t = rd.created_at ? new Date(rd.created_at * 1000).toLocaleString() : '—';
+        return '<tr>' +
+          '<td>' + label + '</td>' +
+          '<td>🪙 ' + fmt(rd.bet) + '</td>' +
+          '<td>' + outcome + '</td>' +
+          '<td>' + t + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }).catch(function () {
+    txRounds.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+}
+/* ═══════════ صفحة سجل الحساب ═══════════ */
+function openAccountLog() {
+  if (!AUTH.user) { toast(T('tr.needLogin'), 'warn'); return; }
+  closeAcctMenu();
+  nav('account', null);
+  renderAccountLog();
+}
+function renderAccountLog() {
+  const pg = document.getElementById('pg-account');
+  if (!pg || !pg.classList.contains('active')) return;
+  const el = document.getElementById('accountInfo');
+  if (!el) return;
+  if (!AUTH.user) {
+    el.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    return;
+  }
+  const u = AUTH.user;
+  const joined = u.created_at ? new Date(u.created_at * 1000).toLocaleString() : '—';
+  const lastSeen = u.last_seen ? new Date(u.last_seen * 1000).toLocaleString() : '—';
+  el.innerHTML =
+    '<table class="atable">' +
+    '<tbody>' +
+      '<tr><th>' + T('auth.username') + '</th><td><b>' + esc(u.username) + '</b></td></tr>' +
+      '<tr><th>' + T('auth.balance') + '</th><td>🪙 ' + fmt(u.gold) + '</td></tr>' +
+      '<tr><th>' + T('admin.role') + '</th><td>' + roleLabel(u.role) + '</td></tr>' +
+      '<tr><th>' + T('acct.joined') + '</th><td>' + joined + '</td></tr>' +
+      '<tr><th>' + T('acct.lastSeen') + '</th><td>' + lastSeen + '</td></tr>' +
+      (u.admin_id ? '<tr><th>' + T('acct.adminRef') + '</th><td>' + esc(String(u.admin_id)) + '</td></tr>' : '') +
+    '</tbody></table>';
+}
 /* خريطة محرك التهيئة — تُستدعى بعد رسم واجهة اللعبة */
 function initFor(eng) {
   const map = {
@@ -427,8 +540,9 @@ function syncGameFsBtn() {
   const btn = document.getElementById('gameFsBtn');
   if (!btn) return;
   const on = document.fullscreenElement || document.webkitFullscreenElement;
-  const label = document.getElementById('gameFsLabel');
-  if (label) label.textContent = on ? T('ui.exitFullscreen') : T('ui.fullscreen');
+  const label = on ? T('ui.exitFullscreen') : T('ui.fullscreen');
+  btn.setAttribute('aria-label', label);
+  btn.setAttribute('title', label);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
 }
 /* ═══════════ فرض الوضع العرضي للألعاب العريضة (عرض > طول) ═══════════ */
@@ -793,7 +907,11 @@ function adminChargeDeduct(id, action) {
     : { action: action, amount: amount };
   API.post('/api/admin/user/' + id + '/balance', payload).then(function (r) {
     if (r.ok) {
-      toast((action === 'charge' ? T('admin.charge') + ' ✔' : T('admin.deduct') + ' ✔') + ' ' + fmt(amount), 'ok');
+      let msg = (action === 'charge' ? T('admin.charge') + ' ✔' : T('admin.deduct') + ' ✔') + ' ' + fmt(amount);
+      if (action === 'charge' && r.data && r.data.commission && r.data.commission > 0) {
+        msg += ' | ' + T('admin.commission') + ': ' + fmt(r.data.commission);
+      }
+      toast(msg, 'ok');
       adminLoadUsers();
       adminLoadStats();
       if (typeof wallet === 'function') wallet();
@@ -1145,16 +1263,18 @@ function initApp() {
   initState();
   /* ضبط اللغة */
   if (typeof syncLangDrop === 'function') syncLangDrop();
-  /* ضبط زر الصوت */
-  const muteBtn = document.getElementById('muteBtn');
-  if (muteBtn) {
+  /* ضبط زر الصوت (قد يوجد أكثر من زر في صفحات مختلفة) */
+  const muteBtns = document.querySelectorAll('#muteBtn');
+  muteBtns.forEach(function (btn) {
     /* الأيقونة عبر CSS ::before وفق aria-pressed — لا نص إيموجي */
-    muteBtn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
-  }
+    btn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
+  });
   /* تطبيق الاتجاه */
   applyI18n();
   /* ترجمة العناصر الثابتة (لغة محفوظة) */
   translateStatic();
+  /* تحديث سنة حقوق النشر */
+  updateCopyright();
   /* تهيئة التأثيرات */
   fxInit();
   /* استعادة جلسة المستخدم (إن وُجدت) */
@@ -1178,6 +1298,8 @@ function initApp() {
   }, 5000);
   /* رسم كل شيء */
   renderAll();
+  /* Hash routing: activate the section matching the URL hash (e.g. index.html#games) */
+  navFromHash();
   /* أرقام المتصلين والدردشة الحية تأتي الآن من SSE (js/core/live.js) */
   /* زر ملء الشاشة: نص أولي + تزامن مع تغيير الوضع */
   syncGameFsBtn();

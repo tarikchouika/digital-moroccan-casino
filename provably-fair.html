@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Provably Fair — تحقق من عدل النتائج في Digital Moroccan Casino">
+<meta name="theme-color" content="#070B12">
+<title>Digital Moroccan Casino — Provably Fair</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="css/01-variables.css">
+<link rel="stylesheet" href="css/02-base.css">
+<link rel="stylesheet" href="css/03-components.css">
+<link rel="stylesheet" href="css/07-responsive.css">
+<!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
+<script>
+(function () {
+var t = 'dark';
+try { t = localStorage.getItem('rc_theme') || 'dark'; } catch (e) {}
+if (t === 'radiant') {
+document.documentElement.setAttribute('data-theme', 'radiant');
+}
+})();
+</script>
+<script src="js/i18n/auto-lang.js"></script>
+<style>
+/* ── Legal content layout (header/footer provided by legal-ui.js) ── */
+.legal-wrap {
+max-width: 860px;
+margin: 0 auto;
+padding: 34px 20px 60px;
+}
+.legal-wrap .legal-icon {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 52px;
+height: 52px;
+border-radius: 14px;
+background: var(--gg);
+color: #0A0E1A;
+font-size: 1.3rem;
+margin-bottom: 18px;
+}
+.legal-wrap h1 {
+font-family: var(--font2, 'Orbitron'), sans-serif;
+font-weight: 900;
+font-size: 1.55rem;
+margin: 0 0 8px;
+background: var(--gg);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+}
+.legal-wrap .updated {
+color: var(--t3);
+font-size: 0.78rem;
+margin-bottom: 28px;
+}
+.legal-wrap h2 {
+font-size: 1.05rem;
+font-weight: 800;
+color: var(--gold);
+margin: 26px 0 8px;
+display: flex;
+align-items: center;
+gap: 9px;
+}
+.legal-wrap h2 i {
+color: var(--gold);
+}
+.legal-wrap p,
+.legal-wrap li {
+color: var(--t2);
+font-size: 0.92rem;
+line-height: 1.85;
+}
+.legal-wrap ul {
+padding-inline-start: 22px;
+margin: 8px 0;
+}
+.legal-wrap .legal-note {
+background: var(--bg2);
+border: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
+border-radius: 12px;
+padding: 14px 16px;
+margin: 18px 0;
+}
+.legal-wrap .legal-note b {
+color: var(--gold);
+}
+.legal-wrap a {
+color: var(--gold);
+}
+.comm-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 12px;
+margin: 12px 0 6px;
+}
+.comm-card {
+background: var(--bg2);
+border: 1px solid var(--bd);
+border-radius: 12px;
+padding: 14px;
+text-align: center;
+}
+.comm-card .rate {
+font-family: var(--font2, 'Orbitron'), sans-serif;
+font-weight: 900;
+font-size: 1.5rem;
+background: var(--gg);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+}
+.comm-card .desc {
+color: var(--t2);
+font-size: 0.8rem;
+margin-top: 4px;
+line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<article class="legal-content">
+<main class="legal-wrap">
+<div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-dice"></i></div>
+<h1 data-k="pf.title">Provably Fair — عدل النتائج</h1>
+<div class="updated" data-k="pf.updated">آخر تحديث: 14 أغسطس 2026</div>
+
+<p data-k="pf.intro">نظام <strong>Provably Fair</strong> يمنحك القدرة على التحقق من أن كل جولة كانت عادلة وبدون تدخل أو تلاعب. باستخدام خوارزميات التشفير، يمكنك التأكد من أن النتيجة لم يتم التلاعب بها بعد بدء الجولة.</p>
+
+<div class="legal-note">
+<b data-k="pf.noteTitle">المبدأ الأساسي</b><br>
+<span data-k="pf.noteBody">كل جولة تستخدم three عناصر غير متوقعة: Seed من الخادم، Seed من اللاعب، و Nonce. بعد انتهاء الجولة يمكنك التحقق من النتيجة محلياً باستخدام هذه القيم.</span>
+</div>
+
+<h2><i class="fa-solid fa-server" aria-hidden="true"></i> <span data-k="pf.step1Title">1. Seed الخادم</span></h2>
+<p data-k="pf.step1Body">قبل بدء الجولة، يُولد الخادم قيمة سرية عشوائية (Server Seed) ويقوم بتشفيرها عبر SHA-256. النسخة المشفرة تظهر لك قبل الجولة، بينما النسخة الأصلية تبقى مخفية حتى انتهاء الجولة.</p>
+
+<h2><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-k="pf.step2Title">2. Seed اللاعب</span></h2>
+<p data-k="pf.step2Body">يمكنك إدخال seed خاص بك (Client Seed) أو استخدام قيمة عشوائية مولّدة تلقائياً. هذا يضمن أن الخادم لا يستطيع التنبؤ بناتجة الجولة مسبقاً.</p>
+
+<h2><i class="fa-solid fa-hashtag" aria-hidden="true"></i> <span data-k="pf.step3Title">3. Nonce</span></h2>
+<p data-k="pf.step3Body">هو عدّاد يزداد تلقائياً مع كل جولة. يجمع بين Server Seed و Client Seed لضمان أن كل جولة لها نتيجة فريدة لا يمكن تكرارها.</p>
+
+<h2><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> <span data-k="pf.verifyTitle">كيف تتحقق؟</span></h2>
+<p data-k="pf.verifyBody">بعد انتهاء الجولة، يُكشف الخادم عن النسخة الأصلية من Seed. يمكنك الآن تطبيق الخوارزمية محلياً على جهازك: ادمج الـ Seeds + Nonce، ثم احسب النتيجة. إذا تطابقت مع النتيجة المعروضة، فهذا يعني أن الجولة كانت عادلة 100%.</p>
+
+<div class="legal-note">
+<b data-k="pf.techTitle">التقنيات المستخدمة</b><br>
+<span data-k="pf.techBody">نستخدم <code>SHA-256</code> لتشفير Seed الخادم، و <code>HMAC-SHA512</code> لدمج القيم، و <code>combined seeds</code> لضمان عدم التوقع. التحقق يتم كاملاً على جهازك (client-side verify) بدون الحاجة لاتصال بالخادم.</span>
+</div>
+
+<p data-k="pf.outro">لمزيد من التفاصيل التقنية، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.</p>
+<p><a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="pf.back">العودة للموقع</span></a></p>
+</main>
+</article>
+
+<script src="js/core/state.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/i18n/translations.js"></script>
+<script src="js/ui/legal-ui.js"></script>
+<script>
+/* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
+var D = {
+'pf.title': {
+ar: 'Provably Fair — عدل النتائج',
+fr: 'Provably Fair — Justice des résultats',
+en: 'Provably Fair — Fair Results'
+},
+'pf.updated': {
+ar: 'آخر تحديث: 14 أغسطس 2026',
+fr: 'Dernière mise à jour : 14 août 2026',
+en: 'Last updated: August 14, 2026'
+},
+'pf.intro': {
+ar: 'نظام <strong>Provably Fair</strong> يمنحك القدرة على التحقق من أن كل جولة كانت عادلة وبدون تدخل أو تلاعب. باستخدام خوارزميات التشفير، يمكنك التأكد من أن النتيجة لم يتم التلاعب بها بعد بدء الجولة.',
+fr: 'Le système <strong>Provably Fair</strong> vous permet de vérifier que chaque tour a été équitable, sans intervention ni manipulation. Grâce aux algorithmes cryptographiques, vous pouvez être certain que le résultat n\'a pas été altéré après le début du tour.',
+en: 'The <strong>Provably Fair</strong> system gives you the ability to verify that every round was fair and without intervention or manipulation. Using cryptographic algorithms, you can be sure that the result was not tampered with after the round started.'
+},
+'pf.noteTitle': {
+ar: 'المبدأ الأساسي',
+fr: 'Principe fondamental',
+en: 'Core principle'
+},
+'pf.noteBody': {
+ar: 'كل جولة تستخدم three عناصر غير متوقعة: Seed من الخادم، Seed من اللاعب، و Nonce. بعد انتهاء الجولة يمكنك التحقق من النتيجة محلياً باستخدام هذه القيم.',
+fr: 'Chaque tour utilise trois éléments imprévisibles : le seed du serveur, le seed du joueur et le nonce. Après la fin du tour, vous pouvez vérifier le résultat localement à l\'aide de ces valeurs.',
+en: 'Each round uses three unpredictable elements: the server seed, the player seed, and a nonce. After the round ends, you can verify the result locally using these values.'
+},
+'pf.step1Title': { ar: '1. Seed الخادم', fr: '1. Seed du serveur', en: '1. Server Seed' },
+'pf.step1Body': {
+ar: 'قبل بدء الجولة، يُولد الخادم قيمة سرية عشوائية (Server Seed) ويقوم بتشفيرها عبر SHA-256. النسخة المشفرة تظهر لك قبل الجولة، بينما النسخة الأصلية تبقى مخفية حتى انتهاء الجولة.',
+fr: 'Avant le début du tour, le serveur génère une valeur secrète aléatoire (Server Seed) et la chiffre via SHA-256. La version chiffrée vous est présentée avant le tour, tandis que l\'original reste caché jusqu\'à la fin du tour.',
+en: 'Before the round starts, the server generates a secret random value (Server Seed) and encrypts it using SHA-256. The encrypted version is shown to you before the round, while the original stays hidden until the round ends.'
+},
+'pf.step2Title': { ar: '2. Seed اللاعب', fr: '2. Seed du joueur', en: '2. Player Seed' },
+'pf.step2Body': {
+ar: 'يمكنك إدخال seed خاص بك (Client Seed) أو استخدام قيمة عشوائية مولّدة تلقائياً. هذا يضمن أن الخادم لا يستطيع التنبؤ بناتجة الجولة مسبقاً.',
+fr: 'Vous pouvez saisir votre propre seed (Client Seed) ou utiliser une valeur aléatoire générée automatiquement. Cela garantit que le serveur ne peut pas prédire le résultat du tour à l\'avance.',
+en: 'You can enter your own seed (Client Seed) or use an automatically generated random value. This ensures the server cannot predict the round result in advance.'
+},
+'pf.step3Title': { ar: '3. Nonce', fr: '3. Nonce', en: '3. Nonce' },
+'pf.step3Body': {
+ar: 'هو عدّاد يزداد تلقائياً مع كل جولة. يجمع بين Server Seed و Client Seed لضمان أن كل جولة لها نتيجة فريدة لا يمكن تكرارها.',
+fr: 'C\'est un compteur qui augmente automatiquement à chaque tour. Il combine le Server Seed et le Client Seed pour garantir que chaque tour a un résultat unique et non répétable.',
+en: 'This is a counter that increases automatically with each round. It combines the Server Seed and Client Seed to ensure each round has a unique, non-repeating result.'
+},
+'pf.verifyTitle': { ar: 'كيف تتحقق؟', fr: 'Comment vérifier ?', en: 'How to verify?' },
+'pf.verifyBody': {
+ar: 'بعد انتهاء الجولة، يُكشف الخادم عن النسخة الأصلية من Seed. يمكنك الآن تطبيق الخوارزمية محلياً على جهازك: ادمج الـ Seeds + Nonce، ثم احسب النتيجة. إذا تطابقت مع النتيجة المعروضة، فهذا يعني أن الجولة كانت عادلة 100%.',
+fr: 'Après la fin du tour, le serveur révèle la version originale du seed. Vous pouvez maintenant appliquer l\'algorithme localement sur votre appareil : combinez les seeds + le nonce, puis calculez le résultat. Si celui-ci correspond au résultat affiché, cela signifie que le tour était équitable à 100%.',
+en: 'After the round ends, the server reveals the original seed. You can now apply the algorithm locally on your device: combine the seeds + the nonce, then calculate the result. If it matches the displayed result, the round was 100% fair.'
+},
+'pf.techTitle': { ar: 'التقنيات المستخدمة', fr: 'Technologies utilisées', en: 'Technologies used' },
+'pf.techBody': {
+ar: 'نستخدم <code>SHA-256</code> لتشفير Seed الخادم، و <code>HMAC-SHA512</code> لدمج القيم، و <code>combined seeds</code> لضمان عدم التوقع. التحقق يتم كاملاً على جهازك (client-side verify) بدون الحاجة لاتصال بالخادم.',
+fr: 'Nous utilisons <code>SHA-256</code> pour chiffrer le seed du serveur, <code>HMAC-SHA512</code> pour combiner les valeurs, et <code>combined seeds</code> pour garantir l\'imprévisibilité. La vérification se fait entièrement sur votre appareil (client-side verify) sans nécessiter de connexion au serveur.',
+en: 'We use <code>SHA-256</code> to encrypt the server seed, <code>HMAC-SHA512</code> to combine the values, and <code>combined seeds</code> to ensure unpredictability. Verification is done entirely on your device (client-side verify) without needing to contact the server.'
+},
+'pf.outro': {
+ar: 'لمزيد من التفاصيل التقنية، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.',
+fr: 'Pour plus de détails techniques, vous pouvez visiter la <a href="about.html#security">page Sécurité</a> ou <a href="contact.html">nous contacter</a>.',
+en: 'For more technical details, you can visit the <a href="about.html#security">Security page</a> or <a href="contact.html">contact us</a>.'
+},
+'pf.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' }
+};
+var curLang = 'ar';
+try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+function applyLang() {
+document.documentElement.setAttribute('lang', curLang);
+document.documentElement.setAttribute('dir', curLang === 'ar' ? 'rtl' : 'ltr');
+document.querySelectorAll('[data-k]').forEach(function (el) {
+var v = D[el.getAttribute('data-k')];
+if (v && v[curLang]) el.textContent = v[curLang];
+});
+}
+/* دمج applyLang (data-k) مع setLang الأصلي من utils.js (data-i18n) */
+var _origSetLang = (typeof setLang === 'function') ? setLang : null;
+window.setLang = function(l) {
+curLang = l;
+applyLang();
+if (_origSetLang) _origSetLang(l);
+};
+/* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+injectLegalUI('pf');
+applyLang();
+</script>
+</body>
+</html>

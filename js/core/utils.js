@@ -74,9 +74,33 @@ function nav(id, el) {
   if (id === 'admin' && typeof renderAdmin === 'function') renderAdmin();
   if (id === 'tourney' && typeof renderTourney === 'function') renderTourney();
   if (id === 'rooms' && typeof renderRooms === 'function') renderRooms();
+  if (id === 'transactions' && typeof renderTransactions === 'function') renderTransactions();
+  if (id === 'account' && typeof renderAccountLog === 'function') renderAccountLog();
   closeSide();
   SND.click();
+  /* ── Hash routing: update URL hash without triggering hashchange loop ── */
+  _syncHash(id);
 }
+/* ── Hash routing (hash ↔ section) ── */
+var _hashUpdating = false;
+function _syncHash(id) {
+  if (_hashUpdating) return;
+  var hash = window.location.hash.replace('#', '');
+  if (hash !== id) {
+    _hashUpdating = true;
+    window.history.replaceState(null, '', id === 'home' ? '' : '#' + id);
+    _hashUpdating = false;
+  }
+}
+function navFromHash() {
+  var hash = window.location.hash.replace('#', '') || 'home';
+  var el = document.querySelector('[data-nav="' + hash + '"]');
+  if (typeof nav === 'function') nav(hash, el);
+}
+window.addEventListener('hashchange', function () {
+  if (_hashUpdating) return;
+  navFromHash();
+});
 /* ── القائمة الجانبية للموبايل ── */
 function openSide() {
   const sidebar = document.getElementById('sidebar');
@@ -101,7 +125,8 @@ function setLang(lang) {
   applyI18n();
   translateStatic();
   syncLangDrop();
-  renderAll();
+  if (typeof renderAll === 'function') renderAll();
+  updateCopyright();
 }
 /* ── قائمة اللغة المنسدلة (ع / FR / EN) ── */
 const LANG_MENU_LABEL = { ar: 'ع', fr: 'FR', en: 'EN' };
@@ -155,8 +180,20 @@ function translateStatic() {
     const v = T(el.getAttribute('data-i18n-placeholder'));
     if (v) el.setAttribute('placeholder', v);
   });
+  /* ترجمة الـ title (للأزرار والأيقونات بدون نص) */
+  document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+    const v = T(el.getAttribute('data-i18n-title'));
+    if (v) el.setAttribute('title', v);
+  });
   /* زر ملء الشاشة في صفحة اللعبة — نصه يُدار ديناميكياً حسب الوضع */
   if (typeof syncGameFsBtn === 'function') syncGameFsBtn();
+}
+/* ── تحديث سنة حقوق النشر بناءً على التوقيت المحلي ── */
+function updateCopyright() {
+  var year = new Date().getFullYear();
+  document.querySelectorAll('[data-i18n-year]').forEach(function (el) {
+    el.textContent = year;
+  });
 }
 /* ── تطبيق اتجاه الصفحة ── */
 function applyI18n() {

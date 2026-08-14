@@ -1101,9 +1101,33 @@
   position: relative;
   flex-shrink: 0;
 }
+/* زر الحساب في التوب بار: دائري بأيقونة فقط (بدون نص) */
 .acct .uchip {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 50%;
+  gap: 0;
+  max-width: none;
+  justify-content: center;
   cursor: pointer;
   transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.acct .uchip .uname,
+.acct .uchip .urole,
+.acct .uchip .ucaret {
+  display: none;
+}
+.acct .uavatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .acct .uchip:hover {
   border-color: var(--gold);
@@ -1138,6 +1162,25 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+/* ترويس القائمة المنسدلة: اسم الحساب + الرصيد (عرض فقط) */
+.acct-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 11px 8px;
+}
+.acct-name {
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: var(--t1);
+}
+.acct-balance {
+  font-size: 0.78rem;
+  color: var(--t2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .acct-item {
   display: flex;
@@ -1417,5 +1460,116 @@ select.ainp {
 }
 .abadge.wait {
   background: rgba(245, 197, 24, 0.14);
+  color: var(--gold);
+}
+/* ── أزرار أيقونية فقط في هيدر الألعبة (gp-head) ── */
+.gp-head .icon-only {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gp-head .icon-only i {
+  font-size: 1.05rem;
+}
+/* اسم اللعبة في gp-head: إخفاء النص بصرياً لكن الاحتفاظ بعنصر للوصول */
+#gamePageName {
+  font-size: 1.25rem;
+}
+/* ── شارات الفوتر أيقونية فقط (بدون نص) ── */
+.foot-badges .fb {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 40px;
+height: 40px;
+gap: 0;
+padding: 0;
+border-radius: 12px;
+background: var(--gg);
+border: 2px solid var(--gold);
+color: var(--t1);
+transition: all 0.2s var(--ease);
+box-shadow: var(--shadow-gold);
+text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.foot-badges .fb:hover {
+background: linear-gradient(135deg, #FFD23F, #C99050);
+border-color: #FFD23F;
+color: #0A0E1A;
+transform: translateY(-2px);
+box-shadow: 0 0 22px rgba(255, 210, 63, 0.45);
+}
+.foot-badges .fb i {
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+/* ── أيقونات الأمان في أسفل السايد بار (side-foot) ── */
+.sf-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sf-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--bg3);
+  border: 1px solid var(--bd);
+  color: var(--t2);
+  font-size: 0.85rem;
+  cursor: default;
+  transition: all 0.2s var(--ease);
+}
+.sf-icon:hover {
+  background: var(--gc);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(245, 197, 24, 0.25);
+}
+.sf-icon i {
+  color: var(--gold);
+}
+/* ── أيقونات الأمان في أسفل صفحة اللعبة (game-foot) ── */
+.game-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  flex-wrap: wrap;
+}
+.g-ficon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--ctl-bd);
+  color: var(--t2);
+  font-size: 1rem;
+  transition: all 0.2s var(--ease);
+}
+.g-ficon:hover {
+  background: var(--gc);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(245, 197, 24, 0.3);
+}
+.g-ficon i {
   color: var(--gold);
 }
