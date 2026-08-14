@@ -192,7 +192,7 @@ fr: 'Principe fondamental',
 en: 'Core principle'
 },
 'pf.noteBody': {
-ar: 'كل جولة تستخدم three عناصر غير متوقعة: Seed من الخادم، Seed من اللاعب، و Nonce. بعد انتهاء الجولة يمكنك التحقق من النتيجة محلياً باستخدام هذه القيم.',
+ar: 'كل جولة تستخدم ثلاثة عناصر غير متوقعة: Seed من الخادم، Seed من اللاعب، و Nonce. بعد انتهاء الجولة يمكنك التحقق من النتيجة محلياً باستخدام هذه القيم.',
 fr: 'Chaque tour utilise trois éléments imprévisibles : le seed du serveur, le seed du joueur et le nonce. Après la fin du tour, vous pouvez vérifier le résultat localement à l\'aide de ces valeurs.',
 en: 'Each round uses three unpredictable elements: the server seed, the player seed, and a nonce. After the round ends, you can verify the result locally using these values.'
 },
@@ -204,7 +204,7 @@ en: 'Before the round starts, the server generates a secret random value (Server
 },
 'pf.step2Title': { ar: '2. Seed اللاعب', fr: '2. Seed du joueur', en: '2. Player Seed' },
 'pf.step2Body': {
-ar: 'يمكنك إدخال seed خاص بك (Client Seed) أو استخدام قيمة عشوائية مولّدة تلقائياً. هذا يضمن أن الخادم لا يستطيع التنبؤ بناتجة الجولة مسبقاً.',
+ar: 'يمكنك إدخال seed خاص بك (Client Seed) أو استخدام قيمة عشوائية مولّدة تلقائياً. هذا يضمن أن الخادم لا يستطيع التنبؤ بنتيجة الجولة مسبقاً.',
 fr: 'Vous pouvez saisir votre propre seed (Client Seed) ou utiliser une valeur aléatoire générée automatiquement. Cela garantit que le serveur ne peut pas prédire le résultat du tour à l\'avance.',
 en: 'You can enter your own seed (Client Seed) or use an automatically generated random value. This ensures the server cannot predict the round result in advance.'
 },
@@ -222,9 +222,9 @@ en: 'After the round ends, the server reveals the original seed. You can now app
 },
 'pf.techTitle': { ar: 'التقنيات المستخدمة', fr: 'Technologies utilisées', en: 'Technologies used' },
 'pf.techBody': {
-ar: 'نستخدم <code>SHA-256</code> لتشفير Seed الخادم، و <code>HMAC-SHA512</code> لدمج القيم، و <code>combined seeds</code> لضمان عدم التوقع. التحقق يتم كاملاً على جهازك (client-side verify) بدون الحاجة لاتصال بالخادم.',
-fr: 'Nous utilisons <code>SHA-256</code> pour chiffrer le seed du serveur, <code>HMAC-SHA512</code> pour combiner les valeurs, et <code>combined seeds</code> pour garantir l\'imprévisibilité. La vérification se fait entièrement sur votre appareil (client-side verify) sans nécessiter de connexion au serveur.',
-en: 'We use <code>SHA-256</code> to encrypt the server seed, <code>HMAC-SHA512</code> to combine the values, and <code>combined seeds</code> to ensure unpredictability. Verification is done entirely on your device (client-side verify) without needing to contact the server.'
+ar: 'نستخدم <code>SHA-256</code> لتشفير Seed الخادم، و <code>HMAC-SHA512</code> لدمج القيم، وندمج البذور لضمان عدم القدرة على التوقع. التحقق يتم بالكامل على جهازك (client-side) بدون الحاجة لأي اتصال بالخادم.',
+fr: 'Nous utilisons <code>SHA-256</code> pour chiffrer le seed du serveur, <code>HMAC-SHA512</code> pour combiner les valeurs, et nous mélangeons les graines pour garantir l\'imprévisibilité. La vérification se fait entièrement sur votre appareil (côté client) sans nécessiter de connexion au serveur.',
+en: 'We use <code>SHA-256</code> to encrypt the server seed, <code>HMAC-SHA512</code> to combine the values, and we mix the seeds to ensure unpredictability. Verification is done entirely on your device (client-side) without needing to contact the server.'
 },
 'pf.outro': {
 ar: 'لمزيد من التفاصيل التقنية، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.',
