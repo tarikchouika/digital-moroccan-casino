@@ -2,17 +2,17 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="من نحن — Digital Moroccan Casino: الشحن، السحب، الإحالة، الغرف الجماعية وقواعد الدردشة">
   <meta name="theme-color" content="#070B12">
   <title>Digital Moroccan Casino — من نحن</title>
-  <!-- Fonts -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <!-- CSS Files -->
   <link rel="stylesheet" href="css/01-variables.css">
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
@@ -27,81 +27,9 @@
       }
     })();
   </script>
+  <script src="js/i18n/auto-lang.js"></script>
   <style>
-    .legal-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
-      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
-      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .legal-topbar .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--t1);
-      text-decoration: none;
-      font-family: var(--font2, 'Orbitron'), sans-serif;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    .legal-topbar .brand b {
-      color: var(--gold);
-    }
-    .legal-topbar .brand .foot-logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-    }
-    .legal-topbar .brand .foot-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 9px;
-    }
-    .legal-topbar .tools {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg2);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .lang-switch button {
-      border: none;
-      background: transparent;
-      color: var(--t2);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.72rem;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .lang-switch button.active {
-      background: var(--gold);
-      color: #0A0E1A;
-    }
-    .lang-switch button:hover:not(.active) {
-      color: var(--gold);
-    }
+    /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -169,23 +97,6 @@
     .legal-wrap a {
       color: var(--gold);
     }
-    .legal-foot {
-      text-align: center;
-      padding: 22px 16px 30px;
-      color: var(--t3);
-      font-size: 0.8rem;
-    }
-    .legal-foot .fb {
-      margin: 0 4px 6px;
-    }
-    .legal-foot a {
-      color: var(--t2);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .legal-foot a:hover {
-      color: var(--gold);
-    }
     .comm-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -217,24 +128,8 @@
   </style>
 </head>
 <body>
-  <div class="legal-topbar">
-    <a class="brand" href="index.html">
-      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
-      <span><b>Digital Moroccan</b> Casino</span>
-    </a>
-    <div class="tools">
-      <div class="lang-switch" role="group" aria-label="Language / اللغة">
-        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
-        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
-        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
-      </div>
-      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
-      </button>
-    </div>
-  </div>
-
-  <main class="legal-wrap">
+  <article class="legal-content">
+    <main class="legal-wrap">
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-building-columns"></i></div>
     <h1 data-k="a.title">من نحن</h1>
     <div class="updated" data-k="a.updated">آخر تحديث: 12 أغسطس 2026</div>
@@ -275,8 +170,9 @@
     <p data-k="a.commP">يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:</p>
     <div class="comm-grid">
       <div class="comm-card"><div class="rate">25%</div><div class="desc" data-k="a.comm1">من الشحن فوق 1000 درهم = 10000 كوينز</div></div>
-      <div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 5000 درهم = 50000 كوينز</div></div>
-      <div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm3">من الشحن فوق 10000 درهم = 100000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 10000 درهم = 100000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">35%</div><div class="desc" data-k="a.comm3">من الشحن فوق 100000 درهم = 1000000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm4">من الشحن فوق 1000000 درهم = 10000000 كوينز</div></div>
     </div>
 
     <h2><i class="fa-solid fa-users" aria-hidden="true"></i> <span data-k="a.roomsTitle">الغرف الجماعية</span></h2>
@@ -295,16 +191,16 @@
     <p><a class="btn ghost small" href="contact.html"><i class="fa-solid fa-headset" aria-hidden="true"></i> <span data-k="a.contactBtn">صفحة تواصل معنا</span></a>
     <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="a.back">العودة للموقع</span></a></p>
   </main>
+    </article>
 
-  <footer class="legal-foot">
-    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="a.fb2fa">2FA محمي</span></span>
-    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="a.fbSecure">اتصال آمن</span></span>
-    <br>
-    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="a.footer">جميع الحقوق محفوظة</span>
-  </footer>
-
+  <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/ui/legal-ui.js"></script>
   <script>
-    /* ── الترجمة المحلية (ar/fr/en) ── */
+    /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
       'a.title': { ar: 'من نحن', fr: 'À propos de nous', en: 'About Us' },
       'a.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
@@ -358,8 +254,9 @@
         en: 'Admins benefit directly from a commission on top-ups above the following thresholds:'
       },
       'a.comm1': { ar: 'من الشحن فوق 1000 درهم = 10000 كوينز', fr: 'sur les recharges au-delà de 1000 dirhams = 10000 pièces', en: 'on top-ups above 1000 dirhams = 10000 coins' },
-      'a.comm2': { ar: 'من الشحن فوق 5000 درهم = 50000 كوينز', fr: 'sur les recharges au-delà de 5000 dirhams = 50000 pièces', en: 'on top-ups above 5000 dirhams = 50000 coins' },
-      'a.comm3': { ar: 'من الشحن فوق 10000 درهم = 100000 كوينز', fr: 'sur les recharges au-delà de 10000 dirhams = 100000 pièces', en: 'on top-ups above 10000 dirhams = 100000 coins' },
+      'a.comm2': { ar: 'من الشحن فوق 10000 درهم = 100000 كوينز', fr: 'sur les recharges au-delà de 10 000 dirhams = 100 000 pièces', en: 'on top-ups above 10000 dirhams = 100000 coins' },
+      'a.comm3': { ar: 'من الشحن فوق 100000 درهم = 1000000 كوينز', fr: 'sur les recharges au-delà de 100 000 dirhams = 1 000 000 pièces', en: 'on top-ups above 100000 dirhams = 1000000 coins' },
+      'a.comm4': { ar: 'من الشحن فوق 1000000 درهم = 10000000 كوينز', fr: 'sur les recharges au-delà de 1 000 000 dirhams = 10 000 000 pièces', en: 'on top-ups above 1000000 dirhams = 10000000 coins' },
       'a.roomsTitle': { ar: 'الغرف الجماعية', fr: 'Salles de groupe', en: 'Group rooms' },
       'a.roomsP': {
         ar: 'يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:',
@@ -408,37 +305,17 @@
         var v = D[el.getAttribute('data-k')];
         if (v && v[curLang]) el.textContent = v[curLang];
       });
-      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
-      });
-      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — من نحن' : (curLang === 'fr' ? 'Digital Moroccan Casino — À propos' : 'Digital Moroccan Casino — About Us');
     }
-    function setLang(l) {
+    /* دمج applyLang (data-k) مع setLang الأصلي من utils.js (data-i18n) */
+    var _origSetLang = (typeof setLang === 'function') ? setLang : null;
+    window.setLang = function(l) {
       curLang = l;
-      try { localStorage.setItem('rc_lang', l); } catch (e) {}
       applyLang();
-    }
-    /* ── تبديل الثيم ── */
-    function themeToggle() {
-      var html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'radiant') {
-        html.removeAttribute('data-theme');
-        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
-      } else {
-        html.setAttribute('data-theme', 'radiant');
-        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
-      }
-      updateThemeIcon();
-    }
-    function updateThemeIcon() {
-      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
-      var ico = document.getElementById('themeIco');
-      var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
-      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
-    }
+      if (_origSetLang) _origSetLang(l);
+    };
+    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+    injectLegalUI('about');
     applyLang();
-    updateThemeIcon();
   </script>
 </body>
 </html>

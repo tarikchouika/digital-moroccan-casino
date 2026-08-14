@@ -2,21 +2,23 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="تواصل معنا — Digital Moroccan Casino: الشحن، السحب، الدعم، والإبلاغ عن المخالفات">
   <meta name="theme-color" content="#070B12">
   <title>Digital Moroccan Casino — تواصل معنا</title>
-  <!-- Fonts -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <!-- CSS Files -->
   <link rel="stylesheet" href="css/01-variables.css">
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
   <link rel="stylesheet" href="css/07-responsive.css">
+  <!-- Language detection (must run before CSS paint) -->
+  <script src="js/i18n/auto-lang.js"></script>
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -28,80 +30,7 @@
     })();
   </script>
   <style>
-    .legal-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
-      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
-      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .legal-topbar .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--t1);
-      text-decoration: none;
-      font-family: var(--font2, 'Orbitron'), sans-serif;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    .legal-topbar .brand b {
-      color: var(--gold);
-    }
-    .legal-topbar .brand .foot-logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-    }
-    .legal-topbar .brand .foot-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 9px;
-    }
-    .legal-topbar .tools {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg2);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .lang-switch button {
-      border: none;
-      background: transparent;
-      color: var(--t2);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.72rem;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .lang-switch button.active {
-      background: var(--gold);
-      color: #0A0E1A;
-    }
-    .lang-switch button:hover:not(.active) {
-      color: var(--gold);
-    }
+    /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -169,44 +98,50 @@
     .legal-wrap a {
       color: var(--gold);
     }
-    .legal-foot {
-      text-align: center;
-      padding: 22px 16px 30px;
-      color: var(--t3);
-      font-size: 0.8rem;
+    /* ── WhatsApp contact buttons ── */
+    .whatsapp-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 12px 0;
     }
-    .legal-foot .fb {
-      margin: 0 4px 6px;
+    .whatsapp-btns .btn {
+      flex: 1 1 0;
+      min-width: 140px;
+      justify-content: center;
+      border-color: var(--green2);
+      color: var(--green2);
     }
-    .legal-foot a {
-      color: var(--t2);
-      text-decoration: none;
-      font-weight: 700;
+    .whatsapp-btns .btn:hover {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: var(--green2);
+      color: var(--green2);
     }
-    .legal-foot a:hover {
-      color: var(--gold);
+    /* ── Contact form ── */
+    .form-row {
+      margin-bottom: 14px;
+    }
+    .form-row:last-child {
+      margin-bottom: 18px;
+    }
+    .afinput {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .afinput textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .required {
+      color: var(--red);
+      font-weight: 900;
     }
   </style>
 </head>
 <body>
-  <div class="legal-topbar">
-    <a class="brand" href="index.html">
-      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
-      <span><b>Digital Moroccan</b> Casino</span>
-    </a>
-    <div class="tools">
-      <div class="lang-switch" role="group" aria-label="Language / اللغة">
-        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
-        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
-        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
-      </div>
-      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
-      </button>
-    </div>
-  </div>
-
-  <main class="legal-wrap">
+  <article class="legal-content">
+    <main class="legal-wrap">
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></div>
     <h1 data-k="c.title">تواصل معنا</h1>
     <div class="updated" data-k="c.updated">آخر تحديث: 12 أغسطس 2026</div>
@@ -239,19 +174,53 @@
       <span data-k="c.safetyP">لن يطلب منك أي أدمن كلمة المرور الخاصة بك أبداً. لا تشارك كلمة مرورك أو رمز التحقق مع أي شخص.</span>
     </div>
 
+    <h2><i class="fa-solid fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsappTitle">الدعم عبر واتساب</span></h2>
+    <p data-k="c.whatsappIntro">تواصل مع الدعم عبر واتساب — متاح 7/24.</p>
+    <div class="whatsapp-btns">
+      <a href="https://wa.me/212766672027" class="btn ghost small" target="_blank" rel="noopener" aria-label="واتساب 1">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsapp1">واتساب 1</span>
+      </a>
+      <a href="https://wa.me/212706865019" class="btn ghost small" target="_blank" rel="noopener" aria-label="واتساب 2">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsapp2">واتساب 2</span>
+      </a>
+    </div>
+
+    <h2><i class="fa-solid fa-envelope" aria-hidden="true"></i> <span data-k="c.formTitle">نموذج التواصل</span></h2>
+    <p data-k="c.formIntro">أرسل رسالتك إلى فريق الدعم عبر النموذج أدناه.</p>
+    <form id="contactForm" autocomplete="on">
+      <div class="form-row">
+        <label class="aflabel" for="cName"><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-k="c.formName">الاسم</span> <span class="required" aria-label="مطلوب">*</span></label>
+        <input class="afinput" type="text" id="cName" name="name" maxlength="100" required>
+      </div>
+      <div class="form-row">
+        <label class="aflabel" for="cEmail"><i class="fa-solid fa-envelope" aria-hidden="true"></i> <span data-k="c.formEmail">البريد الإلكتروني</span> <span class="required" aria-label="مطلوب">*</span></label>
+        <input class="afinput" type="email" id="cEmail" name="email" maxlength="254" required>
+      </div>
+      <div class="form-row">
+        <label class="aflabel" for="cSubject"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span data-k="c.formSubject">الموضوع</span></label>
+        <input class="afinput" type="text" id="cSubject" name="subject" maxlength="120">
+      </div>
+      <div class="form-row">
+        <label class="aflabel" for="cMessage"><i class="fa-solid fa-pen" aria-hidden="true"></i> <span data-k="c.formMessage">الرسالة</span> <span class="required" aria-label="مطلوب">*</span></label>
+        <textarea class="afinput" id="cMessage" name="message" rows="5" maxlength="3000" required></textarea>
+      </div>
+      <div id="contactMsg" class="authmsg" role="alert" aria-live="polite"></div>
+      <button type="submit" class="btn full" id="contactSubmit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> <span data-k="c.formSubmit">إرسال الرسالة</span></button>
+    </form>
+
     <p><a class="btn ghost small" href="about.html"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> <span data-k="c.aboutBtn">صفحة من نحن</span></a>
     <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="c.back">العودة للموقع</span></a></p>
   </main>
+  </article>
 
-  <footer class="legal-foot">
-    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="c.fb2fa">2FA محمي</span></span>
-    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="c.fbSecure">اتصال آمن</span></span>
-    <br>
-    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="c.footer">جميع الحقوق محفوظة</span>
-  </footer>
-
+  <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/ui/legal-ui.js"></script>
   <script>
-    /* ── الترجمة المحلية (ar/fr/en) ── */
+    /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
       'c.title': { ar: 'تواصل معنا', fr: 'Contactez-nous', en: 'Contact Us' },
       'c.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
@@ -304,7 +273,20 @@
       'c.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' },
       'c.fb2fa': { ar: '2FA محمي', fr: '2FA protégé', en: '2FA protected' },
       'c.fbSecure': { ar: 'اتصال آمن', fr: 'Connexion sécurisée', en: 'Secure connection' },
-      'c.footer': { ar: 'جميع الحقوق محفوظة', fr: 'Tous droits réservés', en: 'All rights reserved' }
+      'c.footer': { ar: 'جميع الحقوق محفوظة', fr: 'Tous droits réservés', en: 'All rights reserved' },
+      'c.whatsappTitle': { ar: 'الدعم عبر واتساب', fr: 'Support via WhatsApp', en: 'Support via WhatsApp' },
+      'c.whatsappIntro': { ar: 'تواصل مع الدعم عبر واتساب — متاح 7/24.', fr: 'Contactez le support via WhatsApp — 7j/24', en: 'Contact support via WhatsApp — available 24/7.' },
+      'c.whatsapp1': { ar: 'واتساب 1', fr: 'WhatsApp 1', en: 'WhatsApp 1' },
+      'c.whatsapp2': { ar: 'واتساب 2', fr: 'WhatsApp 2', en: 'WhatsApp 2' },
+      'c.formTitle': { ar: 'نموذج التواصل', fr: 'Formulaire de contact', en: 'Contact form' },
+      'c.formIntro': { ar: 'أرسل رسالتك إلى فريق الدعم عبر النموذج أدناه.', fr: 'Envoyez votre message à l\'équipe de support.', en: 'Send your message to the support team.' },
+      'c.formName': { ar: 'الاسم', fr: 'Nom', en: 'Your name' },
+      'c.formEmail': { ar: 'البريد الإلكتروني', fr: 'Email', en: 'Your email' },
+      'c.formSubject': { ar: 'الموضوع', fr: 'Objet', en: 'Subject' },
+      'c.formMessage': { ar: 'الرسالة', fr: 'Message', en: 'Message' },
+      'c.formSubmit': { ar: 'إرسال الرسالة', fr: 'Envoyer le message', en: 'Send message' },
+      'c.formSuccess': { ar: 'تم إرسال رسالتك بنجاح! سيتواصل معك الدعم قريباً.', fr: 'Votre message a été envoyé avec succès !', en: 'Your message was sent successfully! Support will contact you soon.' },
+      'c.formError': { ar: 'فشل إرسال الرسالة — حاول مجدداً.', fr: 'Échec de l\'envoi — réessayez.', en: 'Failed to send message — please try again.' }
     };
     var curLang = 'ar';
     try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
@@ -315,37 +297,58 @@
         var v = D[el.getAttribute('data-k')];
         if (v && v[curLang]) el.textContent = v[curLang];
       });
-      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
-      });
-      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — تواصل معنا' : (curLang === 'fr' ? 'Digital Moroccan Casino — Contactez-nous' : 'Digital Moroccan Casino — Contact Us');
     }
-    function setLang(l) {
+    /* دمج applyLang (data-k) مع setLang الأصلي من utils.js (data-i18n) */
+    var _origSetLang = (typeof setLang === 'function') ? setLang : null;
+    window.setLang = function(l) {
       curLang = l;
-      try { localStorage.setItem('rc_lang', l); } catch (e) {}
       applyLang();
-    }
-    /* ── تبديل الثيم ── */
-    function themeToggle() {
-      var html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'radiant') {
-        html.removeAttribute('data-theme');
-        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
-      } else {
-        html.setAttribute('data-theme', 'radiant');
-        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
-      }
-      updateThemeIcon();
-    }
-    function updateThemeIcon() {
-      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
-      var ico = document.getElementById('themeIco');
-      var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
-      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
-    }
+      if (_origSetLang) _origSetLang(l);
+    };
+    /* إرسال نموذج التواصل إلى الخادم — يعمل بشكل منعزل عن تبديل اللغة */
+    (function () {
+      var form = document.getElementById('contactForm');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('contactSubmit');
+        var msg = document.getElementById('contactMsg');
+        if (btn) btn.disabled = true;
+        var fd = new FormData(form);
+        var payload = {
+          name: (fd.get('name') || '').trim(),
+          email: (fd.get('email') || '').trim(),
+          subject: (fd.get('subject') || '').trim(),
+          message: (fd.get('message') || '').trim()
+        };
+        fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data && data.ok) {
+              msg.textContent = D['c.formSuccess'] ? D['c.formSuccess'][curLang] : 'تم إرسال رسالتك بنجاح';
+              msg.className = 'authmsg ok';
+              form.reset();
+            } else {
+              msg.textContent = (data && data.message) ? data.message : (D['c.formError'] ? D['c.formError'][curLang] : 'فشل الإرسال');
+              msg.className = 'authmsg err';
+            }
+          })
+          .catch(function () {
+            msg.textContent = D['c.formError'] ? D['c.formError'][curLang] : 'فشل الإرسال';
+            msg.className = 'authmsg err';
+          })
+          .finally(function () {
+            if (btn) btn.disabled = false;
+          });
+      });
+    })();
+    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+    injectLegalUI('contact');
     applyLang();
-    updateThemeIcon();
   </script>
 </body>
 </html>

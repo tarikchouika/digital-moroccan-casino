@@ -2,21 +2,23 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="سياسة الخصوصية — Digital Moroccan Casino: جمع البيانات، المدفوعات، الأمن وحقوق المستخدم">
   <meta name="theme-color" content="#070B12">
   <title>Digital Moroccan Casino — سياسة الخصوصية</title>
-  <!-- Fonts -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <!-- CSS Files -->
   <link rel="stylesheet" href="css/01-variables.css">
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
   <link rel="stylesheet" href="css/07-responsive.css">
+  <!-- Language detection (must run before CSS paint) -->
+  <script src="js/i18n/auto-lang.js"></script>
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -28,80 +30,7 @@
     })();
   </script>
   <style>
-    .legal-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
-      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
-      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .legal-topbar .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--t1);
-      text-decoration: none;
-      font-family: var(--font2, 'Orbitron'), sans-serif;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    .legal-topbar .brand b {
-      color: var(--gold);
-    }
-    .legal-topbar .brand .foot-logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-    }
-    .legal-topbar .brand .foot-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 9px;
-    }
-    .legal-topbar .tools {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg2);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .lang-switch button {
-      border: none;
-      background: transparent;
-      color: var(--t2);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.72rem;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .lang-switch button.active {
-      background: var(--gold);
-      color: #0A0E1A;
-    }
-    .lang-switch button:hover:not(.active) {
-      color: var(--gold);
-    }
+    /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -169,44 +98,11 @@
     .legal-wrap a {
       color: var(--gold);
     }
-    .legal-foot {
-      text-align: center;
-      padding: 22px 16px 30px;
-      color: var(--t3);
-      font-size: 0.8rem;
-    }
-    .legal-foot .fb {
-      margin: 0 4px 6px;
-    }
-    .legal-foot a {
-      color: var(--t2);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .legal-foot a:hover {
-      color: var(--gold);
-    }
   </style>
 </head>
 <body>
-  <div class="legal-topbar">
-    <a class="brand" href="index.html">
-      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
-      <span><b>Digital Moroccan</b> Casino</span>
-    </a>
-    <div class="tools">
-      <div class="lang-switch" role="group" aria-label="Language / اللغة">
-        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
-        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
-        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
-      </div>
-      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
-      </button>
-    </div>
-  </div>
-
-  <main class="legal-wrap">
+  <article class="legal-content">
+    <main class="legal-wrap">
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div>
     <h1 data-k="p.title">سياسة الخصوصية</h1>
     <div class="updated" data-k="p.updated">آخر تحديث: 12 أغسطس 2026</div>
@@ -251,16 +147,16 @@
     <p><a class="btn ghost small" href="contact.html"><i class="fa-solid fa-headset" aria-hidden="true"></i> <span data-k="p.contactBtn">تواصل معنا</span></a>
     <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="p.back">العودة للموقع</span></a></p>
   </main>
+  </article>
 
-  <footer class="legal-foot">
-    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="p.fb2fa">2FA محمي</span></span>
-    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="p.fbSecure">اتصال آمن</span></span>
-    <br>
-    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="p.footer">جميع الحقوق محفوظة</span>
-  </footer>
-
+  <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/ui/legal-ui.js"></script>
   <script>
-    /* ── الترجمة المحلية (ar/fr/en) ── */
+    /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
       'p.title': { ar: 'سياسة الخصوصية', fr: 'Politique de confidentialité', en: 'Privacy Policy' },
       'p.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
@@ -291,7 +187,7 @@
         en: 'Chat data: messages sent in rooms and on the platform to enforce conduct rules.'
       },
       'p.collect5': {
-        ar: 'بيانات تقنية: المتصفح، اللغة، والعنوان التقريبي عبر خوادمنا لتحسين الأداء والحماية من الهجمات.',
+        ar: 'بيانات تقنية: المتصفح، اللغة، والعنوان التقريبي عبر خوادرنا لتحسين الأداء والحماية من الهجمات.',
         fr: "Données techniques : navigateur, langue et adresse approximative via nos serveurs pour améliorer les performances et se protéger des attaques.",
         en: 'Technical data: browser, language and approximate address through our servers to improve performance and protect against attacks.'
       },
@@ -303,7 +199,7 @@
       },
       'p.payTitle': { ar: 'معالجة المدفوعات', fr: 'Traitement des paiements', en: 'Payment processing' },
       'p.payP': {
-        ar: 'تتم عمليات الشحن والسحب عبر أدمنز المنصة بوسائل آمنة: حوالة بنكية، كاش وجه لوجه، أو عملات رقمية حسب اختيار اللاعب. لا نخزن أرقام البطاقات البنكية ولا بياناتها في خوادمنا، ولا تُطلب منك إلا مباشرة عند تنفيذ العملية من قبل وسيلة الدفع نفسها.',
+        ar: 'تتم عمليات الشحن والسحب عبر أدمنز المنصة بوسائل آمنة: حوالة بنكية، كاش وجه لوجه، أو عملات رقمية حسب اختيار اللاعب. لا نخزن أرقام البطاقات البنكية ولا بياناتها في خوادرنا، ولا تُطلب منك إلا مباشرة عند تنفيذ العملية من قبل وسيلة الدفع نفسها.',
         fr: "Les recharges et retraits se font via les admins par des moyens sécurisés : virement bancaire, espèces en face à face ou cryptomonnaies au choix du joueur. Nous ne stockons ni numéros ni données de cartes bancaires sur nos serveurs ; ils ne sont demandés que directement lors de l'exécution de l'opération par le moyen de paiement lui-même.",
         en: 'Top-ups and withdrawals are handled by platform admins through secure methods: bank transfer, face-to-face cash or cryptocurrency at the player\'s choice. We never store bank card numbers or details on our servers; they are only requested directly by the payment method itself when executing the operation.'
       },
@@ -364,37 +260,17 @@
         var v = D[el.getAttribute('data-k')];
         if (v && v[curLang]) el.textContent = v[curLang];
       });
-      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
-      });
-      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — سياسة الخصوصية' : (curLang === 'fr' ? 'Digital Moroccan Casino — Politique de confidentialité' : 'Digital Moroccan Casino — Privacy Policy');
     }
-    function setLang(l) {
+    /* دمج applyLang (data-k) مع setLang الأصلي من utils.js (data-i18n) */
+    var _origSetLang = (typeof setLang === 'function') ? setLang : null;
+    window.setLang = function(l) {
       curLang = l;
-      try { localStorage.setItem('rc_lang', l); } catch (e) {}
       applyLang();
-    }
-    /* ── تبديل الثيم ── */
-    function themeToggle() {
-      var html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'radiant') {
-        html.removeAttribute('data-theme');
-        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
-      } else {
-        html.setAttribute('data-theme', 'radiant');
-        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
-      }
-      updateThemeIcon();
-    }
-    function updateThemeIcon() {
-      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
-      var ico = document.getElementById('themeIco');
-      var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
-      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
-    }
+      if (_origSetLang) _origSetLang(l);
+    };
+    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+    injectLegalUI('privacy');
     applyLang();
-    updateThemeIcon();
   </script>
 </body>
 </html>
