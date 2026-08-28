@@ -315,6 +315,12 @@ body.app-fs-on .main { padding-top: 0 !important; }
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  /* [Fit] المدى الكامل بلا هوامش/فراغات سوداء: يمتد المحتوى لعرض الشاشة
+     ويبدأ من الأعلى (كان center/center يسبب فراغاً أسود حول اللعبة) */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 /* زر الخروج الذهبي العائم — أعلى يمين الشاشة (يظهر فقط في الشاشة الممتلئة) */
@@ -700,3 +706,9 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
   .friends-conv { min-height: 50vh; }
   #roomSettingsModal { width: 94vw; height: 90vh; }
 }
+
+/* ═══ منع كسر النص في صفوف اللاعبين (اسم + أنت/👑/👁️/🤖 + الحالة)
+   حتى لا يظهر حرف منفرد في سطر جديد (مثل "r") ═══ */
+.cmsg { min-width: 0; }
+.cname, .ctext2 { overflow-wrap: anywhere; word-break: break-word; }
+.cname { min-width: 0; }
