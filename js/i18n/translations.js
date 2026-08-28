@@ -1147,6 +1147,40 @@ const TR = {
   'rm.required': [ 'هذا الحقل مطلوب', 'Ce champ est requis', 'This field is required', 'هاد الخانة لازمة' ],
   'rm.needType': [ 'اختر نوع الغرفة أولاً', "Choisissez d'abord le type de salle", 'Pick a room type first', 'اختار نوع الغرفة أولاً' ],
   'rm.betDeducted': [ 'رهان يُقتطع عند بدء الجولة', 'La mise est prélevée au démarrage de la manche', 'Bet is deducted at round start', 'الرهان كيتقطع وقت بداية الجولة' ],
+
+  /* ── Friends (ui.*) ── */
+  'ui.friends': [ 'الأصدقاء', 'Amis', 'Friends', 'الصحاب' ],
+  'ui.addFriend': [ 'إضافة صديق', 'Ajouter un ami', 'Add Friend', 'زيد صديق' ],
+  'ui.friendList': [ 'قائمة الأصدقاء', 'Liste d\'amis', 'Friend List', 'ليستة ديال الصحاب' ],
+  'ui.conversation': [ 'المحادثة', 'Conversation', 'Conversation', 'الدردشة' ],
+  'ui.invite': [ 'دعوة لغرفة', 'Inviter à une salle', 'Invite to Room', 'عيط لشومبر' ],
+
+  /* ── 2FA management UI (2fa.*) ── */
+  '2fa.modalTitle': [ 'المصادقة الثنائية 2FA', 'Authentification à deux facteurs 2FA', 'Two-Factor Authentication 2FA', 'المصادقة الثنائية 2FA' ],
+  '2fa.manageTitle': [ 'إدارة المصادقة الثنائية', 'Gérer la 2FA', 'Manage 2FA', 'سيّر 2FA' ],
+  '2fa.manageBody': [ 'من هذه الصفحة يمكنك تفعيل أو تعطيل طبقة الحماية الإضافية على حسابك.', 'Depuis cette page vous pouvez activer ou désactiver la protection supplémentaire de votre compte.', 'From this page you can enable or disable the extra protection on your account.', 'من هاد الصفحة تقدر تفعّل ولا تطفي الحماية الزايدة ديال الكونت ديالك.' ],
+  '2fa.enableBtn': [ 'تفعيل المصادقة الثنائية 2FA', 'Activer la 2FA', 'Enable 2FA', 'فعّل 2FA' ],
+  '2fa.disableBtn': [ 'تعطيل 2FA', 'Désactiver la 2FA', 'Disable 2FA', 'عطّل 2FA' ],
+  '2fa.secretLbl': [ 'السر', 'Clé secrète', 'Secret', 'السر' ],
+  '2fa.codeLbl': [ 'الرمز', 'Code', 'Code', 'الكود' ],
+  '2fa.verifyBtn': [ 'تأكيد وتفعيل', 'Vérifier et activer', 'Verify & Activate', 'تحقّق وفعّل' ],
+
+  /* ── Room settings overlay (rs.*) ── */
+  'rs.title': [ 'إعدادات الغرفة والجولة', 'Paramètres de la salle et de la manche', 'Room & Round Settings', 'إعدادات الشومبر والجولة' ],
+  'rs.type': [ 'نوع الغرفة', 'Type de salle', 'Room type', 'نوع الشومبر' ],
+  'rs.game': [ 'اللعبة', 'Jeu', 'Game', 'اللعبة' ],
+  'rs.hour': [ 'بالساعة', "À l'heure", 'Per hour', 'بالساعة' ],
+  'rs.percentage': [ 'بالنسبة المئوية', 'En pourcentage', 'Percentage', 'بالنسبة المئوية' ],
+  'rs.bet': [ 'مبلغ الرهان', 'Montant de la mise', 'Bet amount', 'مبلغ الرهان' ],
+  'rs.save': [ 'إنشاء الغرفة', 'Créer la salle', 'Create Room', 'إنشئ الشومبر' ],
+  'rs.cancel': [ 'إلغاء', 'Annuler', 'Cancel', 'إلغاء' ],
+
+  /* ── Security / 2FA section in account (sec.*) ── */
+  'sec.twofaTitle': [ 'المصادقة الثنائية 2FA', 'Authentification à deux facteurs 2FA', 'Two-Factor Authentication 2FA', 'المصادقة الثنائية 2FA' ],
+  'sec.desc': [ 'حماية حسابك بطبقة أمان إضافية عبر المصادقة الثنائية.', 'Protégez votre compte avec une couche de sécurité supplémentaire via la 2FA.', 'Protect your account with an extra security layer via two-factor authentication.', 'حمي الكونت ديالك بطبقة أمان زايدة عبر 2FA.' ],
+  'sec.secret': [ 'السر', 'Clé secrète', 'Secret', 'السر' ],
+  'sec.verify': [ 'تأكيد وتفعيل', 'Vérifier', 'Verify', 'تحقّق' ],
+  'sec.disable': [ 'تعطيل 2FA', 'Désactiver la 2FA', 'Disable 2FA', 'عطّل 2FA' ],
 };
 
 /* ── Export to window and module ── */
