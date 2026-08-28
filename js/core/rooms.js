@@ -728,7 +728,7 @@
         var pm = p.id !== (u && u.id)
           ? '<button class="rchat-pm" onclick="Rooms.setRecipient(' + p.id + ',\'' + esc(p.username).replace(/'/g, "\\'") + '\')" title="مراسلة ' + esc(p.username) + '" aria-label="مراسلة فردية">💬</button>'
           : '';
-        return '<div class="cmsg" style="margin-bottom:6px;align-items:center">' +
+        return '<div class="cmsg" style="margin-bottom:6px;align-items:flex-start">' +
           '<div class="cav" style="background:var(--accent)">' + esc(p.username.slice(-1)) + '</div>' +
           '<div style="flex:1"><div class="cname">' + esc(p.username) + crown + you + mode + botTag + '</div>' +
           '<div class="ctext2">' + rd + (p.isBot ? ' ' + T('ui.roomBot') : (p.spectate ? ' ' + T('ui.roomSpectator') : (p.ready ? ' ' + T('ui.roomReady') : ' ' + T('ui.roomNotReady')))) + '</div></div>' +

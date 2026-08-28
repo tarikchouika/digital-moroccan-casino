@@ -854,7 +854,10 @@ const ParchisiApp = {
       const pr = parseFloat(cs.paddingRight) || 0;
       const w = area.clientWidth - pl - pr - 4;
       const h = area.clientHeight - pt - pb - 4;
-      const size = Math.max(150, Math.min(w, h, 620));
+      /* إذا كانت المنطقة بلا ارتفاع فعلي (شاشة ممتلئة/عمودية لم تُعطَ
+         ارتفاعاً كاملاً) نعتمد نسبة عرضية بدل الانهيار إلى 150px */
+      const effH = (h > 40) ? h : w * 1.3;
+      const size = Math.max(280, Math.min(w, effH, 640));
       wrap.style.width = size + 'px';
     };
     apply();

@@ -450,8 +450,8 @@ function renderAccountLog() {
     return;
   }
   const u = AUTH.user;
-  const joined = u.created_at ? new Date(u.created_at * 1000).toLocaleString() : '—';
-  const lastSeen = u.last_seen ? new Date(u.last_seen * 1000).toLocaleString() : '—';
+  const joined = u.created_at ? new Date(u.created_at * 1000).toLocaleString() : T('acct.na');
+  const lastSeen = u.last_seen ? new Date(u.last_seen * 1000).toLocaleString() : T('acct.na');
   el.innerHTML =
     '<table class="atable">' +
     '<tbody>' +

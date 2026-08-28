@@ -77,6 +77,7 @@ const TR = {
   'acct.adminRef': [ 'إدار مرجعي', 'Admin référent', 'Referral admin', 'إدار مرجعي' ],
   'acct.joined': [ 'انضممت', 'Inscrit depuis', 'Joined', 'انضممت' ],
   'acct.lastSeen': [ 'آخر نشاط', 'Dernière activité', 'Last activity', 'آخر نشاط' ],
+  'acct.na': [ 'غير متوفر', 'N/D', 'N/A', 'غير متوفر' ],
   'acct.subtitle': [ 'معلومات حسابك ونشاطك الحديث', 'Informations sur votre compte et activité récente', 'Your account info and recent activity', 'معلومات حسابك ونشاطك الحديث' ],
   'admin.active': [ 'نشط', 'Actif', 'Active', 'نشط' ],
   'admin.activeToday': [ 'نشط اليوم', 'Actifs aujourd\'hui', 'Active today', 'نشط اليوم' ],

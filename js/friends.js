@@ -25,7 +25,8 @@
   var AR = {
     'fr.title': 'الأصدقاء', 'fr.add': 'إضافة صديق', 'fr.addPlaceholder': 'اسم المستخدم أو المعرّف',
     'fr.pending': 'طلبات معلّقة', 'fr.accept': 'قبول', 'fr.decline': 'رفض', 'fr.noFriends': 'لا يوجد أصدقاء بعد — أضف صديقاً للبدء.',
-    'fr.send': 'إرسال', 'fr.invite': 'دعوة لغرفة', 'fr.inbox': 'الوارد', 'fr.online': 'متصل'
+    'fr.send': 'إرسال', 'fr.invite': 'دعوة لغرفة', 'fr.inbox': 'الوارد', 'fr.online': 'متصل',
+    'fr.noConv': 'لا توجد رسائل بعد — ابدأ المحادثة.'
   };
   function t(k) {
     var v = (typeof T === 'function') ? T(k) : k;
@@ -171,7 +172,7 @@
       return;
     }
     if (!_conv.length) {
-      el.innerHTML = '<div class="note">—</div>';
+      el.innerHTML = '<div class="note">' + esc(t('fr.noConv')) + '</div>';
       return;
     }
     el.innerHTML = _conv.map(function (m) {
