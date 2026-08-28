@@ -38,8 +38,34 @@ CREATE TABLE IF NOT EXISTS users (
   banned INTEGER NOT NULL DEFAULT 0,
   last_claim INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
-  last_seen INTEGER NOT NULL DEFAULT 0
+  last_seen INTEGER NOT NULL DEFAULT 0,
+  totp_secret TEXT,
+  twofa_enabled INTEGER NOT NULL DEFAULT 0
 );
+`);
+/* [2FA] ترحيل آمن: إضافة أعمدة المصادقة الثنائية لقواعد البيانات القديمة (royalcoin.db) */
+try { db.exec('ALTER TABLE users ADD COLUMN totp_secret TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN twofa_enabled INTEGER NOT NULL DEFAULT 0'); } catch (e) {}
+
+/* [Friends] جداول الأصدقاء والرسائل الخاصة */
+db.exec(`
+CREATE TABLE IF NOT EXISTS friends (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  friend_id INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted')),
+  created_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_friends ON friends(user_id, friend_id);
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  receiver_id INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  room_code TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_msg_created ON messages(created_at);
 `);
 
 /* مخطط تشفير كلمات المرور مطابق للباك-أند القديم (scrypt) */
@@ -55,6 +81,69 @@ function verifyPassword(password, saltHex, expectedHash) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+/* ═══════ [2FA] TOTP (RFC 6238) — node:crypto فقط (HMAC-SHA1, 30s, 6 أرقام, base32) ═══════ */
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function base32Encode(buf) {
+  let bits = 0, value = 0, out = '';
+  for (let i = 0; i < buf.length; i++) {
+    value = (value << 8) | buf[i];
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      out += BASE32_ALPHABET[(value >>> bits) & 31];
+    }
+  }
+  if (bits > 0) out += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+  return out;
+}
+function base32Decode(str) {
+  const lookup = {};
+  for (let i = 0; i < BASE32_ALPHABET.length; i++) lookup[BASE32_ALPHABET[i]] = i;
+  str = String(str || '').toUpperCase().replace(/=+$/, '');
+  let bits = 0, value = 0;
+  const out = [];
+  for (let i = 0; i < str.length; i++) {
+    const c = lookup[str[i]];
+    if (c === undefined) continue;
+    value = (value << 5) | c;
+    bits += 5;
+    if (bits >= 8) {
+      bits -= 8;
+      out.push((value >>> bits) & 0xff);
+    }
+  }
+  return Buffer.from(out);
+}
+/* سر TOTP عشوائي (20 بايت → base32) */
+function totpSecret() { return base32Encode(crypto.randomBytes(20)); }
+/* رمز TOTP عند لحظة زمنية معيّنة (ميلي ثانية) */
+function totpAt(secret, time) {
+  const key = base32Decode(secret);
+  if (!key.length) return '';
+  const counter = Math.floor(time / 30000);
+  const buf = Buffer.alloc(8);
+  buf.writeUInt32BE(Math.floor(counter / 0x100000000), 0);
+  buf.writeUInt32BE(counter >>> 0, 4);
+  const hmac = crypto.createHmac('sha1', key).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0xf;
+  const code = ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
+  return (code % 1000000).toString().padStart(6, '0');
+}
+/* التحقق من رمز TOTP مع نافذة ±1 خطوة زمنية */
+function totpVerify(secret, code) {
+  if (!secret || code == null) return false;
+  code = String(code).trim();
+  if (!/^\d{6}$/.test(code)) return false;
+  const now = Date.now();
+  for (let w = -1; w <= 1; w++) {
+    if (totpAt(secret, now + w * 30000) === code) return true;
+  }
+  return false;
+}
+
 let nextUserId = 100;
 const users = {};               // userId -> {id, username, passHash, passSalt, role, gold, lang, banned}
 const sessions = {};            // sid -> userId
@@ -65,12 +154,13 @@ const BET_FEE_RATE = 0.05;      /* 5% رسوم المنصة على الرهان 
 
 /* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
 function loadUsersFromDB() {
-  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned FROM users').all();
+  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled FROM users').all();
   rows.forEach(function (r) {
     users[r.id] = {
       id: r.id, username: r.username,
       passHash: r.pass_hash, passSalt: r.pass_salt,
-      role: r.role, gold: r.gold, lang: r.lang, banned: !!r.banned
+      role: r.role, gold: r.gold, lang: r.lang, banned: !!r.banned,
+      totpSecret: r.totp_secret || null, twofaEnabled: !!r.twofa_enabled
     };
     if (r.id >= nextUserId) nextUserId = r.id + 1;
   });
@@ -103,6 +193,11 @@ function persistUser(u) {
   console.log('[seed] created default accounts: super, admin, player');
 })();
 loadUsersFromDB();
+
+/* [Friends] مؤقّت تنظيف الرسائل الأقدم من 24 ساعة */
+setInterval(() => {
+  try { db.prepare('DELETE FROM messages WHERE created_at < ?').run(Date.now() - 24 * 3600 * 1000); } catch (e) {}
+}, 5 * 60 * 1000);
 
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
@@ -138,7 +233,7 @@ function getUser(req) {
 }
 function publicUser(u) {
   if (!u) return null;
-  return { id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang };
+  return { id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang, twofa_enabled: !!u.twofaEnabled };
 }
 
 /* ═══════ الغرف: تسلسل + بثّ ═══════ */
@@ -153,6 +248,7 @@ function serializeRoom(room) {
     max_players: room.max_players,
     status: room.status,
     bet: room.bet || 0,   /* [B10] رهان الغرفة */
+    room_type: room.room_type || null,   /* [B10] نوع الرهان: 'hour' | 'percentage' */
     players: room.players.map(function (p) {
       return { id: p.id, username: p.username, ready: !!p.ready, spectate: !!p.spectate, seat: p.seat, isBot: !!p.isBot };
     }),
@@ -186,6 +282,12 @@ function broadcastRoom(room, event, payload) {
   });
 }
 function updateRoom(room) { broadcastRoom(room, 'room:update', serializeRoom(room)); }
+/* [Friends] إرسال حدث SSE لمستخدم محدّد (يطابق بنية sseClients الموجودة) */
+function sendToUser(userId, event, data) {
+  sseClients.forEach(function (c) {
+    if (c.userId != null && c.userId === userId) sendSSE(c.res, event, data);
+  });
+}
 
 
 /* [Req3] حلّ تصويت المباراة الجديدة: حين يقرّر كل المشاركين (تصويت أو مغادرة=رفض)
@@ -352,6 +454,13 @@ const server = http.createServer((req, res) => {
           if (existing.passHash && !verifyPassword(data.password || '', existing.passSalt, existing.passHash)) {
             json({ ok: false, message: 'كلمة المرور غير صحيحة' }, 401); return;
           }
+          /* [2FA] إذا كانت المصادقة الثنائية مفعّلة يلزم رمز TOTP صالح قبل إصدار الجلسة */
+          if (existing.twofaEnabled) {
+            if (!data.totp || !totpVerify(existing.totpSecret, data.totp)) {
+              json({ twofa_required: true, userId: existing.id });
+              return;
+            }
+          }
           try { db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), existing.id); } catch (e) {}
           startSession(res, existing);
           json({ ok: true, user: publicUser(existing) });
@@ -403,6 +512,42 @@ const server = http.createServer((req, res) => {
         json({ ok: true, message: 'تم تغيير كلمة المرور' });
         return;
       }
+      /* ── [2FA] المصادقة الثنائية ── */
+      if (pathname === '/api/2fa/login') {
+        /* إكمال الدخول بعد إدخال رمز TOTP (userId + code) */
+        const user = (data.userId != null) ? users[data.userId] : null;
+        if (!user) { json({ ok: false, message: 'المستخدم غير موجود' }, 401); return; }
+        if (user.twofaEnabled && !totpVerify(user.totpSecret, data.code)) { json({ ok: false, message: 'رمز التحقق غير صحيح' }, 401); return; }
+        try { db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), user.id); } catch (e) {}
+        startSession(res, user);
+        json({ ok: true, user: publicUser(user) });
+        return;
+      }
+      if (pathname === '/api/2fa/enable') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const secret = totpSecret();
+        me.totpSecret = secret;
+        try { db.prepare('UPDATE users SET totp_secret = ? WHERE id = ?').run(secret, me.id); } catch (e) {}
+        const otpauth = 'otpauth://totp/DigitalMoroccanCasino:' + me.username + '?secret=' + secret + '&issuer=DigitalMoroccanCasino&algorithm=SHA1&digits=6&period=30';
+        json({ ok: true, secret: secret, otpauth: otpauth });
+        return;
+      }
+      if (pathname === '/api/2fa/verify') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        if (!totpVerify(me.totpSecret, data.code)) { json({ ok: false, error: 'رمز التحقق غير صحيح' }, 400); return; }
+        me.twofaEnabled = 1;
+        try { db.prepare('UPDATE users SET totp_secret = ?, twofa_enabled = ? WHERE id = ?').run(me.totpSecret, 1, me.id); } catch (e) {}
+        json({ ok: true });
+        return;
+      }
+      if (pathname === '/api/2fa/disable') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        if (me.passHash && !verifyPassword(data.password || '', me.passSalt, me.passHash)) { json({ ok: false, message: 'كلمة المرور غير صحيحة' }, 401); return; }
+        me.twofaEnabled = 0; me.totpSecret = null;
+        try { db.prepare('UPDATE users SET totp_secret = ?, twofa_enabled = ? WHERE id = ?').run(null, 0, me.id); } catch (e) {}
+        json({ ok: true });
+        return;
+      }
       if (pathname === '/api/transfer') {
         const amt = parseInt(data.amount, 10);
         if (!me || !data.to || isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
@@ -413,6 +558,109 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/transfers') { json({ ok: true, transfers: transfersList }); return; }
+
+      /* ── [Friends] الأصدقاء والرسائل الخاصة ── */
+      if (pathname === '/api/friends/add' && req.method === 'POST') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const target = Object.values(users).find(function (u) { return u.username === (data.username || ''); });
+        if (!target) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+        if (target.id === me.id) { json({ ok: false, message: 'لا يمكنك إضافة نفسك' }, 400); return; }
+        try { db.prepare('INSERT OR REPLACE INTO friends (user_id, friend_id, status, created_at) VALUES (?,?,?,?)').run(me.id, target.id, 'pending', Date.now()); } catch (e) {}
+        json({ ok: true });
+        return;
+      }
+      if (pathname === '/api/friends/accept' && req.method === 'POST') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const fid = Number(data.friendUserId);
+        if (isNaN(fid)) { json({ ok: false, message: 'معرّف غير صالح' }, 400); return; }
+        try {
+          db.prepare("UPDATE friends SET status='accepted' WHERE user_id = ? AND friend_id = ?").run(me.id, fid);
+          db.prepare("UPDATE friends SET status='accepted' WHERE user_id = ? AND friend_id = ?").run(fid, me.id);
+        } catch (e) {}
+        json({ ok: true });
+        return;
+      }
+      if (pathname === '/api/friends/remove' && req.method === 'POST') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const fid = Number(data.friendUserId);
+        if (isNaN(fid)) { json({ ok: false, message: 'معرّف غير صالح' }, 400); return; }
+        try {
+          db.prepare('DELETE FROM friends WHERE user_id = ? AND friend_id = ?').run(me.id, fid);
+          db.prepare('DELETE FROM friends WHERE user_id = ? AND friend_id = ?').run(fid, me.id);
+        } catch (e) {}
+        json({ ok: true });
+        return;
+      }
+      if (pathname === '/api/friends' && req.method === 'GET') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const uname = function (id) { const u = users[id]; return u ? u.username : ('user' + id); };
+        const accepted = db.prepare('SELECT friend_id FROM friends WHERE user_id = ? AND status = ?').all(me.id, 'accepted');
+        const incoming = db.prepare('SELECT user_id FROM friends WHERE friend_id = ? AND status = ?').all(me.id, 'pending');
+        const outgoing = db.prepare('SELECT friend_id FROM friends WHERE user_id = ? AND status = ?').all(me.id, 'pending');
+        json({
+          ok: true,
+          friends: accepted.map(function (r) { return { id: r.friend_id, username: uname(r.friend_id), status: 'accepted' }; }),
+          incoming: incoming.map(function (r) { return { id: r.user_id, username: uname(r.user_id) }; }),
+          outgoing: outgoing.map(function (r) { return { id: r.friend_id, username: uname(r.friend_id) }; })
+        });
+        return;
+      }
+      if (pathname === '/api/messages' && req.method === 'POST') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        let receiverId;
+        const to = data.to;
+        if (to != null && /^\d+$/.test(String(to))) {
+          receiverId = Number(to);
+          if (!users[receiverId]) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+        } else {
+          const target = Object.values(users).find(function (u) { return u.username === String(to || ''); });
+          if (!target) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+          receiverId = target.id;
+        }
+        const text = String(data.text || '').slice(0, 4000);
+        if (!text) { json({ ok: false, message: 'الرسالة فارغة' }, 400); return; }
+        const now = Date.now();
+        const roomCode = data.room_code || null;
+        let msg;
+        try {
+          const info = db.prepare('INSERT INTO messages (sender_id, receiver_id, text, room_code, created_at) VALUES (?,?,?,?,?)').run(me.id, receiverId, text, roomCode, now);
+          msg = { id: Number(info.lastInsertRowid), sender_id: me.id, receiver_id: receiverId, text: text, room_code: roomCode, created_at: now };
+        } catch (e) { json({ ok: false, message: 'تعذّر إرسال الرسالة' }, 500); return; }
+        sendToUser(me.id, 'dm', msg);
+        sendToUser(receiverId, 'dm', msg);
+        json({ ok: true, message: msg });
+        return;
+      }
+      if (pathname === '/api/messages' && req.method === 'GET') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const otherId = Number(parsedUrl.query.with);
+        if (isNaN(otherId)) { json({ ok: false, message: 'مطلوب معرّف المستخدم' }, 400); return; }
+        const since = Date.now() - 24 * 3600 * 1000;
+        const msgs = db.prepare('SELECT id, sender_id, receiver_id, text, room_code, created_at FROM messages WHERE created_at >= ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) ORDER BY created_at ASC')
+          .all(since, me.id, otherId, otherId, me.id);
+        json({ ok: true, messages: msgs });
+        return;
+      }
+      if (pathname === '/api/messages/inbox' && req.method === 'GET') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const since = Date.now() - 24 * 3600 * 1000;
+        const rows = db.prepare('SELECT id, sender_id, receiver_id, text, created_at FROM messages WHERE created_at >= ? AND (sender_id = ? OR receiver_id = ?) ORDER BY created_at ASC').all(since, me.id, me.id);
+        const map = {};
+        let totalUnread = 0;
+        rows.forEach(function (m) {
+          const other = (m.sender_id === me.id) ? m.receiver_id : m.sender_id;
+          if (!map[other]) map[other] = { lastText: m.text, at: m.created_at, unread: 0 };
+          else { map[other].lastText = m.text; map[other].at = m.created_at; }
+          if (m.receiver_id === me.id) { map[other].unread += 1; totalUnread += 1; }
+        });
+        const conversations = Object.keys(map).map(function (k) {
+          const o = map[k];
+          const u = users[k];
+          return { with: Number(k), username: u ? u.username : ('user' + k), lastText: o.lastText, unread: o.unread, at: o.at };
+        });
+        json({ ok: true, conversations: conversations, unread: totalUnread });
+        return;
+      }
       if (pathname === '/api/claim') { if (me) me.gold = (me.gold || 0) + 100; json({ ok: true, amount: 100, gold: me ? me.gold : 100 }); return; }
       if (pathname === '/api/chat') {
         const msg = { username: me ? me.username : 'زائر', message: data.message || '', created_at: Date.now() };
@@ -431,24 +679,26 @@ const server = http.createServer((req, res) => {
       /* ── الغرف ── */
       if (pathname === '/api/rooms' && req.method === 'GET') {
         const list = Object.values(rooms).filter(function (r) { return r.status === 'waiting'; }).map(function (r) {
-          return { id: r.id, code: r.code, game_id: r.game_id, owner_name: r.owner_name, max_players: r.max_players, players_count: r.players.length, status: r.status, bet: r.bet || 0 };
+          return { id: r.id, code: r.code, game_id: r.game_id, owner_name: r.owner_name, max_players: r.max_players, players_count: r.players.length, status: r.status, bet: r.bet || 0, room_type: r.room_type || null };
         });
         json({ ok: true, rooms: list });
         return;
       }
       if (pathname === '/api/rooms' && req.method === 'POST') {
-        /* إنشاء غرفة */
+        /* إنشاء غرفة — الرهان مدفوع إلزامياً (لا غرف مجانية) */
         if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const room_type = data.room_type;
+        if (room_type !== 'hour' && room_type !== 'percentage') { json({ ok: false, error: 'room_type_required' }, 400); return; }
+        const bet = Number(data.bet);
+        if (isNaN(bet) || bet <= 0) { json({ ok: false, error: 'bet_required' }, 400); return; }
         const gid = data.game_id || 'rm';
         const maxp = Math.max(2, Math.min(8, parseInt(data.max_players, 10) || 4));
-        /* [B10] غرفات الرهان (شطرنج): مبلغ اختياري يُعرض على المنضمّين */
-        const bet = Math.max(0, Math.min(10000, parseInt(data.bet, 10) || 0));
         const rid = 'r' + (nextRoomId++);
         const code = crypto.randomBytes(3).toString('hex').toUpperCase();
         const room = {
           id: rid, code: code, game_id: gid,
           owner_id: me.id, owner_name: me.username,
-          max_players: maxp, status: 'waiting', bet: bet,
+          max_players: maxp, status: 'waiting', bet: bet, room_type: room_type,
           players: [{ id: me.id, username: me.username, ready: false, spectate: false, seat: 0 }],
           moveHistory: [], dedupSeen: {}, driverId: me.id, online: {},
           room_state: {}, chat: []
@@ -519,6 +769,19 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/start') {
         const room = rooms[data.room_id];
         if (room && me && room.owner_id === me.id) {
+          const bet = Number(room.bet) || 0;
+          /* [B10] اقتطاع الرهان من كل لاعب غير متفرّج (وليس بوتّاً) عند بدء المباراة */
+          const payers = room.players.filter(function (p) { return !p.spectate && users[p.id]; });
+          let insufficient = null;
+          for (const p of payers) {
+            if ((users[p.id].gold || 0) < bet) { insufficient = users[p.id].username; break; }
+          }
+          if (insufficient) { json({ ok: false, error: 'insufficient_funds', user: insufficient }, 400); return; }
+          payers.forEach(function (p) {
+            const u = users[p.id];
+            u.gold = (u.gold || 0) - bet;
+            try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
+          });
           room.status = 'playing';
           updateRoom(room);
         }

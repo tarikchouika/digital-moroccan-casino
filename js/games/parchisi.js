@@ -843,7 +843,17 @@ const ParchisiApp = {
     const wrap = document.getElementById('parchisiBoardWrap');
     if (!area || !wrap) return;
     const apply = () => {
-      const w = area.clientWidth - 4, h = area.clientHeight - 4;
+      /* [Owner] القياس على صندوق المحتوى (بلا الهامش): clientHeight يشمل
+         الهامش العمودي، فطرحه يُبقي حواف اللوحة داخل المحتوى ويُخصّص الهامش
+         للنرد الدائم خارج اللوحة (يمنع الفيضان فوق الترويسة/صف النرد في
+         الشاشة الممتلئة القصيرة/الأفقية) */
+      const cs = getComputedStyle(area);
+      const pt = parseFloat(cs.paddingTop) || 0;
+      const pb = parseFloat(cs.paddingBottom) || 0;
+      const pl = parseFloat(cs.paddingLeft) || 0;
+      const pr = parseFloat(cs.paddingRight) || 0;
+      const w = area.clientWidth - pl - pr - 4;
+      const h = area.clientHeight - pt - pb - 4;
       const size = Math.max(150, Math.min(w, h, 620));
       wrap.style.width = size + 'px';
     };

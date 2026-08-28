@@ -133,10 +133,42 @@ color: var(--gold);
 <b data-k="2fa.securityNoteTitle">معلومة أمنية:</b> <span data-k="2fa.securityNoteBody">الرمز الزمني يُحسب محلياً على جهازك ولا يُرسل أبداً عبر الشبكة. حتى لو اعترض مخترق Traffic، لن يحصل على الرمز الصالح إلا في نافذة 30 ثانية.</span>
 </div>
 
+<div class="legal-note" id="twofaManageCard">
+<b data-k="2fa.manageTitle">إدارة المصادقة الثنائية</b><br>
+<span data-k="2fa.manageBody">من هذه الصفحة يمكنك تفعيل أو تعطيل طبقة الحماية الإضافية على حسابك. اضغط «تفعيل» لفتح نافذة المسح والرمز.</span>
+<div id="twofaStatusLine" class="note" style="margin:12px 0 6px"></div>
+<button class="btn" id="btnEnable2fa"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="2fa.enableBtn">تفعيل المصادقة الثنائية 2FA</span></button>
+</div>
+
 <p data-k="2fa.outro">لمزيد من المعلومات حول حماية الحساب، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.</p>
 <p><a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="2fa.back">العودة للموقع</span></a></p>
 </main>
 </article>
+
+<!-- ═══════════ 2FA Modal (standalone page) ═══════════ -->
+<div class="mwrap" id="twofaModal" role="dialog" aria-modal="true" aria-labelledby="twofaTitle"
+     onclick="if(event.target.id==='twofaModal') closeTwofaModal()">
+  <div class="modal modal-sm">
+    <div class="mhead">
+      <h3 id="twofaTitle"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="2fa.modalTitle">المصادقة الثنائية 2FA</span></h3>
+      <button class="mclose" onclick="closeTwofaModal()" aria-label="إغلاق">✕</button>
+    </div>
+    <div class="mbody">
+      <div id="twofaSetup">
+        <div class="ctext" style="text-align:center;margin-bottom:10px">
+          <img id="twofaQr" alt="2FA QR Code" style="width:180px;height:180px;background:#fff;border-radius:8px" />
+        </div>
+        <label class="aflabel" for="twofaSecret"><i class="fa-solid fa-key" aria-hidden="true"></i> <span data-k="2fa.secretLbl">السر</span></label>
+        <code id="twofaSecret" class="afinput" style="display:block;user-select:all;word-break:break-all"></code>
+        <label class="aflabel" for="twofaCode"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> <span data-k="2fa.codeLbl">الرمز</span></label>
+        <input class="afinput" id="twofaCode" inputmode="numeric" maxlength="6" placeholder="123456">
+        <div id="twofaStatus" class="authmsg" role="alert" aria-live="polite"></div>
+        <button class="btn full" id="twofaVerify"><i class="fa-solid fa-check" aria-hidden="true"></i> <span data-k="2fa.verifyBtn">تأكيد وتفعيل</span></button>
+      </div>
+      <button class="btn full ghost" id="twofaDisable" style="display:none;margin-top:10px"><i class="fa-solid fa-ban" aria-hidden="true"></i> <span data-k="2fa.disableBtn">تعطيل 2FA</span></button>
+    </div>
+  </div>
+</div>
 
 <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
 <script src="js/core/state.js"></script>
@@ -144,6 +176,8 @@ color: var(--gold);
 <script src="js/core/utils.js"></script>
 <script src="js/i18n/translations.js"></script>
 <script src="js/ui/legal-ui.js"></script>
+<script src="js/core/api.js"></script>
+<script src="js/core/auth.js"></script>
 <script>
 /* ── المحتوى (data-k) ── */
 var D = {
@@ -304,6 +338,17 @@ if (_origSetLang) _origSetLang(l);
 /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
 injectLegalUI('2fa');
 applyLang();
+
+/* ── ربط 2FA للصفحة المستقلة: استعادة الجلسة ثم تهيئة الواجهة ── */
+if (typeof authRestore === 'function') {
+  authRestore().then(function () {
+    if (typeof init2fa === 'function') init2fa();
+  }).catch(function () {
+    if (typeof init2fa === 'function') init2fa();
+  });
+} else if (typeof init2fa === 'function') {
+  init2fa();
+}
 </script>
 </body>
 </html>

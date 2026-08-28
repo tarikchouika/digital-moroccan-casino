@@ -1113,6 +1113,40 @@ const TR = {
   'parchisi.teamWin': [ '🏆 فاز فريقك!', '🏆 Votre équipe a gagné !', '🏆 Your team won!', '🏆 فاز فريقك!' ],
   'parchisi.teamLose': [ 'فاز الفريق الخصم', 'L\'équipe adverse a gagné', 'Opponent team won', 'فاز الفريق الخصم' ],
   'parchisi.partnerTurn': [ '(تتحرّك لصالح شريكك)', '(vous jouez pour votre partenaire)', '(playing for your partner)', '(تتحرّك لصالح شريكك)' ],
+
+
+  /* ── Security / 2FA (sec.*) ── */
+  'sec.title': [ 'الأمان والمصادقة الثنائية', 'Sécurité et 2FA', 'Security & 2FA', 'الأمان والمصادقة الثنائية' ],
+  'sec.enable2fa': [ 'تفعيل المصادقة الثنائية (2FA)', 'Activer la 2FA', 'Enable 2FA', 'فعل المصادقة الثنائية (2FA)' ],
+  'sec.enabled': [ '✅ تم تفعيل المصادقة الثنائية', '✅ 2FA activée', '✅ 2FA enabled', '✅ تم تفعيل 2FA' ],
+  'sec.disable2fa': [ 'تعطيل المصادقة الثنائية', 'Désactiver la 2FA', 'Disable 2FA', 'عطّل المصادقة الثنائية' ],
+  'sec.qrHint': [ 'امسح الرمز باستخدام تطبيق مصادقة (مثل Google Authenticator) ثم أدخل الرمز الظاهر لديك.', "Scannez le code avec une appli d'authentification puis saisissez le code affiché.", 'Scan the code with an authenticator app then enter the shown code.', 'سكاني الكود بتطبيق المصادقة ثم دخل الكود الظاهر.' ],
+  'sec.code': [ 'الرمز', 'Code', 'Code', 'الكود' ],
+  'sec.status': [ 'الحالة', 'Statut', 'Status', 'الحالة' ],
+  'sec.loginCode': [ 'رمز الدخول', 'Code de connexion', 'Login code', 'كود الدخول' ],
+
+  /* ── Friends (fr.*) ── */
+  'fr.title': [ 'الأصدقاء', 'Amis', 'Friends', 'الأصدقاء' ],
+  'fr.add': [ 'إضافة صديق', 'Ajouter un ami', 'Add friend', 'زيد صديق' ],
+  'fr.addPlaceholder': [ 'اسم المستخدم أو المعرّف', "Nom d'utilisateur ou identifiant", 'Username or ID', 'سمية المستخدم ولا ل-id' ],
+  'fr.pending': [ 'طلبات معلّقة', 'Demandes en attente', 'Pending requests', 'طلبات فالانتظار' ],
+  'fr.accept': [ 'قبول', 'Accepter', 'Accept', 'قبول' ],
+  'fr.decline': [ 'رفض', 'Refuser', 'Decline', 'رفض' ],
+  'fr.noFriends': [ 'لا يوجد أصدقاء بعد — أضف صديقاً للبدء.', "Aucun ami pour l'instant — ajoutez-en un.", 'No friends yet — add one to start.', 'ماعندك حتى صديق — زيد واحد.' ],
+  'fr.send': [ 'إرسال', 'Envoyer', 'Send', 'صيفط' ],
+  'fr.invite': [ 'دعوة لغرفة', 'Inviter dans une salle', 'Invite to room', 'عيّط لغرفة' ],
+  'fr.inbox': [ 'الوارد', 'Boîte de réception', 'Inbox', 'الوارد' ],
+  'fr.online': [ 'متصل', 'En ligne', 'Online', 'كاين' ],
+
+  /* ── Rooms settings / paid rooms (rm.*) ── */
+  'rm.type': [ 'نوع الغرفة', 'Type de salle', 'Room type', 'نوع الغرفة' ],
+  'rm.byHour': [ 'بالساعة', "À l'heure", 'Per hour', 'بالساعة' ],
+  'rm.byPct': [ 'بالنسبة المئوية', 'En pourcentage', 'By percentage', 'بالنسبة' ],
+  'rm.settings': [ 'إعدادات الغرفة', 'Paramètres de la salle', 'Room settings', 'إعدادات الغرفة' ],
+  'rm.bet': [ 'الرهان', 'Mise', 'Bet', 'الرهان' ],
+  'rm.required': [ 'هذا الحقل مطلوب', 'Ce champ est requis', 'This field is required', 'هاد الخانة لازمة' ],
+  'rm.needType': [ 'اختر نوع الغرفة أولاً', "Choisissez d'abord le type de salle", 'Pick a room type first', 'اختار نوع الغرفة أولاً' ],
+  'rm.betDeducted': [ 'رهان يُقتطع عند بدء الجولة', 'La mise est prélevée au démarrage de la manche', 'Bet is deducted at round start', 'الرهان كيتقطع وقت بداية الجولة' ],
 };
 
 /* ── Export to window and module ── */

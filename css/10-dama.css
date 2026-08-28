@@ -188,36 +188,6 @@
   align-items: center;
   justify-content: center;
 }
-.dama-hud {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(217, 169, 78, 0.35);
-  border-radius: 11px;
-  padding: 9px 12px;
-}
-.dama-side { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #f0e3c0; font-weight: 800; }
-.dama-side .dama-lab { color: #cdb684; font-weight: 700; }
-.dama-side b { font-size: 17px; color: #fff; min-width: 18px; text-align: center; }
-.dama-pip { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(0, 0, 0, 0.35); }
-.dama-pip.w { background: radial-gradient(circle at 35% 30%, #fff, #cdbb9a); }
-.dama-pip.b { background: radial-gradient(circle at 35% 30%, #5a5a5a, #1c1c1c); }
-.dama-turn { font-size: 13.5px; font-weight: 900; padding: 5px 14px; border-radius: 20px; white-space: nowrap; }
-.dama-turn.you {
-  background: rgba(255, 215, 94, 0.16);
-  color: #ffe9a8;
-  border: 1px solid rgba(255, 215, 94, 0.55);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-}
-.dama-turn.bot {
-  background: rgba(0, 0, 0, 0.3);
-  color: #e8d9ae;
-  border: 1px solid rgba(217, 169, 78, 0.4);
-}
-
 /* ── [Owner] شريط المتفرجين (شفاف 100%) ── */
 .dama-spectators {
   display: flex;
@@ -508,8 +478,6 @@
 @media (max-width: 640px) {
   #pg-game.active #gamePageBody #damaStage { padding: 5px 5px 7px; }
   .dama-setup { gap: 7px; }
-  .dama-hud { padding: 6px 9px; }
-  .dama-hud, .dama-side { font-size: 12px; }
   .dama-ctrls { gap: 6px; }
   .dama-mini { padding: 6px 11px; font-size: 11.5px; }
 }
@@ -533,8 +501,6 @@
   .dama-setup, .dama-play { gap: 5px; }
   .dama-field { padding: 5px 8px; gap: 4px; }
   .dama-chip { padding: 5px 4px; font-size: 11px; }
-  .dama-hud { padding: 4px 8px; border-radius: 8px; }
-  .dama-side, .dama-turn { font-size: 11.5px; }
   .dama-timer { font-size: 11.5px; min-height: 14px; }
   .dama-status { font-size: 11.5px; min-height: 16px; }
   .dama-mini { padding: 5px 10px; font-size: 11px; }

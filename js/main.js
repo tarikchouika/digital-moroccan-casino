@@ -437,6 +437,7 @@ function openAccountLog() {
   if (!AUTH.user) { toast(T('tr.needLogin'), 'warn'); return; }
   closeAcctMenu();
   nav('account', null);
+  if (typeof init2fa === 'function') init2fa();
   renderAccountLog();
 }
 function renderAccountLog() {

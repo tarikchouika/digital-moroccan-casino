@@ -34,7 +34,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px 4px;          /* [Owner] هامش عمودي لإخراج النرد خارج اللوحة والبيوت */
+  /* [Owner] هامش عمودي أوسع لإخراج النرد خارج اللوحة والبيوت الملوّنة بفجوة واضحة */
+  padding: 72px 4px;
 }
 
 /* ── سجل الرميات المنسدل: الزاوية 90° العليا اليسرى للشاشة (ملتقى الضلع
@@ -384,6 +385,8 @@
   flex-wrap: wrap;
   margin-top: 8px;
   padding: 0 4px;
+  /* [Owner] لا ينكمش في ملء الشاشة — صف النرد والأزرار يبقى ظاهراً أسفل اللوحة */
+  flex: 0 0 auto;
 }
 
 .pr-dice-row {
@@ -425,17 +428,18 @@
   z-index: 58;
 }
 .pr-cd {
-  --cdsz: clamp(42px, 11vw, 58px);       /* [Owner] أصغر قليلاً ليُحتوى في الهامش */
+  --cdsz: clamp(40px, 10vw, 52px);       /* [Owner] أصغر ليُحتوى في الهامش بفجوة واضحة */
   position: absolute;
   display: flex;
   gap: 6px;
   transition: filter 0.25s ease;
 }
-/* [Owner] خارج اللوحة والبيوت الملوّنة: أعلى/أسفل الحافة العمودية بعيداً عن زوايا القواعد */
-.pr-cd[data-corner="tl"] { top: 0; left: 24%; transform: translate(-50%, -100%); }
-.pr-cd[data-corner="tr"] { top: 0; left: 76%; transform: translate(-50%, -100%); }
-.pr-cd[data-corner="bl"] { bottom: 0; left: 24%; transform: translate(-50%, 100%); }
-.pr-cd[data-corner="br"] { bottom: 0; left: 76%; transform: translate(-50%, 100%); }
+/* [Owner] خارج اللوحة والبيوت الملوّنة: أعلى/أسفل الحافة العمودية بعيداً عن زوايا
+   القواعد، مع إزاحة للخارج (فجوة واضحة عن حافة اللوحة وأي مثلث لوني للقاعدة) */
+.pr-cd[data-corner="tl"] { top: 0; left: 24%; transform: translate(-50%, calc(-100% - 10px)); }
+.pr-cd[data-corner="tr"] { top: 0; left: 76%; transform: translate(-50%, calc(-100% - 10px)); }
+.pr-cd[data-corner="bl"] { bottom: 0; left: 24%; transform: translate(-50%, calc(100% + 10px)); }
+.pr-cd[data-corner="br"] { bottom: 0; left: 76%; transform: translate(-50%, calc(100% + 10px)); }
 .pr-cdie {
   width: var(--cdsz);
   height: var(--cdsz);

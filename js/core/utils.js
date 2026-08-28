@@ -116,14 +116,12 @@ function nav(id, el) {
   if (id === 'rooms' && typeof renderRooms === 'function') renderRooms();
   if (id === 'transactions' && typeof renderTransactions === 'function') renderTransactions();
   if (id === 'account' && typeof renderAccountLog === 'function') renderAccountLog();
+  /* صفحة الأصدقاء: إظهارها وتهيئتها (إن وُجدت) */
+  if (id === 'friends' && typeof Friends !== 'undefined' && Friends.init) Friends.init();
   closeSide();
   SND.click();
   /* ── Hash routing: update URL hash without triggering hashchange loop ── */
   _syncHash(id);
-
-  /* حصر الأيقونة العائمة للتفاعلات داخل صفحة اللعبة فقط */
-  const fab = document.getElementById('floatingReactionsFab');
-  if (fab) fab.style.display = (id === 'game') ? 'flex' : 'none';
 }
 /* ── Hash routing (hash ↔ section) ── */
 var _hashUpdating = false;
@@ -416,126 +414,3 @@ function sanitizeAmount(val) {
 window.getVipLevel = getVipLevel;
 window.sanitizeAmount = sanitizeAmount;
 
-/* ═══════════ Floating Emoji Reactions ═══════════ */
-function sendReaction(emoji) {
-  spawnFloatingReaction(emoji);
-  if (typeof SND !== 'undefined' && SND.click) SND.click();
-  if (typeof Rooms !== 'undefined' && Rooms.state && Rooms.sendMove) {
-    Rooms.sendMove('reaction', { emoji: emoji });
-  }
-}
-function spawnFloatingReaction(emoji, startX) {
-  const el = document.createElement('div');
-  el.className = 'floating-reaction';
-  el.textContent = emoji;
-  const x = startX !== undefined ? startX : (window.innerWidth / 2 + (Math.random() * 120 - 60));
-  el.style.left = x + 'px';
-  el.style.bottom = '90px';
-  document.body.appendChild(el);
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 2200);
-}
-window.sendReaction = sendReaction;
-window.spawnFloatingReaction = spawnFloatingReaction;
-
-
-function toggleReactionsFab() {
-  const menu = document.getElementById('fabReactionsMenu');
-  const btn = document.querySelector('.fab-main-btn');
-  if (!menu) return;
-  const isOpen = menu.classList.toggle('open');
-  if (btn) btn.classList.toggle('active', isOpen);
-  if (isOpen) {
-    setTimeout(function () {
-      const inp = document.getElementById('fabQuickMsgInput');
-      if (inp) inp.focus();
-    }, 100);
-  }
-}
-
-function sendFabQuickMsg() {
-  const inp = document.getElementById('fabQuickMsgInput');
-  if (!inp) return;
-  const txt = (inp.value || '').trim();
-  if (!txt) return;
-  inp.value = '';
-  toggleReactionsFab();
-  spawnFloatingReaction('💬 ' + txt);
-  if (typeof SND !== 'undefined' && SND.click) SND.click();
-  if (typeof Rooms !== 'undefined' && Rooms.state && Rooms.sendMove) {
-    Rooms.sendMove('chat', { text: txt });
-  }
-}
-
-window.toggleReactionsFab = toggleReactionsFab;
-window.sendFabQuickMsg = sendFabQuickMsg;
-
-/* ═══════════ أيقونة التفاعلات العائمة القابلة للسحب يدوياً ═══════════ */
-/* النقر = فتح قائمة التفاعلات؛ السحب = تحريك الأيقونة لأي مكان ضمن الشاشة. */
-var _fabDrag = null;
-function initFabDrag() {
-  if (typeof document === 'undefined') return;
-  var fab = document.getElementById('floatingReactionsFab');
-  var handle = document.querySelector('.fab-main-btn');
-  if (!fab || !handle || fab._dragBound) return;
-  fab._dragBound = true;
-  handle.style.touchAction = 'none';
-
-  /* استعادة الموضع المحفوظ من الجلسة السابقة */
-  try {
-    var saved = localStorage.getItem('rc_fab_pos');
-    if (saved) {
-      var pos = JSON.parse(saved);
-      if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
-        fab.style.right = 'auto'; fab.style.bottom = 'auto';
-        fab.style.left = pos.x + 'px'; fab.style.top = pos.y + 'px';
-      }
-    }
-  } catch (e) {}
-
-  handle.addEventListener('pointerdown', function (e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    var r = fab.getBoundingClientRect();
-    _fabDrag = { startX: e.clientX, startY: e.clientY, origX: r.left, origY: r.top,
-      moved: false, id: e.pointerId, w: r.width, h: r.height };
-    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
-  });
-
-  handle.addEventListener('pointermove', function (e) {
-    if (!_fabDrag || e.pointerId !== _fabDrag.id) return;
-    var dx = e.clientX - _fabDrag.startX;
-    var dy = e.clientY - _fabDrag.startY;
-    if (!_fabDrag.moved && (dx * dx + dy * dy) < 100) return; /* عتبة 10px لفصل النقرة عن السحب */
-    if (!_fabDrag.moved) { _fabDrag.moved = true; fab.classList.add('dragging'); }
-    var nx = _fabDrag.origX + dx;
-    var ny = _fabDrag.origY + dy;
-    /* تقييد ضمن حدود الشاشة */
-    var maxX = window.innerWidth - _fabDrag.w - 4;
-    var maxY = window.innerHeight - _fabDrag.h - 4;
-    nx = Math.max(4, Math.min(nx, maxX));
-    ny = Math.max(4, Math.min(ny, maxY));
-    fab.style.right = 'auto'; fab.style.bottom = 'auto';
-    fab.style.left = nx + 'px'; fab.style.top = ny + 'px';
-    if (e.cancelable) e.preventDefault();
-  });
-
-  function endDrag(e) {
-    if (!_fabDrag || (e && e.pointerId !== _fabDrag.id)) return;
-    var wasDrag = _fabDrag.moved;
-    var pid = _fabDrag.id;
-    _fabDrag = null;
-    fab.classList.remove('dragging');
-    try { handle.releasePointerCapture(pid); } catch (err) {}
-    if (wasDrag) {
-      var r = fab.getBoundingClientRect();
-      try { localStorage.setItem('rc_fab_pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); } catch (err) {}
-      /* منع النقرة اللاحقة من فتح القائمة بعد السحب */
-      var block = function (ev) { ev.stopPropagation(); ev.preventDefault(); handle.removeEventListener('click', block, true); };
-      handle.addEventListener('click', block, true);
-    }
-  }
-  handle.addEventListener('pointerup', endDrag);
-  handle.addEventListener('pointercancel', endDrag);
-}
-window.initFabDrag = initFabDrag;

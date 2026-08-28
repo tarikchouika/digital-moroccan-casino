@@ -859,7 +859,6 @@ function damaRender() {
     }
   }
   board.innerHTML = html;
-  damaUpdateCounts();
   damaUpdateTurn();
   damaUpdateStake();
   damaRenderSpectators();
@@ -875,32 +874,9 @@ function damaUpdateStake() {
   el.hidden = false;
 }
 
-function damaUpdateCounts() {
-  if (!DAMA || !DAMA.state) return;
-  var s = DAMA.state, hu = 0, ai = 0;
-  var mySide = DAMA.isSpectator ? WHITE : DAMA.human;
-  for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
-    var p = s.grid[r][c]; if (!p) continue;
-    if (p.owner === mySide) hu++; else ai++;
-  }
-  var ye = document.getElementById('damaYouCnt'), be = document.getElementById('damaBotCnt');
-  if (ye) ye.textContent = hu;
-  if (be) be.textContent = ai;
-}
-
 function damaUpdateTurn() {
   if (!DAMA || !DAMA.state) return;
   damaUpdateTurnIcons();
-  var el = document.getElementById('damaTurn');
-  if (!el) return;
-  if (DAMA.state.over) { el.textContent = T('dama.ended'); el.className = 'dama-turn'; return; }
-  if (DAMA.state.turn === DAMA.human) {
-    el.textContent = DAMA.state.cont ? T('dama.continueCaptureShort') : T('dama.turn');
-    el.className = 'dama-turn you';
-  } else {
-    el.textContent = (DAMA.mode === 'room' && !DAMA.oppBot) ? T('dama.oppTurn') : T('dama.thinking');
-    el.className = 'dama-turn bot';
-  }
 }
 
 /* [Owner] تهيئة أيقونات اللاعبين (فوق/تحت اللوحة) + حلقة الدور + شريط المتفرجين */

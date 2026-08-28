@@ -268,12 +268,150 @@
           '<div id="roomVoiceRec" class="rrp-voicerec" style="display:none"><span class="rvr-dot"></span><span id="roomVoiceTimer">0</span>s · ' + (typeof T === 'function' ? T('ui.voiceRecStop') || 'انقر للإيقاف والإرسال' : 'انقر للإيقاف والإرسال') + '</div>';
         document.body.appendChild(btn);
         document.body.appendChild(panel);
+        Rooms._bindReactDrag(btn);
         document.addEventListener('click', function (ev) {
           if (!btn.contains(ev.target) && !panel.contains(ev.target)) Rooms._toggleReactPanel(false);
         });
       }
       btn.style.display = active ? 'flex' : 'none';
       if (!active) Rooms._toggleReactPanel(false);
+    },
+    /* [B-migrate] سحب أيقونة الرموز (#roomReactBtn) يدوياً — نفس منطق السحب السابق للأيقونة العائمة.
+       النقر = فتح اللوحة؛ السحب = تحريك الأيقونة ضمن الشاشة. نخزّن الموضع في localStorage. */
+    _bindReactDrag: function (btn) {
+      if (!btn || btn._dragBound) return;
+      btn._dragBound = true;
+      btn.style.touchAction = 'none';
+      /* استعادة الموضع المحفوظ */
+      try {
+        var saved = localStorage.getItem('rc_fab_pos');
+        if (saved) {
+          var pos = JSON.parse(saved);
+          if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+            btn.style.right = 'auto'; btn.style.bottom = 'auto';
+            btn.style.left = pos.x + 'px'; btn.style.top = pos.y + 'px';
+          }
+        }
+      } catch (e) {}
+      var drag = null;
+      btn.addEventListener('pointerdown', function (e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        var r = btn.getBoundingClientRect();
+        drag = { startX: e.clientX, startY: e.clientY, origX: r.left, origY: r.top,
+          moved: false, id: e.pointerId, w: r.width, h: r.height };
+        try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      btn.addEventListener('pointermove', function (e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var dx = e.clientX - drag.startX;
+        var dy = e.clientY - drag.startY;
+        if (!drag.moved && (dx * dx + dy * dy) < 100) return; /* عتبة 10px لفصل النقرة عن السحب */
+        if (!drag.moved) { drag.moved = true; btn.classList.add('dragging'); }
+        var nx = drag.origX + dx;
+        var ny = drag.origY + dy;
+        var maxX = window.innerWidth - drag.w - 4;
+        var maxY = window.innerHeight - drag.h - 4;
+        nx = Math.max(4, Math.min(nx, maxX));
+        ny = Math.max(4, Math.min(ny, maxY));
+        btn.style.right = 'auto'; btn.style.bottom = 'auto';
+        btn.style.left = nx + 'px'; btn.style.top = ny + 'px';
+        if (e.cancelable) e.preventDefault();
+      });
+      function endDrag(e) {
+        if (!drag || (e && e.pointerId !== drag.id)) return;
+        var wasDrag = drag.moved;
+        var pid = drag.id;
+        drag = null;
+        btn.classList.remove('dragging');
+        try { btn.releasePointerCapture(pid); } catch (err) {}
+        if (wasDrag) {
+          var r = btn.getBoundingClientRect();
+          try { localStorage.setItem('rc_fab_pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); } catch (err) {}
+          /* منع النقرة اللاحقة من فتح اللوحة بعد السحب */
+          var block = function (ev) { ev.stopPropagation(); ev.preventDefault(); btn.removeEventListener('click', block, true); };
+          btn.addEventListener('click', block, true);
+        }
+      }
+      btn.addEventListener('pointerup', endDrag);
+      btn.addEventListener('pointercancel', endDrag);
+    },
+    /* [B-migrate] شارة نوع الغرفة في الشريط العلوي للمودال (#roomTypeBadge) */
+    _renderBadge: function () {
+      var badge = document.getElementById('roomTypeBadge');
+      if (!badge) return;
+      var st = Rooms.state;
+      if (!st || !st.room_type) { badge.textContent = ''; badge.style.display = 'none'; return; }
+      var txt = (st.room_type === 'percentage') ? T('rm.byPct')
+              : (st.room_type === 'hour' ? T('rm.byHour') : st.room_type);
+      badge.textContent = txt;
+      badge.style.display = txt ? '' : 'none';
+    },
+    /* [B-migrate] إعدادات الغرفة (نوع + رهان) — ربط عناصر المودال التي أنشأها index.html */
+    _initSettings: function () {
+      if (Rooms._settingsBound) return;
+      Rooms._settingsBound = true;
+      var gear = document.getElementById('roomGearBtn');
+      var save = document.getElementById('rsSave');
+      var cancel = document.getElementById('rsCancel');
+      if (gear) gear.addEventListener('click', function () { Rooms._openSettings(false); });
+      if (save) save.addEventListener('click', Rooms._saveSettings);
+      if (cancel) cancel.addEventListener('click', function () {
+        /* إن وُجدت غرفة نغلق الإعدادات (نعود للغرفة)؛ وإلا نبقيها مفتوحة (الإلغاء معطّل) */
+        if (Rooms.state) {
+          var sm = document.getElementById('roomSettingsModal');
+          if (sm) sm.style.display = 'none';
+        }
+      });
+    },
+    _openSettings: function (forceNoRoom) {
+      var sm = document.getElementById('roomSettingsModal');
+      if (!sm) return;
+      var rt = document.getElementById('rsRoomType');
+      var bet = document.getElementById('rsBet');
+      var game = document.getElementById('rsGame');
+      if (game) game.value = window._currentGameId || (Rooms.state && Rooms.state.game_id) || '';
+      if (Rooms.state) {
+        if (rt && Rooms.state.room_type) rt.value = Rooms.state.room_type;
+        if (bet && typeof Rooms.state.bet === 'number') bet.value = Rooms.state.bet;
+      }
+      var cancel = document.getElementById('rsCancel');
+      if (cancel) {
+        var lock = !!(forceNoRoom || !Rooms.state);
+        cancel.disabled = lock;
+        cancel.style.opacity = lock ? '0.5' : '';
+        cancel.title = lock ? T('rm.required') : '';
+      }
+      sm.style.display = 'block';
+      if (rt) rt.focus();
+    },
+    _saveSettings: function () {
+      var rt = document.getElementById('rsRoomType');
+      var bet = document.getElementById('rsBet');
+      var game = document.getElementById('rsGame');
+      var gid = (game && game.value) || window._currentGameId || (Rooms.state && Rooms.state.game_id);
+      var roomType = rt ? rt.value : '';
+      var betVal = bet ? (parseInt(bet.value, 10) || 0) : 0;
+      if (!roomType) {
+        toast(T('rm.needType'), 'err');
+        if (rt) { rt.classList.add('err'); rt.focus(); }
+        return;
+      }
+      if (!(betVal > 0)) {
+        toast(T('rm.required'), 'err');
+        if (bet) bet.classList.add('err');
+        return;
+      }
+      if (rt) rt.classList.remove('err');
+      if (bet) bet.classList.remove('err');
+      Rooms.createRoom(gid, { room_type: roomType, bet: betVal }).then(function () {
+        var sm = document.getElementById('roomSettingsModal');
+        if (sm) sm.style.display = 'none';
+      });
+    },
+    /* [B-migrate] إغلاق مودال إعدادات الغرفة (زر الإغلاق + النقر على الخلفية) */
+    closeRoomSettings: function () {
+      var sm = document.getElementById('roomSettingsModal');
+      if (sm) sm.style.display = 'none';
     },
     /* إرسال رسالة: جماعية (إلى الجميع) أو فردية (إلى _recipient) */
     sendChat: function () {
@@ -308,15 +446,28 @@
     hasPendingReplay: function () { return !!_pendingReplay; },
 
     /* ═══════ API ═══════ */
-    createRoom: function (gameId, bet) {
+    /* [B10] إنشاء غرفة: opts = { room_type, bet } (أو عدد bet للتوافق القديم مع الشطرنج).
+       يُرسل نوع الغرفة + الرهان إلى /api/rooms؛ الخادم يقتطع الرهان عند بدء الجولة. */
+    createRoom: function (gameId, opts) {
       var u = me();
       if (!u) { toast(T('ui.roomNeedLogin'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
       var max = Rooms.maxFor(gameId);
-      /* [B10] غرفات الرهان: مبلغ اختياري (شطرنج) */
-      var payload = { game_id: gameId, max_players: max };
-      if (typeof bet === 'number' && bet > 0) payload.bet = bet;
+      var bet = 0;
+      var roomType = 'hour';
+      if (typeof opts === 'number') {
+        bet = opts;
+      } else if (opts && typeof opts === 'object') {
+        bet = (typeof opts.bet === 'number') ? opts.bet : 0;
+        if (opts.room_type) roomType = opts.room_type;
+      }
+      var payload = { game_id: gameId, max_players: max, bet: bet, room_type: roomType };
       return API.post('/api/rooms', payload).then(function (r) {
-        if (!r.ok) { toast((r.data && r.data.message) || T('ui.roomError'), 'err'); return; }
+        if (!r.ok) {
+          var msg = (r.data && r.data.message) || T('ui.roomError');
+          if (r.data && r.data.error === 'insufficient_funds') msg = '🚫 ' + msg;
+          toast(msg, 'err');
+          return;
+        }
         Rooms.state = r.data.room;
         Rooms.render();
         Rooms.openModal();
@@ -484,6 +635,7 @@
         if (exit && exit.catch) exit.catch(function () {});
       }
       m.classList.add('show');
+      Rooms._initSettings();
       /* جلب سجل رسائل الغرفة (آخر 50) */
       if (Rooms.state) {
         _recipient = null;
@@ -493,6 +645,9 @@
             Rooms.renderChat();
           }
         });
+      } else {
+        /* لا غرفة بعد → إجبار المستخدم على اختيار النوع + الرهان قبل الإنشاء */
+        Rooms._openSettings(true);
       }
       Rooms.render();
     },
@@ -513,12 +668,8 @@
       if (!Rooms.state) {
         var gid = window._currentGameId;
         if (!Rooms.isGameSupported(gid)) return;
-        /* [B10] الشطرنج: أنشئ غرفة برهان اللاعب المختار في الإعدادات */
-        if (gid === 'ch' && typeof CHESS !== 'undefined' && CHESS && CHESS.bet > 0) {
-          Rooms.createRoom(gid, CHESS.bet);
-          return;
-        }
-        Rooms.createRoom(gid);
+        /* [B10] لا غرفة بعد → افتح المودال (سيُظهر إعدادات النوع + الرهان إجبارياً) */
+        Rooms.openModal();
         return;
       }
       Rooms.openModal();
@@ -550,6 +701,7 @@
 
     render: function () {
       Rooms._syncReactWidget();
+      Rooms._renderBadge();
       var body = document.getElementById('roomBody');
       if (!body) return;
       var st = Rooms.state;
@@ -622,6 +774,11 @@
         '<div style="text-align:center;margin-bottom:10px">' +
           '<button class="btn ghost small" onclick="Rooms.copyCode()" style="margin-left:6px">📋 ' + T('ui.roomCopy') + '</button>' +
           '<button class="btn ghost small" onclick="Rooms.copyLink()">🔗 ' + T('ui.roomInviteLink') + '</button>' +
+        '</div>' +
+        /* ── نوع الغرفة + الرهان (يُقتطع عند بدء الجولة) ── */
+        '<div style="text-align:center;margin-bottom:8px">' +
+          '<div class="ctext2">' + T('rm.bet') + ': ' + fmt(st.bet || 0) + '</div>' +
+          '<div class="ctext2" style="color:var(--t3);font-size:0.78rem">' + T('rm.betDeducted') + '</div>' +
         '</div>' +
         '<div class="ctext" style="padding:4px 0">' + T('ui.roomPlayers') + ' (' + st.players.length + '/' + st.max_players + ')</div>' +
         '<div style="max-height:150px;overflow-y:auto;margin-bottom:10px">' + rows + '</div>' +
