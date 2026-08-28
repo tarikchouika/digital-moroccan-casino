@@ -218,6 +218,69 @@
   border: 1px solid rgba(217, 169, 78, 0.4);
 }
 
+/* ── [Owner] شريط المتفرجين (شفاف 100%) ── */
+.dama-spectators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 auto 4px;
+  min-height: 26px;
+  background: transparent;          /* شفاف 100% — لا فراغ أسود */
+  pointer-events: none;
+}
+.dama-spectators:empty { display: none; }   /* فارغ بلا متفرجين ⇒ يُخفى تماماً */
+.dama-spec {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(22, 11, 4, 0.82);
+  border: 1.5px solid rgba(255, 215, 94, 0.55);
+  font-size: 15px;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ── [Owner] مقاعد اللاعبين (فوق/تحت اللوحة) ── */
+.dama-seat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.dama-seat-top { margin-bottom: 3px; }
+.dama-seat-bottom { margin-top: 3px; }
+.dama-picon {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 28%, #4a2f18, #1d0f05 82%);
+  border: 3px solid #d9a94e;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 230, 170, 0.25);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.dama-picon.w { border-color: #ffe9a8; }
+.dama-picon.b { border-color: #d9a94e; }
+.dama-picon.turn {
+  border-color: #ffd75e;
+  box-shadow: 0 0 0 3px rgba(255, 215, 94, 0.9), 0 0 20px rgba(255, 215, 94, 0.55), 0 3px 9px rgba(0, 0, 0, 0.6);
+}
+.dama-pface {
+  font-size: 22px;
+  color: #ffe9a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+  user-select: none;
+}
+
 /* ── Board ── */
 .dama-board {
   width: min(94vw, 430px);

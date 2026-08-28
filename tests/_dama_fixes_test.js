@@ -44,11 +44,9 @@ const res=[]; const ok=(n,c)=>{res.push([n,!!c]); console.log((c?'  ✓ ':'  ✗
   ok('Issue1: bottom-right has a piece', corners.brPiece);
   ok('Issue1: bottom-left (7,0) is light', corners.blLight);
 
-  // HUD opponent translated EN
-  const oppLabel = await p.evaluate(() => {
-    const lab = document.querySelector('#damaBot .dama-lab'); return lab ? lab.textContent.trim() : '';
-  });
-  ok('EN HUD opponent label = "Opponent"', oppLabel === 'Opponent');
+  // Opponent seat icon (top of board) — HUD label removed per owner request
+  const oppIcon = await p.evaluate(() => !!document.getElementById('damaOppIcon'));
+  ok('Opponent seat icon present', oppIcon);
 
   // Issue 3: countdown running (⏱ ...)
   const cd = await wait(p, () => { const el = document.getElementById('damaTimer'); return (el && /⏱/.test(el.textContent)) ? el.textContent : null; }, 6000);

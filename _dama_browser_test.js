@@ -74,11 +74,14 @@ async function measureFit(page) {
       await page.click('#damaBoard .dm-sq[data-r="4"][data-c="2"]');
       await sleep(300);
       await wait(page, () => {
-        const t = document.getElementById('damaTurn');
-        return t && /دورك|أكمل/.test(t.textContent);
+        const el = document.getElementById('damaMainIcon');
+        return el && el.classList.contains('turn');
       }, 8000);
-      const turnTxt = await page.evaluate(() => (document.getElementById('damaTurn') || {}).textContent || '');
-      results.push([label + ': AI replied, turn back to human (' + turnTxt.trim() + ')', /دورك/.test(turnTxt)]);
+      const turnTxt = await page.evaluate(() => {
+        const el = document.getElementById('damaMainIcon');
+        return (el && el.classList.contains('turn')) ? 'دورك' : '';
+      });
+      results.push([label + ': AI replied, turn back to human (gold ring on main icon)', /دورك/.test(turnTxt)]);
 
       /* 6. mandatory capture UI: force a capture position via engine + re-render */
       const capTest = await page.evaluate(() => {

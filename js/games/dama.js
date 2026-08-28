@@ -536,14 +536,12 @@ function eDama(g) {
       '</div>' +
       /* ── play screen ── */
       '<div class="dama-play" id="damaPlay" hidden>' +
-        '<div class="dama-hud">' +
-          '<div class="dama-side" id="damaYou"><span class="dama-pip w"></span><span class="dama-lab">' + T('dama.you') + '</span><b id="damaYouCnt">12</b></div>' +
-          '<div class="dama-turn" id="damaTurn">' + T('dama.turn') + '</div>' +
-          '<div class="dama-side" id="damaBot"><b id="damaBotCnt">12</b><span class="dama-lab">' + T('dama.opp') + '</span><span class="dama-pip b"></span></div>' +
-        '</div>' +
+        '<div class="dama-spectators" id="damaSpectators" aria-hidden="true"></div>' +   /* [Owner] شريط متفرجين شفاف 100% — فارغ بلا متفرجين */
+        '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface">⚑</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
         '<div class="dama-stake" id="damaStake" hidden></div>' +   /* [B10] الرهان الجاري (عرض ساكن فقط) */
         '<div class="dama-timer" id="damaTimer"></div>' +
         '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div></div>' +
+        '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface">★</span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
         '<div class="dama-status" id="damaStatus"></div>' +
         '<div class="dama-ctrls">' +
           '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()">' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
@@ -697,11 +695,8 @@ function damaStart() {
   document.getElementById('damaSetup').hidden = true;
   document.getElementById('damaOver').hidden = true;
   document.getElementById('damaPlay').hidden = false;
-  /* HUD side pips reflect who is who */
-  var youPip = document.querySelector('#damaYou .dama-pip');
-  var botPip = document.querySelector('#damaBot .dama-pip');
-  if (youPip) youPip.className = 'dama-pip ' + human;
-  if (botPip) botPip.className = 'dama-pip ' + DAMA.ai;
+  /* [Owner] أيقونات اللاعبين فوق/تحت اللوحة + حلقة الدور الذهبية */
+  damaSetupIcons();
   DAMA.drawBanUntil = 0;
   var db = document.getElementById('damaDrawBar'); if (db) db.hidden = true;
   damaRender();
@@ -867,6 +862,7 @@ function damaRender() {
   damaUpdateCounts();
   damaUpdateTurn();
   damaUpdateStake();
+  damaRenderSpectators();
 }
 
 /* [B10] عرض الرهان الجاري أثناء المباراة (ساكن — التعديل من الإعدادات فقط) */
@@ -894,6 +890,7 @@ function damaUpdateCounts() {
 
 function damaUpdateTurn() {
   if (!DAMA || !DAMA.state) return;
+  damaUpdateTurnIcons();
   var el = document.getElementById('damaTurn');
   if (!el) return;
   if (DAMA.state.over) { el.textContent = T('dama.ended'); el.className = 'dama-turn'; return; }
@@ -903,6 +900,44 @@ function damaUpdateTurn() {
   } else {
     el.textContent = (DAMA.mode === 'room' && !DAMA.oppBot) ? T('dama.oppTurn') : T('dama.thinking');
     el.className = 'dama-turn bot';
+  }
+}
+
+/* [Owner] تهيئة أيقونات اللاعبين (فوق/تحت اللوحة) + حلقة الدور + شريط المتفرجين */
+function damaSetupIcons() {
+  var opp = document.getElementById('damaOppIcon');
+  var main = document.getElementById('damaMainIcon');
+  if (opp) opp.className = 'dama-picon ' + (DAMA.ai || 'b');
+  if (main) main.className = 'dama-picon ' + (DAMA.human || 'w');
+  damaUpdateTurnIcons();
+  damaRenderSpectators();
+}
+
+/* [Owner] حلقة ذهبية حول أيقونة اللاعب صاحب الدور */
+function damaUpdateTurnIcons() {
+  if (!DAMA || !DAMA.state) return;
+  var opp = document.getElementById('damaOppIcon');
+  var main = document.getElementById('damaMainIcon');
+  if (opp) opp.classList.toggle('turn', DAMA.state.turn === DAMA.ai);
+  if (main) main.classList.toggle('turn', DAMA.state.turn === DAMA.human);
+}
+
+/* [Owner] شريط متفرجين شفاف — يظهر فقط عند وجود متفرجين غير اللاعب نفسه */
+function damaRenderSpectators() {
+  var bar = document.getElementById('damaSpectators');
+  if (!bar) return;
+  bar.innerHTML = '';
+  if (typeof Rooms === 'undefined' || !Rooms.state || !Rooms.state.players) return;
+  var me = damaMeId();
+  for (var i = 0; i < Rooms.state.players.length; i++) {
+    var pl = Rooms.state.players[i];
+    if (!pl || !pl.spectate) continue;
+    if (me != null && String(pl.id) === String(me)) continue;   /* تخطّي اللاعب نفسه */
+    var s = document.createElement('span');
+    s.className = 'dama-spec';
+    s.title = pl.username || (T('dama.spectator') || 'Spectator');
+    s.textContent = '👁️';
+    bar.appendChild(s);
   }
 }
 
@@ -1266,7 +1301,7 @@ function damaRegisterRooms() {
   if (typeof Rooms === 'undefined' || !Rooms || typeof Rooms.setGameHandler !== 'function') return;
   Rooms.setGameHandler(damaRoomMove);
   Rooms.setStartHandler(damaRoomStart);
-  if (typeof Rooms.setUpdateHandler === 'function') Rooms.setUpdateHandler(function () {});
+  if (typeof Rooms.setUpdateHandler === 'function') Rooms.setUpdateHandler(function () { damaRenderSpectators(); });
   if (typeof window !== 'undefined') window.applyRoomReplay = damaApplyReplay;
   /* [Resilience] استئناف مباراة جارية عند فتح اللعبة (عائد بعد انقطاع/مشاهد متأخر):
      ندخل وضع الغرفة أولاً (mode='room' + لوحة أولية) ثم نطبّق سجل الإعادة المعلّق.
@@ -1353,11 +1388,8 @@ function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
   if (setup) setup.hidden = true;
   if (over) over.hidden = true;
   if (play) play.hidden = false;
-  /* شارات الهوية في الـ HUD (أنا/الخصم) */
-  var youPip = document.querySelector('#damaYou .dama-pip');
-  var botPip = document.querySelector('#damaBot .dama-pip');
-  if (youPip && DAMA.human) youPip.className = 'dama-pip ' + DAMA.human;
-  if (botPip) botPip.className = 'dama-pip ' + DAMA.ai;
+  /* [Owner] أيقونات اللاعبين فوق/تحت اللوحة + حلقة الدور الذهبية + شريط المتفرجين */
+  damaSetupIcons();
   if (broadcastNew) damaEmit('newgame', {});
   damaRender();
   if (spec) { damaSetStatus('👁️ ' + T('dama.spec')); return; }

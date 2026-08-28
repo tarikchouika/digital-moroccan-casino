@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 0;
+  padding: 60px 4px;          /* [Owner] هامش عمودي لإخراج النرد خارج اللوحة والبيوت */
 }
 
 /* ── سجل الرميات المنسدل: الزاوية 90° العليا اليسرى للشاشة (ملتقى الضلع
@@ -425,17 +425,17 @@
   z-index: 58;
 }
 .pr-cd {
-  --cdsz: clamp(45px, 12vw, 63px);   /* [B10] تكبير 50% */
+  --cdsz: clamp(42px, 11vw, 58px);       /* [Owner] أصغر قليلاً ليُحتوى في الهامش */
   position: absolute;
   display: flex;
   gap: 6px;
   transition: filter 0.25s ease;
 }
-/* بجانب أيقونة اللاعب عند زاوية قاعدته الخارجية — يتبادل الحافة فوق/تحت اللوحة */
-.pr-cd[data-corner="tl"] { top: -18px; left: calc(6.5% + 42px); }
-.pr-cd[data-corner="tr"] { top: -18px; right: calc(6.5% + 42px); }
-.pr-cd[data-corner="bl"] { bottom: -18px; left: calc(6.5% + 42px); }
-.pr-cd[data-corner="br"] { bottom: -18px; right: calc(6.5% + 42px); }
+/* [Owner] خارج اللوحة والبيوت الملوّنة: أعلى/أسفل الحافة العمودية بعيداً عن زوايا القواعد */
+.pr-cd[data-corner="tl"] { top: 0; left: 24%; transform: translate(-50%, -100%); }
+.pr-cd[data-corner="tr"] { top: 0; left: 76%; transform: translate(-50%, -100%); }
+.pr-cd[data-corner="bl"] { bottom: 0; left: 24%; transform: translate(-50%, 100%); }
+.pr-cd[data-corner="br"] { bottom: 0; left: 76%; transform: translate(-50%, 100%); }
 .pr-cdie {
   width: var(--cdsz);
   height: var(--cdsz);
