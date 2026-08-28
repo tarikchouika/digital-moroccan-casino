@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   Digital Moroccan casino — Game Catalog (22 Games)
+   Digital Moroccan casino — Game Catalog (36 Games)
    ══════════════════════════════════════════ */
 "use strict";
 const GAMES = [
@@ -13,8 +13,20 @@ const GAMES = [
     tag: 'HOT',
     rtp: 95,
     pl: 312,
-    n: 'Moroccan Ronda ♦️♠️',
-    d: ['40 ورقة مغاربية', '40 cartes', '40 cards']
+    n: ['فلات دوغ', 'FLAT DOG', 'FLAT DOG', 'فلات دوغ'],
+    d: ['تخمين البطاقة قبل الموزع', 'FLAT DOG — devinez la carte', 'FLAT DOG — guess the card', 'تخمين البطاقة قبل الموزع']
+  },
+  {
+    id: 'rm',
+    eng: 'rami',
+    em: '🃏',
+    art: 'rami',
+    cat: 'traditional',
+    tag: 'NEW',
+    rtp: 96,
+    pl: 0,
+    n: ['رامي', 'Rami', 'Rami', 'رامي'],
+    d: ['لعبة رامي المغربية — Talaj و Simple', 'Rami marocain — Talaj et Simple', 'Moroccan Rami — Talaj & Simple variants', 'لعبة رامي المغربية — Talaj و Simple']
   },
   {
     id: 'pr',
@@ -25,8 +37,32 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 156,
-    n: 'Parchisi',
-    d: ['لعبة الطاولة الهندية', 'Jeu de société', 'Classic board game']
+    n: ['بارتشي', 'Parchi', 'Parchi', 'بارتشي'],
+    d: ['لعبة الطاولة الهندية', 'Jeu de société', 'Classic board game', 'لعبة الطاولة الهندية']
+  },
+  {
+    id: 'ch',
+    eng: 'chess',
+    em: '♞',
+    art: 'ch',
+    cat: 'traditional',
+    tag: 'NEW',
+    rtp: 97,
+    pl: 0,
+    n: ['الشطرنج الدولي', 'Échecs internationaux', 'International Chess', 'الشطرنج الدولي'],
+    d: ['قواعد FIDE كاملة — وجه لوجه أو غرفة رهان أونلاين', 'Règles FIDE — face à face ou salle en ligne', 'Full FIDE rules — hot-seat or online betting room', 'قواعد FIDE — وجه لوجه ولا بيت رهان أونلاين']
+  },
+  {
+    id: 'dm',
+    eng: 'dama',
+    em: 'ⴷ',
+    art: 'dm',
+    cat: 'traditional',
+    tag: 'NEW',
+    rtp: 96,
+    pl: 0,
+    n: ['ضاما مغربية', 'Dama Maghribia', 'Dama Maghribia', 'ضاما مغربية'],
+    d: ['الداما المغربية ضد الذكاء الاصطناعي أو أونلاين', 'Dames marocaines — IA ou en ligne', 'Moroccan Checkers — vs AI or online', 'الداما المغربية ضد الذكاء الاصطناعي أو أونلاين']
   },
   /* ═══ كراش ═══ */
   {
@@ -38,8 +74,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 97,
     pl: 892,
-    n: 'Aviator Crash',
-    d: ['منحنى حي', 'Courbe live', 'Live curve']
+    n: ['أفياتور كراش', 'Aviator Crash', 'Aviator Crash', 'أفياتور كراش'],
+    d: ['منحنى حي', 'Courbe live', 'Live curve', 'منحنى حي']
   },
   /* ═══ فورية ═══ */
   {
@@ -51,8 +87,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 97,
     pl: 720,
-    n: 'Mines',
-    d: ['تجنب الألغام', 'Évitez les mines', 'Avoid mines']
+    n: ['ماينز', 'Mines', 'Mines', 'ماينز'],
+    d: ['تجنب الألغام', 'Évitez les mines', 'Avoid mines', 'تجنب الألغام']
   },
   {
     id: 'pl',
@@ -63,8 +99,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 98,
     pl: 534,
-    n: 'Plinko',
-    d: ['فيزياء كرة', 'Physique réelle', 'Ball physics']
+    n: ['بلينكو', 'Plinko', 'Plinko', 'بلينكو'],
+    d: ['فيزياء كرة', 'Physique réelle', 'Ball physics', 'فيزياء كرة']
   },
   {
     id: 'dc',
@@ -75,8 +111,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 98,
     pl: 411,
-    n: 'Dice',
-    d: ['هدف متحرك', 'Cible réglable', 'Target']
+    n: ['دايس', 'Dice', 'Dice', 'دايس'],
+    d: ['هدف متحرك', 'Cible réglable', 'Target', 'هدف متحرك']
   },
   {
     id: 'cf',
@@ -87,8 +123,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 97.5,
     pl: 265,
-    n: 'Coin Flip 3D',
-    d: ['عملة 3D', 'Pièce 3D', '3D coin']
+    n: ['كوين فليب 3D', 'Coin Flip 3D', 'Coin Flip 3D', 'كوين فليب 3D'],
+    d: ['عملة 3D', 'Pièce 3D', '3D coin', 'عملة 3D']
   },
   {
     id: 'hl',
@@ -99,8 +135,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 95.4,
     pl: 342,
-    n: 'Hi-Lo Cards',
-    d: ['أعلى/أقل', 'Plus haut/bas', 'Higher/lower']
+    n: ['هاي-لو كاردز', 'Hi-Lo Cards', 'Hi-Lo Cards', 'هاي-لو كاردز'],
+    d: ['أعلى/أقل', 'Plus haut/bas', 'Higher/lower', 'أعلى/أقل']
   },
   {
     id: 'wf',
@@ -111,8 +147,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 97.5,
     pl: 456,
-    n: 'Wheel of Fortune',
-    d: ['12 مضاعفاً', '12 multiplicateurs', '12 multipliers']
+    n: ['ويل أوف فورتشن', 'Wheel of Fortune', 'Wheel of Fortune', 'ويل أوف فورتشن'],
+    d: ['12 مضاعفاً', '12 multiplicateurs', '12 multipliers', '12 مضاعفاً']
   },
   {
     id: 'sc',
@@ -123,8 +159,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 94,
     pl: 187,
-    n: 'Scratch Card',
-    d: ['اكشف 3', '3 identiques', 'Match 3']
+    n: ['سكراتش كارد', 'Scratch Card', 'Scratch Card', 'سكراتش كارد'],
+    d: ['اكشف 3', '3 identiques', 'Match 3', 'اكشف 3']
   },
   {
     id: 'wg',
@@ -135,8 +171,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 95,
     pl: 398,
-    n: 'Wingo Colors',
-    d: ['ألوان', 'Couleurs', 'Colors']
+    n: ['وينجو كولورز', 'Wingo Colors', 'Wingo Colors', 'وينجو كولورز'],
+    d: ['ألوان', 'Couleurs', 'Colors', 'ألوان']
   },
   {
     id: 'rp',
@@ -147,8 +183,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 98.3,
     pl: 154,
-    n: 'Rock Paper Scissors',
-    d: ['ضد الحاسوب', 'vs IA', 'vs AI']
+    n: ['روك بيبر سيسرز', 'Rock Paper Scissors', 'Rock Paper Scissors', 'روك بيبر سيسرز'],
+    d: ['ضد الحاسوب', 'vs IA', 'vs AI', 'ضد الحاسوب']
   },
   {
     id: 'pn',
@@ -159,8 +195,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 96.7,
     pl: 276,
-    n: 'Penalty Shootout',
-    d: ['حارس متحرك', 'Gardien', 'Keeper']
+    n: ['بينالتي شوت أوت', 'Penalty Shootout', 'Penalty Shootout', 'بينالتي شوت أوت'],
+    d: ['حارس متحرك', 'Gardien', 'Keeper', 'حارس متحرك']
   },
   {
     id: 'l7',
@@ -171,8 +207,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 94.8,
     pl: 203,
-    n: 'Lucky 7',
-    d: ['كرة 1-9', 'Boule 1-9', 'Ball 1-9']
+    n: ['لاكي 7', 'Lucky 7', 'Lucky 7', 'لاكي 7'],
+    d: ['كرة 1-9', 'Boule 1-9', 'Ball 1-9', 'كرة 1-9']
   },
   /* ═══ كازينو ═══ */
   {
@@ -184,8 +220,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 97,
     pl: 145,
-    n: 'Sic Bo',
-    d: ['نرد متدحرج', 'Dés animés', 'Rolling dice']
+    n: ['سيك بو', 'Sic Bo', 'Sic Bo', 'سيك بو'],
+    d: ['نرد متدحرج', 'Dés animés', 'Rolling dice', 'نرد متدحرج']
   },
   {
     id: 'rl',
@@ -196,8 +232,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 97,
     pl: 412,
-    n: 'European Roulette',
-    d: ['كرة دوّارة', 'Bille orbitale', 'Orbiting ball']
+    n: ['يوروبيان روليت', 'Roulette Européenne', 'European Roulette', 'يوروبيان روليت'],
+    d: ['كرة دوّارة', 'Bille orbitale', 'Orbiting ball', 'كرة دوّارة']
   },
   /* ═══ ورق ═══ */
   {
@@ -209,8 +245,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 98,
     pl: 256,
-    n: 'Blackjack 21',
-    d: ['ضد الموزع', 'vs croupier', 'vs dealer']
+    n: ['بلاك جاك 21', 'Blackjack 21', 'Blackjack 21', 'بلاك جاك 21'],
+    d: ['ضد الموزع', 'vs croupier', 'vs dealer', 'ضد الموزع']
   },
   {
     id: 'bc',
@@ -221,8 +257,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 96,
     pl: 187,
-    n: 'Baccarat',
-    d: ['لاعب/موزع', 'Joueur/Banquier', 'Player/Banker']
+    n: ['باكارات', 'Baccarat', 'Baccarat', 'باكارات'],
+    d: ['لاعب/موزع', 'Joueur/Banquier', 'Player/Banker', 'لاعب/موزع']
   },
   {
     id: 'dt',
@@ -233,8 +269,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 96,
     pl: 165,
-    n: 'Dragon Tiger',
-    d: ['بطاقتان', '2 cartes', '2 cards']
+    n: ['دراغون تايغر', 'Dragon Tiger', 'Dragon Tiger', 'دراغون تايغر'],
+    d: ['بطاقتان', '2 cartes', '2 cards', 'بطاقتان']
   },
   {
     id: 'vp',
@@ -245,8 +281,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 97,
     pl: 132,
-    n: 'Video Poker',
-    d: ['Jacks or Better', 'Jacks or Better', 'Jacks or Better']
+    n: ['فيديو بوكر', 'Video Poker', 'Video Poker', 'فيديو بوكر'],
+    d: ['Jacks or Better', 'Jacks or Better', 'Jacks or Better', 'Jacks or Better']
   },
   {
     id: 'ke',
@@ -257,8 +293,8 @@ const GAMES = [
     tag: 'LIVE',
     rtp: 94,
     pl: 189,
-    n: 'Keno',
-    d: ['20 من 80', '20 sur 80', '20 of 80']
+    n: ['كينو', 'Keno', 'Keno', 'كينو'],
+    d: ['20 من 80', '20 sur 80', '20 of 80', '20 من 80']
   },
   {
     id: 'sl',
@@ -269,8 +305,8 @@ const GAMES = [
     tag: 'HOT',
     rtp: 95.9,
     pl: 342,
-    n: 'Royal Slots',
-    d: ['3 بكرات', '3 rouleaux', '3 reels']
+    n: ['رويال سلوتس', 'Royal Slots', 'Royal Slots', 'رويال سلوتس'],
+    d: ['3 بكرات', '3 rouleaux', '3 reels', '3 بكرات']
   },
   {
     id: 'ab',
@@ -281,8 +317,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 134,
-    n: 'Andar Bahar',
-    d: ['أندار أم باهار', 'Andar ou Bahar', 'Andar or Bahar']
+    n: ['أندار باهار', 'Andar Bahar', 'Andar Bahar', 'أندار باهار'],
+    d: ['أندار أم باهار', 'Andar ou Bahar', 'Andar or Bahar', 'أندار أم باهار']
   },
   /* ═══ جديدة ═══ */
   {
@@ -294,8 +330,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 94.4,
     pl: 0,
-    n: 'Crabbin',
-    d: ['9 سرطانات: 6 ذهبية و3 حمراء', 'Jeu de crabes', 'Crab game']
+    n: ['كرابين', 'Crabbin', 'Crabbin', 'كرابين'],
+    d: ['9 سرطانات: 6 ذهبية و3 حمراء', 'Jeu de crabes', 'Crab game', '9 سرطانات: 6 ذهبية و3 حمراء']
   },
   {
     id: 'fishing',
@@ -306,8 +342,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95.5,
     pl: 0,
-    n: 'Fishing',
-    d: ['اصطد السمكة بالمضاعف', 'Pêche aux multiplicateurs', 'Fishing multipliers']
+    n: ['فيشينغ', 'Fishing', 'Fishing', 'فيشينغ'],
+    d: ['اصطد السمكة بالمضاعف', 'Pêche aux multiplicateurs', 'Fishing multipliers', 'اصطد السمكة بالمضاعف']
   },
   {
     id: 'gates',
@@ -318,8 +354,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Gates',
-    d: ['بوابات زيوس الذهبية', 'Portes de Zeus', 'Gates of Zeus']
+    n: ['غيتس', 'Gates', 'Gates', 'غيتس'],
+    d: ['بوابات زيوس الذهبية', 'Portes de Zeus', 'Gates of Zeus', 'بوابات زيوس الذهبية']
   },
   {
     id: 'lightning',
@@ -330,8 +366,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95.8,
     pl: 0,
-    n: 'Lightning',
-    d: ['برق ذهبي يحقق الجائزة', 'Éclair doré', 'Golden lightning']
+    n: ['لايتنينغ', 'Lightning', 'Lightning', 'لايتنينغ'],
+    d: ['برق ذهبي يحقق الجائزة', 'Éclair doré', 'Golden lightning', 'برق ذهبي يحقق الجائزة']
   },
   {
     id: 'lottery',
@@ -342,8 +378,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Lottery',
-    d: ['تذاكر يانصيب محظوظة', 'Billets de loterie', 'Lucky lottery']
+    n: ['لوتيري', 'Lottery', 'Lottery', 'لوتيري'],
+    d: ['تذاكر يانصيب محظوظة', 'Billets de loterie', 'Lucky lottery', 'تذاكر يانصيب محظوظة']
   },
   {
     id: 'mahjong',
@@ -354,8 +390,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Mahjong',
-    d: ['بلاطات الحظ الصينية', 'Tuiles de chance chinoises', 'Lucky mahjong tiles']
+    n: ['ماجونغ', 'Mahjong', 'Mahjong', 'ماجونغ'],
+    d: ['بلاطات الحظ الصينية', 'Tuiles de chance chinoises', 'Lucky mahjong tiles', 'بلاطات الحظ الصينية']
   },
   {
     id: 'money',
@@ -366,8 +402,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 94.4,
     pl: 0,
-    n: 'Money',
-    d: ['صناديق الكنوز', 'Coffres aux trésors', 'Golden money safes']
+    n: ['ماني', 'Money', 'Money', 'ماني'],
+    d: ['صناديق الكنوز', 'Coffres aux trésors', 'Golden money safes', 'صناديق الكنوز']
   },
   {
     id: 'olympus',
@@ -378,8 +414,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Olympus',
-    d: ['قوة آلهة الأوليمب', 'Puissance des dieux', 'Power of Olympus gods']
+    n: ['أوليمبوس', 'Olympus', 'Olympus', 'أوليمبوس'],
+    d: ['قوة آلهة الأوليمب', 'Puissance des dieux', 'Power of Olympus gods', 'قوة آلهة الأوليمب']
   },
   {
     id: 'poker',
@@ -390,8 +426,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Poker',
-    d: ['البطاقات الملكية للبوكر', 'Cartes royales du poker', 'Royal poker cards']
+    n: ['بوكر', 'Poker', 'Poker', 'بوكر'],
+    d: ['البطاقات الملكية للبوكر', 'Cartes royales du poker', 'Royal poker cards', 'البطاقات الملكية للبوكر']
   },
   {
     id: 'rose',
@@ -402,8 +438,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Rose',
-    d: ['وردة الحظ الذهبية', 'Rose dorée de la chance', 'Golden lucky rose']
+    n: ['روز', 'Rose', 'Rose', 'روز'],
+    d: ['وردة الحظ الذهبية', 'Rose dorée de la chance', 'Golden lucky rose', 'وردة الحظ الذهبية']
   },
   {
     id: 'sweet-bonanza',
@@ -414,8 +450,8 @@ const GAMES = [
     tag: 'NEW',
     rtp: 95,
     pl: 0,
-    n: 'Sweet Bonanza',
-    d: ['حلوى سكرية محظوظة', 'Bonbons sucrés chanceux', 'Sweet candy bonanza']
+    n: ['سويت بونانزا', 'Sweet Bonanza', 'Sweet Bonanza', 'سويت بونانزا'],
+    d: ['حلوى سكرية محظوظة', 'Bonbons sucrés chanceux', 'Sweet candy bonanza', 'حلوى سكرية محظوظة']
   }
 ];
 /* ── قواعد مختصرة داخل اللعبة ── */
@@ -431,7 +467,7 @@ const RULES = {
   poker: [['اضغط ابدأ ثم اختر بطاقة واحدة', '3 بطاقات ملكية A/K/Q و2 منخفضتان تخسران', 'البطاقة الملكية تربح — RTP 95%']],
   rose: [['اضغط ابدأ ثم اختر وردة واحدة', '4 وردات ذهبية ×1.2-×1.7 وصبارتان تخسران', 'الوردة الذهبية تربح — RTP 95%']],
   "sweet-bonanza": [['اضغط ابدأ ثم اختر حلوى واحدة', '8 حلوى ×1.2-×1.8 و4 قنابل تخسر', 'الحلوى الذهبية تربح — RTP 95%']],
-  rn: [['اختر رقماً (1-12) أو رقماً + رمزاً', 'سحب بالتناوب مع الموزع', 'أول من يجد بطاقته يفوز']],
+  rn: [['اختر وضع اللعب: رقم فقط (×2) أو رقم + رمز (×3)', 'سحب بالتناوب مع الموزع (DOG) — أول من يجد بطاقته يفوز', 'FLAT = بطاقتك · DOG = بطاقة الموزع']],
   av: [['اضغط ابدأ ليقلع المضاعف', 'اسحب قبل التحطم', 'كلما انتظرت أكثر زاد الربح']],
   mn: [['اختر عدد الألغام', 'افتح الخانات الآمنة', 'اسحب قبل لغم']],
   ab: [['اختر Andar أو Bahar', 'يتم السحب بالتناوب — أول بطاقة بنفس رتبة الجوكر تفوز', 'كلا الجانبين ×1.9 — RTP 95%']],
@@ -451,9 +487,24 @@ const RULES = {
   rp: [['اختر ✊ حجر أو ✋ ورقة أو ✌️ مقص', 'الحاسوب يختار عشوائياً في نفس اللحظة', 'فوز ×1.95 / تعادل = استرداد / خسارة — RTP 98.3%']],
   pn: [['اختر ⬅️ يسار أو ⬆️ وسط أو ➡️ يمين', 'الحارس يختار عشوائياً في نفس اللحظة', 'فوز ×1.45 / نفس الجهة = تصدي وخسارة — RTP 96.7%']],
   l7: [['اختر <7 (1-6) أو =7 أو >7 (8-9)', 'كُرة مرقمة 1-9 تُسحب عشوائياً', '<7 ×1.4 / =7 ×8.6 / >7 ×4.3 — RTP 94.8%']],
-  sl: [['3 بكرات × 8 رموز متساوية الاحتمال', '3 متطابقة = جاكبوت (×120 أقصى) / 2 متطابقة = استرداد', 'الرهان يُسحب ثم يدفع عند الفوز — RTP 95.9%']]
+  sl: [['3 بكرات × 8 رموز متساوية الاحتمال', '3 متطابقة = جاكبوت (×120 أقصى) / 2 متطابقة = استرداد', 'الرهان يُسحب ثم يدفع عند الفوز — RTP 95.9%']],
+  ch: [['الشطرنج بالمعايير الدولية (FIDE): كل حركات القطع القانونية، التبييت بشرطه، الأخذ بالتجاوز، والترقية باختيار القطعة',
+      'الأكل وفق قواعد الشطرنج: من كش مات أو استسلم أو انتهى وقته يخسر — والتعادلات: الجمود، قاعدة 50 حركة، تكرار الموقع ثلاثاً، نقص المواد، والتوافق',
+      'زر 🤝 تعادل يعرض نهاية ودية بإعادة الجولة — ويجب مصادقة الطرفين عليه',
+      'وجه لوجه على جهاز واحد (مجاني — اللوحة تُقلب تلقائياً)، أو غرفة أونلاين برهان اختياري: الفائز يأخذ الرهانين والتعادل يسترجعهما',
+      'القطع: ♜رخ • ♞فارس • ♝فيل • ♛ملكة • ♚ملك — الأبيض يبدأ دائماً']],
+  dm: [['الحركة قطري للأمام فقط، والأكل بالقفز فوق الخصم؛ أمّا الضائمة (الملك) فتطير في كل الاتجاهات وتأكل طويلاً', 'الأكل إلزامي: إن وُجد أكل فلا تُعرض أي حركة هادئة — والسلسلة الأكبر أكثر إلزامية (لا يجوز أخذ سلسلة أصغر من المتاحة الكبرى)', 'عليك إتمام سلسلة الأكل حتى نهايتها بالقطعة نفسها ولا تتوقف في المنتصف', 'إن وصل البيدق للصف الأخير بالأكل وتوفرت تتمة سلسلة: يتوقف فوراً (تُهجر السلسلة) ويُتوَّج ضائمةً بعد مرور دور كامل', 'من يصل لآخر صفٍّ يترقّى ضائمة، ومن يفقد أحجاره كلّها أو يحبس يخسر', 'ضد الذكاء الاصطناعي (متوسط/محترف/خبير — مكافأة ×2 إلى ×3) أو أونلاين عبر غرفة ضد لاعب أو بوت']]
 };
+
+/* ── اسم اللعبة بحسب اللغة الحالية (n = [عربية، فرنسية، إنجليزية، دارجة]) ──
+   [B7] الأسماء تُكتب كما تُنطق بحروف عربية — لا ترجمة لغوية لأسماء الألعاب */
+function gname(g) {
+  if (!g) return '';
+  if (Array.isArray(g.n)) return g.n[langIndex()] || g.n[0];
+  return g.n;
+}
 
 /* ── Export to global ────────────────── */
 window.GAMES = GAMES;
 window.RULES = RULES;
+window.gname = gname;

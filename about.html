@@ -2,17 +2,17 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="من نحن — Digital Moroccan Casino: الشحن، السحب، الإحالة، الغرف الجماعية وقواعد الدردشة">
   <meta name="theme-color" content="#070B12">
   <title>Digital Moroccan Casino — من نحن</title>
-  <!-- Fonts -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <!-- CSS Files -->
   <link rel="stylesheet" href="css/01-variables.css">
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
@@ -27,81 +27,9 @@
       }
     })();
   </script>
+  <script src="js/i18n/auto-lang.js"></script>
   <style>
-    .legal-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
-      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
-      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .legal-topbar .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--t1);
-      text-decoration: none;
-      font-family: var(--font2, 'Orbitron'), sans-serif;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    .legal-topbar .brand b {
-      color: var(--gold);
-    }
-    .legal-topbar .brand .foot-logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-    }
-    .legal-topbar .brand .foot-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 9px;
-    }
-    .legal-topbar .tools {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg2);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .lang-switch button {
-      border: none;
-      background: transparent;
-      color: var(--t2);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.72rem;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .lang-switch button.active {
-      background: var(--gold);
-      color: #0A0E1A;
-    }
-    .lang-switch button:hover:not(.active) {
-      color: var(--gold);
-    }
+    /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -169,23 +97,6 @@
     .legal-wrap a {
       color: var(--gold);
     }
-    .legal-foot {
-      text-align: center;
-      padding: 22px 16px 30px;
-      color: var(--t3);
-      font-size: 0.8rem;
-    }
-    .legal-foot .fb {
-      margin: 0 4px 6px;
-    }
-    .legal-foot a {
-      color: var(--t2);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .legal-foot a:hover {
-      color: var(--gold);
-    }
     .comm-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -217,24 +128,8 @@
   </style>
 </head>
 <body>
-  <div class="legal-topbar">
-    <a class="brand" href="index.html">
-      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
-      <span><b>Digital Moroccan</b> Casino</span>
-    </a>
-    <div class="tools">
-      <div class="lang-switch" role="group" aria-label="Language / اللغة">
-        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
-        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
-        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
-      </div>
-      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
-      </button>
-    </div>
-  </div>
-
-  <main class="legal-wrap">
+  <article class="legal-content">
+    <main class="legal-wrap">
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-building-columns"></i></div>
     <h1 data-k="a.title">من نحن</h1>
     <div class="updated" data-k="a.updated">آخر تحديث: 12 أغسطس 2026</div>
@@ -274,11 +169,12 @@
     <h2><i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i> <span data-k="a.commTitle">عمولات الأدمنز</span></h2>
     <p data-k="a.commP">يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:</p>
     <div class="comm-grid">
-      <div class="comm-card"><div class="rate">25%</div><div class="desc" data-k="a.comm1">من الشحن فوق 1000 درهم = 10000 كوينز</div></div>
-      <div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 5000 درهم = 50000 كوينز</div></div>
-      <div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm3">من الشحن فوق 10000 درهم = 100000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">25%</div><div class="desc" data-k="a.comm1">من الشحن فوق 1000 درهم = 12500 كوينز</div></div>
+      <div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 10000 درهم = 130000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">35%</div><div class="desc" data-k="a.comm3">من الشحن فوق 100000 درهم = 1350000 كوينز</div></div>
+      <div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm4">من الشحن فوق 1000000 درهم = 14000000 كوينز</div></div>
     </div>
-
+    <div class="legal-note" style="margin-top:14px"><p data-k="a.adminWithdraw">يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.</p></div>
     <h2><i class="fa-solid fa-users" aria-hidden="true"></i> <span data-k="a.roomsTitle">الغرف الجماعية</span></h2>
     <p data-k="a.roomsP">يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:</p>
     <ul>
@@ -295,150 +191,304 @@
     <p><a class="btn ghost small" href="contact.html"><i class="fa-solid fa-headset" aria-hidden="true"></i> <span data-k="a.contactBtn">صفحة تواصل معنا</span></a>
     <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="a.back">العودة للموقع</span></a></p>
   </main>
+    </article>
 
-  <footer class="legal-foot">
-    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="a.fb2fa">2FA محمي</span></span>
-    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="a.fbSecure">اتصال آمن</span></span>
-    <br>
-    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="a.footer">جميع الحقوق محفوظة</span>
-  </footer>
-
+  <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/ui/legal-ui.js"></script>
   <script>
-    /* ── الترجمة المحلية (ar/fr/en) ── */
+    /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
-      'a.title': { ar: 'من نحن', fr: 'À propos de nous', en: 'About Us' },
-      'a.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
-      'a.intro': {
-        ar: 'Digital Moroccan Casino — منصة مغربية تجمع بين المتعة والترفيه والربح. يمكنك شحن حسابك بمال حقيقي، ومبادلة الكوينز بحرية بين اللاعبين، وسحب أرباحك بالطريقة التي تناسبك.',
-        fr: 'Digital Moroccan Casino — une plateforme marocaine qui allie plaisir, divertissement et gain. Rechargez votre compte avec de l\'argent réel, échangez librement des pièces entre joueurs et retirez vos gains comme vous le souhaitez.',
-        en: 'Digital Moroccan Casino — a Moroccan platform combining fun, entertainment and profit. Top up your account with real money, trade coins freely between players, and withdraw your winnings the way you prefer.'
-      },
-      'a.missionTitle': { ar: 'ما هي منصتنا', fr: 'Notre plateforme', en: 'Our platform' },
-      'a.missionP': {
-        ar: 'منصة ترفيهية مغربية تتيح للاعبين اللعب والتحدي في أجواء آمنة ومنظمة، مع نظام اقتصادي داخلي واضح وشفاف: الكوينز لها قيمة، واللعب له قواعد، والأرباح تُسحب بأمان.',
-        fr: 'Une plateforme marocaine de divertissement permettant de jouer et de se défier dans un cadre sûr et organisé, avec un système économique interne clair et transparent : les pièces ont une valeur, le jeu a des règles, et les gains se retirent en toute sécurité.',
-        en: 'A Moroccan entertainment platform that lets players play and challenge each other in a safe, organized environment, with a clear, transparent internal economy: coins have value, games have rules, and winnings are withdrawn safely.'
-      },
-      'a.coinTitle': { ar: 'نظام الكوينز', fr: 'Le système de pièces', en: 'The coin system' },
-      'a.coin1': { ar: '10 كوينز = 1 درهم مغربي.', fr: '10 pièces = 1 dirham marocain.', en: '10 coins = 1 Moroccan dirham.' },
-      'a.coin2': { ar: 'الكوينز تُستخدم في الألعاب والغرف الجماعية والإرسال بين اللاعبين.', fr: 'Les pièces servent aux jeux, aux salles de groupe et aux transferts entre joueurs.', en: 'Coins are used in games, group rooms and transfers between players.' },
-      'a.coin3': { ar: 'مبادلة الكوينز بين اللاعبين حرة عبر المنصة وبدون أي رسوم للمنصة.', fr: 'L\'échange de pièces entre joueurs est libre via la plateforme et sans aucun frais pour la plateforme.', en: 'Coin trading between players is free through the platform with no platform fees.' },
-      'a.topupTitle': { ar: 'الشحن', fr: 'Recharge', en: 'Top-up' },
-      'a.topupP': {
-        ar: 'يمكن للاعب شحن حسابه بمال حقيقي عبر أحد أدمنز المنصة. يتم التحويل فوراً إلى كوينز وفق المعادلة: 10 كوينز = 1 درهم.',
-        fr: 'Le joueur peut recharger son compte avec de l\'argent réel via l\'un des admins de la plateforme. Le montant est converti immédiatement en pièces selon la formule : 10 pièces = 1 dirham.',
-        en: 'Players can top up their account with real money through one of the platform admins. The amount is converted instantly into coins at the rate: 10 coins = 1 dirham.'
-      },
-      'a.tradeTitle': { ar: 'مبادلة الكوينز', fr: 'Échange de pièces', en: 'Coin trading' },
-      'a.tradeP': {
-        ar: 'يمكن للاعبين مبادلة الكوينز فيما بينهم بشكل حر عبر المنصة، بدون أي رسوم تُفرض على عملية المبادلة نفسها.',
-        fr: 'Les joueurs peuvent échanger des pièces entre eux librement via la plateforme, sans aucun frais sur l\'échange lui-même.',
-        en: 'Players can trade coins with each other freely through the platform, with no fees on the exchange itself.'
-      },
-      'a.withdrawTitle': { ar: 'السحب', fr: 'Retrait', en: 'Withdrawal' },
-      'a.withdrawP': {
-        ar: 'يمكن للاعب سحب أرباحه مقابل مال حقيقي بإحدى الطرق الثلاث، والاختيار للاعب حسب رغبته:',
-        fr: 'Le joueur peut retirer ses gains en argent réel par l\'une des trois méthodes, au choix du joueur :',
-        en: 'Players can withdraw their winnings as real money using one of three methods, at the player\'s choice:'
-      },
-      'a.withdraw1': { ar: 'حوالة بنكية.', fr: 'Virement bancaire.', en: 'Bank transfer.' },
-      'a.withdraw2': { ar: 'كاش وجه لوجه عن طريق أحد الأدمنز.', fr: 'Espèces en face à face via l\'un des admins.', en: 'Face-to-face cash via one of the admins.' },
-      'a.withdraw3': { ar: 'عملات رقمية.', fr: 'Cryptomonnaies.', en: 'Cryptocurrency.' },
-      'a.referTitle': { ar: 'الإحالة', fr: 'Parrainage', en: 'Referral' },
-      'a.referTitle2': { ar: 'كافأة الإحالة:', fr: 'Bonus de parrainage :', en: 'Referral bonus:' },
-      'a.referP': {
-        ar: 'يمكن للاعب إحالة صديق، ويُكافأ بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.',
-        fr: 'Un joueur peut parrainer un ami et reçoit automatiquement et directement 10% de la valeur de la première recharge du nouveau joueur parrainé.',
-        en: 'A player can refer a friend and is rewarded automatically and directly with 10% of the value of the new referred player\'s first top-up.'
-      },
-      'a.commTitle': { ar: 'عمولات الأدمنز', fr: 'Commissions des admins', en: 'Admin commissions' },
-      'a.commP': {
-        ar: 'يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:',
-        fr: 'Les admins bénéficient directement d\'une commission sur les recharges dépassant le seuil suivant :',
-        en: 'Admins benefit directly from a commission on top-ups above the following thresholds:'
-      },
-      'a.comm1': { ar: 'من الشحن فوق 1000 درهم = 10000 كوينز', fr: 'sur les recharges au-delà de 1000 dirhams = 10000 pièces', en: 'on top-ups above 1000 dirhams = 10000 coins' },
-      'a.comm2': { ar: 'من الشحن فوق 5000 درهم = 50000 كوينز', fr: 'sur les recharges au-delà de 5000 dirhams = 50000 pièces', en: 'on top-ups above 5000 dirhams = 50000 coins' },
-      'a.comm3': { ar: 'من الشحن فوق 10000 درهم = 100000 كوينز', fr: 'sur les recharges au-delà de 10000 dirhams = 100000 pièces', en: 'on top-ups above 10000 dirhams = 100000 coins' },
-      'a.roomsTitle': { ar: 'الغرف الجماعية', fr: 'Salles de groupe', en: 'Group rooms' },
-      'a.roomsP': {
-        ar: 'يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:',
-        fr: 'Les joueurs peuvent miser en face à face dans les salles de jeu en groupe. Il existe deux types de salles :',
-        en: 'Players can bet face-to-face in group game rooms. There are two types of rooms:'
-      },
-      'a.rooms1': {
-        ar: 'غرف مجانية وغرف للمراهنة — يحدد الداعي ما إذا كانت الغرفة عمومية أو خاصة، ومجانية أو للمراهنة.',
-        fr: 'Des salles gratuites et des salles de pari — l\'inviteur décide si la salle est publique ou privée, et gratuite ou de pari.',
-        en: 'Free rooms and betting rooms — the host decides whether the room is public or private, and free or for betting.'
-      },
-      'a.rooms2': {
-        ar: 'غرف مراهنة برسوم ثابتة 10 كوينز لغرفة تبقى مفتوحة لساعتين بدون رسوم على الجولات.',
-        fr: 'Salles de pari à frais fixes de 10 pièces pour une salle ouverte pendant deux heures, sans frais sur les manches.',
-        en: 'Betting rooms with a fixed fee of 10 coins for a room that stays open for two hours, with no fee on rounds.'
-      },
-      'a.rooms3': {
-        ar: 'غرف مراهنة تفتح بدون قيد الوقت مع رسوم 1٪ من قيمة رهان اللاعب الرابح في كل جولة.',
-        fr: 'Salles de pari ouvertes sans limite de temps avec une commission de 1% de la mise du joueur gagnant à chaque manche.',
-        en: 'Betting rooms open with no time limit, with a 1% fee on the winning player\'s bet in each round.'
-      },
-      'a.chatTitle': { ar: 'قواعد الدردشة', fr: 'Règles du chat', en: 'Chat rules' },
-      'a.chatP': {
-        ar: 'في الدردشة داخل الغرف وفي دردشة المنصة يمنع الكلام النابي والعبارات الهجومية والجارحة والخادشة للحياء. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة كلما تكرر الأمر، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.',
-        fr: 'Dans le chat des salles et celui de la plateforme, les propos grossiers, agressifs, blessants ou indécents sont interdits. Le contrevenant est banni du chat pendant 24 heures, durée doublée à chaque récidive, et toute atteinte aux bonnes mœurs ou à la vie privée des joueurs entraîne un bannissement.',
-        en: 'In room chats and the platform chat, abusive, aggressive, offensive or indecent language is forbidden. Violators are banned from chat for 24 hours, doubled on each repeat offense, and anyone violating public decency or player privacy is banned.'
-      },
-      'a.contactTitle': { ar: 'تواصل معنا', fr: 'Contactez-nous', en: 'Contact us' },
-      'a.contactP': {
-        ar: 'لأي استفسار حول الشحن أو السحب أو الإحالة أو الغرف، تفضل بزيارة صفحة التواصل معنا.',
-        fr: 'Pour toute question sur la recharge, le retrait, le parrainage ou les salles, visitez notre page de contact.',
-        en: 'For any question about top-ups, withdrawals, referrals or rooms, visit our contact page.'
-      },
-      'a.contactBtn': { ar: 'صفحة تواصل معنا', fr: 'Page de contact', en: 'Contact page' },
-      'a.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' },
-      'a.fb2fa': { ar: '2FA محمي', fr: '2FA protégé', en: '2FA protected' },
-      'a.fbSecure': { ar: 'اتصال آمن', fr: 'Connexion sécurisée', en: 'Secure connection' },
-      'a.footer': { ar: 'جميع الحقوق محفوظة', fr: 'Tous droits réservés', en: 'All rights reserved' }
-    };
-    var curLang = 'ar';
-    try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
-    function applyLang() {
-      document.documentElement.setAttribute('lang', curLang);
-      document.documentElement.setAttribute('dir', curLang === 'ar' ? 'rtl' : 'ltr');
+  "a.title": {
+    "ar": "من نحن",
+    "da": "من حنا",
+    "fr": "À propos de nous",
+    "en": "About Us"
+  },
+  "a.updated": {
+    "ar": "آخر تحديث: 12 أغسطس 2026",
+    "da": "آخر تحديث: 12 غشت 2026",
+    "fr": "Dernière mise à jour : 12 août 2026",
+    "en": "Last updated: August 12, 2026"
+  },
+  "a.intro": {
+    "ar": "Digital Moroccan Casino — منصة مغربية تجمع بين المتعة والترفيه والربح. يمكنك شحن حسابك بمال حقيقي، ومبادلة الكوينز بحرية بين اللاعبين، وسحب أرباحك بالطريقة التي تناسبك.",
+    "da": "Digital Moroccan Casino — منصة مغربية كتجمع بين المتعة والنشاط والربح. تقدر تشحن حسابك بالفلوس، تبادل الكوينز بحرية بين اللعابة، وتسحب أرباحك بالطريقة اللي تريحك.",
+    "fr": "Digital Moroccan Casino — une plateforme marocaine qui allie plaisir, divertissement et gain. Rechargez votre compte avec de l'argent réel, échangez librement des pièces entre joueurs et retirez vos gains comme vous le souhaitez.",
+    "en": "Digital Moroccan Casino — a Moroccan platform combining fun, entertainment and profit. Top up your account with real money, trade coins freely between players, and withdraw your winnings the way you prefer."
+  },
+  "a.missionTitle": {
+    "ar": "ما هي منصتنا",
+    "da": "شنو هي المنصة ديالنا",
+    "fr": "Notre plateforme",
+    "en": "Our platform"
+  },
+  "a.missionP": {
+    "ar": "منصة ترفيهية مغربية تتيح للاعبين اللعب والتحدي في أجواء آمنة ومنظمة، مع نظام اقتصادي داخلي واضح وشفاف: الكوينز لها قيمة، واللعب له قواعد، والأرباح تُسحب بأمان.",
+    "da": "منصة ترفيهية مغربية كتخلي اللعابة يقصروا ويتحدّاو بعضياتهم فجو نقي ومأمن، بنظام اقتصادي واضح وشفاف: الكوينز عندها قيمة، اللعب عندو قواعد، والأرباح كتسحبها بأمان.",
+    "fr": "Une plateforme marocaine de divertissement permettant de jouer et de se défier dans un cadre sûr et organisé, avec un système économique interne clair et transparent : les pièces ont une valeur, le jeu a des règles, et les gains se retirent en toute sécurité.",
+    "en": "A Moroccan entertainment platform that lets players play and challenge each other in a safe, organized environment, with a clear, transparent internal economy: coins have value, games have rules, and winnings are withdrawn safely."
+  },
+  "a.coinTitle": {
+    "ar": "نظام الكوينز",
+    "da": "نظام الكوينز",
+    "fr": "Le système de pièces",
+    "en": "The coin system"
+  },
+  "a.coin1": {
+    "ar": "10 كوينز = 1 درهم مغربي.",
+    "da": "10 كوينز = 1 درهم مغربي.",
+    "fr": "10 pièces = 1 dirham marocain.",
+    "en": "10 coins = 1 Moroccan dirham."
+  },
+  "a.coin2": {
+    "ar": "الكوينز تُستخدم في الألعاب والغرف الجماعية والإرسال بين اللاعبين.",
+    "da": "الكوينز كتستعمل فكاع الألعاب والغرف الجماعية والإرسال بين اللعابة.",
+    "fr": "Les pièces servent aux jeux, aux salles de groupe et aux transferts entre joueurs.",
+    "en": "Coins are used in games, group rooms and transfers between players."
+  },
+  "a.coin3": {
+    "ar": "للاعبين كامل الحرية في تبادل الكوينز فيما بينهم عبر المنصة، سواءً بالمجان، أو مقابل سعر، أو مقابل خدمة، ويتم تدوين وتسجيل جميع العمليات بالكامل وبشكل فوري في السجل الخاص بكل لاعب.",
+    "fr": "Les joueurs ont l'entière liberté d'échanger des pièces entre eux via la plateforme (gratuitement, contre paiement ou en échange d'un service), toutes les opérations étant enregistrées immédiatement dans le journal privé de chaque joueur.",
+    "en": "Players have complete freedom to exchange coins with each other through the platform, whether for free, for a price, or in exchange for a service, with all transactions recorded immediately in each player's private account log.",
+    "da": "اللعابة عندهم كامل الحرية يتبادلو الكوينز بيناتهم فالموقع، سواء فابور، ولا بمقابل مالي، ولا مقابل خدمة، وكاع العمليات كتقيد أوتوماتيكياً فالسجل الخاص بكل لعاب."
+  },
+  "a.topupTitle": {
+    "ar": "الشحن",
+    "da": "الشحن",
+    "fr": "Recharge",
+    "en": "Top-up"
+  },
+  "a.topupP": {
+    "ar": "بالنسبة للاعبين، يتم الشحن والسحب بنفس القيمة الثابتة: 1 درهم = 10 كوينز (10 كوينز = 1 درهم مغربي). يتم الشحن بمال حقيقي عبر أحد أدمنز المنصة ويُحوَّل فوراً إلى رصيد حسابك.",
+    "fr": "Pour les joueurs, les recharges et retraits sont effectués exactement à la même valeur fixe : 1 dirham = 10 pièces (10 pièces = 1 DH). Le compte est rechargé via un admin et crédité instantanément.",
+    "en": "For players, top-ups and withdrawals are processed at the exact same fixed rate: 1 MAD = 10 Coins (10 Coins = 1 Moroccan Dirham). Recharges are made via an admin and credited instantly.",
+    "da": "بالنسبة للعابة، الشحن والسحب كيبقا ديما بنفس القيمة الثابتة: 1 درهم = 10 كوينز (10 كوينز = 1 درهم مغربي). الشحن كيتم عن طريق أدمن المنصة وكيتحول ديك الساع لرصيدك."
+  },
+  "a.tradeTitle": {
+    "ar": "مبادلة الكوينز",
+    "da": "مبادلة الكوينز",
+    "fr": "Échange de pièces",
+    "en": "Coin trading"
+  },
+  "a.tradeP": {
+    "ar": "للاعبين كامل الحرية في تبادل الكوينز فيما بينهم عبر المنصة، سواءً بالمجان، أو مقابل سعر، أو مقابل خدمة، ويتم تدوين وتسجيل جميع العمليات بالكامل وبشكل فوري في السجل الخاص بكل لاعب.",
+    "fr": "Les joueurs ont l'entière liberté d'échanger des pièces entre eux via la plateforme (gratuitement, contre paiement ou en échange d'un service), toutes les opérations étant enregistrées immédiatement dans le journal privé de chaque joueur.",
+    "en": "Players have complete freedom to exchange coins with each other through the platform, whether for free, for a price, or in exchange for a service, with all transactions recorded immediately in each player's private account log.",
+    "da": "اللعابة عندهم كامل الحرية يتبادلو الكوينز بيناتهم فالموقع، سواء فابور، ولا بمقابل مالي، ولا مقابل خدمة، وكاع العمليات كتقيد أوتوماتيكياً فالسجل الخاص بكل لعاب."
+  },
+  "a.withdrawTitle": {
+    "ar": "السحب",
+    "da": "السحب",
+    "fr": "Retrait",
+    "en": "Withdrawal"
+  },
+  "a.withdrawP": {
+    "ar": "يمكن للاعب سحب أرباحه مقابل مال حقيقي بإحدى الطرق الثلاث، والاختيار للاعب حسب رغبته:",
+    "da": "يقدر اللعاب يسحب أرباحو مقابل فلوس حقيقية بواحدة من هاد 3 ديال الطرق، والاختيار كيبقى ليه:",
+    "fr": "Le joueur peut retirer ses gains en argent réel par l'une des trois méthodes, au choix du joueur :",
+    "en": "Players can withdraw their winnings as real money using one of three methods, at the player's choice:"
+  },
+  "a.withdraw1": {
+    "ar": "حوالة بنكية.",
+    "da": "فيرمون بنكي (حوالة بنكية).",
+    "fr": "Virement bancaire.",
+    "en": "Bank transfer."
+  },
+  "a.withdraw2": {
+    "ar": "كاش وجه لوجه عن طريق أحد الأدمنز.",
+    "da": "كاش يد ليد عن طريق أدمن.",
+    "fr": "Espèces en face à face via l'un des admins.",
+    "en": "Face-to-face cash via one of the admins."
+  },
+  "a.withdraw3": {
+    "ar": "عملات رقمية.",
+    "da": "عملات رقمية (USDT).",
+    "fr": "Cryptomonnaies.",
+    "en": "Cryptocurrency."
+  },
+  "a.referTitle": {
+    "ar": "الإحالة",
+    "da": "الإحالة",
+    "fr": "Parrainage",
+    "en": "Referral"
+  },
+  "a.referTitle2": {
+    "ar": "كافأة الإحالة:",
+    "da": "كافأة الإحالة:",
+    "fr": "Bonus de parrainage :",
+    "en": "Referral bonus:"
+  },
+  "a.referP": {
+    "ar": "يمكن للاعب إحالة صديق، ويُكافأ بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.",
+    "da": "يمكن للاعب إحالة صديق، ويُكافأ بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.",
+    "fr": "Un joueur peut parrainer un ami et reçoit automatiquement et directement 10% de la valeur de la première recharge du nouveau joueur parrainé.",
+    "en": "A player can refer a friend and is rewarded automatically and directly with 10% of the value of the new referred player's first top-up."
+  },
+  "a.commTitle": {
+    "ar": "عمولات الأدمنز",
+    "da": "عمولات الأدمنز",
+    "fr": "Commissions des admins",
+    "en": "Admin commissions"
+  },
+  "a.commP": {
+    "ar": "يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:",
+    "da": "يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:",
+    "fr": "Les admins bénéficient directement d'une commission sur les recharges dépassant le seuil suivant :",
+    "en": "Admins benefit directly from a commission on top-ups above the following thresholds:"
+  },
+  "a.comm1": {
+    "ar": "من الشحن فوق 1000 درهم = 12500 كوينز",
+    "fr": "sur les recharges au-delà de 1 000 dirhams = 12 500 pièces",
+    "en": "on top-ups above 1,000 dirhams = 12,500 coins",
+    "da": "من الشحن فوق 1000 درهم = 12500 كوينز"
+  },
+  "a.comm2": {
+    "ar": "من الشحن فوق 10000 درهم = 130000 كوينز",
+    "fr": "sur les recharges au-delà de 10 000 dirhams = 130 000 pièces",
+    "en": "on top-ups above 10,000 dirhams = 130,000 coins",
+    "da": "من الشحن فوق 10000 درهم = 130000 كوينز"
+  },
+  "a.comm3": {
+    "ar": "من الشحن فوق 100000 درهم = 1350000 كوينز",
+    "fr": "sur les recharges au-delà de 100 000 dirhams = 1 350 000 pièces",
+    "en": "on top-ups above 100,000 dirhams = 1,350,000 coins",
+    "da": "من الشحن فوق 100000 درهم = 1350000 كوينز"
+  },
+  "a.comm4": {
+    "ar": "من الشحن فوق 1000000 درهم = 14000000 كوينز",
+    "fr": "sur les recharges au-delà de 1 000 000 dirhams = 14 000 000 pièces",
+    "en": "on top-ups above 1,000,000 dirhams = 14,000,000 coins",
+    "da": "من الشحن فوق 1000000 درهم = 14000000 كوينز"
+  },
+  "a.roomsTitle": {
+    "ar": "الغرف الجماعية",
+    "da": "الغرف الجماعية",
+    "fr": "Salles de groupe",
+    "en": "Group rooms"
+  },
+  "a.roomsP": {
+    "ar": "يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:",
+    "da": "اللعابة يقدرو يراهنوا راس لراس فغرف الألعاب الجماعية، وكاينين جوج أنواع:",
+    "fr": "Les joueurs peuvent miser en face à face dans les salles de jeu en groupe. Il existe deux types de salles :",
+    "en": "Players can bet face-to-face in group game rooms. There are two types of rooms:"
+  },
+  "a.rooms1": {
+    "ar": "غرف مجانية وغرف للمراهنة — يحدد الداعي ما إذا كانت الغرفة عمومية أو خاصة، ومجانية أو للمراهنة.",
+    "da": "غرف فابور وغرف بالمراهنة — صاحب الغرفة هو اللي كيحدد واش عمومية ولا خاصة.",
+    "fr": "Des salles gratuites et des salles de pari — l'inviteur décide si la salle est publique ou privée, et gratuite ou de pari.",
+    "en": "Free rooms and betting rooms — the host decides whether the room is public or private, and free or for betting."
+  },
+  "a.rooms2": {
+    "ar": "غرف مراهنة برسوم ثابتة 10 كوينز لغرفة تبقى مفتوحة لساعتين بدون رسوم على الجولات.",
+    "da": "غرف مراهنة برسم ثابت 10 كوينز كتبقى محلولة ساعتين بلا رسوم على الجولات.",
+    "fr": "Salles de pari à frais fixes de 10 pièces pour une salle ouverte pendant deux heures, sans frais sur les manches.",
+    "en": "Betting rooms with a fixed fee of 10 coins for a room that stays open for two hours, with no fee on rounds."
+  },
+  "a.rooms3": {
+    "ar": "غرف مراهنة تفتح بدون قيد الوقت مع رسوم 1٪ من قيمة رهان اللاعب الرابح في كل جولة.",
+    "da": "غرف مراهنة بلا قيد الوقت مع اقتطاع 1٪ من رهان الرابح فكل جولة.",
+    "fr": "Salles de pari ouvertes sans limite de temps avec une commission de 1% de la mise du joueur gagnant à chaque manche.",
+    "en": "Betting rooms open with no time limit, with a 1% fee on the winning player's bet in each round."
+  },
+  "a.chatTitle": {
+    "ar": "قواعد الدردشة",
+    "da": "قواعد الشات",
+    "fr": "Règles du chat",
+    "en": "Chat rules"
+  },
+  "a.chatP": {
+    "ar": "في الدردشة داخل الغرف وفي دردشة المنصة يمنع الكلام النابي والعبارات الهجومية والجارحة والخادشة للحياء. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة كلما تكرر الأمر، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.",
+    "da": "فالشات ديال الغرف ولا شات المنصة ممنوع الهضرة الخايبة والسبان والكلام اللي كيجرح الحياء. اللي خالف القانون كيتوكف 24 ساعة وكتدوبل إلا عاودها.",
+    "fr": "Dans le chat des salles et celui de la plateforme, les propos grossiers, agressifs, blessants ou indécents sont interdits. Le contrevenant est banni du chat pendant 24 heures, durée doublée à chaque récidive, et toute atteinte aux bonnes mœurs ou à la vie privée des joueurs entraîne un bannissement.",
+    "en": "In room chats and the platform chat, abusive, aggressive, offensive or indecent language is forbidden. Violators are banned from chat for 24 hours, doubled on each repeat offense, and anyone violating public decency or player privacy is banned."
+  },
+  "a.contactTitle": {
+    "ar": "تواصل معنا",
+    "da": "تواصل معنا",
+    "fr": "Contactez-nous",
+    "en": "Contact us"
+  },
+  "a.contactP": {
+    "ar": "لأي استفسار حول الشحن أو السحب أو الإحالة أو الغرف، تفضل بزيارة صفحة التواصل معنا.",
+    "da": "لأي سؤال على الشحن، السحب، الإحالة ولا الغرف، دوز لصفحة تواصل معنا.",
+    "fr": "Pour toute question sur la recharge, le retrait, le parrainage ou les salles, visitez notre page de contact.",
+    "en": "For any question about top-ups, withdrawals, referrals or rooms, visit our contact page."
+  },
+  "a.contactBtn": {
+    "ar": "صفحة تواصل معنا",
+    "da": "صفحة تواصل معنا",
+    "fr": "Page de contact",
+    "en": "Contact page"
+  },
+  "a.back": {
+    "ar": "العودة للموقع",
+    "da": "الرجوع للموقع",
+    "fr": "Retour au site",
+    "en": "Back to site"
+  },
+  "a.fb2fa": {
+    "ar": "2FA محمي",
+    "da": "2FA محمي",
+    "fr": "2FA protégé",
+    "en": "2FA protected"
+  },
+  "a.fbSecure": {
+    "ar": "اتصال آمن",
+    "da": "اتصال آمن",
+    "fr": "Connexion sécurisée",
+    "en": "Secure connection"
+  },
+  "a.footer": {
+    "ar": "جميع الحقوق محفوظة",
+    "da": "جميع الحقوق محفوظة",
+    "fr": "Tous droits réservés",
+    "en": "All rights reserved"
+  },
+  "a.adminWithdraw": {
+    "ar": "يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.",
+    "fr": "Pour les administrateurs, le retrait des fonds est calculé sur la base du taux et du palier de pièces auquel le dépôt a été effectué.",
+    "en": "For admins, fund withdrawals are calculated based on the coin conversion rate and tier at which the deposit was made.",
+    "da": "بالنسبة للأدمنز، سحب الفلوس كيتم باحتساب تمن الكوينز على حساب الشريحة اللي تدار بيها الإيداع."
+  }
+};
+        var currentLang = 'ar';
+    try { currentLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+    if (currentLang !== 'fr' && currentLang !== 'en' && currentLang !== 'da') currentLang = 'ar';
+
+    function applyLang(l) {
+      if (l) currentLang = l;
+      if (currentLang !== 'fr' && currentLang !== 'en' && currentLang !== 'da') currentLang = 'ar';
+      try { localStorage.setItem('rc_lang', currentLang); } catch (e) {}
+      document.documentElement.setAttribute('lang', currentLang === 'da' ? 'ar-MA' : currentLang);
+      document.documentElement.setAttribute('dir', (currentLang === 'ar' || currentLang === 'da') ? 'rtl' : 'ltr');
+      
+      // Update data-k elements
       document.querySelectorAll('[data-k]').forEach(function (el) {
-        var v = D[el.getAttribute('data-k')];
-        if (v && v[curLang]) el.textContent = v[curLang];
+        var k = el.getAttribute('data-k');
+        if (D[k] && D[k][currentLang]) {
+          el.innerHTML = D[k][currentLang];
+        }
       });
-      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
+      // Update active state in lang buttons
+      document.querySelectorAll('.lang-drop button[data-lang], .lang-opt[data-lang]').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-lang') === currentLang);
       });
-      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — من نحن' : (curLang === 'fr' ? 'Digital Moroccan Casino — À propos' : 'Digital Moroccan Casino — About Us');
     }
-    function setLang(l) {
-      curLang = l;
-      try { localStorage.setItem('rc_lang', l); } catch (e) {}
-      applyLang();
-    }
-    /* ── تبديل الثيم ── */
-    function themeToggle() {
-      var html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'radiant') {
-        html.removeAttribute('data-theme');
-        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
-      } else {
-        html.setAttribute('data-theme', 'radiant');
-        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
-      }
-      updateThemeIcon();
-    }
-    function updateThemeIcon() {
-      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
-      var ico = document.getElementById('themeIco');
-      var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
-      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
-    }
+
+    // Call on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      applyLang(currentLang);
+    });
+    applyLang(currentLang);
+      if (_origSetLang) _origSetLang(l);
+    };
+    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+    injectLegalUI('about');
     applyLang();
-    updateThemeIcon();
   </script>
 </body>
 </html>

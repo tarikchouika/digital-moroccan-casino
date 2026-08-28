@@ -135,6 +135,10 @@ function dealB() {
   bSplitHand = [];
   bSplitActive = 0;
   bDbl = [false, false];
+  /* بداية جولة بلاك جاك — قابلة للاستئناف عند العودة */
+  if (typeof window.SessionResume !== 'undefined') {
+    try { window.SessionResume.markRoundStart({ gameId: 'bj' }); } catch (e) {}
+  }
   const seq = bSeq;
   /* تعطيل كل الأزرار حتى اكتمال التوزيع */
   document.getElementById('bDeal').disabled = true;
@@ -208,6 +212,23 @@ function doubleB() {
   SND.deal();
   renderB(true);
   if (hv(bP) > 21) {
+    if (bSplit && bSplitActive === 0) {
+      /* اليد الأولى تجاوزت 21 بعد المضاعفة → الانتقال لليد الثانية بدلاً من إنهاء اللعبة */
+      bSplitActive = 1;
+      const done = bP;
+      bP = bSplitHand;
+      bSplitHand = done;
+      gres(T('bj.hand1bust'), false);
+      renderB(true);
+      document.getElementById('bDouble').disabled = (ST.gold >= GB) ? false : true;
+      return;
+    }
+    if (bSplit && bSplitActive === 1) {
+      /* اليد الثانية تجاوزت 21 → الموزع يلعب ويحسم اليدين معاً */
+      SND.lose();
+      standB();
+      return;
+    }
     gres(' ' + T('ts.lose'), false);
     SND.lose();
     bjEncourage('lose', 0);
@@ -387,3 +408,6 @@ function endB() {
   if (areaS) areaS.style.display = 'none';
   renderB(false);
 }
+
+/* ── Export to window ── */
+window.eBj = eBj;

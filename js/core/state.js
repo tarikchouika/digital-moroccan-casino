@@ -55,8 +55,10 @@ function loadState() {
 }
 /* ── تحديث الواجهة بالرصيد ── */
 function wallet() {
-  const goldEl = document.getElementById('goldD');
-  if (goldEl) goldEl.textContent = fmt(ST.gold);
+  const goldEls = document.querySelectorAll('#goldD');
+  goldEls.forEach(function (el) { el.textContent = fmt(ST.gold); });
+  const acctGoldEl = document.getElementById('acctGoldD');
+  if (acctGoldEl) acctGoldEl.textContent = fmt(ST.gold);
 }
 /* ── عمليات الرصيد ── */
 function takeBet(amount) {
@@ -74,6 +76,10 @@ function giveWin(amount) {
   ST.gold += amount;
   wallet();
   save();
+  /* إنهاء حالة «الجولة قيد التقدم» عند تحقيق الربح */
+  if (typeof window.SessionResume !== 'undefined') {
+    try { window.SessionResume.onResolve(); } catch (e) {}
+  }
 }
 /* ── Provably Fair ── */
 function fairTick() {
@@ -92,17 +98,22 @@ function newSeeds() {
 /* ── Daily Reward ── */
 function claimDaily() {
   const now = Date.now();
-  if (now - ST.lastClaim < 10000) {
-    toast(T('ts.wait'), 'warn');
+  if (now - ST.lastClaim < 15000) {
+    toast(T('ts.wait') || 'انتظر قليلاً بين كل مطالبة', 'warn');
     return;
   }
-  ST.gold += 100;
   ST.lastClaim = now;
   save();
-  wallet();
-  SND.coin();
-  confetti(40);
-  toast(T('ts.claim'), 'ok');
+  if (typeof openWheelModal === 'function') {
+    openWheelModal();
+  } else {
+    ST.gold += 100;
+    save();
+    wallet();
+    if (typeof SND !== 'undefined' && SND.coin) SND.coin();
+    if (typeof confetti === 'function') confetti(40);
+    toast(T('ts.claim') || 'تم استلام المكافأة اليومية +100', 'ok');
+  }
 }
 /* ── تهيئة الحالة عند التحميل ── */
 function initState() {

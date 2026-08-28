@@ -108,23 +108,27 @@ html[data-theme="radiant"] {
   --shadow-gold: 0 0 22px rgba(201, 150, 31, 0.4);
 }
 
-/* الألعاب (المودال / صفحة اللعبة) تبقى داكنة في الوضع المشع — تباين كالكازينو الحقيقي */
+/* الألعاب والمودالات تبقى داكنة ومتباينة بوضوح في الوضعين — تباين كازينو فخم وواضح */
+html[data-theme="radiant"] .mwrap,
 html[data-theme="radiant"] .modal,
-html[data-theme="radiant"] #pg-game {
+html[data-theme="radiant"] #pg-game,
+html[data-theme="radiant"] .rules-full,
+html[data-theme="radiant"] .gp-head {
   --bg: #070B12;
   --bg2: #0D1320;
   --bg3: #141C2E;
   --card: #0F1626;
   --bd: #22304A;
   --bd2: #3A4C70;
-  --ctl-bd: rgba(255, 210, 63, 0.28);
+  --ctl-bd: rgba(255, 210, 63, 0.35);
   --gold: #FFD23F;
   --gold2: #F5C518;
   --copper: #C99050;
   --t1: #F6F8FC;
   --t2: #A7B0C3;
-  --t3: #66708A;
+  --t3: #7E8BA6;
   --gc: linear-gradient(145deg, #0F1626, #0D1320);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-gold: 0 0 22px rgba(255, 210, 63, 0.35);
+  color: var(--t1);
 }

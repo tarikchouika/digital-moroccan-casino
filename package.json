@@ -1,18 +1,17 @@
 {
   "name": "digital-moroccan-casino",
-  "version": "2.0.0",
-  "description": "Digital Moroccan casino - Casino Gaming Platform",
-  "type": "module",
+  "version": "2.5.1",
+  "description": "Digital Moroccan Casino — منصة الألعاب التراثية المغربية والكازينو العالمية (Vanilla JS + Node.js SSE)",
+  "private": true,
   "scripts": {
-    "dev": "node server.js",
-    "build": "echo 'No build step - vanilla JS'",
-    "test": "node test-runner.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
-    "three": "^0.167.0",
-    "@dimforge/rapier3d": "^0.14.0"
+    "playwright": "^1.40.1",
+    "three": "^0.160.0"
   },
   "devDependencies": {
-    "playwright": "^1.46.0"
+    "jsdom": "^29.1.1"
   }
 }

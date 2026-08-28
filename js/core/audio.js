@@ -98,6 +98,21 @@ function playChord(notes, duration, volume, delay) {
 }
 /* ── مكتبة الأصوات ── */
 const SND = {
+  /* ── أصوات الروندا المغربية التقليدية ── */
+  ronda() {
+    playChord([523, 659, 784, 1046], 0.3, 0.22);
+    setTimeout(() => playChord([659, 830, 987, 1318], 0.35, 0.22), 150);
+  },
+  trenta() {
+    playChord([440, 554, 659, 880], 0.4, 0.22);
+    playNoise(0.2, 0.12, 'pink');
+  },
+  messa() {
+    for (let i = 0; i < 6; i++) playTone(320 + i * 90, 0.05, 'triangle', 0.12, i * 0.035);
+  },
+  byebye() {
+    playChord([587, 740, 880, 1174], 0.3, 0.2);
+  },
   click() { playTone(700, 0.05, 'square', 0.07); },
   spin() { for (let i = 0; i < 12; i++) playTone(280 + i * 35, 0.03, 'square', 0.04, i * 0.05); },
   tick() { playTone(1100, 0.03, 'square', 0.05); },
@@ -123,18 +138,52 @@ const SND = {
   /* توقف بكرات الفواكه — كلانك معدني */
   reelStop() { playTone(180, 0.07, 'square', 0.05); playTone(95, 0.1, 'sine', 0.09, 0.01); },
   /* توزيع ورقة — حفيف خفيف مرتفع */
-  deal() { playTone(700, 0.05, 'triangle', 0.09); playTone(1100, 0.06, 'triangle', 0.06, 0.04); }
+  deal() { playTone(700, 0.05, 'triangle', 0.09); playTone(1100, 0.06, 'triangle', 0.06, 0.04); },
+
+  /* ══ [B9] أصوات ضاما المميزة لكل نوع حركة ══ */
+  /* حركة هادئة لبيدق: انزلاق خشبي قصير بطرقة خفيفة */
+  damaMove() { playNoise(0.05, 0.05, 'pink'); playTone(210, 0.06, 'sine', 0.14); playTone(140, 0.05, 'sine', 0.08, 0.03); },
+  /* حركة هادئة للضائمة (الملك): أثقل وأعمق — طيران أطول */
+  damaKingMove() { playNoise(0.09, 0.06, 'pink'); playTone(150, 0.1, 'sine', 0.16); playTone(98, 0.08, 'sine', 0.09, 0.04); },
+  /* قفزة أكل: ارتطام عميق + طقطقة الضحية */
+  damaCapture() { playTone(95, 0.11, 'sine', 0.2); playTone(230, 0.05, 'triangle', 0.12, 0.02); playNoise(0.08, 0.09); },
+  /* ضحايا متتالية في السلسلة: نغمة ترتفع مع كل ضحية */
+  damaChain(n) { var k = (n || 0) % 6; playTone(95 + k * 26, 0.1, 'sine', 0.18); playTone(230 + k * 40, 0.05, 'triangle', 0.1, 0.02); playNoise(0.07, 0.08); },
+  /* تتويج ضائمة: رنّة تتويج صاعدة */
+  damaKing() { playChord([523, 659, 784], 0.22, 0.16); playTone(1046, 0.32, 'triangle', 0.1, 0.12); playTone(1318, 0.3, 'sine', 0.07, 0.22); },
+  /* انتظار التتويج المؤجل: نغمة توقّف هادئة */
+  damaPending() { playTone(392, 0.14, 'sine', 0.09); playTone(330, 0.18, 'sine', 0.07, 0.1); },
+
+  /* ══ [B10] أصوات الشطرنج المميزة ══ */
+  /* حركة هادئة: طرقة خشبية ناعمة */
+  chessMove() { playNoise(0.04, 0.045, 'pink'); playTone(230, 0.05, 'sine', 0.13); playTone(150, 0.04, 'sine', 0.07, 0.03); },
+  /* أكل: ارتطام أعمق وطقطقة القطعة المأكولة */
+  chessCapture() { playTone(120, 0.09, 'sine', 0.2); playNoise(0.07, 0.09); playTone(260, 0.04, 'triangle', 0.1, 0.02); },
+  /* تبييت: طرقتان متتاليتان للملك والرخ */
+  chessCastle() { playTone(210, 0.05, 'sine', 0.12); playTone(180, 0.06, 'sine', 0.12, 0.09); },
+  /* كش: تنبيه حاد مزدوج */
+  chessCheck() { playTone(880, 0.08, 'square', 0.07); playTone(660, 0.11, 'square', 0.06, 0.09); },
+  /* ترقية: رنّة صاعدة */
+  chessPromote() { playChord([523, 659, 784], 0.22, 0.16); playTone(1046, 0.3, 'triangle', 0.09, 0.12); },
+  /* نهاية الجولة */
+  chessEnd() { playChord([392, 523, 659, 784], 0.5, 0.2); }
 };
 /* ── كتم / تشغيل الصوت ── */
+function syncMuteBtns() {
+  const btns = document.querySelectorAll('#muteBtn, .sound-btn');
+  btns.forEach(function (btn) {
+    btn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
+    btn.classList.toggle('active', ST.mute);
+    const ico = btn.querySelector('i');
+    if (ico) {
+      ico.className = ST.mute ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+    }
+  });
+}
 function toggleMute() {
   ST.mute = !ST.mute;
   sSet('rc_mute', ST.mute ? '1' : '0');
-  const btn = document.getElementById('muteBtn');
-  if (btn) {
-    const ico = document.getElementById('muteIco');
-    if (ico) ico.className = ST.mute ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-    btn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
-  }
+  syncMuteBtns();
   if (!ST.mute) SND.click();
 }
 /* ── Export to global ────────────────── */

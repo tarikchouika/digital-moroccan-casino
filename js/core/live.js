@@ -54,8 +54,9 @@
     var el = document.getElementById('ticker');
     if (!el) return;
     var items = RC_ticks.map(function (x) {
+      var gl = (typeof window.tickGameLabel === 'function') ? window.tickGameLabel(x[1]) : x[1];
       return '<span class="tk"> <span class="p">' + esc(x[0]) + '</span> ' + T('tk.won') +
-        ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + esc(x[1]) + ')</span></span>';
+        ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + esc(gl) + ')</span></span>';
     }).join('');
     el.innerHTML = items + items;
   }

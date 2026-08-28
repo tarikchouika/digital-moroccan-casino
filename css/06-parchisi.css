@@ -1,111 +1,641 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Parchisi Styles
+   Parchisi — طابع بني فاخر + حواف ذهبية
+   بزوايا قائمة (حدود الشاشة واللعبة)
    ═══════════════════════════════════════════ */
-/* ── Canvas ── */
+
+/* ── شاشة اللعب: خلفية بنية دافئة + إطار ذهبي بزوايا قائمة يملأ الشاشة ── */
+#parchisiGame {
+  position: relative;   /* مرجع سجل الرميات: الزاوية العليا اليسرى */
+  background:
+    radial-gradient(140% 90% at 50% 0%, rgba(97, 62, 33, 0.95) 0%, rgba(43, 25, 11, 0.97) 70%),
+    linear-gradient(180deg, #4a2f1a, #241206);
+  border: 3px solid #d9a94e;
+  border-radius: 0;
+  padding: 6px 5px 9px;
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 227, 150, 0.25), 0 0 26px rgba(217, 169, 78, 0.22);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;          /* لا يُقصّ محتوى أبداً — تمرير عند الضيق الشديد */
+  overscroll-behavior: contain;
+}
+/* ملء ارتفاع حاوية اللعبة في صفحة اللعبة (بلا فراغ أسود) */
+#pg-game.active #gamePageBody #parchisiGame {
+  height: 100%;
+  max-width: 100%;
+}
+#parchisiGame > .pr-header { flex: 0 0 auto; }
+
+/* منطقة اللوحة تتمدد عمودياً وتوسّط اللوحة — الحافة الذهبية تلاصق أسفل الشاشة */
+.pr-boardarea {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+/* ── سجل الرميات المنسدل: الزاوية 90° العليا اليسرى للشاشة (ملتقى الضلع
+     الأعلى والضلع الأيسر) • حاوية شفافة 100% • خط واضح متباين ── */
+#prRollLog {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;          /* شفافة 100% — التباين من الخط والظل */
+  pointer-events: none;
+  max-width: min(52vw, 240px);
+  max-height: calc(100% - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+#prRollLog::-webkit-scrollbar { display: none; }
+#prRollLog.show { display: flex; animation: prRlIn 0.22s ease; }
+@keyframes prRlIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.pr-rl-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.pr-rl-name {
+  color: var(--pc, #ffd75e);
+  font-weight: 900;
+  font-size: clamp(0.72rem, 3vw, 0.88rem);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.85);
+}
+.pr-rl-t {
+  color: #f4e3b2;
+  font-weight: 700;
+  font-size: clamp(0.6rem, 2.6vw, 0.74rem);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.85);
+}
+.pr-rl-x {
+  pointer-events: auto;
+  background: transparent;
+  border: 1px solid rgba(255, 215, 94, 0.55);
+  color: #ffe9a8;
+  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  font-size: 0.66rem;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+.pr-rl-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pr-rl-n {
+  color: rgba(255, 236, 190, 0.8);
+  font-size: 0.62rem;
+  font-weight: 800;
+  min-width: 11px;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+.pr-rl-dice {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pr-rl-die {
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 215, 94, 0.55);
+  color: #fff3cf;
+  font-weight: 900;
+  font-size: 0.82rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.9);
+}
+.pr-rl-row.new .pr-rl-die {
+  border-color: #ffd75e;
+  box-shadow: 0 0 10px rgba(255, 215, 94, 0.4);
+  color: #ffe9a8;
+}
+.pr-rl-dice b {
+  color: #e8cf9a;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+.pr-rl-empty {
+  color: rgba(255, 236, 190, 0.85);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+/* زر السجل الصغير بجوار أيقونة كل لاعب */
+.pr-hist-btn {
+  pointer-events: auto;
+  position: absolute;
+  right: -8px;
+  bottom: -5px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 215, 94, 0.85);
+  background: radial-gradient(circle at 35% 30%, #4a2f18, #1d0f05 85%);
+  color: #ffe9a8;
+  font-size: 9.5px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pr-hist-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(255, 215, 94, 0.5), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.pr-hist-btn:active { transform: scale(0.95); }
+#parchisiGame > .parchisi-info,
+
+
+/* ── الترويسة: اسم اللعبة + مجموع الرهان (ذهبي فاخر 3D) ── */
+.pr-header {
+  text-align: center;
+  padding: 4px 2px 8px;
+  user-select: none;
+}
+.pr-title {
+  font-size: clamp(1.6rem, 6.5vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1.15;
+  background: linear-gradient(180deg, #fff6cf 0%, #ffe08a 30%, #f2b93b 58%, #b97f1e 82%, #8a5a10 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 0 rgba(122, 77, 8, 0.9))
+    drop-shadow(0 2px 0 rgba(90, 56, 6, 0.75))
+    drop-shadow(0 3px 1px rgba(60, 37, 3, 0.6))
+    drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+}
+.pr-pot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 3px;
+  padding: 1px 14px;
+  border-top: 1px solid rgba(217, 169, 78, 0.35);
+  border-bottom: 1px solid rgba(217, 169, 78, 0.2);
+}
+.pr-pot-num {
+  font-size: 1.12rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #fff3c0, #f2c14e 55%, #b97f1e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.65)) drop-shadow(0 2px 0 rgba(122, 77, 8, 0.55));
+}
+
+/* حجم الكانفاس من حاويتها — خصوصية أعلى من قاعدة 55vh القديمة للشاشات القصيرة */
+#gamePageBody #parchisiCanvas { max-height: none !important; }
+
+/* ── غلاف اللوحة + أيقونات اللاعبين في الزوايا ── */
+.pr-boardwrap {
+  position: relative;
+  width: min(94vw, 560px);   /* احتياط — يضبطه JS على أصغر بُعد بالمنطقة */
+  max-width: 100%;
+  margin: 0 auto;
+  container-type: inline-size;
+}
 #parchisiCanvas {
-  border-radius: 16px;
-  background: #0a0e1a;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 0;
+  border: 2px solid #d9a94e;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  touch-action: manipulation;
   cursor: pointer;
   display: block;
-  margin: 0 auto;
-  max-width: 100%;
-  height: auto;
-  border: 2px solid var(--bd);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
-/* ── شاشة الإعدادات ── */
-.setup-screen {
+.pr-icons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.pr-picon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 9.6cqw;
+  height: 9.6cqw;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 58px;
+  max-height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #4a2f18, #1d0f05 82%);
+  border: 2.5px solid var(--pc);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 230, 170, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s ease;
+}
+.pr-picon.on {
+  box-shadow: 0 0 0 3px rgba(255, 215, 94, 0.9), 0 0 20px rgba(255, 215, 94, 0.55), 0 3px 9px rgba(0, 0, 0, 0.6);
+  z-index: 6;
+}
+.pr-pc {
+  color: #ffedbe;
+  font-weight: 900;
+  font-size: 3.8cqw;
+  font-size: clamp(0.72rem, 3.8cqw, 1.15rem);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+  user-select: none;
+}
+.pr-ptimer {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  /* [B6] حجم أيقونة المؤقت +50% */
+  font-size: clamp(0.87rem, 4.05cqw, 1.28rem);
+  font-weight: 800;
+  color: #ffe9a8;
+  background: rgba(22, 11, 4, 0.82);
+  border: 1.5px solid rgba(255, 215, 94, 0.55);
+  border-radius: 999px;
+  padding: 0.12em 0.5em;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.pr-picon[data-side="right"] .pr-ptimer { left: calc(100% + 0.7cqw); }
+.pr-picon[data-side="left"] .pr-ptimer { right: calc(100% + 0.7cqw); }
+.pr-ptimer.on { opacity: 1; }
+.pr-ptimer.low { color: #ff8f6a; border-color: rgba(255, 110, 80, 0.75); }
+
+/* ── نافذة الفوز/الخسارة + تصويت وجهاً لوجه ── */
+.pr-over-modal {
+  max-width: 380px;
   text-align: center;
-  padding: 20px;
+  padding: 24px 18px 20px;
+  background: linear-gradient(180deg, #3d2713, #20100400), linear-gradient(180deg, #3d2713, #1d0e04);
+  border: 2px solid #d9a94e;
+  border-radius: 0;
+  box-shadow: 0 0 34px rgba(217, 169, 78, 0.25);
 }
-.setup-screen .ctitle {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
+.pr-over-icon { font-size: 3.1rem; line-height: 1; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
+.pr-over-title {
+  font-size: 1.32rem;
+  font-weight: 900;
+  margin-top: 8px;
 }
-.setup-screen .bets {
-  margin: 14px 0;
+.pr-over-title.win {
+  background: linear-gradient(180deg, #fff6cf, #ffd75e 55%, #b97f1e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
-.setup-screen select {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: var(--bg3);
-  color: var(--t1);
-  border: 1px solid var(--bd);
-  font-family: inherit;
-  font-size: 0.85rem;
-  outline: none;
-  cursor: pointer;
-  min-height: 44px;
+.pr-over-title.lose { color: #ff9f8a; }
+.pr-over-sub {
+  color: #ffe9a8;
+  font-weight: 900;
+  font-size: 1.05rem;
+  margin-top: 4px;
 }
-.setup-screen select:focus-visible {
-  border-color: var(--gold);
+.pr-over-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 18px;
 }
-/* ── معلومات اللعبة ── */
-.parchisi-info {
+.pr-over-actions .big { min-width: 132px; }
+.pr-act-new {
+  background: linear-gradient(180deg, #ffd75e, #d9a13a) !important;
+  color: #241305 !important;
+  border: 1px solid #b8892e !important;
+  box-shadow: 0 4px 14px rgba(217, 169, 78, 0.45);
+}
+.pr-act-exit {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #f4e8cf !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+.pr-vote { margin-top: 14px; }
+.pr-vote-title {
+  color: #ffd75e;
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+.pr-vote-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+.pr-vote-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 12px 0;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 215, 94, 0.22);
+  border-left: 4px solid var(--pc);
+  border-radius: 9px;
+  padding: 7px 11px;
+  font-size: 0.86rem;
+  color: #fff;
+}
+.pr-vote-btns button {
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  padding: 3px 11px;
+  margin-inline-start: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.pr-vote-btns button:hover { background: rgba(255, 215, 94, 0.2); }
+.pr-vote-v { font-size: 1rem; }
+
+/* ── شريط المعلومات والنرد ── */
+.parchisi-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   flex-wrap: wrap;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.pr-dice-row {
+  display: flex;
   gap: 8px;
-  padding: 10px 14px;
-  background: var(--bg3);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.pr-die {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1.5px solid rgba(245, 197, 24, 0.45);
   border-radius: 12px;
-  border: 1px solid var(--bd);
+  padding: 7px 13px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  min-height: 38px;
 }
-.parchisi-info .btn {
-  padding: 8px 16px;
+.pr-die:hover:not(.on) { border-color: #f5c518; color: #f5c518; }
+.pr-die.on {
+  background: #f5c518;
+  color: #1a1207;
+  border-color: #f5c518;
+  box-shadow: 0 0 14px rgba(245, 197, 24, 0.55);
 }
-/* ── رسالة الحالة ── */
-#parchisiMessage {
-  min-height: 28px;
-  padding: 8px;
-  font-size: 0.85rem;
-  text-align: center;
+.pr-die.pr-sum { border-radius: 999px; font-size: 0.8rem; padding: 7px 12px; }
+
+@keyframes prPulse { 50% { opacity: 0.4; } }
+
+/* ── [B9] النرد الدائم بزوايا القواعد — خارج زوايا اللوحة الأربع ── */
+#prCornerDice {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 58;
 }
-#parchisiMessage.win {
-  color: var(--green2);
-  font-weight: 700;
+.pr-cd {
+  --cdsz: clamp(45px, 12vw, 63px);   /* [B10] تكبير 50% */
+  position: absolute;
+  display: flex;
+  gap: 6px;
+  transition: filter 0.25s ease;
 }
-#parchisiMessage.lose {
-  color: var(--red2);
+/* بجانب أيقونة اللاعب عند زاوية قاعدته الخارجية — يتبادل الحافة فوق/تحت اللوحة */
+.pr-cd[data-corner="tl"] { top: -18px; left: calc(6.5% + 42px); }
+.pr-cd[data-corner="tr"] { top: -18px; right: calc(6.5% + 42px); }
+.pr-cd[data-corner="bl"] { bottom: -18px; left: calc(6.5% + 42px); }
+.pr-cd[data-corner="br"] { bottom: -18px; right: calc(6.5% + 42px); }
+.pr-cdie {
+  width: var(--cdsz);
+  height: var(--cdsz);
+  border-radius: 20%;
+  background: linear-gradient(145deg, #fffef7 0%, #efe6cd 100%);
+  border: 1.5px solid rgba(12, 10, 8, 0.6);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5), inset 0 -3px 6px rgba(0, 0, 0, 0.14);
+  position: relative;
+  flex: 0 0 auto;
 }
-/* ── قطع اللاعبين (للاستخدام في UI إن لزم) ── */
-.parchisi-piece {
-  width: 24px;
-  height: 24px;
+/* صاحب الدور: حلقة بلونه حول نرديه */
+.pr-cd.on .pr-cdie {
+  box-shadow: 0 0 0 2.5px var(--cdc, #ffd75e), 0 3px 12px rgba(0, 0, 0, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.14);
+}
+.pr-cdie .pip {
+  position: absolute;
+  width: 17%;
+  height: 17%;
   border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  transition: transform 0.3s var(--ease);
+  background: radial-gradient(circle at 35% 30%, #4a3a30, #16100b 70%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
 }
-.parchisi-piece:hover {
-  transform: scale(1.15);
+
+/* ── [B6] شارة المكافأة (+20/+10): أيقونة دائرية بلا خلفية، أعلى الشاشة
+   أسفل عنوان پارتشي ومجموع الرهان — تختفي باستهلاك الحركة ── */
+.pr-bonus {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  width: clamp(38px, 10.5vw, 54px);
+  height: clamp(38px, 10.5vw, 54px);
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 215, 94, 0.95);
+  box-shadow: 0 0 0 1.5px rgba(12, 10, 8, 0.6);
+  color: #ffe9a8;
+  background: transparent;                 /* بلا خلفية بطلب صريح */
+  font-weight: 900;
+  font-size: clamp(0.95rem, 4.2vw, 1.3rem);
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  animation: prBonusIn 0.25s ease;
 }
-.parchisi-piece.p0 { background: #EF4444; }
-.parchisi-piece.p1 { background: #3B82F6; }
-.parchisi-piece.p2 { background: #10B981; }
-.parchisi-piece.p3 { background: #F59E0B; }
-/* ── Responsive لـ Parchisi ── */
+@keyframes prBonusIn { from { transform: translateX(-50%) scale(0.85); opacity: 0; } }
+
+/* ── شاشة الإعداد: بطاقة بنية فاخرة بحواف ذهبية قائمة ── */
+#parchisiSetup {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(97, 62, 33, 0.9) 0%, rgba(43, 25, 11, 0.96) 70%),
+    linear-gradient(180deg, #4a2f1a, #241206);
+  border: 3px solid #d9a94e;
+  border-radius: 0;
+  padding: 18px 14px 16px;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 227, 150, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+#pg-game.active #gamePageBody #parchisiSetup {
+  height: 100%;          /* مقيّد بجسم الصفحة — التمرير داخله لا القصّ */
+  min-height: 0;
+  justify-content: flex-start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* توسيط آمن بلا قصّ: فراغات مرنة أعلى/أسفل تنكمش عند الضيق */
+#parchisiSetup::before,
+#parchisiSetup::after { content: ''; flex: 0 0 0; margin: auto 0; min-height: 6px; }
+#parchisiSetup .ctitle {
+  text-align: center;
+  background: linear-gradient(180deg, #fff6cf 0%, #ffe08a 30%, #f2b93b 58%, #b97f1e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(122, 77, 8, 0.9)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+#parchisiSetup .bets {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(217, 169, 78, 0.28);
+  border-radius: 10px;
+  padding: 9px 12px;
+  gap: 10px;
+}
+#parchisiSetup .ctext { color: #efe2c2; font-weight: 700; }
+#parchisiSetup select {
+  background: #2c1a0a;
+  color: #ffedbe;
+  border: 1px solid rgba(217, 169, 78, 0.5);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-weight: 700;
+  font-family: inherit;
+  min-height: 40px;
+}
+#parchisiSetup .big {
+  background: linear-gradient(180deg, #ffd75e, #d9a13a);
+  color: #241305;
+  border: 1px solid #b8892e;
+  border-radius: 10px;
+  font-weight: 900;
+  box-shadow: 0 5px 16px rgba(217, 169, 78, 0.4);
+}
+#parchisiSetup .bbtn {
+  background: rgba(255, 215, 94, 0.12);
+  border: 1px solid rgba(217, 169, 78, 0.55);
+  color: #ffe9a8;
+}
+#parchisiSetup .bamt { color: #ffedbe; font-weight: 900; }
+
+/* ── شاشة الإعداد: أصناف اللعب ── */
+.pr-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pr-chip {
+  background: rgba(255, 255, 255, 0.07);
+  color: #dfe6f2;
+  border: 1.5px solid rgba(245, 197, 24, 0.4);
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+  min-height: 38px;
+}
+.pr-chip:hover:not(.on) { border-color: #f5c518; color: #f5c518; }
+.pr-chip.on {
+  background: #f5c518;
+  color: #1a1207;
+  border-color: #f5c518;
+  box-shadow: 0 0 12px rgba(245, 197, 24, 0.5);
+}
+.pr-mode-desc {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #b7a68c;
+  margin: 6px 0 2px;
+  min-height: 16px;
+  line-height: 1.5;
+}
+#parchisiTeamsRow { align-items: center; }
+
+/* ── استجابة الشاشات الصغيرة ── */
 @media (max-width: 640px) {
-  .parchisi-info {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-  .parchisi-info .btn {
-    width: 100%;
-  }
-  #parchisiCanvas {
-    border-radius: 10px;
-  }
+  #parchisiGame { padding: 4px 3px 7px; }
+  .parchisi-info { gap: 7px; }
+  .pr-die { padding: 6px 11px; font-size: 0.88rem; min-height: 36px; }
+  .pr-picon { border-width: 2px; }
+  #parchisiSetup { padding: 12px 9px 10px; gap: 7px; }
+}
+/* ارتفاع قصير (شريط عنوان ظاهر): إعداد مضغوط يتّسع بلا تمرير */
+@media (max-height: 740px) {
+  #parchisiSetup { gap: 6px; padding: 8px 8px; }
+  #parchisiSetup .ctitle { font-size: 1.05rem; }
+  #parchisiSetup .bets { padding: 6px 10px; gap: 6px; }
+  #parchisiSetup .pr-mode-desc { font-size: 0.72rem; }
+  #parchisiSetup .pr-chip { padding: 5px 9px; font-size: 0.78rem; }
+  #parchisiSetup select { min-height: 34px; padding: 5px 8px; }
+  #parchisiSetup .big { padding: 8px 18px; }
+  #parchisiSetup .bamt { padding: 4px 10px; }
+  #parchisiSetup .bbtn { width: 30px; height: 30px; }
+}
+
+/* شاشات قصيرة جداً (لوحة مفاتيح مفتوحة/هواتف صغيرة): أشدّ ضغطاً */
+@media (max-height: 660px) {
+  #parchisiSetup { gap: 4px; padding: 6px 7px; }
+  #parchisiSetup .ctitle { font-size: 0.95rem; }
+  #parchisiSetup .bets { padding: 4px 8px; gap: 4px; }
+  #parchisiSetup .pr-mode-desc { display: none; }
+  #parchisiSetup .pr-chip { padding: 4px 7px; font-size: 0.72rem; }
+  #parchisiSetup select { min-height: 30px; padding: 4px 6px; font-size: 0.8rem; }
+  #parchisiSetup .big { padding: 7px 14px; }
+}
+
+/* لاندسكيب / ارتفاع قصير: عناصر مضغوطة واللوحة بقياس المتاح */
+@media (orientation: landscape) and (max-height: 520px) {
+  #parchisiGame { padding: 3px 4px 6px; }
+  .pr-title { font-size: 1rem; }
+  .pr-header { padding: 1px 0 3px; }
+  .parchisi-info { gap: 5px; flex-wrap: wrap; }
+  .pr-die { padding: 4px 9px; font-size: 0.8rem; min-height: 30px; }
+  .pr-boardarea { min-height: 110px; }
+  #parchisiSetup { gap: 6px; }
+  #parchisiSetup .ctitle { font-size: 1.02rem; }
+  #parchisiSetup .bets { padding: 6px 9px; }
 }
 @media (max-width: 380px) {
-  .setup-screen .bets {
-    flex-direction: column;
-    gap: 8px;
-  }
-  .setup-screen select {
-    width: 100%;
-  }
+  .pr-die { padding: 5px 9px; font-size: 0.8rem; }
 }

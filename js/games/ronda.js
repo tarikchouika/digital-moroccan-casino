@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Moroccan Ronda ♦️♠️ Engine
-   محرك روندا المغربية — تخمين البطاقة قبل الموزع
+   FLAT DOG · فلات دوغ — Card guessing game
+   محرك اللعبة — تخمين الورقة قبل الموزع
+   (سابقاً Moroccan Ronda — نفس المنطق، هوية وتصميم جديد)
    ═══════════════════════════════════════════ */
 "use strict";
 let RN_ADAPTER = null;
@@ -161,15 +162,73 @@ class RondaGame extends EventEmitter {
     this.roundResults = []; /* نتائج الجولات من منظور اللاعب */
   }
   start() {
-    this.state = 'MAIN_MENU';
-    this.emit('STATE_CHANGED', { to: 'MAIN_MENU' });
+    this.state = 'IDLE';
+    this.emit('STATE_CHANGED', { to: 'IDLE' });
   }
+  /* ترتيب الورقة لتحديد الموزع: الرقم ثم الرمز (A<B<C<D) */
+  static cardRank(c) {
+    const numRank = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 10: 8, 11: 9, 12: 10 };
+    const suitRank = { A: 0, B: 1, C: 2, D: 3 };
+    return (numRank[c.number] || 0) * 4 + (suitRank[c.symbol] || 0);
+  }
+  /* توزيع ورقة لكل لاعب لتحديد الموزع (الأعلى). يفترض أن البذرة ضُبطت.
+     يُعيد {cards (محاذية للترتيب الأصلي), dealerIdx, order (الموزع أولاً)} */
+  dealForDealer(order) {
+    const tmp = new DeckManager(this.rng);
+    tmp.createDeck();
+    const cards = order.map(function () { const c = tmp.draw(); return { num: c.number, sym: c.symbol }; });
+    let best = 0;
+    for (let i = 1; i < cards.length; i++) {
+      const a = { number: cards[i].num, symbol: cards[i].sym };
+      const b = { number: cards[best].num, symbol: cards[best].sym };
+      if (RondaGame.cardRank(a) > RondaGame.cardRank(b)) best = i;
+    }
+    return { cards: cards, dealerIdx: best, order: order.slice(best).concat(order.slice(0, best)) };
+  }
+  /* اختيار الوضع (مفرد): يخصم الرهان فوراً ويُسقط أرقام الاختيار — بلا قوائم سوداء */
   chooseMode(m) {
     if (this.dead) return;
+    if (this.multiplayer) { this.mode = m; this.emit('MODE_CHOSEN', { mode: m }); return; }
     this.mode = m;
-    this.state = 'MODE_SELECTION';
+    if (!this._chargeBet()) return;
+    this.roundId++;
+    this.selection = null;
+    this.deck.createDeck();
+    this.state = 'SELECTING';
     this.emit('MODE_CHOSEN', { mode: m });
-    setTimeout(() => this._enterRoleAssignment(), 350);
+    this.emit('SELECTION_REQUIRED', {});
+  }
+  /* بدء جولة جديدة بعد سؤال «راهن/انسحب» — يُبقي الوضع نفسه */
+  betAgain() {
+    if (this.dead || this.multiplayer) return;
+    if (!this._chargeBet()) return;
+    this.roundId++;
+    this.selection = null;
+    this.deck.createDeck();
+    this.state = 'SELECTING';
+    this.emit('SELECTION_REQUIRED', {});
+  }
+  /* الانسحاب للقائمة (مفرد) */
+  withdraw() {
+    if (this.dead || this.multiplayer) return;
+    this.state = 'IDLE';
+    this.emit('STATE_CHANGED', { to: 'IDLE' });
+  }
+  /* خصم رهان الجولة مع فحص الرصيد —true إن نجح */
+  _chargeBet() {
+    if (typeof ST !== 'undefined' && ST.gold < this.bet) {
+      toast(T('ts.noc') || '❌ رصيد غير كافٍ', 'err');
+      this.state = 'IDLE';
+      this.emit('STATE_CHANGED', { to: 'IDLE' });
+      return false;
+    }
+    if (typeof ST !== 'undefined') {
+      ST.gold -= this.bet;
+      save();
+      wallet();
+    }
+    this.emit('BET_PLACED', { bet: this.bet, gold: typeof ST !== 'undefined' ? ST.gold : 0 });
+    return true;
   }
   _enterRoleAssignment() {
     if (this.dead) return;
@@ -227,15 +286,22 @@ class RondaGame extends EventEmitter {
     if (this.dead) return;
     if (this.state !== 'SELECTING' || this.myRole !== 'selector') return;
     this.selection = new Card(n, 'A', -1);
-    this.state = 'NUMBER_PICKED';
     this.emit('NUMBER_PICKED', { selection: this.selection });
+    if (this.mode === 'number_only') {
+      this.state = 'NUMBER_PICKED';
+      this._finalizeSelection();
+    } else {
+      this.state = 'SYMBOL_PICKING';
+      this.emit('SYMBOL_SELECTION_REQUIRED', { selection: this.selection });
+    }
   }
   selectSymbol(s) {
     if (this.dead) return;
     if (this.state !== 'SYMBOL_PICKING' || !this.selection) return;
     this.selection.symbol = s;
-    this.state = 'SYMBOL_PICKED';
     this.emit('SYMBOL_PICKED', { selection: this.selection });
+    this.state = 'SYMBOL_PICKED';
+    this._finalizeSelection();
   }
   confirmSelection() {
     if (this.dead) return;
@@ -308,6 +374,7 @@ class RondaGame extends EventEmitter {
       : c.equals(this.selection);
     if (cond) {
       this.emit('CARD_MATCHED', { card: c, who: 'player' });
+      if (typeof SND !== 'undefined' && SND.ronda) SND.ronda();
       setTimeout(() => this._endRound('selector'), 750);
     } else {
       this.emit('CARD_MISSED', { card: c, who: 'player' });
@@ -350,6 +417,7 @@ class RondaGame extends EventEmitter {
     const mult = this.mode === 'number_only' ? 2 : 3;
     this.emit('ROUND_RESULT', {
       won: playerWon,
+      winner: winner,
       amount: playerWon ? this.bet * mult : -this.bet,
       payout: playerWon ? this.bet * mult : 0
     });
@@ -361,16 +429,15 @@ class RondaGame extends EventEmitter {
       this.emit('ROUND_ENDED', { won: playerWon, winner: winner });
       return;
     }
-    /* solo: لا نقلب الأدوار أبداً — اللاعب متخمن دائماً */
+    /* solo: لا نقلب الأدوار أبداً — اللاعب متخمن دائماً. بعد الجولة نسأل: راهن أم ينسحب؟ */
     this.emit(playerWon ? 'PLAYER_WON' : 'DEALER_WON', {});
     setTimeout(() => {
-      this.state = 'ROUND_ENDED';
-      this.emit('ROLES_KEPT', {});
-      setTimeout(() => this._enterRoundReady(), 900);
-    }, 1500);
+      this.state = 'AWAIT_BET';
+      this.emit('AWAIT_BET', {});
+    }, 1700);
   }
 }
-/* ── الرندر ── */
+/* ── الرندر (واجهة FLAT DOG) ── */
 class RondaRenderer {
   constructor(core) {
     this.core = core;
@@ -380,15 +447,16 @@ class RondaRenderer {
   }
   _subscribe() {
     this.core.on('STATE_CHANGED', (d) => {
-      if (d.to === 'MAIN_MENU') this._showModeMenu();
+      if (d.to === 'IDLE') { this._sheet(null); this._renderRound(); }
     });
+    this.core.on('AWAIT_BET', () => this._showBetPrompt());
     this.core.on('ROLE_ASSIGNED', () => this._renderRound());
     this.core.on('ROUND_READY', () => this._updateRound());
     this.core.on('SHUFFLING_STARTED', (d) => {
-      this._setHint('🔄 ' + RL('shuffling'));
       this._addLog('🔄 ' + RL('shuffling'), 'event');
       const badge = document.getElementById('rnDeckBadge');
       if (badge) badge.textContent = d.remaining;
+      this._sheet(null);
     });
     this.core.on('SELECTION_REQUIRED', () => this._showSelection());
     this.core.on('NUMBER_PICKED', (d) => this._onNumberPicked(d));
@@ -398,11 +466,13 @@ class RondaRenderer {
     this.core.on('BET_PLACED', (d) => {
       this._addLog('🪙 ' + RL('betPlaced') + ' −' + fmt(d.bet), 'event');
       this._refreshBetBar();
+      if (typeof window.SessionResume !== 'undefined') {
+        try { window.SessionResume.markRoundStart({ bet: d.bet }); } catch (e) {}
+      }
     });
     this.core.on('CARD_MATCHED', (d) => this._showCard(d, true));
     this.core.on('CARD_MISSED', (d) => this._showCard(d, false));
     this.core.on('ROUND_RESULT', (d) => {
-      /* وضع الغرفة: المشاهد/المنتظر لا يراهن — تظهرهم اللافتة المحايدة فقط */
       if (this.core.multiplayer && (this.core.myRole === 'waiting' || this.core.myRole === 'spectator')) return;
       this._chips.push(d.won);
       if (this._chips.length > 10) this._chips.shift();
@@ -414,11 +484,17 @@ class RondaRenderer {
       } else {
         this._addLog('💔 ' + RL('youLose') + ' −' + fmt(this.core.bet) + ' 🪙', 'lose');
       }
+      if (typeof recordRound === 'function') {
+        recordRound(!!d.won, (d.won && typeof d.payout === 'number' && d.payout > 0) ? d.payout : 0,
+          (d.won ? RL('youWin') : RL('youLose')));
+      }
+      if (typeof window.SessionResume !== 'undefined') {
+        try { window.SessionResume.onResolve(); } catch (e) {}
+      }
     });
     this.core.on('PLAYER_WON', () => this._showResult(true, 'selector'));
     this.core.on('DEALER_WON', () => this._showResult(false, 'dealer'));
     this.core.on('ROUND_ENDED', (d) => {
-      /* الأدوار غير النشطة (منتظر/مشاهد): لافتة محايدة بمن ربح الجولة */
       if (this.core.myRole === 'selector' || this.core.myRole === 'dealer') return;
       this._showNeutralEnd(d.winner);
     });
@@ -428,19 +504,19 @@ class RondaRenderer {
   }
   _cardFaceHTML(c, extra) {
     const s = RN_SUITS[c.symbol] || RN_SUITS.A;
-    return '<div class="ronda-card face rn-suit-' + c.symbol + (extra ? ' ' + extra : '') + '">' +
-      '<div class="ronda-card-corner tl"><b class="rn-num">' + c.number + '</b><span class="rn-glyph">' + s.glyph + '</span></div>' +
-      '<div class="ronda-card-center"><span class="rn-glyph big">' + s.glyph + '</span></div>' +
-      '<div class="ronda-card-corner br"><b class="rn-num">' + c.number + '</b><span class="rn-glyph">' + s.glyph + '</span></div>' +
+    return '<div class="fd-card face rn-suit-' + c.symbol + (extra ? ' ' + extra : '') + '">' +
+      '<div class="fd-card-c tl"><b>' + c.number + '</b><span>' + s.glyph + '</span></div>' +
+      '<div class="fd-card-center"><span>' + s.glyph + '</span></div>' +
+      '<div class="fd-card-c br"><b>' + c.number + '</b><span>' + s.glyph + '</span></div>' +
       '</div>';
   }
-  _addLog(cls, text) {
-    this._logEntries.push({ cls: cls, text: text });
+  _addLog(text, cls) {
+    this._logEntries.push({ cls: cls || 'event', text: text });
     if (this._logEntries.length > 40) this._logEntries.shift();
     const log = document.getElementById('rnLog');
     if (!log) return;
     const row = document.createElement('div');
-    row.className = 'ronda-log-entry ' + cls;
+    row.className = 'fd-log-entry ' + (cls || 'event');
     row.textContent = text;
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
@@ -451,7 +527,7 @@ class RondaRenderer {
     log.innerHTML = '';
     this._logEntries.forEach(e => {
       const row = document.createElement('div');
-      row.className = 'ronda-log-entry ' + e.cls;
+      row.className = 'fd-log-entry ' + e.cls;
       row.textContent = e.text;
       log.appendChild(row);
     });
@@ -461,13 +537,36 @@ class RondaRenderer {
     const el = document.getElementById('rnChips');
     if (!el) return;
     el.innerHTML = this._chips.map(w =>
-      '<span class="ronda-chip ' + (w ? 'win' : 'lose') + '" title="' + (w ? RL('youWin') : RL('youLose')) + '">' +
+      '<span class="fd-chip ' + (w ? 'win' : 'lose') + '" title="' + (w ? RL('youWin') : RL('youLose')) + '">' +
       (w ? '✔' : '✖') + '</span>'
     ).join('');
   }
   _setHint(t) {
     const el = document.getElementById('rnDrawHint');
     if (el) el.textContent = t || '';
+  }
+  _sheet(html) {
+    const p = document.getElementById('rnSelectionPanel');
+    if (!p) return;
+    if (html === null || html === false || html === '') { p.classList.remove('show'); p.innerHTML = ''; return; }
+    p.innerHTML = '<div class="fd-sheet-inner">' + html + '</div>';
+    p.classList.add('show');
+  }
+  _turnLabel() {
+    const r = this.core.myRole;
+    const st = this.core.state;
+    if (r === 'spectator') return { t: RL('spectating'), ic: '👁️', glow: false };
+    if (r === 'waiting') return { t: RL('waitingTurn'), ic: '⏳', glow: false };
+    if (r === 'dealer') return { t: RL('dealer') + ' · ' + RL('waitDealer'), ic: '🃏', glow: false };
+    if (st === 'SELECTING') return { t: RL('you') + ' — ' + RL('chooseNum'), ic: '🎯', glow: true };
+    return { t: RL('selector'), ic: '🎯', glow: false };
+  }
+  _setTurn() {
+    const el = document.getElementById('fdTurn');
+    if (!el) return;
+    const info = this._turnLabel();
+    el.classList.toggle('glow', !!info.glow);
+    el.innerHTML = '<span class="fd-turn-ic">' + info.ic + '</span><span>' + info.t + '</span>';
   }
   _refreshBetBar() {
     const amt = document.getElementById('rnBetAmt');
@@ -477,183 +576,344 @@ class RondaRenderer {
     if (minus) minus.disabled = this.core.bet <= 10;
     if (plus && typeof ST !== 'undefined') plus.disabled = this.core.bet >= ST.gold;
   }
+  _refreshModeInfo() {
+    const el = document.getElementById('fdModeInfo');
+    const m = this.core.mode;
+    if (el) {
+      if (!m) { el.innerHTML = ''; }
+      else {
+        const mult = m === 'number_only' ? 2 : 3;
+        const name = m === 'number_only' ? RL('mode num') : RL('mode sym');
+        el.innerHTML =
+          '<div class="fd-mi-row"><span>' + RL('mode') + '</span><b>' + name + '</b></div>' +
+          '<div class="fd-mi-row"><span>' + RL('payout') + '</span><b class="gold">×' + mult + '</b></div>';
+      }
+    }
+    /* إبراز زر الوضع المختار في الشريط السفلي */
+    const bNum = document.getElementById('rnModeNum');
+    const bSym = document.getElementById('rnModeSym');
+    if (bNum) bNum.classList.toggle('sel', m === 'number_only');
+    if (bSym) bSym.classList.toggle('sel', m === 'number_symbol');
+  }
+  /* تفعيل/تعطيل أزرار الشريط السفلي حسب الحالة */
+  _refreshControls() {
+    const st = this.core.state;
+    const canStart = (st === 'IDLE' || st === 'AWAIT_BET');
+    ['rnBetMinus', 'rnBetPlus', 'rnModeNum', 'rnModeSym'].forEach(id => {
+      const e = document.getElementById(id);
+      if (e) e.disabled = !canStart;
+    });
+    /* زر التنازل يظهر أثناء جولة نشطة فقط (للتنازل عن الرهان) */
+    const inRound = !canStart && st !== 'BOOT';
+    const r = document.getElementById('rnResign');
+    if (r) r.style.visibility = inRound ? 'visible' : 'hidden';
+  }
+  /* سؤال بعد انتهاء الجولة: راهن أم انسحب؟ (بلا خصم تلقائي) */
+  _showBetPrompt() {
+    if (!this._alive()) return;
+    this._refreshControls();
+    this._sheet(
+      '<div class="fd-bet-prompt">' +
+        '<button class="fd-prompt-btn bet" onclick="RN_betAgain()">' + RL('betAgain') + '</button>' +
+        '<button class="fd-prompt-btn quit" onclick="RN_withdraw()">' + RL('withdraw') + '</button>' +
+      '</div>'
+    );
+  }
+  /* مرحلة تحديد الموزع: ورقة لكل لاعب، الأعلى يُتوّج موزعاً */
+  _showDealerDeal(d) {
+    if (!this._alive()) return;
+    const room = RN_ADAPTER.room;
+    const u = rnMe();
+    const idx = (d.order || []).indexOf(u && u.id);
+    this.core.myRole = idx === 0 ? 'dealer' : idx === 1 ? 'selector' : 'waiting';
+    const spect = room && (room.players || []).some(function (p) { return p.id === (u && u.id) && p.spectate; });
+    if (spect) this.core.myRole = 'spectator';
+    this.core.mode = d.mode;
+    this._sheet(null);
+    this._renderRound();   /* أعد بناء المقاعد بالترتيب الجديد (الموزع أولاً) */
+    /* خريطة اللاعب → ورقته الموزوعة */
+    const map = {};
+    (d.origOrder || []).forEach(function (pid, i) { map[pid] = d.cards[i]; });
+    const dealerId = d.order && d.order[0];
+    const dealerPl = room && (room.players || []).find(function (p) { return p.id === dealerId; });
+    const dealerName = dealerPl ? dealerPl.username : '';
+    const self = this;
+    document.querySelectorAll('.fd-seat').forEach(function (seat) {
+      const pid = seat.getAttribute('data-pid');
+      const card = map[pid];
+      const slot = seat.querySelector('.fd-seat-card');
+      if (slot && card) slot.innerHTML = self._cardFaceHTML({ number: card.num, symbol: card.sym }, '');
+      if (pid && String(pid) === String(dealerId)) seat.classList.add('dealer-pick');
+    });
+    /* لافتة تتويج الموزع */
+    const banner = document.getElementById('rnBanner');
+    const inner = document.getElementById('rnBannerInner');
+    if (banner && inner) {
+      inner.className = 'fd-banner-inner neutral';
+      const ic = document.getElementById('rnBannerIc'); if (ic) ic.textContent = '👑';
+      const txt = document.getElementById('rnBannerText'); if (txt) txt.textContent = RL('dealerPicked');
+      const sub = document.getElementById('rnBannerSub'); if (sub) sub.textContent = dealerName;
+      banner.classList.add('show');
+      setTimeout(() => { if (self._alive()) banner.classList.remove('show'); }, 2200);
+    }
+  }
+  /* يحسب شاغلي المقاعد الأربعة [main, opp1, opp2, opp3] (عكس عقارب الساعة من اللاعب الرئيسي) */
+  _seatPlayers() {
+    const me = rnMe();
+    const emptySeat = function () { return { empty: true, name: '', initials: '', role: 'empty', me: false, bot: false, id: null }; };
+    if (!this.core.multiplayer) {
+      const myName = me ? me.username : RL('you');
+      return [
+        { empty: false, name: myName, initials: rnInitials(myName), role: 'selector', me: true, bot: false, id: me ? me.id : null },
+        { empty: false, name: 'DOG', initials: 'AI', role: 'dealer', me: false, bot: true, id: null },
+        emptySeat(), emptySeat()
+      ];
+    }
+    const room = RN_ADAPTER.room;
+    const order = (room && room.order) ? room.order.slice() : [];
+    const n = order.length || 1;
+    const myIdx = Math.max(0, order.indexOf(me && me.id));
+    const seats = [];
+    for (let i = 0; i < 4; i++) {
+      if (i >= order.length || order[i] == null) { seats.push(emptySeat()); continue; }
+      const idxInOrder = (myIdx + i) % n;
+      const pid = order[idxInOrder];
+      const pl = (room.players || []).find(function (p) { return p.id === pid; });
+      const isSpec = pl && pl.spectate;
+      const role = idxInOrder === 0 ? 'dealer' : idxInOrder === 1 ? 'selector' : 'waiting';
+      seats.push({
+        empty: false,
+        name: pl ? pl.username : pid,
+        initials: (pl && pl.isBot) ? 'AI' : rnInitials(pl ? pl.username : pid),
+        role: isSpec ? 'spectator' : role,
+        me: !!(me && pid === me.id),
+        bot: !!(pl && pl.isBot),
+        id: pid
+      });
+    }
+    return seats;
+  }
   _renderRound() {
     if (!this._alive()) return;
     const c = document.getElementById('rnContainer');
     if (!c) return;
     const mp = this.core.multiplayer;
-    const roleIc = this.core.myRole === 'selector' ? '🎯'
-                 : this.core.myRole === 'spectator' ? '👁️'
-                 : this.core.myRole === 'waiting' ? '⏳' : '🃏';
-    c.innerHTML =
-      '<div class="ronda-stage">' +
-        '<div class="ronda-top">' +
-          '<div class="ronda-role ' + this.core.myRole + '">' +
-            '<span class="pulse"></span>' +
-            '<span class="ronda-role-ic">' + roleIc + '</span>' +
-            '<span>' + RL('you are') + ' <b>' + RL(this.core.myRole) + '</b></span>' +
-          '</div>' +
-          '<div class="ronda-state">' + RL('round') + ' <b>#' + this.core.roundId + '</b></div>' +
-          '<div class="ronda-chips" id="rnChips" role="list" aria-label="' + RL('score') + '"></div>' +
-        '</div>' +
-        '<div class="ronda-table">' +
-          '<div class="ronda-seat">' +
-            '<div class="ronda-label"><span class="ronda-label-ic">🃏</span> ' + RL('dealer') + (mp ? '' : ' · AI') + '</div>' +
-            '<div class="ronda-row" id="rnDealerRow">' +
-              '<div id="rnDealerCard"><div class="ronda-card back"></div></div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="ronda-table-center">' +
-            '<div class="ronda-deck" id="rnDeck">' +
-              '<div class="ronda-deck-pile"><div class="ronda-card back mini"></div></div>' +
-              '<div class="ronda-deck-count" id="rnDeckBadge">40</div>' +
-            '</div>' +
-            '<div class="ronda-draw-area" id="rnDrawArea">' +
-              '<div class="ronda-draw-slot" id="rnDrawSlot"></div>' +
-              '<div class="ronda-draw-hint" id="rnDrawHint">' + RL('chooseMode') + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="ronda-seat">' +
-            '<div class="ronda-label"><span class="ronda-label-ic">🎯</span> ' + RL('selector') + '</div>' +
-            '<div class="ronda-row" id="rnSelectorRow">' +
-              '<div id="rnSelectorCard"><div class="ronda-card back"></div></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        (mp
-          ? '<div class="ronda-rotation" id="rnRotation"></div>'
-          : '<div class="ronda-betbar">' +
-              '<span class="ronda-betbar-label">🪙 ' + RL('bet') + '</span>' +
-              '<button class="ronda-bet-btn" id="rnBetMinus" onclick="RN_changeBet(-10)" aria-label="−10">−</button>' +
-              '<div class="ronda-bet-amt" id="rnBetAmt">10</div>' +
-              '<button class="ronda-bet-btn" id="rnBetPlus" onclick="RN_changeBet(10)" aria-label="+10">+</button>' +
-            '</div>') +
-        '<div id="rnSelectionPanel" class="ronda-sel-wrap"></div>' +
-        '<div class="ronda-log" id="rnLog" role="log" aria-live="polite"></div>' +
-        '<div class="ronda-result-banner" id="rnBanner">' +
-          '<div class="ronda-result-inner" id="rnBannerInner">' +
-            '<div class="ronda-result-ic" id="rnBannerIc"></div>' +
-            '<div class="big" id="rnBannerText"></div>' +
-            '<div class="ronda-result-sub" id="rnBannerSub"></div>' +
-          '</div>' +
+    const seats = this._seatPlayers();
+    const seatHTML = function (s, pos) {
+      if (s.empty) return '<div class="fd-seat empty pos-' + pos + '" data-pid=""><div class="fd-seat-card"></div><div class="fd-seat-icon"><span class="fd-av">—</span></div></div>';
+      return '<div class="fd-seat pos-' + pos + ' ' + s.role + (s.me ? ' me' : '') + (s.bot ? ' bot' : '') + '" data-pid="' + (s.id != null ? s.id : '') + '">' +
+        '<div class="fd-seat-card"></div>' +
+        '<div class="fd-seat-icon">' +
+          '<span class="fd-av' + (s.bot ? ' bot' : '') + '">' + rnEsc(s.initials) + '</span>' +
+          '<span class="fd-seat-name">' + rnEsc(s.name) + '</span>' +
         '</div>' +
       '</div>';
+    };
+    const spectators = mp ? this._spectatorHTML() : '';
+    c.innerHTML =
+      '<div class="fd-stage">' +
+        '<div class="fd-spec-strip" id="rnSpec">' + spectators + '</div>' +
+        '<div class="fd-score" id="rnChips" aria-hidden="true"></div>' +
+        '<div class="fd-history" id="rnLog" aria-hidden="true"></div>' +
+        '<div class="fd-table">' +
+          seatHTML(seats[1], 'opp1') +   /* يمين أعلى */
+          seatHTML(seats[2], 'opp2') +   /* يسار أعلى */
+          seatHTML(seats[3], 'opp3') +   /* يسار أسفل */
+          seatHTML(seats[0], 'main') +   /* يمين أسفل (أنا) */
+          /* وسط الطاولة: ورقتا فلات ودوغ */
+          '<div class="fd-center">' +
+            '<div class="fd-zone flat" id="fdZoneFlat">' +
+              '<div class="fd-zone-label">' + RL('flatCard') + '</div>' +
+              '<div class="fd-zone-card" id="fdFlatCard"><div class="fd-card back"></div></div>' +
+            '</div>' +
+            '<div class="fd-zone dog" id="fdZoneDog">' +
+              '<div class="fd-zone-label">' + RL('dogCard') + '</div>' +
+              '<div class="fd-zone-card" id="fdDogCard"><div class="fd-card back"></div></div>' +
+            '</div>' +
+          '</div>' +
+          /* بطاقة اختيار المتخمن تُوضع في مقعد اللاعب الرئيسي */
+          '<div class="fd-selhost" id="rnSelectorCard"><div class="fd-card back"></div></div>' +
+          /* رزمة الموزع قرب مقعد الخصم 1 */
+          '<div class="fd-deckhost" id="rnDeck"><div class="fd-deck-pile"><div class="fd-card back mini"></div><div class="fd-card back mini"></div><div class="fd-card back mini"></div></div><div class="fd-deck-count" id="rnDeckBadge">40</div></div>' +
+        '</div>' +
+        /* شريط أيقونات سفلي ذهبي شفاف */
+        '<div class="fd-bottombar">' +
+          (mp ? '' :
+          '<div class="fd-bb-left">' +
+            '<button class="fd-ic-btn" id="rnBetMinus" onclick="RN_changeBet(-10)" aria-label="−" title="−10">➖</button>' +
+            '<div class="fd-bet-amt" id="rnBetAmt">10</div>' +
+            '<button class="fd-ic-btn" id="rnBetPlus" onclick="RN_changeBet(10)" aria-label="+" title="+10">➕</button>' +
+          '</div>') +
+          '<div class="fd-bb-center">' +
+            '<button class="fd-ic-btn ghost" id="rnAccept" style="display:none">✔</button>' +
+            '<button class="fd-ic-btn ghost" id="rnRefuse" style="display:none">✖</button>' +
+            '<button class="fd-ic-btn" id="rnResign" onclick="RN_resign()" title="' + RL('resign') + '">🏳️</button>' +
+          '</div>' +
+          '<div class="fd-bb-right">' +
+            '<button class="fd-ic-btn mode" id="rnModeNum" onclick="RN_chooseMode(\'number_only\')" title="' + RL('mode num') + '">🎯</button>' +
+            '<button class="fd-ic-btn mode" id="rnModeSym" onclick="RN_chooseMode(\'number_symbol\')" title="' + RL('mode sym') + '">♦️</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="fd-sheet" id="rnSelectionPanel"></div>' +
+        '<div class="fd-banner" id="rnBanner"><div class="fd-banner-inner" id="rnBannerInner"><div class="fd-banner-ic" id="rnBannerIc"></div><div class="fd-banner-text" id="rnBannerText"></div><div class="fd-banner-sub" id="rnBannerSub"></div></div></div>' +
+      '</div>';
+    this._renderChips();
+    this._renderLog();
+    this._refreshBetBar();
+    this._refreshModeInfo();
+    this._refreshControls();
+  }
+  /* شريط المتفرجين: أيقونات بأول حرفين لكل متفرج */
+  _spectatorHTML() {
+    if (!RN_ADAPTER || !RN_ADAPTER.room) return '';
+    const specs = (RN_ADAPTER.room.players || []).filter(function (p) { return p.spectate; });
+    if (!specs.length) return '';
+    return specs.map(function (p) {
+      const ini = p.isBot ? 'AI' : rnInitials(p.username || p.id);
+      return '<span class="fd-spec-ic" title="' + rnEsc(p.username || p.id) + '">' + rnEsc(ini) + '</span>';
+    }).join('');
+  }
+  /* الـ HTML الأصلي (محفوظ كاحتياط) — غير مستخدم بعد إعادة التصميم */
+  _renderRound_LEGACY() {
+    if (!this._alive()) return;
+    const c = document.getElementById('rnContainer');
+    if (!c) return;
+    const mp = this.core.multiplayer;
+    c.innerHTML =
+      '<div class="fd-stage">' +
+        '<div class="fd-topbar">' +
+          '<div class="fd-brand"><span class="fd-brand-mark">FD</span><span class="fd-brand-txt">FLAT DOG<small> · فلات دوغ</small></span></div>' +
+          '<div class="fd-turn" id="fdTurn"></div>' +
+          '<div class="fd-round" id="fdRound">' + RL('round') + ' <b>#' + this.core.roundId + '</b></div>' +
+        '</div>' +
+        '<div class="fd-main">' +
+          '<aside class="fd-left">' +
+            '<div class="fd-aside-h">🏅 ' + RL('score') + '</div>' +
+            '<div class="fd-chips" id="rnChips"></div>' +
+            '<div class="fd-aside-h">📜 ' + RL('log') + '</div>' +
+            '<div class="fd-log" id="rnLog"></div>' +
+          '</aside>' +
+          '<div class="fd-felt">' +
+            '<div class="fd-felt-ring"></div>' +
+            '<div class="fd-dealer">' +
+              '<div class="fd-pinfo"><div class="fd-avatar dog">🃏</div><div class="fd-pname">DOG <small>' + RL('dealer') + (mp ? '' : ' · AI') + '</small></div></div>' +
+              '<div class="fd-deck" id="rnDeck"><div class="fd-deck-pile"><div class="fd-card back mini"></div><div class="fd-card back mini"></div><div class="fd-card back mini"></div></div><div class="fd-deck-count" id="rnDeckBadge">40</div></div>' +
+            '</div>' +
+            '<div class="fd-zones">' +
+              '<div class="fd-zone flat" id="fdZoneFlat">' +
+                '<div class="fd-zone-label">FLAT <small>· فلات</small></div>' +
+                '<div class="fd-zone-card" id="fdFlatCard"><div class="fd-card back"></div></div>' +
+                '<div class="fd-zone-tag">' + RL('flatTag') + '</div>' +
+              '</div>' +
+              '<div class="fd-zone dog" id="fdZoneDog">' +
+                '<div class="fd-zone-label">DOG <small>· دوغ</small></div>' +
+                '<div class="fd-zone-card" id="fdDogCard"><div class="fd-card back"></div></div>' +
+                '<div class="fd-zone-tag">' + RL('dogTag') + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="fd-selector">' +
+              '<div class="fd-selcard" id="rnSelectorCard"><div class="fd-card back"></div></div>' +
+              '<div class="fd-pinfo"><div class="fd-avatar flat">🎯</div><div class="fd-pname">FLAT <small>' + RL('selector') + '</small></div></div>' +
+            '</div>' +
+            '<div class="fd-hint" id="rnDrawHint"></div>' +
+          '</div>' +
+          '<aside class="fd-side">' +
+            '<div class="fd-mode-info" id="fdModeInfo"></div>' +
+            (mp ? '<div class="fd-rotation" id="rnRotation"></div>' :
+              '<div class="fd-betbar">' +
+                '<span class="fd-bet-label">🪙 ' + RL('bet') + '</span>' +
+                '<button class="fd-bet-btn" id="rnBetMinus" onclick="RN_changeBet(-10)" aria-label="−10">−</button>' +
+                '<div class="fd-bet-amt" id="rnBetAmt">10</div>' +
+                '<button class="fd-bet-btn" id="rnBetPlus" onclick="RN_changeBet(10)" aria-label="+10">+</button>' +
+              '</div>') +
+          '</aside>' +
+        '</div>' +
+        '<div class="fd-sheet" id="rnSelectionPanel"></div>' +
+        '<div class="fd-banner" id="rnBanner"><div class="fd-banner-inner" id="rnBannerInner"><div class="fd-banner-ic" id="rnBannerIc"></div><div class="fd-banner-text" id="rnBannerText"></div><div class="fd-banner-sub" id="rnBannerSub"></div></div></div>' +
+      '</div>';
+    this._setTurn();
     if (mp) this._renderRotation();
     this._renderChips();
     this._renderLog();
     this._refreshBetBar();
+    this._refreshModeInfo();
   }
   _showModeMenu() {
     if (!this._alive()) return;
-    const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
-    p.innerHTML =
-      '<div class="ronda-sel-panel">' +
-        '<div class="ronda-sel-title">♦️ ' + RL('chooseMode') + '</div>' +
-        '<div class="ronda-modes">' +
-          '<button class="ronda-mode-btn" onclick="RN_chooseMode(\'number_only\')">' +
-            '<span class="ronda-mode-em">🎯</span>' +
-            '<span class="ronda-mode-name">' + RL('mode num') + '</span>' +
-            '<span class="ronda-mode-desc">' + RL('mode numDesc') + '</span>' +
-            '<span class="ronda-mode-mult">×2</span>' +
-          '</button>' +
-          '<button class="ronda-mode-btn" onclick="RN_chooseMode(\'number_symbol\')">' +
-            '<span class="ronda-mode-em">♦️♠️</span>' +
-            '<span class="ronda-mode-name">' + RL('mode sym') + '</span>' +
-            '<span class="ronda-mode-desc">' + RL('mode symDesc') + '</span>' +
-            '<span class="ronda-mode-mult">×3</span>' +
-          '</button>' +
-        '</div>' +
-      '</div>';
+    this._sheet(
+      '<div class="fd-sheet-h">♦️ ' + RL('chooseMode') + '</div>' +
+      '<div class="fd-modes">' +
+        '<button class="fd-mode-btn" onclick="RN_chooseMode(\'number_only\')">' +
+          '<span class="fd-mode-em">🎯</span>' +
+          '<span class="fd-mode-name">' + RL('mode num') + '</span>' +
+          '<span class="fd-mode-desc">' + RL('mode numDesc') + '</span>' +
+          '<span class="fd-mode-mult">×2</span>' +
+        '</button>' +
+        '<button class="fd-mode-btn" onclick="RN_chooseMode(\'number_symbol\')">' +
+          '<span class="fd-mode-em">♦️♠️</span>' +
+          '<span class="fd-mode-name">' + RL('mode sym') + '</span>' +
+          '<span class="fd-mode-desc">' + RL('mode symDesc') + '</span>' +
+          '<span class="fd-mode-mult">×3</span>' +
+        '</button>' +
+      '</div>'
+    );
     this._setHint(RL('chooseMode'));
+    this._setTurn();
   }
   _updateRound() {
     if (!this._alive()) return;
-    const label = document.querySelector('.ronda-state');
+    const label = document.getElementById('fdRound');
     if (label) label.innerHTML = RL('round') + ' <b>#' + this.core.roundId + '</b>';
     const badge = document.getElementById('rnDeckBadge');
     if (badge) badge.textContent = this.core.deck.remaining();
-    const panel = document.getElementById('rnSelectionPanel');
-    if (panel) {
-      panel.innerHTML =
-        '<div class="ronda-sel-panel ronda-wait-panel">' +
-          '<div class="ronda-wait-ic">🎲</div>' +
-          '<div class="ronda-wait-text">' + RL('roundReady') + '</div>' +
-        '</div>';
-    }
+    const f = document.getElementById('fdFlatCard'); if (f) f.innerHTML = '<div class="fd-card back"></div>';
+    const d = document.getElementById('fdDogCard'); if (d) d.innerHTML = '<div class="fd-card back"></div>';
+    const sc = document.getElementById('rnSelectorCard'); if (sc) sc.innerHTML = '<div class="fd-card back"></div>';
+    this._sheet(null);
+    this._setHint(RL('roundReady'));
+    this._refreshModeInfo();
+    this._setTurn();
   }
   _showSelection() {
     if (!this._alive()) return;
-    const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
-    if (this.core.myRole === 'waiting' || this.core.myRole === 'spectator') {
-      p.innerHTML =
-        '<div class="ronda-sel-panel ronda-wait-panel">' +
-          '<div class="ronda-wait-ic">' + (this.core.myRole === 'spectator' ? '👁️' : '⏳') + '</div>' +
-          '<div class="ronda-wait-text">' + RL(this.core.myRole === 'spectator' ? 'spectating' : 'waitingTurn') + '</div>' +
-        '</div>';
-      return;
-    }
-    if (this.core.myRole !== 'selector') {
-      p.innerHTML =
-        '<div class="ronda-sel-panel ronda-wait-panel">' +
-          '<div class="ronda-wait-ic">🃏</div>' +
-          '<div class="ronda-wait-text">' + RL('waitDealer') + '</div>' +
-        '</div>';
-      return;
-    }
-    p.innerHTML =
-      '<div class="ronda-sel-panel">' +
-        '<div class="ronda-sel-title">🎯 ' + RL('chooseNum') + '</div>' +
-        '<div class="ronda-nums">' +
-          RN_NUMS.map(n =>
-            '<button class="ronda-num-btn" data-num="' + n + '" onclick="RN_selectNum(' + n + ')">' + n + '</button>'
-          ).join('') +
-        '</div>' +
-        '<button class="ronda-btn primary ronda-confirm" id="rnConfirmNum" onclick="RN_confirm()" disabled>' +
-          RL('confirm') + ' ▶</button>' +
-      '</div>';
-    this._setHint(RL('chooseNum'));
+    if (this.core.myRole !== 'selector') { this._sheet(null); return; }
+    /* أرقام دائرية شفافة في خط أفقي واحد — بلا حاوية/خلفية */
+    this._sheet(
+      '<div class="fd-nums">' +
+        RN_NUMS.map(n =>
+          '<button class="fd-num-btn" data-num="' + n + '" onclick="RN_selectNum(' + n + ')">' + n + '</button>'
+        ).join('') +
+      '</div>'
+    );
+    this._refreshControls();
   }
   _onNumberPicked(d) {
     if (!this._alive()) return;
     const sel = d.selection;
     this._addLog('🎯 ' + RL('pickedNum') + ': ' + sel.number, 'event');
     const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
-    p.querySelectorAll('.ronda-num-btn').forEach(b => {
-      b.classList.toggle('sel', parseInt(b.dataset.num, 10) === sel.number);
-      b.disabled = true;
-    });
-    const cBtn = document.getElementById('rnConfirmNum');
-    if (cBtn) cBtn.disabled = false;
-    if (this.core.mode !== 'number_only') {
-      /* وضع رقم+رمز: ننتقل تلقائياً لاختيار الرمز */
-      this.core.confirmSelection();
+    if (p) {
+      p.querySelectorAll('.fd-num-btn').forEach(b => {
+        const on = parseInt(b.dataset.num, 10) === sel.number;
+        b.classList.toggle('sel', on);
+        b.disabled = !on;   /* تعطيل البقية — رقم_only يُغلق اللوحة تلقائياً */
+      });
     }
   }
   _showSymbol() {
     if (!this._alive()) return;
-    const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
     const sel = this.core.selection;
-    p.innerHTML =
-      '<div class="ronda-sel-panel">' +
-        '<div class="ronda-sel-title">✦ ' + RL('chooseSym') + '</div>' +
-        '<div class="ronda-sel-recap">' + RL('yourNum') + ': <b>' + sel.number + '</b></div>' +
-        '<div class="ronda-syms">' +
-          Object.keys(RN_SUITS).map(k => {
-            const s = RN_SUITS[k];
-            return '<button class="ronda-sym-btn" data-sym="' + k + '" onclick="RN_selectSym(\'' + k + '\')">' +
-              '<span class="ronda-sym-glyph" style="color:' + s.dark + '">' + s.glyph + '</span>' +
-              '<span class="ronda-sym-name">' + RL(s.name) + '</span>' +
-            '</button>';
-          }).join('') +
-        '</div>' +
-        '<button class="ronda-btn primary ronda-confirm" id="rnConfirmSym" onclick="RN_confirm()" disabled>' +
-          RL('confirm') + ' ▶</button>' +
-      '</div>';
-    this._setHint(RL('chooseSym'));
+    /* رموز دائرية شفافة في خط أفقي واحد — بلا حاوية/خلفية */
+    this._sheet(
+      '<div class="fd-syms">' +
+        Object.keys(RN_SUITS).map(k => {
+          const s = RN_SUITS[k];
+          return '<button class="fd-sym-btn" data-sym="' + k + '" onclick="RN_selectSym(\'' + k + '\')">' +
+            '<span style="color:' + s.dark + '">' + s.glyph + '</span>' +
+          '</button>';
+        }).join('') +
+      '</div>'
+    );
   }
   _onSymbolPicked(d) {
     if (!this._alive()) return;
@@ -661,13 +921,13 @@ class RondaRenderer {
     const s = RN_SUITS[sel.symbol];
     this._addLog('✦ ' + RL('pickedSym') + ': ' + s.glyph + ' ' + RL(s.name), 'event');
     const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
-    p.querySelectorAll('.ronda-sym-btn').forEach(b => {
-      b.classList.toggle('sel', b.dataset.sym === sel.symbol);
-      b.disabled = true;
-    });
-    const cBtn = document.getElementById('rnConfirmSym');
-    if (cBtn) cBtn.disabled = false;
+    if (p) {
+      p.querySelectorAll('.fd-sym-btn').forEach(b => {
+        const on = b.dataset.sym === sel.symbol;
+        b.classList.toggle('sel', on);
+        b.disabled = !on;
+      });
+    }
   }
   _showConfirmed(d) {
     if (!this._alive()) return;
@@ -680,45 +940,37 @@ class RondaRenderer {
       this._addLog('🃏 ' + RL('yourChoice') + ': ' + sel.number + ' ' + s.glyph + ' (' + RL(s.name) + ')', 'event');
     }
     const el = document.getElementById('rnSelectorCard');
-    if (el) {
-      el.innerHTML = this._cardFaceHTML(sel, 'selected drawn-card');
-    }
-    const panel = document.getElementById('rnSelectionPanel');
-    if (panel) {
-      panel.innerHTML =
-        '<div class="ronda-sel-panel ronda-wait-panel">' +
-          '<div class="ronda-wait-ic">🎲</div>' +
-          '<div class="ronda-wait-text">' + RL('dealing') + '</div>' +
-        '</div>';
-    }
+    if (el) el.innerHTML = this._cardFaceHTML(sel, 'selected');
+    this._sheet(null);
     this._setHint(RL('dealing'));
+    this._setTurn();
   }
   _showCard(d, matched) {
     if (!this._alive()) return;
     const c = d.card;
     const s = RN_SUITS[c.symbol] || RN_SUITS.A;
-    const who = d.who === 'dealer' ? RL('dealer') : RL('you');
-    const slot = document.getElementById('rnDrawSlot');
-    /* نعرض ظهر الورقة أولاً ثم نقلبها على وجهها */
-    if (slot) {
-      slot.innerHTML = '<div class="ronda-card back drawn"></div>';
-    }
+    const slotId = d.who === 'dealer' ? 'fdDogCard' : 'fdFlatCard';
+    const zoneId = d.who === 'dealer' ? 'fdZoneDog' : 'fdZoneFlat';
+    const slot = document.getElementById(slotId);
+    const zone = document.getElementById(zoneId);
+    if (zone) { document.querySelectorAll('.fd-zone').forEach(z => z.classList.remove('active')); zone.classList.add('active'); }
+    if (slot) slot.innerHTML = '<div class="fd-card back drawn"></div>';
     const reveal = () => {
       if (!this._alive()) return;
-      if (slot) {
-        slot.innerHTML = this._cardFaceHTML(c, (matched ? 'matched' : 'miss') + ' drawn-card');
-      }
+      if (slot) slot.innerHTML = this._cardFaceHTML(c, (matched ? 'matched' : 'miss') + ' drawn-card');
       if (matched) {
-        this._addLog('🔥 ' + RL('drewMatch') + ': ' + c.number + ' ' + s.glyph + ' (' + who + ')', 'win');
+        this._addLog('🔥 ' + RL('drewMatch') + ': ' + c.number + ' ' + s.glyph, 'win');
         SND.match();
       } else {
-        this._addLog('🃏 ' + RL('drewMiss') + ': ' + c.number + ' ' + s.glyph + ' (' + who + ')', 'event');
+        this._addLog('🃏 ' + RL('drewMiss') + ': ' + c.number + ' ' + s.glyph, 'event');
         SND.draw();
       }
       const badge = document.getElementById('rnDeckBadge');
       if (badge) badge.textContent = this.core.deck.remaining();
     };
     setTimeout(reveal, 240);
+    setTimeout(() => { if (zone) zone.classList.remove('active'); }, 1100);
+    this._setTurn();
   }
   _showResult(isWin, winner) {
     if (!this._alive()) return;
@@ -733,14 +985,10 @@ class RondaRenderer {
     const sub = document.getElementById('rnBannerSub');
     const whoWon = winner === 'dealer' ? RL('dealerWon') : RL('selectorWon');
     if (isWin) {
-      if (!mp && typeof ST !== 'undefined') {
-        ST.gold += amt;
-        save();
-        wallet();
-      }
+      if (!mp && typeof ST !== 'undefined') { ST.gold += amt; save(); wallet(); }
       SND.win();
       if (typeof celebrate === 'function' && !mp) celebrate(true);
-      inner.className = 'ronda-result-inner win';
+      inner.className = 'fd-banner-inner win';
       if (ic) ic.textContent = '🏆';
       if (txt) txt.textContent = RL('youWin');
       if (sub) sub.innerHTML = mp ? whoWon : ('+' + fmt(amt) + ' 🪙');
@@ -750,17 +998,15 @@ class RondaRenderer {
       }
     } else {
       SND.lose();
-      inner.className = 'ronda-result-inner lose';
+      inner.className = 'fd-banner-inner lose';
       if (ic) ic.textContent = '💔';
       if (txt) txt.textContent = RL('youLose');
       if (sub) sub.innerHTML = mp ? whoWon : ('−' + fmt(amt) + ' 🪙');
     }
     banner.classList.add('show');
-    setTimeout(() => {
-      banner.classList.remove('show');
-    }, 1900);
+    setTimeout(() => banner.classList.remove('show'), 1900);
+    this._setTurn();
   }
-  /* شريط ترتيب الأدوار الدائرية (الغرفة) */
   _renderRotation() {
     const el = document.getElementById('rnRotation');
     if (!el) return;
@@ -773,40 +1019,62 @@ class RondaRenderer {
       const role = i === 0 ? 'dealer' : i === 1 ? 'selector' : 'waiting';
       const meCls = (u && pid === u.id) ? ' me' : '';
       const you = (u && pid === u.id) ? ' <i>(' + RL('you') + ')</i>' : '';
-      return '<span class="ronda-rot-item ' + role + meCls + '">' + rnEsc(name) + you +
-        '<span class="ronda-rot-lbl">' + RL(role) + '</span></span>';
+      return '<span class="fd-rot-item ' + role + meCls + '">' + rnEsc(name) + you +
+        '<span class="fd-rot-lbl">' + RL(role) + '</span></span>';
     });
-    el.innerHTML = '<span class="ronda-rot-title">🔁 ' + RL('rotation') + '</span>' +
-      items.join('<span class="ronda-rot-arrow">→</span>');
+    el.innerHTML = '<span class="fd-rot-title">🔁 ' + RL('rotation') + '</span>' +
+      items.join('<span class="fd-rot-arrow">→</span>');
   }
-  /* ضيف بانتظار اختيار صاحب الغرفة للوضع (قبل أول جولة) */
   _showWaitingRoom() {
     if (!this._alive()) return;
-    const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
-    p.innerHTML =
-      '<div class="ronda-sel-panel ronda-wait-panel">' +
-        '<div class="ronda-wait-ic">🛡️</div>' +
-        '<div class="ronda-wait-text">' + RL('waitingRoomStart') + '</div>' +
-      '</div>';
+    this._sheet('<div class="fd-wait"><div class="fd-wait-ic">🛡️</div><div>' + RL('waitingRoomStart') + '</div></div>');
     this._setHint('');
   }
-  /* صاحب الغرفة (الموزع): تأكيد الوضع وبدء أول جولة */
+  /* مرحلة الرهان (غرفة): المتخمّن يقترح، الموزّع يقبل/يرفض */
+  _showBetPhase(d) {
+    if (!this._alive()) return;
+    this.core.bet = d.bet;
+    const role = this.core.myRole;
+    let html = '<div class="fd-bet-phase"><div class="fd-bp-amt"><span>' + RL('bet') + '</span><b id="rnBpAmt">' + fmt(d.bet) + '</b></div>';
+    if (role === 'selector') {
+      html += '<button class="fd-prompt-btn" onclick="RN_proposeBet(-10)">−</button>' +
+              '<button class="fd-prompt-btn" onclick="RN_proposeBet(10)">+</button>' +
+              '<button class="fd-prompt-btn bet" onclick="RN_betStart()">' + RL('startRound') + '</button>';
+    } else if (role === 'dealer') {
+      html += '<button class="fd-prompt-btn bet" id="rnBpAccept" style="display:none" onclick="RN_acceptBet()">' + RL('accept') + '</button>' +
+              '<button class="fd-prompt-btn quit" id="rnBpRefuse" style="display:none" onclick="RN_refuseBet()">' + RL('refuse') + '</button>';
+    }
+    html += '</div>';
+    this._sheet(html);
+  }
+  _onBetPropose(d) {
+    const amt = document.getElementById('rnBpAmt');
+    if (amt) amt.textContent = fmt(d.bet);
+    if (this.core.myRole === 'dealer') {
+      const a = document.getElementById('rnBpAccept'), r = document.getElementById('rnBpRefuse');
+      if (a) a.style.display = ''; if (r) r.style.display = '';
+    } else {
+      if (amt) amt.textContent = fmt(d.bet) + ' ⏳';
+    }
+  }
+  _onBetDecide(d) {
+    this.core.bet = d.bet;
+    const amt = document.getElementById('rnBpAmt');
+    if (amt) amt.textContent = fmt(d.bet);
+    const a = document.getElementById('rnBpAccept'), r = document.getElementById('rnBpRefuse');
+    if (a) a.style.display = 'none'; if (r) r.style.display = 'none';
+  }
   _showOwnerRoundStart() {
     if (!this._alive()) return;
-    const p = document.getElementById('rnSelectionPanel');
-    if (!p) return;
     const room = RN_ADAPTER.room;
     const modeName = room && room.mode === 'number_symbol' ? RL('mode sym') : RL('mode num');
-    p.innerHTML =
-      '<div class="ronda-sel-panel">' +
-        '<div class="ronda-sel-title">🃏 ' + RL('you are') + ' <b>' + RL('dealer') + '</b></div>' +
-        '<div class="ronda-sel-recap">' + RL('chooseMode') + ': <b>' + modeName + '</b></div>' +
-        '<button class="ronda-btn primary" onclick="RN_startRound()">' + RL('startRound') + '</button>' +
-      '</div>';
+    this._sheet(
+      '<div class="fd-sheet-h">🃏 ' + RL('you are') + ' <b>' + RL('dealer') + '</b></div>' +
+      '<div class="fd-sym-recap">' + RL('chooseMode') + ': <b>' + modeName + '</b></div>' +
+      '<button class="fd-btn primary" onclick="RN_startRound()">' + RL('startRound') + '</button>'
+    );
     this._setHint(RL('pickMode'));
   }
-  /* لافتة محايدة للأدوار غير النشطة (منتظر/مشاهد): من ربح الجولة */
   _showNeutralEnd(winner) {
     if (!this._alive()) return;
     const banner = document.getElementById('rnBanner');
@@ -816,19 +1084,18 @@ class RondaRenderer {
     const ic = document.getElementById('rnBannerIc');
     const txt = document.getElementById('rnBannerText');
     const sub = document.getElementById('rnBannerSub');
-    inner.className = 'ronda-result-inner neutral';
+    inner.className = 'fd-banner-inner neutral';
     if (ic) ic.textContent = '🔁';
     if (txt) txt.textContent = isSel ? RL('selectorWon') : RL('dealerWon');
     if (sub) sub.innerHTML = RL('waitingRound');
     banner.classList.add('show');
-    setTimeout(() => {
-      banner.classList.remove('show');
-    }, 1900);
+    setTimeout(() => banner.classList.remove('show'), 1900);
   }
   mount(id) {
     this._renderRound();
   }
 }
+
 /* ── المحول ── */
 class RondaPlatformAdapter {
   constructor() {
@@ -910,7 +1177,8 @@ class RondaPlatformAdapter {
       mode: rs.mode || null,
       seed: rs.seed || null,
       pick: rs.pick || null,
-      phase: rs.phase || 'mode'
+      phase: rs.phase || 'mode',
+      bet: rs.bet || 10
     };
 
     /* نهاية الجولة: المالك يدوّر الأدوار ويطلق الجولة التالية تلقائياً */
@@ -931,6 +1199,8 @@ class RondaPlatformAdapter {
       this.room.pick = pick;
       Rooms.sendMove('pick', { num: pick.num, sym: pick.sym, mode: this.core.mode }, this._statePayload());
     });
+    /* تسوية الكوينز: الخاسر يدفع للفائض (رهان×مضاعف إن فاز المتخمّن، أو الرهان إن فاز الموزّع) */
+    this.core.on('ROUND_RESULT', (d) => this._settle(d));
 
     if (!isOwner && (!rs.mode || rs.round === 0)) {
       /* ضيف: بانتظار اختيار المالك للوضع أو بدء الجولة الأولى */
@@ -943,10 +1213,9 @@ class RondaPlatformAdapter {
       if (rs.pick) this.core.receivePick(rs.pick.num, rs.pick.sym);
       return;
     }
-    /* المالك قبل أول جولة */
+    /* المالك قبل أول جولة — يختار الوضع عبر أزرار الشريط السفلي */
     if (isOwner && !rs.mode) {
-      this.renderer._showModeMenu();
-      this.renderer._setHint(RL('pickMode'));
+      this.renderer._renderRound();
     } else {
       this.renderer._showOwnerRoundStart();
     }
@@ -962,6 +1231,7 @@ class RondaPlatformAdapter {
     this.room.phase = d.phase || 'playing';
     const c = this.core;
     c.mode = d.mode;
+    c.bet = this.room.bet;
     const u = rnMe();
     const idx = (d.order || []).indexOf(u && u.id);
     c.myRole = idx === 0 ? 'dealer' : idx === 1 ? 'selector' : 'waiting';
@@ -985,6 +1255,8 @@ class RondaPlatformAdapter {
   /* المالك يطلق جولة جديدة (بذرة عشوائية تُبث للجميع) */
   ownerStartRound() {
     if (!this.room || !this.room.isOwner || !this.room.mode) return;
+    if (this._betTimer) { clearTimeout(this._betTimer); this._betTimer = null; }
+    if (this._propTimer) { clearTimeout(this._propTimer); this._propTimer = null; }
     this.room.round++;
     this.room.seed = (Math.random() * 0xFFFFFFFF) >>> 0;
     this.room.pick = null;
@@ -1001,7 +1273,111 @@ class RondaPlatformAdapter {
   }
   startRound() {
     if (!this.room || !this.room.isOwner) return;
+    /* أول جولة: حدّد الموزع بأعلى ورقة قبل البدء */
+    if (this.room.round === 0) { this.ownerDetermineDealer(); return; }
     this.ownerStartRound();
+  }
+  /* تحديد الموزع: توزيع ورقة لكل لاعب، الأعلى يصبح الموزع (ترتيب جديد) */
+  ownerDetermineDealer() {
+    if (!this.room || !this.room.isOwner || !this.room.mode) return;
+    const order = this.room.order.slice();
+    const seed = (Math.random() * 0xFFFFFFFF) >>> 0;
+    this.core.rng.setSeed(seed);
+    const res = this.core.dealForDealer(order);
+    this.room.order = res.order;
+    this.room.seed = seed;
+    this.room.phase = 'dealing';
+    const payload = { cards: res.cards, origOrder: order, order: res.order, seed: seed, mode: this.room.mode };
+    Rooms.sendMove('deal', payload, this._statePayload());
+    this.renderer._showDealerDeal(payload);
+    setTimeout(() => this.ownerStartBetPhase(), 2600);
+  }
+  /* مرحلة الرهان: المتخمّن يقترح، الموزّع يقبل/يرفض الزيادة */
+  ownerStartBetPhase() {
+    if (!this.room || !this.room.isOwner) return;
+    if (this._betTimer) clearTimeout(this._betTimer);
+    if (this._propTimer) clearTimeout(this._propTimer);
+    this.room.phase = 'bet';
+    const d = { bet: this.room.bet, dealer: this.room.order[0], selector: this.room.order[1], mode: this.room.mode };
+    Rooms.sendMove('betphase', d, this._statePayload());
+    this.renderer._showBetPhase(d);
+    /* إن لم يؤكّد المتخمّن خلال 15 ثانية يبدأ المالك الجولة تلقائياً (يمنع الجمود) */
+    this._betTimer = setTimeout(() => this._onSelectorTimeout(), 30000);
+  }
+  /* المتخمّن يقترح رهاناً جديداً (زيادة/نقصان) */
+  proposeBet(delta) {
+    if (!this.room || this.core.myRole !== 'selector') return;
+    const proposed = Math.max(10, this.room.bet + delta);
+    if (proposed === this.room.bet) return;
+    Rooms.sendMove('betpropose', { bet: proposed }, this._statePayload());
+    this.renderer._onBetPropose({ bet: proposed, mine: true });
+  }
+  /* الموزّع يقرّر: قبول الزيادة أو رفضها */
+  decideBet(accept, proposed) {
+    if (!this.room || this.core.myRole !== 'dealer') return;
+    if (this._propTimer) { clearTimeout(this._propTimer); this._propTimer = null; }
+    if (accept) this.room.bet = proposed;
+    Rooms.sendMove('betdecide', { accept: accept, bet: this.room.bet }, this._statePayload());
+    this.renderer._onBetDecide({ accept: accept, bet: this.room.bet });
+  }
+  /* المتخمّن يؤكّد الرهان ويبدأ الجولة */
+  betStart() {
+    if (!this.room || this.core.myRole !== 'selector') return;
+    Rooms.sendMove('betstart', { bet: this.room.bet }, this._statePayload());
+    if (this.room.isOwner) this.ownerStartRound();
+  }
+  /* تسوية الكوينز (بوساطة المالك): يُقتطع من الخاسر ويُضاف للرابح ناقص رسم الرهان */
+  _onSelectorTimeout() {
+    if (!this.room || !this.room.isOwner || this.room.phase !== 'bet') return;
+    const selId = this.room.order[1];
+    if (selId == null) return;
+    const self = this;
+    API.post('/api/rooms/timeoutSeat', { room_id: this.room.id, playerId: selId }).then(function (r) {
+      if (r && r.ok && r.room) { self.room.players = r.room.players; self._rebuildAfterTimeout(); }
+    }).catch(function () {});
+  }
+  _rebuildAfterTimeout() {
+    if (!this.room || !this.room.isOwner) return;
+    const dealerId = this.room.order[0];
+    const nonSpec = (this.room.players || []).filter(function (p) { return !p.spectate; })
+      .sort(function (a, b) { return (a.seat || 0) - (b.seat || 0); }).map(function (p) { return p.id; });
+    if (nonSpec.length < 2) { if (this.renderer) this.renderer._showWaitingRoom(); return; }
+    const reordered = [dealerId].concat(nonSpec.filter(function (id) { return String(id) !== String(dealerId); }));
+    this.room.order = reordered;
+    this.room.phase = 'bet';
+    const d = { bet: this.room.bet, dealer: reordered[0], selector: reordered[1], mode: this.room.mode };
+    Rooms.sendMove('betphase', d, this._statePayload());
+    if (this.renderer) this.renderer._showBetPhase(d);
+    this._betTimer = setTimeout(() => this._onSelectorTimeout(), 30000);
+  }
+  _onPropTimeout() {
+    if (!this.room || !this.room.isOwner || this.room.phase !== 'bet') return;
+    if (this._pendingProposed == null) return;
+    this._pendingProposed = null;
+    Rooms.sendMove('betdecide', { accept: false, bet: this.room.bet }, this._statePayload());
+    if (this.renderer) this.renderer._onBetDecide({ accept: false, bet: this.room.bet });
+  }
+  _settle(d) {
+    if (!this.room || !this.core.multiplayer || !this.room.isOwner) return;
+    const winnerSide = d.winner;
+    if (!winnerSide || typeof API === 'undefined') return;
+    const mult = this.core.mode === 'number_only' ? 2 : 3;
+    const players = this.room.players || [];
+    const self = this;
+    const dealer = players.find(function (p) { return p.id === self.room.order[0]; });
+    const selector = players.find(function (p) { return p.id === self.room.order[1]; });
+    if (!dealer || !selector) return;
+    var winner, loser, amount;
+    if (winnerSide === 'selector') { winner = selector; loser = dealer; amount = this.room.bet * mult; }
+    else { winner = dealer; loser = selector; amount = this.room.bet; }
+    API.post('/api/rooms/settle', { room_id: this.room.id, loser: loser.username, winner: winner.username, amount: amount }).then(function (r) {
+      if (r && r.ok && typeof ST !== 'undefined') {
+        var u = (typeof AUTH !== 'undefined' && AUTH.user) ? AUTH.user : null;
+        if (u && r.winner && r.winner.username === u.username) { ST.gold = r.winner.gold; if (AUTH.user) AUTH.user.gold = r.winner.gold; save(); wallet(); }
+        else if (u && r.loser && r.loser.username === u.username) { ST.gold = r.loser.gold; if (AUTH.user) AUTH.user.gold = r.loser.gold; save(); wallet(); }
+        if (typeof toast === 'function') toast((winnerSide === 'selector' ? '🏆 ' : '💔 ') + loser.username + ' ← ' + fmt(amount) + ' 🪙' + (r.fee ? ' (رسم ' + fmt(r.fee) + ')' : ''), 'ok');
+      }
+    }).catch(function () {});
   }
   destroy() {
     if (this.core) this.core.dead = true;
@@ -1031,6 +1407,52 @@ function RN_changeBet(d) {
   SND.click();
   if (RN_ADAPTER) RN_ADAPTER.setBet(d);
 }
+/* التنازل (للمفرد فقط): يتخلى المتخمن فتفوز الضاربة (DOG) */
+function RN_resign() {
+  SND.click();
+  if (RN_ADAPTER && RN_ADAPTER.core && !RN_ADAPTER.core.multiplayer) {
+    RN_ADAPTER.core._endRound('dealer');
+  }
+}
+/* المراهنة مجدداً بعد سؤال «راهن/انسحب» (مفرد) */
+function RN_betAgain() {
+  SND.click();
+  if (RN_ADAPTER && RN_ADAPTER.core && !RN_ADAPTER.core.multiplayer) {
+    RN_ADAPTER.core.betAgain();
+  }
+}
+/* الانسحاب للقائمة (مفرد) */
+function RN_withdraw() {
+  SND.click();
+  if (RN_ADAPTER && RN_ADAPTER.core && !RN_ADAPTER.core.multiplayer) {
+    RN_ADAPTER.core.withdraw();
+  }
+}
+/* مرحلة الرهان (غرفة): المتخمّن يقترح، الموزّع يقبل/يرفض */
+function RN_proposeBet(delta) {
+  SND.click();
+  if (RN_ADAPTER) RN_ADAPTER.proposeBet(delta);
+}
+function RN_acceptBet() {
+  SND.click();
+  if (RN_ADAPTER && RN_ADAPTER._pendingProposed != null) RN_ADAPTER.decideBet(true, RN_ADAPTER._pendingProposed);
+}
+function RN_refuseBet() {
+  SND.click();
+  if (RN_ADAPTER) RN_ADAPTER.decideBet(false, RN_ADAPTER._pendingProposed || 0);
+}
+function RN_betStart() {
+  SND.click();
+  if (RN_ADAPTER) RN_ADAPTER.betStart();
+}
+/* أول حرفين من الاسم كصورة رمزية */
+function rnInitials(name) {
+  if (!name) return '؟';
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  const s = parts[0];
+  return s.substring(0, Math.min(2, s.length)).toUpperCase();
+}
 /* ── الغرفة: أحداث وبدء الجولة ── */
 function RN_startRound() {
   SND.click();
@@ -1048,6 +1470,38 @@ function RN_roomMove(d) {
       ad.renderer._renderRound();
       ad.renderer._showWaitingRoom();
     }
+    return;
+  }
+  if (d.action === 'deal') {
+    /* تحديد الموزع: أظهر ورقة كل لاعب ثم يبدأ المالك الجولة الأولى */
+    ad.room.order = d.data.order;
+    ad.room.seed = d.data.seed;
+    ad.room.mode = d.data.mode;
+    ad.room.phase = 'dealing';
+    if (ad.renderer) ad.renderer._showDealerDeal(d.data);
+    return;
+  }
+  if (d.action === 'betphase') {
+    ad.room.bet = d.data.bet; ad.room.phase = 'bet';
+    if (ad.renderer) ad.renderer._showBetPhase(d.data);
+    return;
+  }
+  if (d.action === 'betpropose') {
+    ad._pendingProposed = d.data.bet;
+    if (ad.room.isOwner) { if (ad._propTimer) clearTimeout(ad._propTimer); ad._propTimer = setTimeout(function () { ad._onPropTimeout(); }, 30000); }
+    if (ad.renderer) ad.renderer._onBetPropose({ bet: d.data.bet });
+    return;
+  }
+  if (d.action === 'betdecide') {
+    ad.room.bet = d.data.bet; ad._pendingProposed = null;
+    if (ad._propTimer) { clearTimeout(ad._propTimer); ad._propTimer = null; }
+    if (ad.renderer) ad.renderer._onBetDecide(d.data);
+    return;
+  }
+  if (d.action === 'betstart') {
+    if (ad._betTimer) { clearTimeout(ad._betTimer); ad._betTimer = null; }
+    if (ad._propTimer) { clearTimeout(ad._propTimer); ad._propTimer = null; }
+    if (ad.room.isOwner) ad.ownerStartRound();
     return;
   }
   if (d.action === 'round') {
@@ -1081,8 +1535,24 @@ const RONDA_L = {
   bet: ['الرهان', 'Mise', 'Bet'],
   betPlaced: ['رهان الجولة:', 'Mise du tour:', 'Round bet:'],
   confirm: ['تأكيد', 'Confirmer', 'Confirm'],
+  accept: ['قبول', 'Accepter', 'Accept'],
+  refuse: ['رفض', 'Refuser', 'Refuse'],
   remaining: ['المتبقي', 'Restantes', 'Left'],
   score: ['النتيجة', 'Score', 'Score'],
+  log: ['السجل', 'Journal', 'Log'],
+  openSeat: ['مقعد شاغر', 'Siège libre', 'Open seat'],
+  spectator: ['متفرج', 'Spectateur', 'Spectator'],
+  waiting: ['في الانتظار', 'En attente', 'Waiting'],
+  resign: ['تنازل', 'Abandonner', 'Resign'],
+  betAgain: ['راهن', 'Parier', 'Bet'],
+  withdraw: ['انسحب', 'Se retirer', 'Withdraw'],
+  dealerPicked: ['الموزع:', 'Donneur :', 'Dealer:'],
+  mode: ['الوضع', 'Mode', 'Mode'],
+  payout: ['المضاعف', 'Gain', 'Payout'],
+  flatTag: ['بطاقة المتخمن', 'Carte du devineur', "Guesser's card"],
+  dogTag: ['بطاقة الموزع', 'Carte du donneur', "Dealer's card"],
+  flatCard: ['فلات', 'FLAT', 'FLAT'],
+  dogCard: ['دوغ', 'DOG', 'DOG'],
   shuffling: ['خلط الأوراق…', 'Mélange du paquet…', 'Shuffling…'],
   roundReady: ['الجولة جاهزة…', 'Tour prêt…', 'Round ready…'],
   waitDealer: ['أنت الموزع الآن — انتظر سحب الخصم', 'Vous êtes donneur — attendez', 'You are the dealer — wait'],
@@ -1112,5 +1582,11 @@ const RONDA_L = {
   selectorWon: ['المتخمن ربح الجولة', 'Le devineur gagne', 'Guesser wins the round']
 };
 function RL(k) {
-  return RONDA_L[k] ? RONDA_L[k][langIndex()] : k;
+  var e = RONDA_L[k];
+  if (!e) return k;
+  return e[langIndex()] != null ? e[langIndex()] : e[0];
 }
+
+/* ── Export to window ── */
+window.eRonda = eRonda;
+window.initRonda = initRonda;

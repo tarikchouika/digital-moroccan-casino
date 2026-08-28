@@ -51,8 +51,9 @@ async function initCrashThree() {
   const container = document.getElementById('crash3d');
   if (!container) return;
 
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  try {
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -117,6 +118,9 @@ async function initCrashThree() {
 
   // Start render loop
   animateCrash();
+  } catch (e) {
+    if (typeof console !== 'undefined') console.warn('Crash 3D init failed:', e && e.message);
+  }
 }
 
 // ── بناء الطائرة 3D ──────────────────────────────────────────

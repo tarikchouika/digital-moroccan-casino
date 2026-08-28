@@ -11,6 +11,7 @@ const GAME_IMG = {
   wg: 'wingo', rp: 'rock-paper', pn: 'football', l7: 'lucky-7', sb: 'sic-bo',
   rl: 'roulette', bj: 'blackjack', bc: 'baccarat', dt: 'dragon', vp: 'poker',
   ke: 'keno', sl: 'slot-spin', ab: 'andar-bahar',
+  rm: 'rami',
   crabbin: 'crabbin',
   fishing: 'fishing',
   gates: 'gates',
@@ -27,20 +28,24 @@ function tileHTML(g) {
   const tagClass = { HOT: 'hot', NEW: 'new', LIVE: 'live' }[g.tag] || 'hot';
   const img = GAME_IMG[g.id];
   const art = img
-    ? '<div class="art ' + g.art + ' hasimg" aria-hidden="true"><img src="assets/games/' + img + '/icon.webp" alt="" loading="lazy"></div>'
+    ? '<div class="art ' + g.art + ' hasimg" aria-hidden="true">' +
+        '<span class="art-emoji">' + (g.em || '') + '</span>' +
+        '<img src="assets/games/' + img + '/icon.webp" alt="" loading="lazy" ' +
+        'onerror="var p=this.parentNode;this.remove();if(p)p.classList.remove(\'hasimg\');">' +
+      '</div>'
     : '<div class="art ' + g.art + '" aria-hidden="true">' + g.em + '</div>';
-  const networkIndicator = [ 'rp', 'pn', 'pr', 'rn' ].includes(g.id) ? '<span class="net-indicator net-enabled">🔌 سريع</span>' : '';
-  const playButton = [ 'rp', 'pn', 'pr', 'rn' ].includes(g.id)
+  const networkIndicator = [ 'rp', 'pn', 'pr', 'rn', 'rm' ].includes(g.id) ? '<span class="net-indicator net-enabled">🔌 ' + (T('g.multi') || 'P2P') + '</span>' : '';
+  const playButton = [ 'rp', 'pn', 'pr', 'rn', 'rm' ].includes(g.id)
     ? '<button class="playbtn net-btn" onclick="Rooms.toggleFromGame()" aria-label="' + T('g.play') + ' →">' + T('g.play') + ' →</button>'
     : '<button class="playbtn" onclick="openGame(\'' + g.id + '\')" aria-label="' + T('g.play') + ' →">' + T('g.play') + ' →</button>';
   return '<div class="tile" onclick="openGame(\'' + g.id + '\')" ' +
-    'role="button" tabindex="0" aria-label="' + g.n + '" ' +
+    'role="button" tabindex="0" aria-label="' + gname(g) + '" ' +
     'onkeypress="if(event.key===\'Enter\') openGame(\'' + g.id + '\')">' +
     '<span class="gtag ' + tagClass + '">' + g.tag + '</span>' +
     '<span class="gpl"><span class="dot" aria-hidden="true"></span>' + fmt(g.pl) + '</span>' +
     art +
     '<div class="tinfo">' +
-      '<div class="tname">' + g.n + '</div>' +
+      '<div class="tname">' + gname(g) + '</div>' +
       '<div class="tmeta">' +
         '<span>' + g.d[langIndex()] + '</span>' +
         '<span class="rtp">' + g.rtp + '%</span>' +
@@ -136,7 +141,7 @@ function renderTourney() {
         return '<div class="card">' +
           '<div style="font-size:1.6rem;text-align:center">' + g.em + '</div>' +
           '<b>' + esc(t.name) + '</b>' +
-          '<div class="mrow"><span>' + T('tourney.game') + '</span><b>' + esc(g.n) + '</b></div>' +
+          '<div class="mrow"><span>' + T('tourney.game') + '</span><b>' + esc(gname(g)) + '</b></div>' +
           '<div class="mrow"><span>' + T('tourney.owner') + '</span><b>' + esc(t.owner_name) + '</b></div>' +
           '<div class="mrow"><span>' + T('tourney.prize') + '</span><b class="gold-text">🪙 ' + fmt(t.prize) + '</b></div>' +
           '<div class="mrow"><span>' + T('tourney.players') + '</span><b>' + t.players_count + '/' + t.max_players + '</b></div>' +
@@ -178,7 +183,7 @@ function renderRooms() {
       }
       return '<div class="card">' +
         '<div style="font-size:1.6rem;text-align:center">' + g.em + '</div>' +
-        '<b>' + esc(g.n) + '</b>' +
+        '<b>' + esc(gname(g)) + '</b>' +
         '<div class="mrow"><span>' + T('rooms.host') + '</span><b>' + esc(rm.owner_name) + '</b></div>' +
         '<div class="mrow"><span>' + T('rooms.players') + '</span><b>' + rm.players_count + '/' + rm.max_players + '</b></div>' +
         '<div class="mrow"><span>' + T('rooms.code') + '</span><b dir="ltr">' + esc(rm.code) + '</b></div>' +
@@ -193,6 +198,18 @@ function renderRooms() {
 function joinOpenRoom(code) {
   if (typeof Rooms !== 'undefined' && Rooms.joinRoom) Rooms.joinRoom(code);
 }
+/* ولوج غرفة عبر كود خاص (مدخل من صفحة الغرف) — كلاعب أو متفرج */
+function joinRoomByCode() {
+  var inp = document.getElementById('roomCodeInput');
+  if (!inp) return;
+  var code = (inp.value || '').trim();
+  if (!code) {
+    if (typeof toast === 'function') toast((T('rooms.enterCode') || 'أدخل كود الغرفة') + ' ⚠', 'warn');
+    inp.focus();
+    return;
+  }
+  joinOpenRoom(code);
+}
 
 /* ── إنشاء بطولة (مودال) ── */
 function openTcModal() {
@@ -201,7 +218,7 @@ function openTcModal() {
   if (sel && !sel.options.length) {
     const allowed = ['rn', 'rp', 'pn', 'pr', 'ke', 'av', 'rl', 'bj', 'bc'];
     sel.innerHTML = GAMES.filter(function (g) { return allowed.indexOf(g.id) >= 0; })
-      .map(function (g) { return '<option value="' + g.id + '">' + g.em + ' ' + esc(g.n) + '</option>'; })
+      .map(function (g) { return '<option value="' + g.id + '">' + g.em + ' ' + esc(gname(g)) + '</option>'; })
       .join('');
   }
   const msg = document.getElementById('tcMsg');
@@ -268,18 +285,48 @@ function sendCoins() {
   const to = ((document.getElementById('trTo') || {}).value || '').trim();
   const amtEl = document.getElementById('trAmt');
   const amount = parseInt(amtEl ? amtEl.value : '0', 10);
-  if (!to) { toast(T('tr.recipient') + ' ⚠', 'warn'); return; }
-  if (Number.isNaN(amount) || amount <= 0) { toast(T('tr.badAmount'), 'err'); return; }
-  if (AUTH.user && to === AUTH.user.username) { toast(T('tr.self'), 'warn'); return; }
+  if (!to) { toast((T('tr.recipient') || 'يرجى إدخال اسم المستلم') + ' ⚠', 'warn'); return; }
+  if (Number.isNaN(amount) || amount <= 0) { toast(T('tr.badAmount') || 'المبلغ غير صالح', 'err'); return; }
+  if (AUTH.user && to === AUTH.user.username) { toast(T('tr.self') || 'لا يمكنك التحويل لنفسك', 'warn'); return; }
+  if (ST.gold < amount) {
+    toast(T('ts.noc') || 'رصيدك غير كافٍ', 'err');
+    if (typeof SND !== 'undefined' && SND.lose) SND.lose();
+    return;
+  }
+  
+  // اقتطاع أوتوماتيكي فوري من رصيد اللاعب
+  ST.gold -= amount;
+  if (AUTH.user) AUTH.user.gold = ST.gold;
+  wallet();
+  save();
+  if (typeof SND !== 'undefined' && SND.coin) SND.coin();
+
   API.post('/api/transfer', { to: to, amount: amount }).then(function (r) {
     if (r.ok) {
-      toast('🪙 ' + fmt(amount) + ' → ' + esc(r.data.to) + ' ✔', 'ok');
+      toast('🪙 ' + fmt(amount) + ' → ' + esc(r.data.to || to) + ' ✔', 'ok');
       if (amtEl) amtEl.value = '100';
-      if (typeof wallet === 'function') wallet();
+      if (typeof r.data === 'object' && typeof r.data.gold === 'number') {
+        ST.gold = r.data.gold;
+        if (AUTH.user) AUTH.user.gold = r.data.gold;
+      }
+      wallet();
+      save();
       loadTrHistory();
+      if (typeof renderTransactions === 'function') renderTransactions();
     } else {
+      // استرداد الرصيد في حال رفض الخادم
+      ST.gold += amount;
+      if (AUTH.user) AUTH.user.gold = ST.gold;
+      wallet();
+      save();
       toast((r.data && r.data.message) || T('auth.error'), 'err');
     }
+  }).catch(function () {
+    ST.gold += amount;
+    if (AUTH.user) AUTH.user.gold = ST.gold;
+    wallet();
+    save();
+    toast(T('auth.error'), 'err');
   });
 }
 function loadTrHistory() {
@@ -301,11 +348,127 @@ function loadTrHistory() {
     list.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
   });
 }
-/* ═══════════ فتح / إغلاق صفحة اللعبة ═══════════ */
+/* ═══════════ صفحة سجل المعاملات ═══════════ */
+function openTransactionHistory() {
+  if (!AUTH.user) { toast(T('tr.needLogin'), 'warn'); return; }
+  closeAcctMenu();
+  nav('transactions', null);
+  renderTransactions();
+}
+function renderTransactions() {
+  const pg = document.getElementById('pg-transactions');
+  if (!pg || !pg.classList.contains('active')) return;
+  const txTransfers = document.getElementById('txTransfers');
+  const txRounds = document.getElementById('txRounds');
+  if (!txTransfers || !txRounds) return;
+  if (!AUTH.user) {
+    txTransfers.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    txRounds.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    return;
+  }
+  /* التحويلات بين اللاعبين */
+  txTransfers.innerHTML = '<div class="note">…</div>';
+  API.get('/api/transfers').then(function (r) {
+    const trs = (r.ok && r.data && r.data.transfers) ? r.data.transfers : [];
+    if (!trs.length) { txTransfers.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
+    const meId = AUTH.user.id;
+    txTransfers.innerHTML =
+      '<table class="atable tr-t">' +
+      '<thead><tr>' +
+        '<th>' + T('tr.type') + '</th>' +
+        '<th>' + T('tr.counterparty') + '</th>' +
+        '<th>' + T('tr.sent') + '</th>' +
+        '<th>' + T('tr.received') + '</th>' +
+        '<th>' + T('tr.time') + '</th>' +
+      '</tr></thead><tbody>' +
+      trs.map(function (tr) {
+        const outgoing = tr.from_id === meId;
+        const who = outgoing ? tr.to_name : tr.from_name;
+        const t = tr.created_at ? new Date(tr.created_at * 1000).toLocaleString() : '—';
+        const sentCell = outgoing ? '<td>− 🪙 ' + fmt(tr.amount) + '</td>' : '<td>—</td>';
+        const recvCell = outgoing ? '<td>—</td>' : '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
+        const spillClass = outgoing ? 'bad' : 'ok';
+        const dirLabel = outgoing ? '→ ' + T('tr.sent') : '← ' + T('tr.received');
+        return '<tr>' +
+          '<td><span class="spill ' + spillClass + '">' + dirLabel + '</span></td>' +
+          '<td>' + esc(who) + '</td>' +
+          sentCell + recvCell +
+          '<td>' + t + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }).catch(function () {
+    txTransfers.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+  /* سجل المراهنات (الألعاب) */
+  txRounds.innerHTML = '<div class="note">…</div>';
+  API.get('/api/rounds').then(function (r) {
+    const rounds = (r.ok && r.data && r.data.rounds) ? r.data.rounds : [];
+    if (!rounds.length) { txRounds.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
+    txRounds.innerHTML =
+      '<table class="atable tr-t">' +
+      '<thead><tr>' +
+        '<th>' + T('tr.game') + '</th>' +
+        '<th>' + T('tr.bet') + '</th>' +
+        '<th>' + T('tr.outcome') + '</th>' +
+        '<th>' + T('tr.time') + '</th>' +
+      '</tr></thead><tbody>' +
+      rounds.map(function (rd) {
+        const g = (typeof GAMES !== 'undefined') ? GAMES.find(function (x) { return x.id === rd.game_id; }) : null;
+        const label = g ? (g.em + ' ' + esc(gname(g))) : esc(rd.game_id);
+        const outcome = rd.won
+          ? '<span class="spill ok">+🪙 ' + fmt(rd.payout) + '</span>'
+          : '<span class="spill bad">−🪙 ' + fmt(rd.bet) + '</span>';
+        const t = rd.created_at ? new Date(rd.created_at * 1000).toLocaleString() : '—';
+        return '<tr>' +
+          '<td>' + label + '</td>' +
+          '<td>🪙 ' + fmt(rd.bet) + '</td>' +
+          '<td>' + outcome + '</td>' +
+          '<td>' + t + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }).catch(function () {
+    txRounds.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+}
+/* ═══════════ صفحة سجل الحساب ═══════════ */
+function openAccountLog() {
+  if (!AUTH.user) { toast(T('tr.needLogin'), 'warn'); return; }
+  closeAcctMenu();
+  nav('account', null);
+  renderAccountLog();
+}
+function renderAccountLog() {
+  const pg = document.getElementById('pg-account');
+  if (!pg || !pg.classList.contains('active')) return;
+  const el = document.getElementById('accountInfo');
+  if (!el) return;
+  if (!AUTH.user) {
+    el.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
+    return;
+  }
+  const u = AUTH.user;
+  const joined = u.created_at ? new Date(u.created_at * 1000).toLocaleString() : '—';
+  const lastSeen = u.last_seen ? new Date(u.last_seen * 1000).toLocaleString() : '—';
+  el.innerHTML =
+    '<table class="atable">' +
+    '<tbody>' +
+      '<tr><th>' + T('auth.username') + '</th><td><b>' + esc(u.username) + '</b></td></tr>' +
+      '<tr><th>' + T('auth.balance') + '</th><td>🪙 ' + fmt(u.gold) + '</td></tr>' +
+      '<tr><th>' + T('admin.role') + '</th><td>' + roleLabel(u.role) + '</td></tr>' +
+      '<tr><th>' + T('acct.joined') + '</th><td>' + joined + '</td></tr>' +
+      '<tr><th>' + T('acct.lastSeen') + '</th><td>' + lastSeen + '</td></tr>' +
+      (u.admin_id ? '<tr><th>' + T('acct.adminRef') + '</th><td>' + esc(String(u.admin_id)) + '</td></tr>' : '') +
+    '</tbody></table>';
+}
 /* خريطة محرك التهيئة — تُستدعى بعد رسم واجهة اللعبة */
 function initFor(eng) {
   const map = {
     ronda: (typeof initRonda === 'function') ? initRonda : null,
+    dama: (typeof initDama === 'function') ? initDama : null,
+    chess: (typeof initChess === 'function') ? initChess : null,
+    rami: (typeof initRami === 'function') ? initRami : null,
     plinko: (typeof initPlinko === 'function') ? initPlinko : null,
     wheel: (typeof initWheel === 'function') ? initWheel : null,
     hilo: (typeof initHilo === 'function') ? initHilo : null,
@@ -322,7 +485,7 @@ function openGame(id) {
   }
   const g = GAMES.find(x => x.id === id);
   if (!g) {
-    toast('اللعبة غير موجودة', 'err');
+    toast(T('g.notFound') || 'اللعبة غير موجودة', 'err');
     return;
   }
   SND.click();
@@ -330,15 +493,39 @@ function openGame(id) {
      وإلا صُفّر scene ثلاثي الأبعاد أثناء await التهيئة فيكسر لعبة Crash */
   closeModal();
   window._currentGameId = id;
+  /* فحص جلسة سابقة: إن انتهت جولتها أثناء الغياب → إشعار */
+  if (typeof window.SessionResume !== 'undefined') {
+    try { window.SessionResume.onGameOpen(id); } catch (e) {}
+  }
   /* زر «العب مع صديق» فقط للألعاب المدعومة (rp/pn/pr) */
   if (typeof Rooms !== 'undefined' && Rooms.syncBtn) Rooms.syncBtn();
   /* رأس صفحة اللعبة */
   const iconEl = document.getElementById('gamePageIcon');
   const nameEl = document.getElementById('gamePageName');
   if (iconEl) iconEl.textContent = g.em;
-  if (nameEl) nameEl.textContent = g.n;
+  if (nameEl) nameEl.textContent = gname(g);
   const bodyEl = document.getElementById('gamePageBody');
   if (!bodyEl) return;
+
+  /* استئناف الجولة المفتوحة: لألعاب الورق/اللوحة المحلية (متعددة الأدوار)
+     نُجمّد حالة اللعبة عند الخروج ونعيدها كما هي عند العودة — دون بدء جولة جديدة.
+     (الألعاب الفورية كالكراش/الكينو لا تُستأنف: تُسجَّل نتائجها في السجل فقط) */
+  var RESUMABLE = ['rm', 'rn', 'bj', 'pr'];
+  if (RESUMABLE.indexOf(id) !== -1 && window._liveGameId === id &&
+      bodyEl.children.length > 0 && window.SessionResume && window.SessionResume.isResumable()) {
+    window._currentGameId = id;
+    nav('game', null);
+    window.scrollTo(0, 0);
+    startGameHistory(id);
+    if (id === 'rm') { try { window.SessionResume.markRoundStart({ gameId: id }); } catch (e) {} }
+    enterAppFullscreen();
+    var fab0 = document.getElementById('floatingReactionsFab');
+    if (fab0) fab0.style.display = 'flex';
+    document.body.classList.add('rami-game-open');
+    setTimeout(checkRotateHint, 180);
+    return; /* لا إعادة رسم — استئناف الجولة كما هي */
+  }
+
   /* Parchisi: يُستنسخ من القالب داخل صفحة اللعبة */
   if (id === 'pr') {
     const tpl = document.getElementById('parchisiTpl');
@@ -356,42 +543,79 @@ function openGame(id) {
   }
   /* اللعبة الحالية وفتح الصفحة (closeModal سبق تنفيذه قبل الرسم) */
   window._currentGameId = id;
+  window._liveGameId = id;     /* تتبّع آخر لعبة حيّة (DOM) للاستئناف */
   nav('game', null);
   window.scrollTo(0, 0);
   startGameHistory(id);
+  /* الرامي: لعبة أشواط متعددة — تُعلَّم جلسة قابلة للاستئناف عند الفتح */
+  if (id === 'rm' && typeof window.SessionResume !== 'undefined') {
+    try { window.SessionResume.markRoundStart({ gameId: id }); } catch (e) {}
+  }
   /* اللعب الجماعي (كينو/كراش): تفعيل لوحة الجولة + السجل الحي */
   if ((id === 'ke' || id === 'av') && typeof Group !== 'undefined') {
     Group.activate(id);
   }
-  /* شاشة ممتلئة تلقائية عند فتح أي لعبة — تُطلب فوراً بعد فتح الصفحة
-     (تنجح لأن openGame يُستدعى من نقرة المستخدم؛ إن رفضها المتصفح نتجاهل بصمت) */
+  /* الشاشة الممتلئة افتراضياً عند فتح أي لعبة (على مستوى التطبيق):
+     تُخفي هيدر اللعبة وسجل الجولات وتبقي محيط اللعبة وأزرارها + زر الخروج الذهبي العائم.
+     نطلب أيضاً ملء شاشة المتصفح إن سُمح (للانغماس الكامل) ونتجاهل الرفض بصمت. */
+  enterAppFullscreen();
   if (gameFsSupported()) {
-    const pg = document.getElementById('pg-game');
-    if (pg) {
-      const fn = pg.requestFullscreen || pg.webkitRequestFullscreen;
+    const pgEl = document.getElementById('pg-game');
+    if (pgEl) {
+      const fn = pgEl.requestFullscreen || pgEl.webkitRequestFullscreen;
       if (fn) {
         try {
-          const p = fn.call(pg);
+          const p = fn.call(pgEl);
           if (p && typeof p.catch === 'function') p.catch(function () { /* مرفوض — لا مشكلة */ });
         } catch (e) { /* غير مدعوم في هذا السياق */ }
       }
     }
   }
   /* نافذة القواعد لا تُفتح إلا عند الضغط على أيقونة «القواعد» */
+  /* إظهار الأيقونة العائمة للتفاعلات داخل الألعاب فقط */
+  const fab = document.getElementById('floatingReactionsFab');
+  if (fab) fab.style.display = 'flex';
+
+  /* قفل تمرير الصفحة أثناء اللعب: الطاولة تملأ الـ viewport بدون سكرول */
+  document.body.classList.add('rami-game-open');
+
   /* فحص فرض الوضع العرضي بعد رسم المرحلة (للألعاب العريضة على الموبايل) */
   setTimeout(checkRotateHint, 180);
+  /* [Layout] تحجيم ديناميكي: اللعبة تملأ الإطار بالكامل وتتوسّع/تتقلّص حسب الشاشة */
+  fitGameStageSoon();
 }
 function closeGamePage() {
+  /* الخروج من وضع الشاشة الممتلئة أولاً */
+  if (typeof exitAppFullscreen === 'function') exitAppFullscreen();
+  document.body.classList.remove('rami-game-open');
+  const fab = document.getElementById('floatingReactionsFab');
+  if (fab) fab.style.display = 'none';
+
   stopGameHistory();
   /* إيقاف لوحة الجولات الجماعية إن كانت نشطة */
   if (typeof Group !== 'undefined') Group.deactivate();
   /* مغادرة صامتة لأي غرفة (الانضمام عبر زر الرجوع من صفحة اللعبة) */
   if (typeof Rooms !== 'undefined') Rooms.leaveQuiet();
+
+  /* ألعاب الورق/اللوحة المحلية (متعددة الأدوار): نُجمّد DOMها وحالتها
+     لاستئناف الجولة كما هي عند العودة. غيرها يُنظَّف كالمعتاد. */
+  var RESUMABLE = ['rm', 'rn', 'bj', 'pr'];
+  var curId = window._currentGameId;
+  var keepLive = RESUMABLE.indexOf(curId) !== -1 &&
+    window.SessionResume && window.SessionResume.isResumable();
+
   window._currentGameId = null;
   /* تنظيف Crash إن كان نشطاً */
   if (typeof cleanupCrash === 'function') {
     cleanupCrash();
   }
+  if (!keepLive) {
+    window._liveGameId = null;
+    var gbEl = document.getElementById('gamePageBody');
+    if (gbEl) gbEl.innerHTML = '';
+  }
+  /* فصل راصد تحجيم المرحلة عند مغادرة اللعبة */
+  if (_stageRO) { try { _stageRO.disconnect(); } catch (e) {} _stageRO = null; _stageROEl = null; }
   /* خروج تلقائي من ملء الشاشة إن كنا فيه */
   const doc = document;
   if (doc.fullscreenElement || doc.webkitFullscreenElement) {
@@ -407,29 +631,162 @@ function gameFsSupported() {
   const d = document;
   return !!(d.documentElement.requestFullscreen || d.documentElement.webkitRequestFullscreen);
 }
-function toggleGameFullscreen() {
-  if (!gameFsSupported()) {
-    toast(T('ui.fsUnsupported'), 'warn');
-    return;
-  }
+/* ═══════════ ملء الشاشة للعبة (على مستوى التطبيق) ═══════════ */
+/* الوضع الافتراضي للعبة = الشاشة الممتلئة. يُخفي هيدر اللعبة وسجل الجولات،
+   ويبقي محيط اللعبة وأزرارها + زر خروج ذهبي عائم في أعلى اليمين. */
+function enterAppFullscreen() {
   const pg = document.getElementById('pg-game');
   if (!pg) return;
+  /* أوّلاً: صفحة اللعبة إلى أعلى الشاشة — وإلا بقيت إزاحة فوقها تقصّ أسفلها */
+  try { window.scrollTo(0, pg.offsetTop); } catch (e) {}
+  pg.classList.add('app-fs');
+  document.body.classList.add('app-fs-on');
+  if (typeof syncGameFsBtn === 'function') syncGameFsBtn();
+  setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 60);
+}
+/* تحجيم ديناميكي للألعاب: تلائم مرحلة اللعبة (.stage) كاملةً داخل إطار الشاشة،
+   تتوسّع وتتقلّص حسب أبعاد الشاشة دون قصّ. تُستثنى الرامي (لها تحجيمها الخاص بالأوراق). */
+var _fitStageT = 0;
+var _stageRO = null;       /* ResizeObserver — يعيد الملاءمة عند تغيّر محتوى المرحلة */
+var _stageROEl = null;     /* العنصر المراقَب حالياً */
+/* رصد تغيّر حجم المرحلة (توزيع أوراق، كشف شبكة، فتح قواعد…) لإعادة الملاءمة فوراً.
+   آمن من الحلقة: transform/marginBottom لا يغيّران صندوق الإطار (border-box) المرصود. */
+function _observeStage(stage) {
+  if (_stageROEl === stage) return;
+  if (typeof ResizeObserver === 'undefined') return;
+  if (_stageRO) _stageRO.disconnect();
+  _stageRO = new ResizeObserver(function () {
+    clearTimeout(_fitStageT);
+    _fitStageT = setTimeout(fitGameStage, 80);
+  });
+  _stageRO.observe(stage);
+  _stageROEl = stage;
+}
+function fitGameStage() {
+  var body = document.getElementById('gamePageBody');
+  if (!body) return;
+  var stage = body.querySelector('.stage');
+  if (!stage) return;
+  /* الرامي له تحجيمه الخاص عبر --card-w ؛ الرندا (فلات دوغ) وضاما يملأون الشاشة 100% */
+  if (stage.id === 'rnContainer' || stage.id === 'damaStage' || stage.querySelector('#ramiContainer')) return;
+  _observeStage(stage);
+  var availW = body.clientWidth;
+  var availH = body.clientHeight;
+  if (availW < 40 || availH < 40) return;
+  /* قياس الحجم الطبيعي بصندوق الإطار: offsetWidth/Height لا يتأثر بالـ transform
+     ويشمل الإطار (border) والحشو (padding) — فيطابق المستطيل المرئي تماماً.
+     (scrollWidth/Height يُسقطان سُمك الإطار فيظهران أصغر فيُكبَّر الخطأ بـ transform.) */
+  var natW = stage.offsetWidth;
+  var natH = stage.offsetHeight;
+  if (natW < 10 || natH < 10) return;
+  var scale = Math.min(availW / natW, availH / natH);
+  /* اسمح بتكبير محدود على الشاشات الواسعة، ومنع تقلّص مفرط */
+  scale = Math.max(0.3, Math.min(scale, 1.5));
+  var scaledH = natH * scale;
+  var yOff = Math.max(0, (availH - scaledH) / 2);
+  stage.style.transformOrigin = 'top center';
+  stage.style.transform = 'translateY(' + Math.round(yOff) + 'px) scale(' + (Math.round(scale * 1000) / 1000) + ')';
+  stage.style.marginBottom = Math.round(scaledH - natH) + 'px';   /* تعويض الحجز الطباعي لمنع الفجوة والقصّ */
+}
+function fitGameStageSoon() {
+  clearTimeout(_fitStageT);
+  _fitStageT = setTimeout(fitGameStage, 60);
+  setTimeout(fitGameStage, 320);   /* إعادة قياس بعد اكتمال رسم الكانفاس/الأصول */
+}
+if (typeof window !== 'undefined') {
+  window.fitGameStage = fitGameStage;
+  window.fitGameStageSoon = fitGameStageSoon;
+}
+
+function exitAppFullscreen() {
+  const pg = document.getElementById('pg-game');
+  if (pg) pg.classList.remove('app-fs');
+  document.body.classList.remove('app-fs-on');
+  /* صفحة اللعبة إلى أعلى الشاشة ثم قياس الشريط — الحاوية تملأ حتى أسفل الشاشة بلا قصّ */
+  try { window.scrollTo(0, pg ? pg.offsetTop : 0); } catch (e) {}
+  if (typeof syncPgTop === 'function') syncPgTop();
+  /* الخروج من ملء شاشة المتصفح إن كنا فيه */
   const doc = document;
-  if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
-    const fn = pg.requestFullscreen || pg.webkitRequestFullscreen;
-    if (fn) { fn.call(pg); }
-  } else {
+  if (doc.fullscreenElement || doc.webkitFullscreenElement) {
     const ex = doc.exitFullscreen || doc.webkitExitFullscreen;
-    if (ex) ex.call(doc);
+    if (ex) { try { ex.call(doc); } catch (e) {} }
+  }
+  if (typeof syncGameFsBtn === 'function') syncGameFsBtn();
+  if (typeof syncPgTop === 'function') syncPgTop();
+  /* عند الخروج من الانغماس: إعادة قياس حاوية اللعبة (أصغر الآن لاحتضان الشريط) */
+  if (typeof fitGameStageSoon === 'function') fitGameStageSoon();
+  setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 60);
+}
+function toggleGameFullscreen() {
+  const pg = document.getElementById('pg-game');
+  if (!pg) return;
+  if (pg.classList.contains('app-fs')) {
+    exitAppFullscreen();
+  } else {
+    enterAppFullscreen();
+    /* محاولة ملء شاشة المتصفح أيضاً للانغماس الكامل (نتجاهل الرفض بصمت) */
+    if (gameFsSupported()) {
+      const fn = pg.requestFullscreen || pg.webkitRequestFullscreen;
+      if (fn) {
+        try {
+          const p = fn.call(pg);
+          if (p && typeof p.catch === 'function') p.catch(function () {});
+        } catch (e) {}
+      }
+    }
   }
 }
 function syncGameFsBtn() {
   const btn = document.getElementById('gameFsBtn');
   if (!btn) return;
-  const on = document.fullscreenElement || document.webkitFullscreenElement;
-  const label = document.getElementById('gameFsLabel');
-  if (label) label.textContent = on ? T('ui.exitFullscreen') : T('ui.fullscreen');
+  const pg = document.getElementById('pg-game');
+  const on = (pg && pg.classList.contains('app-fs')) || document.fullscreenElement || document.webkitFullscreenElement;
+  const label = on ? T('ui.exitFullscreen') : T('ui.fullscreen');
+  btn.setAttribute('aria-label', label);
+  btn.setAttribute('title', label);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  const ico = btn.querySelector('i');
+  if (ico) ico.className = on ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+}
+/* مزامنة --vvh مع ارتفاع الشاشة المرئي (visualViewport) — يَعِد bar العنوان
+   وتغيّر الاتجاه وفتح لوحة المفاتيح، فتبقى حاوية اللعبة داخل المجال المرئي تماماً */
+function syncVisualViewport() {
+  const vv = window.visualViewport;
+  const h = vv ? vv.height : window.innerHeight;
+  document.documentElement.style.setProperty('--vvh', Math.round(h) + 'px');
+}
+window.syncVisualViewport = syncVisualViewport;
+syncVisualViewport();
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', syncVisualViewport);
+  window.addEventListener('orientationchange', function () { setTimeout(syncVisualViewport, 250); });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncVisualViewport);
+    window.visualViewport.addEventListener('scroll', syncVisualViewport);
+  }
+}
+
+/* مزامنة --pg-top مع الإزاحة الفعلية لصفحة اللعبة كي تملأ الـ viewport بالضبط
+   وتتوزّع الحاويات الثلاث (هيدر/لعبة/سجل) بلا قصّ أسفل الشاشة. */
+function syncPgTop() {
+  const pg = document.getElementById('pg-game');
+  if (pg) document.documentElement.style.setProperty('--pg-top', Math.max(0, Math.round(pg.getBoundingClientRect().top)) + 'px');
+  /* كل ما فوق جسم اللعبة داخل الصفحة (الشريط + هوامشه) — يُقاس فعلياً كي
+     تملأ الحاوية الشاشة حتى أسفلها تماماً بلا قصّ ولا فراغ */
+  const pgEl = document.getElementById('pg-game');
+  const bodyEl = document.getElementById('gamePageBody');
+  const head = document.querySelector('#pg-game .gp-head');
+  let above = head ? head.offsetHeight : 0;
+  if (pgEl && bodyEl) {
+    above = Math.max(0, Math.round(bodyEl.getBoundingClientRect().top - pgEl.getBoundingClientRect().top));
+  }
+  document.documentElement.style.setProperty('--gp-head-h', above + 'px');
+}
+window.syncPgTop = syncPgTop;
+if (typeof window !== 'undefined') {
+  window.enterAppFullscreen = enterAppFullscreen;
+  window.exitAppFullscreen = exitAppFullscreen;
+  window.toggleGameFullscreen = toggleGameFullscreen;
 }
 /* ═══════════ فرض الوضع العرضي للألعاب العريضة (عرض > طول) ═══════════ */
 function isRotateRelevant() {
@@ -490,6 +847,10 @@ let _serverRounds = [];
 function recordRound(won, payout, txt) {
   const gid = window._currentGameId;
   if (!gid) return;
+  /* إنهاء حالة «الجولة قيد التقدم» — تُسجَّل الجولة في كل الألعاب */
+  if (typeof window.SessionResume !== 'undefined') {
+    try { window.SessionResume.onResolve(); } catch (e) {}
+  }
   const me = (AUTH && AUTH.user) ? AUTH.user.username : 'أنت';
   const bet = (typeof GB === 'number') ? GB : 0;
   const row = {
@@ -539,31 +900,34 @@ function renderGameHistory() {
   if (!el) return;
   const rows = _localRounds.concat(_serverRounds);
   if (!rows.length) {
-    el.innerHTML = '<div class="note">لا توجد جولات بعد — كن أول من يلعب!</div>';
+    el.innerHTML = '<div class="ght-empty">' + (T('ghist.empty') || 'لا توجد جولات بعد') + '</div>';
     return;
   }
-  el.innerHTML =
-    '<table class="atable ghist-t">' +
-      '<thead><tr>' +
-        '<th>اللاعب</th><th>الرهان</th><th>النتيجة</th><th>المكسب</th><th>الوقت</th>' +
-      '</tr></thead><tbody>' +
-      rows.slice(0, 25).map(function (r) {
-        const t = r.created_at ? new Date(r.created_at * 1000).toLocaleTimeString() : '—';
-        const winCell = r.won
-          ? '<span class="spill ok">فوز</span>'
-          : '<span class="spill bad">خسارة</span>';
-        const who = r.local
-          ? '<b class="gold-text">' + esc(r.username) + '</b>'
-          : esc(r.username);
-        return '<tr>' +
-          '<td>' + who + '</td>' +
-          '<td>🪙 ' + fmt(r.bet) + '</td>' +
-          '<td>' + winCell + '</td>' +
-          '<td class="gold-text">+' + fmt(r.payout) + '</td>' +
-          '<td>' + t + '</td>' +
-        '</tr>';
-      }).join('') +
-      '</tbody></table>';
+  /* سجل الجولات على شكل تذاكر صغيرة مكدّسة (لاعب/رهان/نتيجة/مكسب/وقت) */
+  el.innerHTML = rows.slice(0, 25).map(function (r) {
+    const t = r.created_at ? new Date(r.created_at * 1000).toLocaleTimeString() : '—';
+    const won = !!r.won;
+    const who = r.local
+      ? '<b class="gold-text">' + esc(r.username) + '</b>'
+      : '<span class="ght-name">' + esc(r.username) + '</span>';
+    const badge = won
+      ? '<span class="ght-badge win">' + (T('g.win') || 'فوز') + '</span>'
+      : '<span class="ght-badge lose">' + (T('g.loss') || 'خسارة') + '</span>';
+    const payout = (won && r.payout > 0)
+      ? '<span class="ght-payout">+<i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(r.payout) + '</span>'
+      : '<span class="ght-payout muted">—</span>';
+    return '<div class="ght-ticket ' + (won ? 'is-win' : 'is-lose') + '">' +
+      '<div class="ght-top">' +
+        '<span class="ght-who">' + who + '</span>' +
+        badge +
+      '</div>' +
+      '<div class="ght-mid">' +
+        '<span class="ght-bet"><i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(r.bet) + '</span>' +
+        payout +
+        '<span class="ght-time">' + t + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 /* ═══════════ المتصدرون ═══════════ */
 function renderLB() {
@@ -784,7 +1148,7 @@ function adminChargeDeduct(id, action) {
   if (!inp) return;
   const amount = parseInt(inp.value, 10);
   if (Number.isNaN(amount) || amount <= 0) {
-    toast('مبلغ غير صالح', 'err');
+    toast(T('tr.badAmount') || 'المبلغ غير صالح', 'err');
     return;
   }
   const isSuper = AUTH.user && AUTH.user.role === 'super';
@@ -793,7 +1157,11 @@ function adminChargeDeduct(id, action) {
     : { action: action, amount: amount };
   API.post('/api/admin/user/' + id + '/balance', payload).then(function (r) {
     if (r.ok) {
-      toast((action === 'charge' ? T('admin.charge') + ' ✔' : T('admin.deduct') + ' ✔') + ' ' + fmt(amount), 'ok');
+      let msg = (action === 'charge' ? T('admin.charge') + ' ✔' : T('admin.deduct') + ' ✔') + ' ' + fmt(amount);
+      if (action === 'charge' && r.data && r.data.commission && r.data.commission > 0) {
+        msg += ' | ' + T('admin.commission') + ': ' + fmt(r.data.commission);
+      }
+      toast(msg, 'ok');
       adminLoadUsers();
       adminLoadStats();
       if (typeof wallet === 'function') wallet();
@@ -827,7 +1195,7 @@ function adminSetBalance(id) {
   if (!inp) return;
   const gold = parseInt(inp.value, 10);
   if (Number.isNaN(gold) || gold < 0) {
-    toast('رصيد غير صالح', 'err');
+    toast(T('tr.badAmount') || 'رصيد غير صالح', 'err');
     return;
   }
   API.post('/api/admin/user/' + id + '/balance', { gold: gold }).then(function (r) {
@@ -940,7 +1308,7 @@ function adminStartTourney(id) {
 function adminFinishTourney(id) {
   const sel = document.getElementById('tw-' + id);
   if (!sel || !sel.value) {
-    toast('اختر الفائز أولاً', 'warn');
+    toast(T('admin.pickWinner') || 'اختر الفائز أولاً', 'warn');
     return;
   }
   API.post('/api/admin/tournaments/' + id + '/finish', { winner_id: parseInt(sel.value, 10) }).then(function (r) {
@@ -968,7 +1336,7 @@ function adminLoadGames() {
         ? '<button class="abtn bad" onclick="adminToggleGame(\'' + g.id + '\')">' + T('admin.disable') + '</button>'
         : '<button class="abtn ok" onclick="adminToggleGame(\'' + g.id + '\')">' + T('admin.enable') + '</button>';
       return '<tr>' +
-        '<td>' + g.em + ' <b>' + esc(g.n) + '</b></td>' +
+        '<td>' + g.em + ' <b>' + esc(gname(g)) + '</b></td>' +
         '<td>' + g.cat + '</td>' +
         '<td>' + g.rtp + '%</td>' +
         '<td>' + st + '</td>' +
@@ -1066,6 +1434,22 @@ function adminLoadFinance() {
   });
 }
 /* ═══════════ Ticker ═══════════ */
+/* [B7] اسم اللعبة في شريط الفائزين يُحوَّل لاسمه المحلي (لا إنجليزي بالواجهة العربية) */
+function tickGameLabel(raw) {
+  try {
+    const r = String(raw || '').replace(/[^\w\s-]/g, '').trim().toLowerCase();
+    if (r && typeof GAMES !== 'undefined') {
+      const g = GAMES.find(function (x) {
+        if (x.id === r) return true;
+        const eng = String(x.eng || '').toLowerCase();
+        return eng.length > 2 && (r === eng || r.indexOf(eng) !== -1 || eng.indexOf(r) !== -1);
+      });
+      if (g) return gname(g);
+    }
+  } catch (e) {}
+  return raw;
+}
+window.tickGameLabel = tickGameLabel;
 function renderTicker() {
   /* البيانات الحقيقية تأتي من SSE (RC_ticks) — fallback مؤقت قبل الاتصال */
   const src = (window.RC_ticks && window.RC_ticks.length) ? window.RC_ticks : [
@@ -1079,7 +1463,7 @@ function renderTicker() {
   if (!el) return;
   const items = src.map(x =>
     '<span class="tk"> <span class="p">' + x[0] + '</span> ' + T('tk.won') +
-    ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + x[1] + ')</span></span>'
+    ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + tickGameLabel(x[1]) + ')</span></span>'
   ).join('');
   el.innerHTML = items + items;
 }
@@ -1129,7 +1513,17 @@ function claimDaily() {
   toast(T('ts.claim'), 'ok');
 }
 /* ═══════════ Render All ═══════════ */
+/* مزامنة عدد الألعاب المعروض (الشارة + الإحصائية) مع العدد الفعلي في الكتالوج */
+function syncGamesCount() {
+  var n = (typeof GAMES !== 'undefined' && GAMES.length) ? GAMES.length : 35;
+  var badge = document.getElementById('gamesCountBadge');
+  if (badge) { badge.textContent = n; badge.setAttribute('aria-label', n + ' لعبة'); }
+  var stat = document.getElementById('statGamesCount');
+  if (stat) stat.textContent = n;
+}
+
 function renderAll() {
+  syncGamesCount();
   renderGames();
   renderLB();
   renderTourney();
@@ -1145,18 +1539,27 @@ function initApp() {
   initState();
   /* ضبط اللغة */
   if (typeof syncLangDrop === 'function') syncLangDrop();
-  /* ضبط زر الصوت */
-  const muteBtn = document.getElementById('muteBtn');
-  if (muteBtn) {
-    /* الأيقونة عبر CSS ::before وفق aria-pressed — لا نص إيموجي */
-    muteBtn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
+  /* ضبط زر الصوت (قد يوجد أكثر من زر في صفحات مختلفة) */
+  if (typeof syncMuteBtns === 'function') {
+    syncMuteBtns();
+  } else {
+    const muteBtns = document.querySelectorAll('#muteBtn');
+    muteBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', ST.mute ? 'true' : 'false');
+    });
   }
   /* تطبيق الاتجاه */
   applyI18n();
   /* ترجمة العناصر الثابتة (لغة محفوظة) */
   translateStatic();
+  /* مزامنة عدد الألعاب مع الكتالوج الفعلي */
+  syncGamesCount();
+  /* تحديث سنة حقوق النشر */
+  updateCopyright();
   /* تهيئة التأثيرات */
   fxInit();
+  /* تفعيل السحب اليدوي لأيقونة التفاعلات العائمة */
+  if (typeof initFabDrag === 'function') initFabDrag();
   /* استعادة جلسة المستخدم (إن وُجدت) */
   if (typeof authRestore === 'function') {
     authRestore().then(function () {
@@ -1178,18 +1581,22 @@ function initApp() {
   }, 5000);
   /* رسم كل شيء */
   renderAll();
+  /* Hash routing: activate the section matching the URL hash (e.g. index.html#games) */
+  navFromHash();
   /* أرقام المتصلين والدردشة الحية تأتي الآن من SSE (js/core/live.js) */
   /* زر ملء الشاشة: نص أولي + تزامن مع تغيير الوضع */
   syncGameFsBtn();
-  document.addEventListener('fullscreenchange', syncGameFsBtn);
-  document.addEventListener('webkitfullscreenchange', syncGameFsBtn);
+  function onFsChange(){ if (typeof syncGameFsBtn==='function') syncGameFsBtn(); if (typeof syncPgTop==='function') syncPgTop(); }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
   /* تلميح التدوير: يُقيَّم عند تغيير الاتجاه أو الحجم أو وضع ملء الشاشة */
   window.addEventListener('resize', function () {
     clearTimeout(window._rotT);
-    window._rotT = setTimeout(checkRotateHint, 250);
+    window._rotT = setTimeout(function(){ if (typeof syncVisualViewport==='function') syncVisualViewport(); if (typeof syncPgTop==='function') syncPgTop(); checkRotateHint(); if (typeof fitGameStage==='function') fitGameStage(); }, 250);
   });
   window.addEventListener('orientationchange', function () {
     setTimeout(checkRotateHint, 400);
+    if (typeof fitGameStageSoon==='function') fitGameStageSoon();
   });
   document.addEventListener('fullscreenchange', function () {
     setTimeout(checkRotateHint, 300);
@@ -1209,16 +1616,174 @@ function initApp() {
   console.log(' Digital Moroccan casino loaded successfully!');
 }
 /* ═══════════ معالجة الأخطاء العامة ═══════════ */
+/* نتجاهل أخطاء تحميل الموارد (صور/خطوط/أيقونات) وأخطاء السكربتات عبر النطاقات،
+   ولا نعرض تنبيهاً مخيفاً إلا للأخطاء البرمجية الحقيقية. */
 window.addEventListener('error', function(e) {
+  if (!e || !e.error) return;                 // خطأ تحميل مورد (لا يوجد كائن خطأ)
+  if (e.message === 'Script error.') return;  // خطأ عبر نطاق مختلف (بدون تفاصيل)
   console.error('Digital Moroccan casino Error:', e.error);
-  toast('حدث خطأ غير متوقع — أعد المحاولة', 'err');
+  if (typeof toast === 'function') toast('حدث خطأ غير متوقع — أعد المحاولة', 'err');
 });
 window.addEventListener('unhandledrejection', function(e) {
-  console.error('Promise Error:', e.reason);
+  console.error('Promise Error:', e && e.reason);
 });
 /* ═══════════ تشغيل التطبيق ═══════════ */
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
   initApp();
+}
+
+
+/* ═══════════ Daily Lucky Wheel Engine ═══════════ */
+const WHEEL_PRIZES = [50, 100, 200, 500, 100, 300, 1000, 250];
+const WHEEL_COLORS = ['#7C3AED', '#F5C518', '#3B82F6', '#10B981', '#EC4899', '#F97316', '#F59E0B', '#6366F1'];
+let wheelAngle = 0;
+let isSpinningWheel = false;
+
+function drawLuckyWheel() {
+  const cv = document.getElementById('luckyWheelCanvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const cx = 140, cy = 140, r = 135;
+  const n = WHEEL_PRIZES.length;
+  const arc = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, 280, 280);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(wheelAngle);
+
+  for (let i = 0; i < n; i++) {
+    const angle = i * arc;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, angle, angle + arc);
+    ctx.fillStyle = WHEEL_COLORS[i];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Text label
+    ctx.save();
+    ctx.rotate(angle + arc / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('+' + WHEEL_PRIZES[i] + ' 🪙', r - 16, 5);
+    ctx.restore();
+  }
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(0, 0, 24, 0, 2 * Math.PI);
+  ctx.fillStyle = '#070B12';
+  ctx.fill();
+  ctx.strokeStyle = '#F5C518';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#F5C518';
+  ctx.font = '16px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🎁', 0, 1);
+  ctx.restore();
+}
+
+function openWheelModal() {
+  const m = document.getElementById('wheelModal');
+  if (!m) return;
+  m.classList.add('show');
+  drawLuckyWheel();
+  const res = document.getElementById('wheelResult');
+  if (res) res.textContent = '';
+  const btn = document.getElementById('spinWheelBtn');
+  if (btn) btn.disabled = isSpinningWheel;
+}
+
+function closeWheelModal() {
+  if (isSpinningWheel) return;
+  const m = document.getElementById('wheelModal');
+  if (m) m.classList.remove('show');
+}
+
+function spinLuckyWheel() {
+  if (isSpinningWheel) return;
+  const btn = document.getElementById('spinWheelBtn');
+  if (btn) btn.disabled = true;
+  isSpinningWheel = true;
+  const res = document.getElementById('wheelResult');
+  if (res) res.textContent = '';
+
+  const prizeIdx = Math.floor(Math.random() * WHEEL_PRIZES.length);
+  const prize = WHEEL_PRIZES[prizeIdx];
+  const arc = (2 * Math.PI) / WHEEL_PRIZES.length;
+  
+  // Angle targeting the top pointer
+  const targetAngle = (3 * Math.PI / 2) - (prizeIdx * arc + arc / 2);
+  const extraSpins = (5 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
+  const finalAngle = extraSpins + targetAngle;
+
+  const duration = 4000;
+  const start = performance.now();
+  const startAngle = wheelAngle % (2 * Math.PI);
+
+  if (typeof SND !== 'undefined' && SND.spin) SND.spin();
+
+  function animate(time) {
+    const elapsed = time - start;
+    const progress = Math.min(1, elapsed / duration);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    wheelAngle = startAngle + (finalAngle - startAngle) * ease;
+    drawLuckyWheel();
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      isSpinningWheel = false;
+      if (btn) btn.disabled = false;
+      
+      // Credit prize
+      giveWin(prize);
+      if (typeof SND !== 'undefined' && SND.win) SND.win();
+      if (typeof confetti === 'function') confetti(50);
+      if (res) res.textContent = '🎉 مبروك! فزت بـ ' + prize + ' كوينز!';
+      toast('🎁 مكافأة يومية: +' + prize + ' 🪙', 'ok');
+
+      if (typeof AUTH !== 'undefined' && AUTH.user) {
+        API.post('/api/claim', {}).catch(function () {});
+      }
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+window.openWheelModal = openWheelModal;
+window.closeWheelModal = closeWheelModal;
+window.spinLuckyWheel = spinLuckyWheel;
+
+
+/* ═══════════ Tournament Bracket Visualizer ═══════════ */
+function toggleTournamentBracket(tId) {
+  const bracketEl = document.getElementById('bracket-' + tId);
+  if (!bracketEl) return;
+  const isHidden = bracketEl.style.display === 'none';
+  bracketEl.style.display = isHidden ? 'block' : 'none';
+  if (isHidden && typeof SND !== 'undefined' && SND.click) SND.click();
+}
+window.toggleTournamentBracket = toggleTournamentBracket;
+
+/* ═══════════ Network Status Listeners ═══════════ */
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', function () {
+    toast('🌐 ' + (T('ui.onlineBack') || 'تمت استعادة الاتصال بالإنترنت!'), 'ok');
+    if (typeof authRestore === 'function') authRestore();
+  });
+  window.addEventListener('offline', function () {
+    toast('⚠️ ' + (T('ui.offlineWarn') || 'انقطع الاتصال بالإنترنت'), 'warn');
+  });
 }

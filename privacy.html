@@ -2,21 +2,23 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="سياسة الخصوصية — Digital Moroccan Casino: جمع البيانات، المدفوعات، الأمن وحقوق المستخدم">
   <meta name="theme-color" content="#070B12">
   <title>Digital Moroccan Casino — سياسة الخصوصية</title>
-  <!-- Fonts -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <!-- CSS Files -->
   <link rel="stylesheet" href="css/01-variables.css">
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
   <link rel="stylesheet" href="css/07-responsive.css">
+  <!-- Language detection (must run before CSS paint) -->
+  <script src="js/i18n/auto-lang.js"></script>
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -28,80 +30,7 @@
     })();
   </script>
   <style>
-    .legal-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
-      background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
-      border-bottom: 1px solid var(--ctl-bd, rgba(255, 210, 63, 0.28));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .legal-topbar .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--t1);
-      text-decoration: none;
-      font-family: var(--font2, 'Orbitron'), sans-serif;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    .legal-topbar .brand b {
-      color: var(--gold);
-    }
-    .legal-topbar .brand .foot-logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-    }
-    .legal-topbar .brand .foot-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 9px;
-    }
-    .legal-topbar .tools {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg2);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .lang-switch button {
-      border: none;
-      background: transparent;
-      color: var(--t2);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.72rem;
-      padding: 5px 9px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .lang-switch button.active {
-      background: var(--gold);
-      color: #0A0E1A;
-    }
-    .lang-switch button:hover:not(.active) {
-      color: var(--gold);
-    }
+    /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -169,44 +98,11 @@
     .legal-wrap a {
       color: var(--gold);
     }
-    .legal-foot {
-      text-align: center;
-      padding: 22px 16px 30px;
-      color: var(--t3);
-      font-size: 0.8rem;
-    }
-    .legal-foot .fb {
-      margin: 0 4px 6px;
-    }
-    .legal-foot a {
-      color: var(--t2);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .legal-foot a:hover {
-      color: var(--gold);
-    }
   </style>
 </head>
 <body>
-  <div class="legal-topbar">
-    <a class="brand" href="index.html">
-      <span class="foot-logo" aria-hidden="true"><img src="assets/logo/moroccan-casino-logo-main.webp" alt=""></span>
-      <span><b>Digital Moroccan</b> Casino</span>
-    </a>
-    <div class="tools">
-      <div class="lang-switch" role="group" aria-label="Language / اللغة">
-        <button type="button" data-lang-btn="ar" onclick="setLang('ar')">العربية</button>
-        <button type="button" data-lang-btn="fr" onclick="setLang('fr')">Français</button>
-        <button type="button" data-lang-btn="en" onclick="setLang('en')">English</button>
-      </div>
-      <button class="mute theme-btn" id="themeBtn" onclick="themeToggle()" aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false">
-        <i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i>
-      </button>
-    </div>
-  </div>
-
-  <main class="legal-wrap">
+  <article class="legal-content">
+    <main class="legal-wrap">
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div>
     <h1 data-k="p.title">سياسة الخصوصية</h1>
     <div class="updated" data-k="p.updated">آخر تحديث: 12 أغسطس 2026</div>
@@ -251,150 +147,244 @@
     <p><a class="btn ghost small" href="contact.html"><i class="fa-solid fa-headset" aria-hidden="true"></i> <span data-k="p.contactBtn">تواصل معنا</span></a>
     <a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="p.back">العودة للموقع</span></a></p>
   </main>
+  </article>
 
-  <footer class="legal-foot">
-    <span class="fb"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-k="p.fb2fa">2FA محمي</span></span>
-    <span class="fb"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-k="p.fbSecure">اتصال آمن</span></span>
-    <br>
-    © 2026 <a href="index.html">Digital Moroccan Casino</a> — <span data-k="p.footer">جميع الحقوق محفوظة</span>
-  </footer>
-
+  <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/ui/legal-ui.js"></script>
   <script>
-    /* ── الترجمة المحلية (ar/fr/en) ── */
+    /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
-      'p.title': { ar: 'سياسة الخصوصية', fr: 'Politique de confidentialité', en: 'Privacy Policy' },
-      'p.updated': { ar: 'آخر تحديث: 12 أغسطس 2026', fr: 'Dernière mise à jour : 12 août 2026', en: 'Last updated: August 12, 2026' },
-      'p.intro': {
-        ar: 'نحترم خصوصيتك في Digital Moroccan Casino. توضح هذه السياسة البيانات التي نجمعها عند استخدام الموقع وكيف نستخدمها ونحميها ونشاركها، بما في ذلك معالجة عمليات الشحن والسحب المالية.',
-        fr: 'Nous respectons votre vie privée chez Digital Moroccan Casino. Cette politique décrit les données que nous collectons, comment nous les utilisons, les protégeons et les partageons, y compris le traitement des opérations de recharge et de retrait.',
-        en: 'We respect your privacy at Digital Moroccan Casino. This policy describes the data we collect, how we use, protect and share it, including the processing of top-up and withdrawal transactions.'
-      },
-      'p.collectTitle': { ar: 'جمع البيانات', fr: 'Collecte des données', en: 'Data collection' },
-      'p.collect1': {
-        ar: 'بيانات الحساب: اسم المستخدم وكلمة المرور (مشفّرة) عند تسجيل حساب.',
-        fr: "Données de compte : nom d'utilisateur et mot de passe (chiffré) à l'inscription.",
-        en: 'Account data: username and password (encrypted) when you register.'
-      },
-      'p.collect2': {
-        ar: 'بيانات مالية: سجل عمليات الشحن والسحب ومبادلة الكوينز اللازمة لإدارة حسابك المالي.',
-        fr: "Données financières : historique des recharges, retraits et échanges de pièces nécessaires à la gestion de votre compte.",
-        en: 'Financial data: records of top-ups, withdrawals and coin trades needed to manage your account.'
-      },
-      'p.collect3': {
-        ar: 'بيانات اللعب: الرهانات، الرصيد، وسجل الجولات لحفظ تقدمك ومنع الغش.',
-        fr: 'Données de jeu : mises, solde et historique des parties pour sauvegarder votre progression et prévenir la triche.',
-        en: 'Game data: bets, balance and round history to keep your progress and prevent cheating.'
-      },
-      'p.collect4': {
-        ar: 'بيانات الدردشة: الرسائل المرسلة داخل الغرف وفي دردشة المنصة لفرض قواعد السلوك.',
-        fr: "Données de chat : messages envoyés dans les salles et sur la plateforme pour faire respecter les règles de conduite.",
-        en: 'Chat data: messages sent in rooms and on the platform to enforce conduct rules.'
-      },
-      'p.collect5': {
-        ar: 'بيانات تقنية: المتصفح، اللغة، والعنوان التقريبي عبر خوادمنا لتحسين الأداء والحماية من الهجمات.',
-        fr: "Données techniques : navigateur, langue et adresse approximative via nos serveurs pour améliorer les performances et se protéger des attaques.",
-        en: 'Technical data: browser, language and approximate address through our servers to improve performance and protect against attacks.'
-      },
-      'p.useTitle': { ar: 'استخدام البيانات', fr: 'Utilisation des données', en: 'Use of data' },
-      'p.useP': {
-        ar: 'نستخدم بياناتك لحفظ رصيدك وتقدمك، وتنفيذ عمليات الشحن والسحب، وتقديم مكافآت الإحالة والعمولات، وتحسين تجربة اللعب، ومنع إساءة الاستخدام والغش والهجمات الآلية، ودعم حسابات اللاعبين.',
-        fr: "Nous utilisons vos données pour sauvegarder votre solde et votre progression, exécuter les recharges et retraits, verser les récompenses de parrainage et commissions, améliorer l'expérience, prévenir les abus, la triche et les attaques automatisées, et assister les comptes des joueurs.",
-        en: 'We use your data to save your balance and progress, execute top-ups and withdrawals, pay referral rewards and commissions, improve the gaming experience, prevent abuse, cheating and automated attacks, and support player accounts.'
-      },
-      'p.payTitle': { ar: 'معالجة المدفوعات', fr: 'Traitement des paiements', en: 'Payment processing' },
-      'p.payP': {
-        ar: 'تتم عمليات الشحن والسحب عبر أدمنز المنصة بوسائل آمنة: حوالة بنكية، كاش وجه لوجه، أو عملات رقمية حسب اختيار اللاعب. لا نخزن أرقام البطاقات البنكية ولا بياناتها في خوادمنا، ولا تُطلب منك إلا مباشرة عند تنفيذ العملية من قبل وسيلة الدفع نفسها.',
-        fr: "Les recharges et retraits se font via les admins par des moyens sécurisés : virement bancaire, espèces en face à face ou cryptomonnaies au choix du joueur. Nous ne stockons ni numéros ni données de cartes bancaires sur nos serveurs ; ils ne sont demandés que directement lors de l'exécution de l'opération par le moyen de paiement lui-même.",
-        en: 'Top-ups and withdrawals are handled by platform admins through secure methods: bank transfer, face-to-face cash or cryptocurrency at the player\'s choice. We never store bank card numbers or details on our servers; they are only requested directly by the payment method itself when executing the operation.'
-      },
-      'p.secTitle': { ar: 'الأمن', fr: 'Sécurité', en: 'Security' },
-      'p.secP': {
-        ar: 'نحمي بياناتك بتشفير HTTPS، وكلمات مرور مشفّرة، وجلسات آمنة، وأنظمة حماية من البوتات وسكريبتات الأتمتة. لا نبيع بياناتك أبداً لأي طرف ثالث.',
-        fr: 'Nous protégeons vos données avec le chiffrement HTTPS, des mots de passe chiffrés, des sessions sécurisées et des protections contre les bots et scripts d\'automatisation. Nous ne vendons jamais vos données à des tiers.',
-        en: 'We protect your data with HTTPS encryption, encrypted passwords, secure sessions and protections against bots and automation scripts. We never sell your data to third parties.'
-      },
-      'p.cookieTitle': { ar: 'ملفات الكوكيز والتخزين المحلي', fr: 'Cookies et stockage local', en: 'Cookies and local storage' },
-      'p.cookieP': {
-        ar: 'نستخدم التخزين المحلي (localStorage) لحفظ تفضيلاتك (اللغة، الثيم، الرصيد). لا نستخدم كوكيز تتبع إعلانية.',
-        fr: "Nous utilisons le stockage local (localStorage) pour enregistrer vos préférences (langue, thème, solde). Pas de cookies publicitaires.",
-        en: 'We use local storage (localStorage) to save your preferences (language, theme, balance). No advertising tracking cookies.'
-      },
-      'p.shareTitle': { ar: 'المشاركة مع الآخرين', fr: 'Partage avec des tiers', en: 'Sharing with others' },
-      'p.shareP': {
-        ar: 'لا نشارك بياناتك إلا مع أدمنز المنصة عند الحاجة فقط لتنفيذ عمليات السحب أو دعم الحساب. لا يتم بيع بياناتك أو مشاركتها مع جهات إعلانية أو تجارية.',
-        fr: "Nous ne partageons vos données qu'avec les admins de la plateforme uniquement en cas de besoin pour exécuter les retraits ou assister le compte. Vos données ne sont ni vendues ni partagées avec des entités publicitaires ou commerciales.",
-        en: 'We only share your data with platform admins when strictly needed to execute withdrawals or support your account. Your data is never sold or shared with advertising or commercial entities.'
-      },
-      'p.rightsTitle': { ar: 'حقوق المستخدم', fr: 'Droits des utilisateurs', en: 'User rights' },
-      'p.rightsP': {
-        ar: 'يمكنك حذف بيانات حسابك في أي وقت بطلب عبر الدردشة أو صفحة تواصل معنا، ويحق لك معرفة البيانات المحفوظة عنك وتصحيحها.',
-        fr: 'Vous pouvez supprimer vos données de compte à tout moment via le chat ou la page de contact, et connaître ou corriger les données enregistrées.',
-        en: 'You can delete your account data at any time via the chat or the contact page, and you may access or correct the data stored about you.'
-      },
-      'p.retTitle': { ar: 'مدة الاحتفاظ بالبيانات', fr: 'Conservation des données', en: 'Data retention' },
-      'p.retP': {
-        ar: 'نحتفظ ببيانات الحساب والمالية طالما كان الحساب نشطاً، أو بالقدر اللازم لفرض الشروط والالتزامات القانونية، ثم نحذفها أو نجعلها مجهولة الهوية.',
-        fr: "Nous conservons les données de compte et financières tant que le compte est actif, ou dans la mesure nécessaire pour appliquer les conditions et obligations légales, puis nous les supprimons ou les anonymisons.",
-        en: 'We keep account and financial data while the account is active, or as needed to enforce the terms and legal obligations, then we delete or anonymize it.'
-      },
-      'p.respTitle': { ar: 'اللعب المسؤول — 18+', fr: 'Jeu responsable — 18+', en: 'Responsible gaming — 18+' },
-      'p.respP': {
-        ar: 'المنصة مخصصة للبالغين (18 عاماً فما فوق). ننصح باللعب بمسؤولية ووعي، ويمكنك طلب تقييد أو تعليق حسابك مؤقتاً عبر الدردشة أو صفحة تواصل معنا.',
-        fr: 'La plateforme est réservée aux adultes (18 ans et plus). Nous recommandons de jouer de manière responsable et consciente. Vous pouvez demander une restriction ou une suspension temporaire de votre compte via le chat ou la page de contact.',
-        en: 'The platform is for adults (18+). We recommend playing responsibly and consciously. You can request a restriction or temporary suspension of your account via the chat or the contact page.'
-      },
-      'p.contactTitle': { ar: 'الاتصال', fr: 'Contact', en: 'Contact' },
-      'p.contactP': {
-        ar: 'لأي استفسار عن الخصوصية أو بياناتك، تواصل معنا عبر صفحة تواصل معنا أو الدردشة في الموقع الرئيسي.',
-        fr: 'Pour toute question sur la confidentialité ou vos données, contactez-nous via notre page de contact ou le chat du site principal.',
-        en: 'For any privacy question or about your data, contact us through our contact page or the chat on the main site.'
-      },
-      'p.contactBtn': { ar: 'تواصل معنا', fr: 'Contactez-nous', en: 'Contact us' },
-      'p.back': { ar: 'العودة للموقع', fr: 'Retour au site', en: 'Back to site' },
-      'p.fb2fa': { ar: '2FA محمي', fr: '2FA protégé', en: '2FA protected' },
-      'p.fbSecure': { ar: 'اتصال آمن', fr: 'Connexion sécurisée', en: 'Secure connection' },
-      'p.footer': { ar: 'جميع الحقوق محفوظة', fr: 'Tous droits réservés', en: 'All rights reserved' }
-    };
-    var curLang = 'ar';
-    try { curLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
-    function applyLang() {
-      document.documentElement.setAttribute('lang', curLang);
-      document.documentElement.setAttribute('dir', curLang === 'ar' ? 'rtl' : 'ltr');
+    "p.title": {
+        "ar": "سياسة الخصوصية",
+        "da": "سياسة الخصوصية",
+        "fr": "Politique de confidentialité",
+        "en": "Privacy Policy"
+    },
+    "p.updated": {
+        "ar": "آخر تحديث: 12 أغسطس 2026",
+        "da": "آخر تحديث: 12 غشت 2026",
+        "fr": "Dernière mise à jour : 12 août 2026",
+        "en": "Last updated: August 12, 2026"
+    },
+    "p.intro": {
+        "ar": "نحترم خصوصيتك في Digital Moroccan Casino. توضح هذه السياسة البيانات التي نجمعها عند استخدام الموقع وكيف نستخدمها ونحميها ونشاركها، بما في ذلك معالجة عمليات الشحن والسحب المالية.",
+        "da": "كنحترموا الخصوصية ديالك فـ Digital Moroccan Casino. هاد السياسة كتشرح البيانات اللي كنجمعوها وكيفاش كنحميوها.",
+        "fr": "Nous respectons votre vie privée chez Digital Moroccan Casino. Cette politique décrit les données que nous collectons, comment nous les utilisons, les protégeons et les partageons, y compris le traitement des opérations de recharge et de retrait.",
+        "en": "We respect your privacy at Digital Moroccan Casino. This policy describes the data we collect, how we use, protect and share it, including the processing of top-up and withdrawal transactions."
+    },
+    "p.collectTitle": {
+        "ar": "جمع البيانات",
+        "da": "جمع البيانات",
+        "fr": "Collecte des données",
+        "en": "Data collection"
+    },
+    "p.collect1": {
+        "ar": "بيانات الحساب: اسم المستخدم وكلمة المرور (مشفّرة) عند تسجيل حساب.",
+        "da": "بيانات الحساب: سمية المستخدم والمودباس (مشفر) فاش كتسجل.",
+        "fr": "Données de compte : nom d'utilisateur et mot de passe (chiffré) à l'inscription.",
+        "en": "Account data: username and password (encrypted) when you register."
+    },
+    "p.collect2": {
+        "ar": "بيانات مالية: سجل عمليات الشحن والسحب ومبادلة الكوينز اللازمة لإدارة حسابك المالي.",
+        "da": "بيانات مالية: سجل الشحن، السحب، والكوينز لإدارة حسابك.",
+        "fr": "Données financières : historique des recharges, retraits et échanges de pièces nécessaires à la gestion de votre compte.",
+        "en": "Financial data: records of top-ups, withdrawals and coin trades needed to manage your account."
+    },
+    "p.collect3": {
+        "ar": "بيانات اللعب: الرهانات، الرصيد، وسجل الجولات لحفظ تقدمك ومنع الغش.",
+        "da": "بيانات اللعب: الرهانات، الرصيد، وسجل الجولات باش نمنعو الغش.",
+        "fr": "Données de jeu : mises, solde et historique des parties pour sauvegarder votre progression et prévenir la triche.",
+        "en": "Game data: bets, balance and round history to keep your progress and prevent cheating."
+    },
+    "p.collect4": {
+        "ar": "بيانات الدردشة: الرسائل المرسلة داخل الغرف وفي دردشة المنصة لفرض قواعد السلوك.",
+        "da": "بيانات الشات: الرسائل المرسلة فالغرف لفرض الاحترام.",
+        "fr": "Données de chat : messages envoyés dans les salles et sur la plateforme pour faire respecter les règles de conduite.",
+        "en": "Chat data: messages sent in rooms and on the platform to enforce conduct rules."
+    },
+    "p.collect5": {
+        "ar": "بيانات تقنية: المتصفح، اللغة، والعنوان التقريبي عبر خوادرنا لتحسين الأداء والحماية من الهجمات.",
+        "da": "بيانات تقنية: المتصفح واللغة لتحسين السرعة والحماية من الهجمات.",
+        "fr": "Données techniques : navigateur, langue et adresse approximative via nos serveurs pour améliorer les performances et se protéger des attaques.",
+        "en": "Technical data: browser, language and approximate address through our servers to improve performance and protect against attacks."
+    },
+    "p.useTitle": {
+        "ar": "استخدام البيانات",
+        "da": "استعمال البيانات",
+        "fr": "Utilisation des données",
+        "en": "Use of data"
+    },
+    "p.useP": {
+        "ar": "نستخدم بياناتك لحفظ رصيدك وتقدمك، وتنفيذ عمليات الشحن والسحب، وتقديم مكافآت الإحالة والعمولات، وتحسين تجربة اللعب، ومنع إساءة الاستخدام والغش والهجمات الآلية، ودعم حسابات اللاعبين.",
+        "da": "كنستعملو البيانات لحفظ رصيدك، تنفيذ الشحن والسحب، مكافآت الإحالة، ومنع الغش ودعم اللعابة.",
+        "fr": "Nous utilisons vos données pour sauvegarder votre solde et votre progression, exécuter les recharges et retraits, verser les récompenses de parrainage et commissions, améliorer l'expérience, prévenir les abus, la triche et les attaques automatisées, et assister les comptes des joueurs.",
+        "en": "We use your data to save your balance and progress, execute top-ups and withdrawals, pay referral rewards and commissions, improve the gaming experience, prevent abuse, cheating and automated attacks, and support player accounts."
+    },
+    "p.payTitle": {
+        "ar": "معالجة المدفوعات",
+        "da": "معالجة المدفوعات",
+        "fr": "Traitement des paiements",
+        "en": "Payment processing"
+    },
+    "p.payP": {
+        "ar": "تتم عمليات الشحن والسحب عبر أدمنز المنصة بوسائل آمنة: حوالة بنكية، كاش وجه لوجه، أو عملات رقمية حسب اختيار اللاعب. لا نخزن أرقام البطاقات البنكية ولا بياناتها في خوادرنا، ولا تُطلب منك إلا مباشرة عند تنفيذ العملية من قبل وسيلة الدفع نفسها.",
+        "da": "الشحن والسحب كيتم عبر أدمنز بطرق مأمنة: حوالة بنكية، كاش، ولا كريبتو. ما كنخبيوش معلومات البطاقات البنكية فسيرفوراتنا.",
+        "fr": "Les recharges et retraits se font via les admins par des moyens sécurisés : virement bancaire, espèces en face à face ou cryptomonnaies au choix du joueur. Nous ne stockons ni numéros ni données de cartes bancaires sur nos serveurs ; ils ne sont demandés que directement lors de l'exécution de l'opération par le moyen de paiement lui-même.",
+        "en": "Top-ups and withdrawals are handled by platform admins through secure methods: bank transfer, face-to-face cash or cryptocurrency at the player's choice. We never store bank card numbers or details on our servers; they are only requested directly by the payment method itself when executing the operation."
+    },
+    "p.secTitle": {
+        "ar": "الأمن",
+        "da": "الأمان",
+        "fr": "Sécurité",
+        "en": "Security"
+    },
+    "p.secP": {
+        "ar": "نحمي بياناتك بتشفير HTTPS، وكلمات مرور مشفّرة، وجلسات آمنة، وأنظمة حماية من البوتات وسكريبتات الأتمتة. لا نبيع بياناتك أبداً لأي طرف ثالث.",
+        "da": "كنحميو بياناتك بتشفير HTTPS وجلسات مأمنة. وما كنبيعوش بياناتك بتاتاً لأي جهة.",
+        "fr": "Nous protégeons vos données avec le chiffrement HTTPS, des mots de passe chiffrés, des sessions sécurisées et des protections contre les bots et scripts d'automatisation. Nous ne vendons jamais vos données à des tiers.",
+        "en": "We protect your data with HTTPS encryption, encrypted passwords, secure sessions and protections against bots and automation scripts. We never sell your data to third parties."
+    },
+    "p.cookieTitle": {
+        "ar": "ملفات الكوكيز والتخزين المحلي",
+        "da": "ملفات الكوكيز والتخزين المحلي",
+        "fr": "Cookies et stockage local",
+        "en": "Cookies and local storage"
+    },
+    "p.cookieP": {
+        "ar": "نستخدم التخزين المحلي (localStorage) لحفظ تفضيلاتك (اللغة، الثيم، الرصيد). لا نستخدم كوكيز تتبع إعلانية.",
+        "da": "نستخدم التخزين المحلي (localStorage) لحفظ تفضيلاتك (اللغة، الثيم، الرصيد). لا نستخدم كوكيز تتبع إعلانية.",
+        "fr": "Nous utilisons le stockage local (localStorage) pour enregistrer vos préférences (langue, thème, solde). Pas de cookies publicitaires.",
+        "en": "We use local storage (localStorage) to save your preferences (language, theme, balance). No advertising tracking cookies."
+    },
+    "p.shareTitle": {
+        "ar": "المشاركة مع الآخرين",
+        "da": "المشاركة مع الغير",
+        "fr": "Partage avec des tiers",
+        "en": "Sharing with others"
+    },
+    "p.shareP": {
+        "ar": "لا نشارك بياناتك إلا مع أدمنز المنصة عند الحاجة فقط لتنفيذ عمليات السحب أو دعم الحساب. لا يتم بيع بياناتك أو مشاركتها مع جهات إعلانية أو تجارية.",
+        "da": "ما كنشاركوش بياناتك إلا مع الأدمنز عند الحاجة لتنفيذ السحب أو الدعم فقط.",
+        "fr": "Nous ne partageons vos données qu'avec les admins de la plateforme uniquement en cas de besoin pour exécuter les retraits ou assister le compte. Vos données ne sont ni vendues ni partagées avec des entités publicitaires ou commerciales.",
+        "en": "We only share your data with platform admins when strictly needed to execute withdrawals or support your account. Your data is never sold or shared with advertising or commercial entities."
+    },
+    "p.rightsTitle": {
+        "ar": "حقوق المستخدم",
+        "da": "حقوق المستخدم",
+        "fr": "Droits des utilisateurs",
+        "en": "User rights"
+    },
+    "p.rightsP": {
+        "ar": "يمكنك حذف بيانات حسابك في أي وقت بطلب عبر الدردشة أو صفحة تواصل معنا، ويحق لك معرفة البيانات المحفوظة عنك وتصحيحها.",
+        "da": "تقدر تطلب مسح حسابك بأي وقت عبر الشات ولا صفحة تواصل معنا.",
+        "fr": "Vous pouvez supprimer vos données de compte à tout moment via le chat ou la page de contact, et connaître ou corriger les données enregistrées.",
+        "en": "You can delete your account data at any time via the chat or the contact page, and you may access or correct the data stored about you."
+    },
+    "p.retTitle": {
+        "ar": "مدة الاحتفاظ بالبيانات",
+        "da": "مدة الاحتفاظ بالبيانات",
+        "fr": "Conservation des données",
+        "en": "Data retention"
+    },
+    "p.retP": {
+        "ar": "نحتفظ ببيانات الحساب والمالية طالما كان الحساب نشطاً، أو بالقدر اللازم لفرض الشروط والالتزامات القانونية، ثم نحذفها أو نجعلها مجهولة الهوية.",
+        "da": "نحتفظ ببيانات الحساب والمالية طالما كان الحساب نشطاً، أو بالقدر اللازم لفرض الشروط والالتزامات القانونية، ثم نحذفها أو نجعلها مجهولة الهوية.",
+        "fr": "Nous conservons les données de compte et financières tant que le compte est actif, ou dans la mesure nécessaire pour appliquer les conditions et obligations légales, puis nous les supprimons ou les anonymisons.",
+        "en": "We keep account and financial data while the account is active, or as needed to enforce the terms and legal obligations, then we delete or anonymize it."
+    },
+    "p.respTitle": {
+        "ar": "اللعب المسؤول — 18+",
+        "da": "اللعب بمسؤولية — 18+",
+        "fr": "Jeu responsable — 18+",
+        "en": "Responsible gaming — 18+"
+    },
+    "p.respP": {
+        "ar": "المنصة مخصصة للبالغين (18 عاماً فما فوق). ننصح باللعب بمسؤولية ووعي، ويمكنك طلب تقييد أو تعليق حسابك مؤقتاً عبر الدردشة أو صفحة تواصل معنا.",
+        "da": "المنصة للبالغين (+18). كنصحو باللعب بوعي وتقدر تطلب توقيف مؤقت لحسابك إذا بغيتي.",
+        "fr": "La plateforme est réservée aux adultes (18 ans et plus). Nous recommandons de jouer de manière responsable et consciente. Vous pouvez demander une restriction ou une suspension temporaire de votre compte via le chat ou la page de contact.",
+        "en": "The platform is for adults (18+). We recommend playing responsibly and consciously. You can request a restriction or temporary suspension of your account via the chat or the contact page."
+    },
+    "p.contactTitle": {
+        "ar": "الاتصال",
+        "da": "الاتصال",
+        "fr": "Contact",
+        "en": "Contact"
+    },
+    "p.contactP": {
+        "ar": "لأي استفسار عن الخصوصية أو بياناتك، تواصل معنا عبر صفحة تواصل معنا أو الدردشة في الموقع الرئيسي.",
+        "da": "لأي سؤال على الخصوصية تواصل معنا فالشات ولا صفحة تواصل معنا.",
+        "fr": "Pour toute question sur la confidentialité ou vos données, contactez-nous via notre page de contact ou le chat du site principal.",
+        "en": "For any privacy question or about your data, contact us through our contact page or the chat on the main site."
+    },
+    "p.contactBtn": {
+        "ar": "تواصل معنا",
+        "da": "تواصل معنا",
+        "fr": "Contactez-nous",
+        "en": "Contact us"
+    },
+    "p.back": {
+        "ar": "العودة للموقع",
+        "da": "الرجوع للموقع",
+        "fr": "Retour au site",
+        "en": "Back to site"
+    },
+    "p.fb2fa": {
+        "ar": "2FA محمي",
+        "da": "2FA محمي",
+        "fr": "2FA protégé",
+        "en": "2FA protected"
+    },
+    "p.fbSecure": {
+        "ar": "اتصال آمن",
+        "da": "اتصال آمن",
+        "fr": "Connexion sécurisée",
+        "en": "Secure connection"
+    },
+    "p.footer": {
+        "ar": "جميع الحقوق محفوظة",
+        "da": "جميع الحقوق محفوظة",
+        "fr": "Tous droits réservés",
+        "en": "All rights reserved"
+    }
+};
+        var currentLang = 'ar';
+    try { currentLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+    if (currentLang !== 'fr' && currentLang !== 'en' && currentLang !== 'da') currentLang = 'ar';
+
+    function applyLang(l) {
+      if (l) currentLang = l;
+      if (currentLang !== 'fr' && currentLang !== 'en' && currentLang !== 'da') currentLang = 'ar';
+      try { localStorage.setItem('rc_lang', currentLang); } catch (e) {}
+      document.documentElement.setAttribute('lang', currentLang === 'da' ? 'ar-MA' : currentLang);
+      document.documentElement.setAttribute('dir', (currentLang === 'ar' || currentLang === 'da') ? 'rtl' : 'ltr');
+      
+      // Update data-k elements
       document.querySelectorAll('[data-k]').forEach(function (el) {
-        var v = D[el.getAttribute('data-k')];
-        if (v && v[curLang]) el.textContent = v[curLang];
+        var k = el.getAttribute('data-k');
+        if (D[k] && D[k][currentLang]) {
+          el.innerHTML = D[k][currentLang];
+        }
       });
-      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-lang-btn') === curLang);
+      // Update active state in lang buttons
+      document.querySelectorAll('.lang-drop button[data-lang], .lang-opt[data-lang]').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-lang') === currentLang);
       });
-      document.title = curLang === 'ar' ? 'Digital Moroccan Casino — سياسة الخصوصية' : (curLang === 'fr' ? 'Digital Moroccan Casino — Politique de confidentialité' : 'Digital Moroccan Casino — Privacy Policy');
     }
-    function setLang(l) {
-      curLang = l;
-      try { localStorage.setItem('rc_lang', l); } catch (e) {}
-      applyLang();
-    }
-    /* ── تبديل الثيم ── */
-    function themeToggle() {
-      var html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'radiant') {
-        html.removeAttribute('data-theme');
-        try { localStorage.setItem('rc_theme', 'dark'); } catch (e) {}
-      } else {
-        html.setAttribute('data-theme', 'radiant');
-        try { localStorage.setItem('rc_theme', 'radiant'); } catch (e) {}
-      }
-      updateThemeIcon();
-    }
-    function updateThemeIcon() {
-      var radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
-      var ico = document.getElementById('themeIco');
-      var b = document.getElementById('themeBtn');
-      if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
-      if (b) b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
-    }
+
+    // Call on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      applyLang(currentLang);
+    });
+    applyLang(currentLang);
+      if (_origSetLang) _origSetLang(l);
+    };
+    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
+    injectLegalUI('privacy');
     applyLang();
-    updateThemeIcon();
   </script>
 </body>
 </html>

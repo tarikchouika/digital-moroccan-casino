@@ -20,14 +20,7 @@
   pointer-events: none;
 }
 html[data-theme="radiant"] .gstage-bg { opacity: 0.16; }
-.gtop {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
+.gtop { display: none !important; }
 .pf {
   display: inline-flex;
   background: rgba(16, 185, 129, 0.1);
@@ -2177,7 +2170,7 @@ canvas.game {
   65% { transform: scale(0.88) rotate(-10deg); }
   100% { transform: scale(1) rotate(0); }
 }
-/* ═══════════ صفحة اللعبة الحقيقية ═══════════ */
+/* ������������������������� صفحة اللعبة الحقيقية ������������������������� */
 .gp-head {
   display: flex;
   align-items: center;
@@ -2193,20 +2186,34 @@ canvas.game {
   justify-content: center;
 }
 #pg-game .ptitle #gamePageName {
-  background: linear-gradient(135deg, #F5C518, #FF8C00);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: #F5C518;
+  display: none;
 }
-#pg-game .gp-head > .btn.ghost.small:first-child {
+#pg-game .gp-head > .btn.icon-btn:first-child {
   order: 1;
 }
-#pg-game .gp-head > .btn.ghost.small:nth-last-child(2) {
+#pg-game .gp-head > .btn.icon-btn:nth-child(3) {
   order: 3;
 }
-#pg-game .gp-head > .btn.ghost.small:last-child {
+#pg-game .gp-head > .btn.icon-btn:nth-child(4) {
   order: 3;
+}
+#pg-game .gp-head > .btn.icon-btn:last-child {
+  order: 3;
+}
+/* ── توحيد ألوان أيقونات هيدر اللعبة ── */
+#pg-game .gp-head .btn.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  color: var(--t2);
+}
+#pg-game .gp-head .btn.icon-btn:hover {
+  background: rgba(245, 197, 24, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+#pg-game .gp-head .btn.icon-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 /* ── وضع ملء الشاشة للعبة ── */
 #pg-game:fullscreen,
@@ -2223,13 +2230,46 @@ canvas.game {
 }
 /* سجل الجولات لا يظهر في ملء الشاشة — يبقى في صفحة اللعبة فقط */
 #pg-game:fullscreen .ghist,
-#pg-game:-webkit-full-screen .ghist {
+#pg-game:-webkit-full-screen .ghist,
+#pg-game:fullscreen .game-foot,
+#pg-game:-webkit-full-screen .game-foot {
   display: none !important;
 }
 /* منع فيضان مرحلة اللعبة خارج عرض الشاشة */
 #gamePageBody {
   min-width: 0;
   max-width: 100%;
+}
+
+/* ═══════════ تخطيط صفحة اللعبة (الوضع المفتوح): حاوية لعبة ثابتة + سجل مستقل ═══════════ */
+body.rami-game-open { overflow: hidden; }
+#pg-game.active {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--pg-top, 0px));
+  min-height: 0;
+  overflow-y: auto;              /* تمرير لكشف سجل الجولات أسفل حاوية اللعبة */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+/* الشريط العلوي ثابت أعلى الصفحة أثناء التمرير */
+#pg-game.active .gp-head {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+/* حاوية اللعبة بارتفاع ثابت يملأ الشاشة تحت الشريط — لا تتقلّص مهما طال السجل */
+#pg-game.active #gamePageBody {
+  /* --vvh = الارتفاع المرئي الفعلي (visualViewport) — أدقّ من dvh على الجوال
+     حيث يتغيّر بشريط العنوان، فلا يُقصّ أسفل الحاوية أبداً */
+  flex: 0 0 calc(var(--vvh, 100dvh) - var(--pg-top, 0px) - var(--gp-head-h, 64px));
+  min-height: 300px;
+  overflow: hidden;
+}
+/* سجل الجولات مستقل: ارتفاع محتواه الخاص، أسفل حاوية اللعبة (لا يلتهمها) */
+#pg-game.active .ghist {
+  flex: 0 0 auto;
 }
 #gamePageBody .stage,
 #gamePageBody .bjt,
@@ -2323,9 +2363,10 @@ canvas.game {
   50% { opacity: 0.55; }
 }
 .ghist-wrap {
-  padding: 6px 12px 12px;
-  max-height: 320px;
-  overflow-y: auto;
+  padding: 10px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .ghist-t {
   width: 100%;
@@ -2350,6 +2391,51 @@ canvas.game {
 .ghist-t tr:hover td {
   background: rgba(245, 197, 24, 0.05);
 }
+/* ── تذاكر سجل الجولات (بطاقات صغيرة مكدّسة) ── */
+.ght-empty {
+  text-align: center;
+  color: var(--t3);
+  font-size: 0.85rem;
+  padding: 16px 8px;
+}
+.ght-ticket {
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.04), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--bd);
+  border-left: 3px solid var(--bd);
+  border-radius: 12px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color .15s var(--ease, ease), transform .15s var(--ease, ease);
+}
+.ght-ticket:hover { transform: translateY(-1px); }
+.ght-ticket.is-win { border-left-color: var(--green2, #10b981); }
+.ght-ticket.is-lose { border-left-color: #ef4444; }
+.ght-top, .ght-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ght-who { font-size: 0.8rem; color: var(--t1); }
+.ght-name { color: var(--t2); }
+.ght-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+.ght-badge.win { color: var(--green2, #10b981); background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); }
+.ght-badge.lose { color: #ef4444; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.32); }
+.ght-mid { font-size: 0.78rem; color: var(--t2); }
+.ght-bet i { color: var(--gold, #f5c518); margin-inline-end: 3px; }
+.ght-payout { font-weight: 700; color: var(--green2, #10b981); }
+.ght-payout i { margin-inline-end: 3px; }
+.ght-payout.muted { color: var(--t3); font-weight: 500; }
+.ght-time { color: var(--t3); font-size: 0.72rem; margin-inline-start: auto; }
 /* ── ترقية البطاقات (هوية بصرية) ── */
 .tile {
   position: relative;
@@ -2366,7 +2452,17 @@ canvas.game {
   box-shadow: var(--shadow-lg), 0 0 18px rgba(245, 197, 24, 0.18);
 }
 .tile .art.hasimg img {
+  position: relative;
+  z-index: 1;
   transition: transform 0.35s var(--ease);
+}
+.tile .art-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
 }
 .tile:hover .art.hasimg img {
   transform: scale(1.06);
@@ -3746,4 +3842,58 @@ canvas.game {
 .rl-dot.black {
   color: #151515;
   text-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7);
+}
+
+/* ═══════════ Perfect Fullscreen Scaling for Mobile & Desktop ═══════════ */
+#pg-game:fullscreen,
+#pg-game:-webkit-full-screen {
+  background: var(--bg, #070B12);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+}
+
+#pg-game:fullscreen #gamePageBody,
+#pg-game:-webkit-full-screen #gamePageBody {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Responsively constrain all game stages so they never overflow vertically or horizontally */
+#gamePageBody .stage,
+#gamePageBody .bjt,
+#gamePageBody .ronda-stage,
+#gamePageBody .rl-stage,
+#gamePageBody .mn-wrap,
+#gamePageBody .pl-wrap,
+#gamePageBody .rami-game,
+#gamePageBody .crash-3d-container,
+#gamePageBody canvas {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+@media (max-height: 600px) {
+  #pg-game:fullscreen .gp-head,
+  #pg-game:-webkit-full-screen .gp-head {
+    padding: 4px 8px;
+    margin-bottom: 8px;
+  }
+  #gamePageBody canvas {
+    max-height: 55vh !important;
+  }
 }

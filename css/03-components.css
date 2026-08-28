@@ -69,6 +69,7 @@
 .art.cr { background: linear-gradient(135deg, #B45309, #F59E0B); }
 .art.in { background: linear-gradient(135deg, #0E7490, #06B6D4); }
 .art.rn { background: linear-gradient(135deg, #7C2D12, #F5C518); }
+.art.dm { background: linear-gradient(135deg, #3B2A1A, #7A4A22); background-image:repeating-linear-gradient(45deg, rgba(245,197,24,.10) 0 10px, transparent 10px 20px), linear-gradient(135deg, #3B2A1A, #7A4A22); }
 /* ── Tags ── */
 .gtag {
   position: absolute;
@@ -904,26 +905,56 @@
 /* ── Toasts ── */
 #toasts {
   position: fixed;
-  bottom: calc(16px + var(--safe-bottom));
-  inset-inline-end: 16px;
+  top: calc(8px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 7px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  pointer-events: none;
 }
 .toast {
   background: var(--gc);
   border: 1px solid var(--bd);
   border-radius: 11px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 200px;
-  max-width: 320px;
+  max-width: 360px;
   font-size: 0.78rem;
   font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   animation: tIn 0.3s var(--ease);
+  pointer-events: auto;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.toast .toast-ico { flex: 0 0 auto; }
+.toast .toast-msg { flex: 1 1 auto; }
+.toast-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.10);
+  color: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.toast-close:hover { background: rgba(255, 255, 255, 0.20); }
+/* داخل اللعبة: الرسائل أبرز وتظهر أسفل الهيدر العائم مباشرة */
+body.pg-game #toasts {
+  top: calc(54px + var(--safe-top));
 }
 @keyframes tIn {
   from {
@@ -1101,9 +1132,33 @@
   position: relative;
   flex-shrink: 0;
 }
+/* زر الحساب في التوب بار: دائري بأيقونة فقط (بدون نص) */
 .acct .uchip {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 50%;
+  gap: 0;
+  max-width: none;
+  justify-content: center;
   cursor: pointer;
   transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.acct .uchip .uname,
+.acct .uchip .urole,
+.acct .uchip .ucaret {
+  display: none;
+}
+.acct .uavatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .acct .uchip:hover {
   border-color: var(--gold);
@@ -1138,6 +1193,25 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+/* ترويس القائمة المنسدلة: اسم الحساب + الرصيد (عرض فقط) */
+.acct-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 11px 8px;
+}
+.acct-name {
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: var(--t1);
+}
+.acct-balance {
+  font-size: 0.78rem;
+  color: var(--t2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .acct-item {
   display: flex;
@@ -1418,4 +1492,681 @@ select.ainp {
 .abadge.wait {
   background: rgba(245, 197, 24, 0.14);
   color: var(--gold);
+}
+/* ── أزرار أيقونية فقط في هيدر الألعبة (gp-head) ── */
+.gp-head .icon-only {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.gp-head .icon-only i {
+  font-size: 1.05rem;
+}
+/* اسم اللعبة في gp-head: إخفاء النص بصرياً لكن الاحتفاظ بعنصر للوصول */
+#gamePageName {
+  font-size: 1.25rem;
+}
+/* ── شارات الفوتر أيقونية فقط (بدون نص) ── */
+.foot-badges .fb {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 40px;
+height: 40px;
+gap: 0;
+padding: 0;
+border-radius: 12px;
+background: var(--gg);
+border: 2px solid var(--gold);
+color: var(--t1);
+transition: all 0.2s var(--ease);
+box-shadow: var(--shadow-gold);
+text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+.foot-badges .fb:hover {
+background: linear-gradient(135deg, #FFD23F, #C99050);
+border-color: #FFD23F;
+color: #0A0E1A;
+transform: translateY(-2px);
+box-shadow: 0 0 22px rgba(255, 210, 63, 0.45);
+}
+.foot-badges .fb i {
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+/* ── أيقونات الأمان في أسفل السايد بار (side-foot) ── */
+.sf-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sf-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--bg3);
+  border: 1px solid var(--bd);
+  color: var(--t2);
+  font-size: 0.85rem;
+  cursor: default;
+  transition: all 0.2s var(--ease);
+}
+.sf-icon:hover {
+  background: var(--gc);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(245, 197, 24, 0.25);
+}
+.sf-icon i {
+  color: var(--gold);
+}
+/* ── أيقونات الأمان في أسفل صفحة اللعبة (game-foot) ── */
+.game-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  flex-wrap: wrap;
+}
+.g-ficon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--ctl-bd);
+  color: var(--t2);
+  font-size: 1rem;
+  transition: all 0.2s var(--ease);
+}
+.g-ficon:hover {
+  background: var(--gc);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(245, 197, 24, 0.3);
+}
+.g-ficon i {
+  color: var(--gold);
+}
+
+/* ═══════════ Topbar Gold Chip ═══════════ */
+.top-gold-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.14), rgba(245, 197, 24, 0.05));
+  border: 1px solid rgba(245, 197, 24, 0.35);
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.top-gold-chip:hover {
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.25), rgba(245, 197, 24, 0.12));
+  border-color: rgba(245, 197, 24, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245, 197, 24, 0.2);
+}
+.top-gold-chip .g {
+  color: var(--gold, #F5C518);
+  font-size: 1rem;
+}
+.top-gold-chip .gold-val {
+  font-family: 'Orbitron', monospace, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* ═══════════ Mobile Bottom Navigation Bar ═══════════ */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(7, 11, 18, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 250;
+  padding: 0 10px calc(4px + env(safe-area-inset-bottom, 0px));
+  box-sizing: content-box;
+}
+.mobile-bottom-nav .bnav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 6px 0;
+  border-radius: 8px;
+}
+.mobile-bottom-nav .bnav-item i {
+  font-size: 1.15rem;
+  transition: transform 0.2s ease;
+}
+.mobile-bottom-nav .bnav-item.active {
+  color: var(--gold, #F5C518);
+}
+.mobile-bottom-nav .bnav-item.active i {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 8px rgba(245, 197, 24, 0.5));
+}
+
+/* ═══════════ Lucky Wheel Modal ═══════════ */
+.lucky-wheel-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 6px auto;
+}
+.lucky-wheel-pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.6rem;
+  color: var(--gold, #F5C518);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+  z-index: 10;
+}
+#luckyWheelCanvas {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  box-shadow: 0 0 25px rgba(245, 197, 24, 0.25), 0 0 0 4px rgba(245, 197, 24, 0.4);
+}
+
+/* ═══════════ VIP Badges ═══════════ */
+.vip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.vip-badge.vip-bronze {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.25), rgba(205, 127, 50, 0.1));
+  border: 1px solid rgba(205, 127, 50, 0.4);
+  color: #E29B62;
+}
+.vip-badge.vip-silver {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.25), rgba(148, 163, 184, 0.1));
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #CBD5E1;
+}
+.vip-badge.vip-gold {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.12));
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #FCD34D;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+.vip-badge.vip-plat {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(56, 189, 248, 0.12));
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #7DD3FC;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+.vip-badge.vip-royal {
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.4), rgba(124, 58, 237, 0.3));
+  border: 1px solid rgba(245, 197, 24, 0.6);
+  color: #FEEF8B;
+  box-shadow: 0 0 14px rgba(245, 197, 24, 0.35);
+  animation: vipGlow 2.5s infinite alternate;
+}
+@keyframes vipGlow {
+  from { filter: drop-shadow(0 0 2px rgba(245, 197, 24, 0.4)); }
+  to { filter: drop-shadow(0 0 8px rgba(245, 197, 24, 0.8)); }
+}
+
+/* ═══════════ Floating In-Game Reactions ═══════════ */
+.game-reactions-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 14, 26, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 2px 6px;
+  margin-inline-start: 6px;
+}
+.rx-btn {
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 6px;
+  transition: transform 0.15s ease;
+  line-height: 1;
+}
+.rx-btn:hover {
+  transform: scale(1.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+.rx-btn:active {
+  transform: scale(0.9);
+}
+
+.floating-reaction {
+  position: fixed;
+  font-size: 2.4rem;
+  z-index: 9999;
+  pointer-events: none;
+  animation: floatUpAnim 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+}
+@keyframes floatUpAnim {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-30px) scale(1.25);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-160px) scale(1.1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-240px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* ═══════════ Tournament Bracket Tree ═══════════ */
+.tbracket-wrap {
+  margin-top: 14px;
+  padding: 14px;
+  background: rgba(7, 11, 18, 0.75);
+  border: 1px solid rgba(245, 197, 24, 0.2);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.tbracket-tree {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  min-width: 520px;
+  gap: 16px;
+}
+.tbracket-round {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+.tbracket-round-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--gold, #F5C518);
+  text-align: center;
+  text-transform: uppercase;
+}
+.tbracket-match {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tbracket-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #CBD5E1;
+}
+.tbracket-player.winner {
+  color: #10B981;
+  font-weight: 700;
+}
+.tbracket-player .tscore {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ═══════════ In-Game Gold Balance Chip ═══════════ */
+.game-gold-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.18), rgba(245, 197, 24, 0.06));
+  border: 1px solid rgba(245, 197, 24, 0.4);
+  border-radius: 999px;
+  padding: 5px 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.game-gold-chip:hover {
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.3), rgba(245, 197, 24, 0.14));
+  border-color: rgba(245, 197, 24, 0.7);
+  box-shadow: 0 0 14px rgba(245, 197, 24, 0.35);
+  transform: translateY(-1px);
+}
+.game-gold-chip .g {
+  color: var(--gold, #F5C518);
+  font-size: 0.95rem;
+}
+.game-gold-chip .gold-val {
+  font-family: 'Orbitron', monospace, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* ═══════════ In-Game Header Layout ═══════════ */
+.gp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: rgba(13, 19, 32, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+}
+.gp-head-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gp-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gp-name-text {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--t1, #F6F8FC);
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════ Legal Cards & Typography ═══════════ */
+.legal-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  line-height: 1.8;
+  background: var(--card, #0F1626);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.legal-section h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold, #F5C518);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.legal-section p {
+  color: var(--t2, #A7B0C3);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ═══════════ Rules Modal High-Contrast Typography ═══════════ */
+.rules-full {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--t1, #F6F8FC);
+}
+.rules-section {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.rules-section:last-child {
+  border-bottom: none;
+}
+.rules-section h4 {
+  color: var(--gold, #FFD23F) !important;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rules-section p {
+  color: var(--t2, #A7B0C3) !important;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin: 0;
+}
+.rules-steps {
+  padding-inline-start: 22px;
+  color: var(--t1, #F6F8FC);
+  font-size: 0.88rem;
+  margin: 6px 0;
+}
+.rules-steps li {
+  margin-bottom: 6px;
+  line-height: 1.6;
+  color: var(--t1, #F6F8FC);
+}
+.rules-tips {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rules-tips li {
+  background: rgba(245, 197, 24, 0.08);
+  border-inline-start: 3px solid var(--gold, #FFD23F);
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: var(--t1, #F6F8FC);
+  font-size: 0.86rem;
+}
+
+/* القواعد الرسمية التفصيلية */
+.rules-sub {
+  color: #E2E8F0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 10px 0 4px;
+}
+.rules-details {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rules-details li {
+  position: relative;
+  padding-inline-start: 18px;
+  color: var(--t1, #F6F8FC);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.rules-details li::before {
+  content: '▪';
+  position: absolute;
+  inset-inline-start: 4px;
+  color: var(--gold, #FFD23F);
+}
+
+/* ═══════════ Floating Reaction FAB (Bottom-Right) ═══════════ */
+.floating-reactions-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 500;
+  display: none; /* Only visible in active games */
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 10px;
+}
+
+.fab-main-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F5C518, #E5A800);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #070B12;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(245, 197, 24, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab-main-btn:hover {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 8px 24px rgba(245, 197, 24, 0.65);
+}
+
+.fab-main-btn.active {
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.fab-reactions-menu {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(13, 19, 32, 0.95);
+  border: 1px solid rgba(245, 197, 24, 0.35);
+  border-radius: 18px;
+  padding: 10px 8px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7);
+  animation: popIn 0.25s var(--ease);
+  min-width: 190px;
+}
+
+.fab-reactions-menu.open {
+  display: flex;
+}
+
+.fab-rx-emojis {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.fab-rx-item {
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+  line-height: 1;
+}
+
+.fab-rx-item:hover {
+  transform: scale(1.35);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.fab-msg-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 2px 4px 2px 8px;
+  margin-top: 4px;
+}
+
+.fab-msg-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #F8FAFC;
+  font-size: 0.72rem;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.fab-send-btn {
+  background: var(--gold, #FFD23F);
+  border: none;
+  color: #070B12;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: transform 0.15s ease;
+}
+
+.fab-send-btn:hover {
+  transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+  .floating-reactions-fab {
+    bottom: 80px;
+    right: 16px;
+  }
 }

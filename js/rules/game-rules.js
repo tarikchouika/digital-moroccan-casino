@@ -5,7 +5,289 @@
 /* ── قاعدة بيانات القواعد الكاملة ── */
 var FULL_RULES = {
   /* ═══ Moroccan Ronda ♦️♠️ ═══ */
-  rn: {
+    /* ═══ Moroccan Rami (Talaj & Simple) ═══ */
+  rm: {
+    name: {
+      ar: 'الرامي المغربي (طلاح + سامبل) 🃏',
+      da: 'الرامي المغربي (طالاج وسامبل) 🃏',
+      fr: 'Rami Marocain (Talaj + Sample) 🃏',
+      en: 'Moroccan Rami (Talaj + Sample) 🃏'
+    },
+    goal: {
+      ar: 'كوّن مجموعات (متماثلات ومتتاليات) وأنزلها في الطاولة، وأنهِ الشوط بأقل مجموع نقاط، وتجنّب تجاوز هدف الجولة (501–1001) لتبقى الفائز.',
+      da: 'جمع المجموعات (متشابهات وتسلسلات) ونزلها فالطبلة، وسالي الشوط بأقل مجموع نقاط، وتجنب تفوت هدف الجولة (501–1001) باش تبقى رابح.',
+      fr: 'Formez des combinaisons (brelans et suites), posez-les sur la table et finissez la manche avec le moins de points possible, sans dépasser l\'objectif de la partie (501–1001).',
+      en: 'Form melds (sets and sequences), lay them on the table, and finish each round with the lowest score, avoiding exceeding the match target (501–1001) to remain the winner.'
+    },
+    steps: {
+      ar: [
+        'اختر الوضع: طلاح (108 أوراق + 4 جوكر) أو سامبل (104 أوراق بجوكر معكوس اللون)',
+        'التوزيع: 14 ورقة لكل لاعب و15 للموزع في الطلاح (13 لكل لاعب في السامبل)؛ أول موزع = صاحب أصغر ورقة',
+        'في دورك (مؤقت 90 ثانية): اسحب ورقة واحدة بالضبط من المجرف أو خذ ورقة المرموق، ثم ارمِ ورقة واحدة بالضبط (اليد 14 بين الأدوار و15 أثناء الدور)',
+        'الافتتاح: متماثلة ≥3 + متتالية ≥3 ومجموع ≥ 71 نقطة في الطلاح (≥ 51 في السامبل) بدون جوكر في الحساب',
+        'بعد الافتتاح: أضف الأوراق الصالحة لأي مجموعة ظاهرة (له أو لغيره) أو استبدل الجوكر بورقة من يدك',
+        'الإنهاء: 14 ورقة كلها مجموعات صالحة + الورقة الـ15 تُقلب ظهراً على الطاولة (في السامبل: 13 مجموعة + الـ14 ظهراً)'
+      ],
+      da: [
+        'عزل الوضع: طالاج (108 ورقة + 4 جوكير) ولا سامبل (104 ورقة بجوكر معكوس)',
+        'التوزيع: 14 ورقة لكل لعاب و15 للموزع فالطالاج (13 لكل واحد فالسامبل)',
+        'فدورك (90 ثانية): جبد ورقة وحدة بالضبط من الباكي ولا خود المرموق، وارمي ورقة وحدة بالضبط',
+        'الافتتاح: مجموعة متشابهة ≥3 + تسلسل ≥3 والمجموع ≥ 71 فالطالاج (≥ 51 فالسامبل) بلا جوكر فالحساب',
+        'من بعد الافتتاح: زيد الأوراق الصالحة لأي مجموعة ظاهرة ولا بدل الجوكر بورقة من يدك',
+        'الإنهاء: 14 ورقة كلها مجموعات صالحة + الورقة 15 تنقلب على ضهرها'
+      ],
+      fr: [
+        'Choisissez le mode : Talaj (108 cartes + 4 jokers) ou Sample (104 cartes avec joker de couleur inversée)',
+        'Distribution : 14 cartes par joueur et 15 au donneur en Talaj (13 chacun en Sample) ; le premier donneur est celui qui détient la plus petite carte',
+        'À votre tour (90 s) : piochez exactement une carte (talon ou défausse) puis défaussez exactement une carte (14 cartes entre les tours, 15 pendant le tour)',
+        'Ouverture : brelan ≥3 + suite ≥3 et total strictement supérieur à 71 en Talaj (51 en Sample), sans joker dans le compte',
+        'Après l\'ouverture : ajoutez les cartes valides à toute combinaison exposée (la vôtre ou celle d\'un adversaire) ou remplacez un joker par une carte de votre main',
+        'Fin de manche : 14 cartes toutes en combinaisons valides + la 15e posée face cachée (en Sample : 13 combinaisons + la 14e face cachée)'
+      ],
+      en: [
+        'Choose the mode: Talaj (108 cards + 4 Jokers) or Sample (104 cards with a colour-reversed Joker)',
+        'Deal: 14 cards per player and 15 to the dealer in Talaj (13 each in Sample); the first dealer is the holder of the lowest card',
+        'On your turn (90s timer): draw exactly one card (stock or discard) then discard exactly one (14 cards between turns, 15 during the turn)',
+        'Opening: Set ≥3 + Sequence ≥3 and a total ≥ 71 in Talaj (≥ 51 in Sample), excluding Jokers from the count',
+        'After opening: add valid cards to any exposed meld (yours or an opponent\'s) or replace a Joker with one card from your hand',
+        'Finish: all 14 cards form valid melds + the 15th card placed face-down (in Sample: 13 melds + the 14th face-down)'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'تعريفات عامة', items: [
+          'الرموز: قلب/مربع (أحمر)، سيف/عنب (أسود). قيم الافتتاح: الرقم = قيمته؛ J/Q/K/A = 10.',
+          'متماثلة (Set): 3 أوراق أو أكثر بنفس العدد وبرموز مختلفة، بلا تكرار رمز داخل المجموعة.',
+          'متتالية (Sequence): 3 أوراق أو أكثر متتابعة بنفس الرمز.',
+          'المجرف = أوراق السحب؛ المرموق = أوراق الرمي.'
+        ]},
+        { h: 'قانون الطلاح — التوزيع والدور', items: [
+          '2–5 لاعبين؛ 108 أوراق (8 لكل رقم + 4 جوكر). أول موزع = صاحب أصغر ورقة، والتعاقب يميناً كل شوط.',
+          '14 ورقة لكل لاعب و15 للموزع؛ يرمي الموزع أول ورقة لبدء المرموق.',
+          'الدور: سحب واحد (مجرف أو مرموق) ثم رمي واحد بالضبط؛ اليد 14 بين الأدوار و15 أثناء الدور — مستحيل 13 أو 16.',
+          'مؤقت 90 ثانية؛ عند انتهائه لعب أوتوماتيكي وتمرير الدور.'
+        ]},
+        { h: 'قانون الطلاح — الافتتاح (الإظهار)', items: [
+          'شرطان معاً: متماثلة ≥3 + متتالية ≥3، ومجموع الأوراق المُظهرة ≥ 71 (بالحساب الوجهي) دون جوكر في الحساب.',
+          'إن وُجد افتتاح سابق: يجب تجاوز مجموع آخر مُظهِر.',
+          'ورقة الموزع الأولى تُؤخذ فقط في حالتين: إكمال افتتاحٍ مستوفٍ، أو إنهاء الشوط كاملاً.',
+          'إظهار بدون شروط = +71، تُجمع الأوراق ويُرمى ورقة ويستمر الشوط.',
+          'أخذ ورقة (مرموق/سابقة) دون شروط = +71 مع إرجاع الورقة.'
+        ]},
+        { h: 'قانون الطلاح — الإضافة واستبدال الجوكر', items: [
+          'بعد تحقق الشروط يجوز إنقاص ورقة من اليد بإضافتها لأي مجموعة ظاهرة (له أو لغيره) بشرط التجانس وعدم التكرار: متتالية ← نفس الرمز وتمدد التسلسل؛ متماثلة ← نفس العدد برمز غير موجود.',
+          'استبدال الجوكر: ورقة واحدة من اليد تُضاف للمجموعة أو يُستبدل بها الجوكر فيها.',
+          'كل ورقة صالحة تُقبل، وغير الصالحة تُرفض فقط، برسالة واحدة غير مكررة.'
+        ]},
+        { h: 'قانون الطلاح — إنهاء الشوط', items: [
+          'حالة أ (أساسية): 14 ورقة كلها مجموعات صالحة (الجوكر مسموح للتكملة) + الورقة الـ15 تُقلب ظهراً → إنهاء بدون أي شرط نقاط.',
+          'حالة ب: سحب المرموق ثم الإنهاء كحالة أ → بدون شرط افتتاح.',
+          'حالة ج: سحب المرموق + الإنهاء مع إضافة ورقة لمجموعة لاعبٍ منزِلٍ قبله → يلزم الافتتاح وتجاوز مجموع آخر منزِل.',
+          'يمنع ظهور خطأ «شروط الافتتاح» في الحالتين أ/ب.',
+          'شوط مضاعف: إن أنهى الفائز بجوكر حر معزول كالورقة الـ15 (جوكر مسحوب من ورق التوزيع، لا من المرموق أو لا تور) تُضاعف نقاط الأوراق المتبقية/اليد الكاملة على الخاسرين، دون مضاعفة جزاء الخطأ.'
+        ]},
+        { h: 'قانون الطلاح — قاعدة الـ12 ورقة', items: [
+          'من أنزل 12 ورقة: يلزمه في دوره التالي أخذ ورقة السابق إن انتمت لأي مجموعة ظاهرة؛ غفل وسحب من المجرف = +71 نهاية الشوط (ويُعفى الرامي).',
+          'من بيده كاملة: يمنع أن يرمي ورقة منتمية لمجموعة ظاهرة والتالي صاحب 12 ورقة؛ فعلها وأخذها التالي = +71 على الرامي.'
+        ]},
+        { h: 'قانون الطلاح — النفاد والحساب والنهاية', items: [
+          'نفاد المجرف: يُخلط المرموق فقط (لا تُمس مجموعات اللاعبين) ويُستأنف عند من توقف عنده الدور.',
+          'حساب نهاية الشوط: يد كاملة دون إنزال = +100؛ أنزل بعضاً = كل ورقة متبقية 10 نقاط ثابتة بغضّ النظر عن رقمها.',
+          'الجزاءات تُضاف للمجموع التراكمي وتُعرض بسببها مرة واحدة.',
+          'نهاية الجولة: الهدف (501–1001)؛ يخسر من يتجاوز مجموعه التراكمي الهدف، والفائز من بقي دونه؛ لا تُعلن النهاية قبل التجاوز.'
+        ]},
+        { h: 'قانون السامبل (104 أوراق)', items: [
+          'بلا جوكر؛ تُقلب أول ورقة: إن حمراء فجوكرها السوداء بنفس الرقم، والعكس.',
+          '13 ورقة لكل لاعب (والموزع)؛ الإنهاء = 13 في مجموعات + الـ14 ظهراً.',
+          'الافتتاح: متماثلة + متتالية ومجموع ≥ 51 بلا جوكر؛ وما بعده يتجاوز آخر مُظهِر.',
+          'عند الإنهاء يكشف الجميع: من لا يملك متماثلة + متتالية (بدون ورقة الجوكر المعينة) = +51؛ ومن يملكهما تُحسب أوراقه المتبقية بقيمتها الوجهية (J/Q/K/A وورقة الجوكر = 10)؛ إن تجاوزت 51 = +51.',
+          'خطأ الإظهار/الأخذ = +51 مع جمع المجموعات واستمرار الشوط.'
+        ]}
+      ],
+      en: [
+        { h: 'General Definitions', items: [
+          'Suits: Hearts/Diamonds (Red), Spades/Clubs (Black). Opening values: number cards = face value; J/Q/K/A = 10.',
+          'Set: 3 or more cards of the same rank with different suits; no duplicate suits within the set.',
+          'Sequence: 3 or more consecutive cards of the same suit.',
+          'Stock = draw pile; Discard pile = discard pile.'
+        ]},
+        { h: 'Talaj — Dealing and Turn', items: [
+          '2–5 players; 108 cards (8 per rank + 4 Jokers). First dealer = player holding the lowest card; deal rotates to the right each round.',
+          '14 cards per player, 15 for the dealer; the dealer discards first to start the discard pile.',
+          'Turn: draw exactly one card (stock or discard) then discard exactly one; hand size is 14 between turns and 15 during the turn — 13 or 16 is impossible.',
+          '90-second timer; on timeout, auto-play executes and the turn passes.'
+        ]},
+        { h: 'Talaj — Opening (Melding)', items: [
+          'Both conditions required: Set ≥3 + Sequence ≥3, and the total face value of melded cards is ≥ 71, excluding Jokers from the calculation.',
+          'If a prior opening exists: you must exceed the last opener\'s total.',
+          'The dealer\'s first discarded card may only be taken to complete a valid opening or to end the round entirely.',
+          'Showing without conditions = +71: cards are collected, one is discarded, and the round continues.',
+          'Taking a card (discard/previous) without conditions = +71 with the card returned.'
+        ]},
+        { h: 'Talaj — Adding to Melds & Joker Replacement', items: [
+          'After meeting conditions, you may reduce your hand by adding a card to any exposed meld (yours or an opponent\'s) provided it fits legally without duplication: Sequence ← same suit extending the run; Set ← same rank with a suit not already present.',
+          'Joker replacement: one card from hand is either added to the meld OR used to replace a Joker within it.',
+          'All valid cards must be accepted; only invalid cards rejected — with a single, non-repeating message.'
+        ]},
+        { h: 'Talaj — Ending the Round', items: [
+          'Case A (Standard): all 14 cards form valid melds (Jokers allowed as wildcards) + the 15th card placed face-down → ends the round with no point requirement.',
+          'Case B: draw from the discard pile then end as in Case A → no opening requirement.',
+          'Case C: draw from the discard pile + end by adding a card to a previous player\'s meld → must meet opening conditions AND exceed the last opener\'s total.',
+          'The "opening conditions" error must NOT trigger in Cases A/B.',
+          'Doubled round: if the winner ends with a free isolated Joker as the 15th card (a Joker drawn from the draw pile, not from the discard pile or La Tour), the losers\' remaining-card / full-hand points are doubled, while violation penalties are NOT doubled.'
+        ]},
+        { h: 'Talaj — 12-Card Rule', items: [
+          'A player who has laid down 12 cards MUST take the previous player\'s discard on their next turn if it belongs to any exposed meld; failure (drawing from stock instead) = +71 at round end (the thrower is exempt).',
+          'A player with a full hand MAY NOT discard a card belonging to an exposed meld when the next player holds 12 cards; violation + next player takes it = +71 on the thrower.'
+        ]},
+        { h: 'Talaj — Exhaustion, Scoring and Match End', items: [
+          'Stock exhaustion: reshuffle the discard pile ONLY (players\' melds untouched); resume from the current turn position.',
+          'End-of-round scoring: full hand without laying down = +100; partial lay-down = each remaining card is a flat 10 points, regardless of rank.',
+          'Penalties are added to the cumulative score and displayed once with reason.',
+          'Match end: target (501–1001); a player loses upon exceeding the target cumulative score; the winner stays below it; the game does NOT end before the threshold breach.'
+        ]},
+        { h: 'Sample Rules (104 Cards)', items: [
+          'No Jokers; flip the first card: if red, its black counterpart of the same rank becomes the Joker, and vice versa.',
+          '13 cards per player (including the dealer); win condition = 13 cards in melds + the 14th placed face-down.',
+          'Opening: Set + Sequence totaling ≥ 51 excluding Jokers; subsequent openers must exceed the last opener\'s total.',
+          'At round end all hands are revealed: players lacking Set + Sequence (excluding the designated Joker card) = +51; those having both count remaining cards at face value (J/Q/K/A & the Joker = 10); if the total exceeds 51 = +51.',
+          'Invalid meld/take attempt = +51: melds are collected and the round continues.'
+        ]}
+      ],
+      fr: [
+        { h: 'Définitions générales', items: [
+          'Symboles : Cœur/Carreau (rouge), Épée/Trèfle (noir). Valeurs d\'ouverture : chiffre = valeur ; V/D/R/As = 10.',
+          'Brelan (Set) : 3 cartes ou plus de même rang avec des symboles différents, sans doublon de symbole.',
+          'Suite (Sequence) : 3 cartes consécutives ou plus de même symbole.',
+          'Talon = pioche ; Défausse = pile de défausse.'
+        ]},
+        { h: 'Talaj — Distribution et tour', items: [
+          '2–5 joueurs ; 108 cartes (8 par rang + 4 jokers). Premier donneur = plus petite carte ; rotation à droite chaque manche.',
+          '14 cartes par joueur, 15 au donneur ; le donneur défausse en premier.',
+          'Tour : piocher exactement une carte puis défausser exactement une carte ; 14 cartes entre les tours, 15 pendant le tour — 13 ou 16 impossible.',
+          'Minuteur 90 s ; à expiration, jeu automatique et passage du tour.'
+        ]},
+        { h: 'Talaj — Ouverture', items: [
+          'Deux conditions : brelan ≥3 + suite ≥3, et total ≥ 71 (sans joker dans le compte).',
+          'Si une ouverture existe : dépasser le total du dernier ouvreur.',
+          'La première défausse du donneur ne se prend que pour compléter une ouverture valide ou pour finir la manche.',
+          'Montrer sans conditions = +71 (cartes reprises, une défaussée, la manche continue).',
+          'Prendre une carte sans conditions = +71 avec la carte rendue.'
+        ]},
+        { h: 'Talaj — Ajouts et joker', items: [
+          'Après conditions : ajouter une carte à toute combinaison exposée si elle convient sans doublon (suite ← même symbole ; brelan ← même rang, symbole absent).',
+          'Joker : une carte de la main est ajoutée OU remplace un joker.',
+          'Toute carte valide est acceptée ; seule l\'invalide est rejetée, avec un message unique.'
+        ]},
+        { h: 'Talaj — Fin de manche', items: [
+          'Cas A : 14 cartes en combinaisons valides (jokers permis) + la 15e face cachée → fin sans condition de points.',
+          'Cas B : prise de la défausse puis fin comme Cas A → sans condition d\'ouverture.',
+          'Cas C : prise de la défausse + fin en ajoutant à la combinaison d\'un joueur précédent → conditions d\'ouverture + dépasser le total du dernier ouvreur.',
+          'L\'erreur « conditions d\'ouverture » ne doit PAS apparaître dans les cas A/B.'
+        ]},
+        { h: 'Talaj — Règle des 12 cartes', items: [
+          'Un joueur ayant posé 12 cartes DOIT prendre la défausse du précédent si elle appartient à une combinaison exposée ; sinon +71 (le lanceur est exempté).',
+          'Un joueur à main pleine ne PEUT PAS défausser une carte appartenant à une combinaison exposée si le suivant a 12 cartes ; violation + prise = +71 au lanceur.'
+        ]},
+        { h: 'Talaj — Épuisement, score et fin', items: [
+          'Épuisement du talon : mélanger la défausse SEULEMENT (les combinaisons restent intactes).',
+          'Score de fin : main pleine sans pose = +100 ; pose partielle = 10 points fixes par carte restante.',
+          'Les pénalités s\'ajoutent au cumul et s\'affichent une fois avec leur raison.',
+          'Fin de partie : objectif (501–1001) ; on perd en dépassant le cumul ; le gagnant reste en dessous ; pas de fin avant dépassement.'
+        ]},
+        { h: 'Sample (104 cartes)', items: [
+          'Sans joker ; la première carte retournée désigne le joker (contrepartie de couleur inversée).',
+          '13 cartes par joueur ; fin = 13 en combinaisons + la 14e face cachée.',
+          'Ouverture : brelan + suite, total ≥ 51 sans joker ; ensuite dépasser le dernier ouvreur.',
+          'À la fin, révélation : sans brelan + suite (hors joker désigné) = +51 ; sinon cartes restantes à leur valeur faciale (V/D/R/As et joker = 10) ; si > 51 = +51.',
+          'Erreur de pose/prise = +51, combinaisons reprises, la manche continue.'
+        ]}
+      ],
+      da: [
+        { h: 'تعريفات عامة', items: [
+          'الرموز: قلب/مربع حمر، سيف/عنب كحل. قيم الافتتاح: الرقم بقيمتو؛ J/Q/K/A = 10.',
+          'مجموعة متشابهة: 3 أوراق ولا كتر بنفس العدد وبرموز مختلفة بلا تكرار.',
+          'تسلسل: 3 أوراق ولا كتر متتابعين بنفس الرمز.',
+          'الباكي = أوراق السحب؛ المرموق = أوراق الرمي.'
+        ]},
+        { h: 'الطلاح — التوزيع والدور', items: [
+          '2–5 لعابا؛ 108 ورقة. أول موزع = صاحب أصغر ورقة؛ الدور يمشي لليمين.',
+          '14 ورقة لكل لعاب و15 للموزع؛ الموزع يرمي اللولة.',
+          'الدور: جبد ورقة وحدة (باكي ولا مرموق) وارمي ورقة وحدة بالضبط؛ اليد 14 بين الأدوار و15 فالدور.',
+          '90 ثانية؛ ملي يسالي الوقت كيلعب الأوتوماتيك.'
+        ]},
+        { h: 'الطلاح — الافتتاح', items: [
+          'جوج شروط: متشابهة ≥3 + تسلسل ≥3 والمجموع ≥ 71 بلا جوكر فالحساب.',
+          'إلا كان افتتاح قبل: خاصك تفوت مجموع آخر مظهر.',
+          'ورقة الموزع اللولة كتاخذ غير باش تكمل افتتاح ولا تسالي الشوط.',
+          'إظهار بلا شروط = +71.',
+          'أخذ ورقة بلا شروط = +71 وترجع الورقة.'
+        ]},
+        { h: 'الطلاح — الإضافة والجوكر', items: [
+          'من بعد الشروط: زيد ورقة لأي مجموعة ظاهرة إلا جات قانونية بلا تكرار.',
+          'الجوكر: ورقة وحدة من اليد كتزاد ولا كتتبدل بيه الجوكر.',
+          'كل ورقة صالحة كتقبل وغير الصالحة كترفض برسالة وحدة.'
+        ]},
+        { h: 'الطلاح — إنهاء الشوط', items: [
+          'حالة أ: 14 ورقة كلها مجموعات صالحة + الورقة 15 على ضهرها = ساليتي بلا شرط نقاط.',
+          'حالة ب: جبدتي المرموق وساليتي = بلا شرط افتتاح.',
+          'حالة ج: جبدتي المرموق وساليتي بزيادة ورقة لمجموعة لعاب آخر = خاصك الافتتاح وتفوت مجموع آخر منزل.',
+          'ما كيبانش خطأ الافتتاح فالحالتين أ/ب.'
+        ]},
+        { h: 'الطلاح — قاعدة الـ12', items: [
+          'لي نزل 12 ورقة خاصو ياخد ورقة السابق إلا كانت كتسالي مجموعة ظاهرة؛ غفل = +71.',
+          'لي عندو يد كاملة ممنوع يرمي ورقة كتسالي مجموعة والتالي عندو 12؛ دارها = +71 عليه.'
+        ]},
+        { h: 'الطلاح — النفاد والحساب والنهاية', items: [
+          'نفاد الباكي: تخبل المرموق غير، والمجموعات ما كتتمسش.',
+          'حساب نهاية الشوط: يد كاملة بلا إنزال = +100؛ نزل شوية = كل ورقة متبقية 10 نقاط ثابتة.',
+          'الجزاءات كتزيد للمجموع التراكمي وكتعرض مرة وحدة بالسبب.',
+          'نهاية الجولة: الهدف (501–1001)؛ لي فوت التراكمي ديالو الهدف خسر، والرابح لي بقى تحتو.'
+        ]},
+        { h: 'السامبل (104 ورقة)', items: [
+          'بلا جوكر؛ الورقة اللولة لي تنقلب كتعين الجوكر باللون المعكوس.',
+          '13 ورقة لكل لعاب؛ الإنهاء = 13 مجموعة + الورقة 14 على ضهرها.',
+          'الافتتاح: متشابهة + تسلسل والمجموع ≥ 51 بلا جوكر.',
+          'فالآخر كيكشفو الكل: بلا متشابهة + تسلسل = +51؛ اللي عندو بجوج كيتحسبو أوراقو بقيمتهم (J/Q/K/A والجوكر = 10)؛ إلا فاتو 51 = +51.',
+          'خطأ الإظهار/الأخذ = +51.'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>إنهاء الشوط (Finish)</td><td>0 نقطة جزاء (الفوز بالشوط)</td></tr><tr><td>إظهار/افتتاح خاطئ — طلاح</td><td>+71 نقطة جزاء</td></tr><tr><td>إظهار/افتتاح خاطئ — سامبل</td><td>+51 نقطة جزاء</td></tr><tr><td>أخذ ورقة دون شروط — طلاح</td><td>+71 (مع إرجاع الورقة)</td></tr><tr><td>أخذ ورقة دون شروط — سامبل</td><td>+51</td></tr><tr><td>مخالفة قاعدة الـ12 ورقة</td><td>+71</td></tr><tr><td>يد كاملة دون إنزال — طلاح</td><td>+100</td></tr><tr><td>يد كاملة دون إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — طلاح</td><td>10 نقاط ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr><tr><td>شوط مضاعف (إنهاء بجوكر حر معزول)</td><td>نقاط الأوراق المتبقية/اليد الكاملة ×2 (الجزاءات لا تُضاعف)</td></tr>',
+      da: '<tr><td>إنهاء الشوط</td><td>0 نقطة جزاء (ربحتي الشوط)</td></tr><tr><td>إظهار خاطئ — طالاج</td><td>+71</td></tr><tr><td>إظهار خاطئ — سامبل</td><td>+51</td></tr><tr><td>أخذ ورقة بلا شروط — طالاج</td><td>+71 (وترجع الورقة)</td></tr><tr><td>أخذ ورقة بلا شروط — سامبل</td><td>+51</td></tr><tr><td>قاعدة الـ12</td><td>+71</td></tr><tr><td>يد كاملة بلا إنزال — طالاج</td><td>+100</td></tr><tr><td>يد كاملة بلا إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية — طالاج</td><td>10 ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr>',
+      fr: '<tr><td>Finir la manche</td><td>0 point de pénalité (victoire)</td></tr><tr><td>Ouverture invalide — Talaj</td><td>+71 points</td></tr><tr><td>Ouverture invalide — Sample</td><td>+51 points</td></tr><tr><td>Prise de carte sans conditions — Talaj</td><td>+71 (carte rendue)</td></tr><tr><td>Prise de carte sans conditions — Sample</td><td>+51</td></tr><tr><td>Violation de la règle des 12 cartes</td><td>+71</td></tr><tr><td>Main pleine sans pose — Talaj</td><td>+100</td></tr><tr><td>Main pleine sans pose — Sample</td><td>+51</td></tr><tr><td>Cartes restantes après pose partielle — Talaj</td><td>10 fixes par carte</td></tr><tr><td>Cartes restantes après pose partielle — Sample</td><td>Valeur faciale (V/D/R/As et joker = 10)</td></tr>',
+      en: '<tr><td>Finish Round</td><td>0 penalty points (Round Win)</td></tr><tr><td>Invalid meld/opening — Talaj</td><td>+71 penalty points</td></tr><tr><td>Invalid meld/opening — Sample</td><td>+51 penalty points</td></tr><tr><td>Take card without conditions — Talaj</td><td>+71 (card returned)</td></tr><tr><td>Take card without conditions — Sample</td><td>+51</td></tr><tr><td>Violate 12-card rule</td><td>+71</td></tr><tr><td>Full hand without lay-down — Talaj</td><td>+100</td></tr><tr><td>Full hand without lay-down — Sample</td><td>+51</td></tr><tr><td>Remaining after partial lay-down — Talaj</td><td>Flat 10 per card</td></tr><tr><td>Remaining after partial lay-down — Sample</td><td>Face value (J/Q/K/A & Joker = 10)</td></tr><tr><td>Doubled round (free isolated Joker finish)</td><td>Remaining/full-hand points ×2 (penalties not doubled)</td></tr>'
+    },
+    tips: {
+      ar: [
+        'في الطلاح: لا تُحسب ورقة الجوكر ضمن نقاط الافتتاح (يجب تجاوز 71 بدونها).',
+        'في السامبل: راقب ورقة المؤشر — نظيرتها المعاكسة اللون تصبح الجوكر، وتُحسب 10 عند كشف الأوراق.',
+        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) لا يتطلب أي شرط افتتاح.',
+        'قاعدة الـ12 ورقة: إن أنزلت 12 ورقة فخذ ورقة المرموق المطابقة لمجموعات الطاولة، وإلا فالجزاء +71.'
+      ],
+      da: [
+        'فالطالاج: الجوكر ما كيتحسبش فنقاط الافتتاح (خاصك تفوت 71 بلا بيه).',
+        'فالسامبل: رد البال لورقة المؤشر — النظير المعكوس ديالها كيولي جوكر وكيتحسب 10.',
+        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) ما كيحتاج حتى شرط افتتاح.',
+        'قاعدة الـ12: إلا نزلتي 12 ورقة خذ المرموق المطابق للمجموعات وإلا +71.'
+      ],
+      fr: [
+        'En Talaj : le joker ne compte pas dans l\'ouverture (il faut dépasser 71 sans lui).',
+        'En Sample : surveillez la carte indicatrice — sa contrepartie de couleur inversée devient le joker et vaut 10 à la révélation.',
+        'La fin de manche standard (14 cartes + défausse de la 15e) n\'exige aucune condition d\'ouverture.',
+        'Règle des 12 cartes : si vous en posez 12, prenez la défausse qui complète une combinaison, sinon +71.'
+      ],
+      en: [
+        'In Talaj: the Joker does not count toward the opening (you must exceed 71 without it).',
+        'In Sample: watch the indicator card — its colour-reversed counterpart becomes the Joker and counts 10 at reveal.',
+        'Standard round finish (14 cards + discarding the 15th) requires no opening condition.',
+        '12-card rule: if you have laid 12 cards, take the discard that fits a meld, otherwise +71.'
+      ]
+    }
+  },
+
+rn: {
     name: { ar: 'روندا المغربية ♦️♠️', fr: 'Ronda Marocaine ♦️♠️', en: 'Moroccan Ronda ♦️♠️' },
     goal: {
       ar: 'خمّن البطاقة الصحيحة (رقم أو رقم + رمز) قبل الموزع للفوز بالجولة.',
@@ -1528,51 +1810,83 @@ var Tutorial = {
   showFullRules: function(gameId) {
     var rules = FULL_RULES[gameId];
     if (!rules) return;
-    var lang = ST.lang;
+    var lang = (ST.lang === 'fr' || ST.lang === 'en' || ST.lang === 'da') ? ST.lang : 'ar';
+    var fallbackLang = (lang === 'da') ? 'ar' : (lang === 'fr' ? 'fr' : (lang === 'en' ? 'en' : 'ar'));
+    
     var modal = document.getElementById('rulesModal');
     var title = document.getElementById('rulesTitle');
     var body = document.getElementById('rulesBody');
-    title.textContent = '📖 ' + rules.name[lang];
+    
+    var gName = rules.name[lang] || rules.name[fallbackLang] || rules.name['ar'] || rules.name['en'] || 'اللعبة';
+    if (title) title.textContent = '📖 ' + gName;
+    
     var html = '<div class="rules-full">';
+    
     /* الهدف */
+    var goalText = rules.goal[lang] || rules.goal[fallbackLang] || rules.goal['ar'] || rules.goal['en'] || '';
     html += '<div class="rules-section">';
-    html += '<h4>🎯 الهدف</h4>';
-    html += '<p>' + rules.goal[lang] + '</p>';
+    html += '<h4><i class="fa-solid fa-bullseye" aria-hidden="true"></i> ' + (T('ui.goal') || 'الهدف') + '</h4>';
+    html += '<p>' + goalText + '</p>';
     html += '</div>';
+    
     /* الخطوات */
-    html += '<div class="rules-section">';
-    html += '<h4>📋 خطوات اللعب</h4>';
-    html += '<ol class="rules-steps">';
-    rules.steps[lang].forEach(function(step) {
-      html += '<li>' + step + '</li>';
-    });
-    html += '</ol>';
-    html += '</div>';
-    /* جدول الدفع */
-    if (rules.payouts[lang]) {
+    var stepsList = rules.steps[lang] || rules.steps[fallbackLang] || rules.steps['ar'] || rules.steps['en'] || [];
+    if (stepsList.length > 0) {
       html += '<div class="rules-section">';
-      html += '<h4>💰 جدول الدفع</h4>';
+      html += '<h4><i class="fa-solid fa-list-ol" aria-hidden="true"></i> ' + (T('ui.steps') || 'طريقة اللعب') + '</h4>';
+      html += '<ol class="rules-steps">';
+      stepsList.forEach(function(step) {
+        html += '<li>' + step + '</li>';
+      });
+      html += '</ol>';
+      html += '</div>';
+    }
+    
+    /* القواعد الرسمية التفصيلية */
+    var detailsList = rules.details ? (rules.details[lang] || rules.details[fallbackLang] || rules.details['ar'] || rules.details['en']) : null;
+    if (detailsList && detailsList.length > 0) {
+      html += '<div class="rules-section">';
+      html += '<h4><i class="fa-solid fa-gavel" aria-hidden="true"></i> ' + (T('ui.officialRules') || 'القواعد الرسمية') + '</h4>';
+      detailsList.forEach(function(sec) {
+        html += '<h5 class="rules-sub">' + sec.h + '</h5>';
+        html += '<ul class="rules-details">';
+        sec.items.forEach(function(it) {
+          html += '<li>' + it + '</li>';
+        });
+        html += '</ul>';
+      });
+      html += '</div>';
+    }
+    
+    /* جدول الدفع */
+    var payoutContent = rules.payouts[lang] || rules.payouts[fallbackLang] || rules.payouts['ar'] || rules.payouts['en'];
+    if (payoutContent) {
+      html += '<div class="rules-section">';
+      html += '<h4><i class="fa-solid fa-table-list" aria-hidden="true"></i> ' + (T('ui.payouts') || 'جدول الأرباح والمضاعفات') + '</h4>';
       html += '<table class="atable">';
-      html += '<thead><tr><th>النتيجة</th><th>المكافأة</th></tr></thead>';
-      html += '<tbody>' + rules.payouts[lang] + '</tbody>';
+      html += '<thead><tr><th>' + (T('ui.outcome') || 'النتيجة') + '</th><th>' + (T('ui.reward') || 'المضاعف / المكسب') + '</th></tr></thead>';
+      html += '<tbody>' + payoutContent + '</tbody>';
       html += '</table>';
       html += '</div>';
     }
+    
     /* نصائح */
-    if (rules.tips[lang] && rules.tips[lang].length > 0) {
+    var tipsList = rules.tips[lang] || rules.tips[fallbackLang] || rules.tips['ar'] || rules.tips['en'] || [];
+    if (tipsList.length > 0) {
       html += '<div class="rules-section">';
-      html += '<h4>💡 نصائح</h4>';
+      html += '<h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> ' + (T('ui.tips') || 'نصائح وإرشادات') + '</h4>';
       html += '<ul class="rules-tips">';
-      rules.tips[lang].forEach(function(tip) {
+      tipsList.forEach(function(tip) {
         html += '<li>' + tip + '</li>';
       });
       html += '</ul>';
       html += '</div>';
     }
+    
     html += '</div>';
-    body.innerHTML = html;
-    modal.classList.add('show');
-    SND.click();
+    if (body) body.innerHTML = html;
+    if (modal) modal.classList.add('show');
+    if (typeof SND !== 'undefined' && SND.click) SND.click();
   },
   /* فحص أول مرة لعب */
   checkFirstPlay: function(gameId) {

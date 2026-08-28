@@ -10,7 +10,9 @@
   var _started = false;
   var _gameHandler = null;   // معالج room:move للعبة النشطة
   var _startHandler = null;  // معالج بدء اللعب (status=playing)
+  var _updateHandler = null; // [Req3] معالج تحديث حالة الغرفة (لتحديث واجهة التصويت)
   var _messages = [];        // رسائل الغرفة (جماعية + فردية مستلمة)
+  var _pendingReplay = null;  // [Resilience] تاريخ الحركات لإعادة بناء الحالة عند العودة
   var _recipient = null;     // { id, name } — المستلم الفردي الحالي (null = الجميع)
 
   /* ── أدوات ── */
@@ -26,16 +28,18 @@
   var Rooms = {
     state: null,
     /* الألعاب المدعومة للغرف: id -> أقصى عدد لاعبين */
-    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4 },
+    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, dm: 2, ch: 2 },
 
     isGameSupported: function (id) { return !!Rooms.roomGameIds[id]; },
     isActive: function () { return !!(Rooms.state && Rooms.state.status === 'playing'); },
     maxFor: function (id) { return Rooms.roomGameIds[id] || 2; },
     /* إظهار/إخفاء زر «العب مع صديق» حسب اللعبة المفتوحة */
     syncBtn: function () {
+      var show = Rooms.isGameSupported(window._currentGameId);
       var b = document.getElementById('roomBtn');
-      if (!b) return;
-      b.style.display = Rooms.isGameSupported(window._currentGameId) ? '' : 'none';
+      if (b) b.style.display = show ? '' : 'none';
+      var ab = document.getElementById('aiBtn');
+      if (ab) ab.style.display = show ? '' : 'none';
     },
 
     /* ═══════ SSE (أحداث الغرف فقط — نفس /api/live) ═══════ */
@@ -52,6 +56,26 @@
       _source.addEventListener('room:chat', function (e) {
         try { Rooms._onChat(JSON.parse(e.data)); } catch (err) { console.error('[rooms] chat', err); }
       });
+      /* [Req7] رمز تعبيري/تفاعل وارد من عضو في الغرفة */
+      _source.addEventListener('room:react', function (e) {
+        try { Rooms._onReact(JSON.parse(e.data)); } catch (err) { console.error('[rooms] react', err); }
+      });
+      /* [Req8] رسالة صوتية واردة (≤10ث) */
+      _source.addEventListener('room:voice', function (e) {
+        try { Rooms._onVoice(JSON.parse(e.data)); } catch (err) { console.error('[rooms] voice', err); }
+      });
+      /* [Resilience] إعادة بناء حالة الجولة للاعب العائد (بعد انقطاع/إغلاق) */
+      _source.addEventListener('room:replay', function (e) {
+        try {
+          var d = JSON.parse(e.data);
+          _pendingReplay = d;   /* يستهلكها محوّل اللعبة عند فتحها */
+          /* [Resilience] إن كانت اللعبة مسجَّلة بالفعل، طبّق الإعادة فوراً */
+          try {
+            if (typeof window !== 'undefined' && typeof window.applyRoomReplay === 'function') window.applyRoomReplay(d);
+            else if (typeof window !== 'undefined' && typeof window.RM_applyReplay === 'function') window.RM_applyReplay(d);
+          } catch (er) {}
+        } catch (err) { console.error('[rooms] replay', err); }
+      });
     },
 
     _onUpdate: function (room) {
@@ -61,11 +85,12 @@
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
         Rooms.closeModal();
-        if (_startHandler) { var fn = _startHandler; _startHandler = null; fn(room); }
+        if (_startHandler) _startHandler(room);   /* [Req3] يُبقى المعالج لإعادة إطلاقه عند المباراة الجديدة */
       }
       /* غادرت الغرفة (حُذفت أو طردت) */
       if (!room) { Rooms.reset(); Rooms.render(); return; }
       Rooms.render();
+      if (_updateHandler) { try { _updateHandler(room); } catch (e) {} }   /* [Req3] تحديث واجهة التصويت */
     },
     _onMove: function (d) {
       if (_gameHandler) _gameHandler(d);
@@ -82,7 +107,173 @@
       if (msg.to_id != null && msg.from_id !== (u && u.id)) {
         toast('💬 ' + esc(msg.from_name) + ': ' + esc(msg.text), 'ok');
         if (typeof SND !== 'undefined' && SND.notify) SND.notify();
+      } else if (msg.to_id == null && msg.from_id !== (u && u.id)) {
+        /* [Req7] الرسائل الجماعية تظهر أثناء اللعب (دون فتح المودال) */
+        toast('💬 ' + esc(msg.from_name) + ': ' + esc(msg.text), 'ok');
+        if (typeof SND !== 'undefined' && SND.notify) SND.notify();
       }
+    },
+    /* [Req7] تفاعل وارد: رمز يطفو على شاشة الجميع (لاعبين + متفرجين) */
+    _onReact: function (d) {
+      if (!d || !d.emoji) return;
+      Rooms._spawnReact(d.emoji, d.from_name || '');
+      if (typeof SND !== 'undefined' && SND.notify) SND.notify();
+    },
+    /* رسم رمز طافٍ متحرك يختفي تلقائياً */
+    _spawnReact: function (emoji, name) {
+      var host = document.getElementById('roomReactStage') || Rooms._ensureReactStage();
+      if (!host) return;
+      var el = document.createElement('div');
+      el.className = 'room-react-burst';
+      var left = 18 + Math.random() * 60;
+      el.style.left = left + '%';
+      el.innerHTML = '<span class="rrb-emoji">' + esc(emoji) + '</span>' + (name ? '<span class="rrb-name">' + esc(name) + '</span>' : '');
+      host.appendChild(el);
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 2600);
+    },
+    _ensureReactStage: function () {
+      var st = document.createElement('div');
+      st.id = 'roomReactStage';
+      st.className = 'room-react-stage';
+      document.body.appendChild(st);
+      return st;
+    },
+    /* [Req7] إرسال رمز تفاعل للجميع */
+    sendReact: function (emoji) {
+      if (!Rooms.state) return;
+      API.post('/api/rooms/react', { room_id: Rooms.state.id, emoji: String(emoji || '') }).catch(function () {});
+      /* أظهره محلياً فوراً */
+      var u = me();
+      Rooms._spawnReact(emoji, u ? u.username : '');
+      Rooms._toggleReactPanel(false);
+    },
+    /* [Req7] الرسالة السريعة داخل اللعبة (للجميع) */
+    sendQuickMsg: function () {
+      var inp = document.getElementById('roomReactInput');
+      if (!inp || !Rooms.state) return;
+      var text = inp.value.trim();
+      if (!text) return;
+      inp.value = '';
+      API.post('/api/rooms/chat', { room_id: Rooms.state.id, text: text, to: null }).then(function (r) {
+        if (r && r.ok && r.data && r.data.msg) Rooms._onChat(r.data.msg);
+      });
+      Rooms._toggleReactPanel(false);
+    },
+    /* [Req8] تسجيل/إيقاف رسالة صوتية ≤10ث وبثّها للجميع */
+    toggleVoice: function () {
+      if (Rooms._mr) { Rooms.stopVoice(); return; }
+      if (!Rooms.state) return;
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+        toast('🎤 المتصفح لا يدعم تسجيل الصوت', 'err'); return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        var rec;
+        try { rec = new MediaRecorder(stream); } catch (e) { toast('🎤 فشل بدء التسجيل', 'err'); return; }
+        Rooms._mr = { rec: rec, chunks: [], stream: stream, start: Date.now() };
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) Rooms._mr.chunks.push(e.data); };
+        rec.onstop = function () {
+          var mr = Rooms._mr; Rooms._mr = null; Rooms._renderVoiceRec(false);
+          if (Rooms._voiceTi) { clearInterval(Rooms._voiceTi); Rooms._voiceTi = null; }
+          try { mr.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+          var blob = new Blob(mr.chunks, { type: mr.rec.mimeType || 'audio/webm' });
+          var dur = Math.max(1, Math.min(10, Math.round((Date.now() - mr.start) / 1000)));
+          if (!blob.size) { toast('🎤 تسجيل فارغ', 'warn'); return; }
+          var fr = new FileReader();
+          fr.onload = function () {
+            API.post('/api/rooms/voice', { room_id: Rooms.state.id, audio: fr.result, dur: dur }).catch(function () {});
+            toast('🎤 تم إرسال الرسالة الصوتية', 'ok');
+          };
+          fr.readAsDataURL(blob);
+        };
+        rec.start();
+        Rooms._renderVoiceRec(true);
+        Rooms._voiceTi = setInterval(function () {
+          var el = document.getElementById('roomVoiceTimer');
+          var s = Math.min(10, Math.round((Date.now() - Rooms._mr.start) / 1000));
+          if (el) el.textContent = String(s);
+        }, 250);
+        Rooms._voiceTimer = setTimeout(function () { Rooms.stopVoice(); }, 10000);
+      }).catch(function (e) {
+        toast('🎤 لا يمكن الوصول للميكروفون: ' + (e && e.message ? e.message : 'مرفوض'), 'err');
+      });
+    },
+    stopVoice: function () {
+      if (Rooms._voiceTimer) { clearTimeout(Rooms._voiceTimer); Rooms._voiceTimer = null; }
+      if (Rooms._mr && Rooms._mr.rec && Rooms._mr.rec.state !== 'inactive') {
+        try { Rooms._mr.rec.stop(); } catch (e) {}
+      }
+    },
+    _renderVoiceRec: function (on) {
+      var box = document.getElementById('roomVoiceRec');
+      var mic = document.getElementById('roomMicBtn');
+      if (box) box.style.display = on ? 'flex' : 'none';
+      if (mic) { mic.classList.toggle('rec', !!on); mic.textContent = on ? '⏹' : '🎤'; }
+    },
+    /* [Req8] رسالة صوتية واردة: تشغيل تلقائي + فقاعة قابلة لإعادة التشغيل */
+    _onVoice: function (d) {
+      if (!d || !d.audio) return;
+      Rooms._spawnVoiceBubble(d.audio, d.from_name || '', d.dur || 0);
+      if (typeof SND !== 'undefined' && SND.notify) SND.notify();
+    },
+    _spawnVoiceBubble: function (dataUrl, name, dur) {
+      var host = document.getElementById('roomReactStage') || Rooms._ensureReactStage();
+      if (!host) return;
+      var el = document.createElement('div');
+      el.className = 'room-voice-bubble';
+      el.innerHTML = '<span class="rvb-icon">🔊</span>' +
+        '<span class="rvb-name">' + esc(name || '') + (dur ? (' · ' + dur + 's') : '') + '</span>';
+      el.onclick = function () { try { new Audio(dataUrl).play(); } catch (e) {} };
+      host.appendChild(el);
+      /* تشغيل تلقائي (قد يُحجب دون تفاعل — تظل الفقاعة قابلة للنقر) */
+      try { var a = new Audio(dataUrl); a.play().catch(function () {}); } catch (e) {}
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 6000);
+    },
+    /* [Req7] إظهار/إخفاء لوحة الرموز والرسائل */
+    _toggleReactPanel: function (force) {
+      var p = document.getElementById('roomReactPanel');
+      if (!p) return;
+      var show = (force === undefined) ? (p.style.display === 'none' || !p.style.display) : !!force;
+      p.style.display = show ? 'flex' : 'none';
+    },
+    /* [Req7] الأيقونة الطافية + لوحة الرموز/الرسائل (تظهر داخل غرفة نشطة) */
+    _REACT_SET: ['👍', '❤️', '😂', '🔥', '🎉', '😮', '👏', '🤔'],
+    _syncReactWidget: function () {
+      if (typeof document === 'undefined') return;
+      var btn = document.getElementById('roomReactBtn');
+      var active = !!(Rooms.state && (Rooms.state.status === 'playing' || Rooms.state.status === 'waiting'));
+      if (!btn) {
+        if (!active) return;
+        btn = document.createElement('button');
+        btn.id = 'roomReactBtn';
+        btn.className = 'room-react-btn';
+        btn.setAttribute('aria-label', 'رموز ورسائل');
+        btn.title = 'رموز ورسائل';
+        btn.innerHTML = '😊';
+        btn.onclick = function (e) { if (e) e.stopPropagation(); Rooms._toggleReactPanel(); };
+        var panel = document.createElement('div');
+        panel.id = 'roomReactPanel';
+        panel.className = 'room-react-panel';
+        panel.style.display = 'none';
+        var emojis = Rooms._REACT_SET.map(function (em) {
+          return '<span class="rrp-emoji" onclick="Rooms.sendReact(\'' + em + '\')">' + em + '</span>';
+        }).join('');
+        panel.innerHTML =
+          '<div class="rrp-head">' + (typeof T === 'function' ? T('ui.reactTitle') || 'تفاعل سريع' : 'تفاعل سريع') + '</div>' +
+          '<div class="rrp-emojis">' + emojis + '</div>' +
+          '<div class="rrp-msg">' +
+            '<button id="roomMicBtn" class="rrp-mic" onclick="Rooms.toggleVoice()" title="' + (typeof T === 'function' ? T('ui.voiceRec') || 'رسالة صوتية ≤10ث' : 'رسالة صوتية ≤10ث') + '" aria-label="رسالة صوتية">🎤</button>' +
+            '<input id="roomReactInput" type="text" maxlength="120" placeholder="' + (typeof T === 'function' ? T('ui.reactMsgPh') || 'رسالة للجميع…' : 'رسالة للجميع…') + '" onkeydown="if(event.key===\'Enter\'){Rooms.sendQuickMsg();}">' +
+            '<button class="rrp-send" onclick="Rooms.sendQuickMsg()" aria-label="إرسال">➤</button>' +
+          '</div>' +
+          '<div id="roomVoiceRec" class="rrp-voicerec" style="display:none"><span class="rvr-dot"></span><span id="roomVoiceTimer">0</span>s · ' + (typeof T === 'function' ? T('ui.voiceRecStop') || 'انقر للإيقاف والإرسال' : 'انقر للإيقاف والإرسال') + '</div>';
+        document.body.appendChild(btn);
+        document.body.appendChild(panel);
+        document.addEventListener('click', function (ev) {
+          if (!btn.contains(ev.target) && !panel.contains(ev.target)) Rooms._toggleReactPanel(false);
+        });
+      }
+      btn.style.display = active ? 'flex' : 'none';
+      if (!active) Rooms._toggleReactPanel(false);
     },
     /* إرسال رسالة: جماعية (إلى الجميع) أو فردية (إلى _recipient) */
     sendChat: function () {
@@ -111,13 +302,20 @@
     /* تسجيل معالجات اللعبة النشطة (تستدعيها اللعبة عند فتحها) */
     setGameHandler: function (fn) { _gameHandler = fn; },
     setStartHandler: function (fn) { _startHandler = fn; },
+    setUpdateHandler: function (fn) { _updateHandler = fn; },   /* [Req3] */
+    /* [Resilience] استهلاك تاريخ الحركات المعلّق لإعادة بناء الحالة */
+    consumePendingReplay: function () { var h = _pendingReplay; _pendingReplay = null; return h; },
+    hasPendingReplay: function () { return !!_pendingReplay; },
 
     /* ═══════ API ═══════ */
-    createRoom: function (gameId) {
+    createRoom: function (gameId, bet) {
       var u = me();
       if (!u) { toast(T('ui.roomNeedLogin'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
       var max = Rooms.maxFor(gameId);
-      return API.post('/api/rooms', { game_id: gameId, max_players: max }).then(function (r) {
+      /* [B10] غرفات الرهان: مبلغ اختياري (شطرنج) */
+      var payload = { game_id: gameId, max_players: max };
+      if (typeof bet === 'number' && bet > 0) payload.bet = bet;
+      return API.post('/api/rooms', payload).then(function (r) {
         if (!r.ok) { toast((r.data && r.data.message) || T('ui.roomError'), 'err'); return; }
         Rooms.state = r.data.room;
         Rooms.render();
@@ -143,8 +341,29 @@
         Rooms.openModal();
       });
     },
+    /* [MP-AI] المضيف يضيف لاعباً آلياً لملء مقعد */
+    addBot: function () {
+      if (!Rooms.state) return;
+      API.post('/api/rooms/addBot', { room_id: Rooms.state.id }).then(function (r) {
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+      });
+    },
+    /* [MP-AI] المضيف يحذف لاعباً آلياً */
+    removeBot: function (botId) {
+      if (!Rooms.state) return;
+      API.post('/api/rooms/removeBot', { room_id: Rooms.state.id, botId: botId }).then(function (r) {
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+      });
+    },
     leaveRoom: function () {
       if (!Rooms.state) return;
+      /* [Req6] المُنشئ لا يغلق الغرفة حتى ينتهي الرهان الجاري */
+      var u = me();
+      var isOwner = Rooms.state.owner_id === (u && u.id);
+      if (isOwner && Rooms.state.status === 'playing') {
+        toast('لا يمكن إغلاق الغرفة حتى انتهاء الرهان الجاري — انتظر نهاية المباراة', 'warn');
+        return;
+      }
       var id = Rooms.state.id;
       Rooms.state = null;
       return API.post('/api/rooms/leave', { room_id: id }).then(function () {
@@ -152,6 +371,29 @@
         Rooms.render();
         Rooms.closeModal();
         if (typeof closeGamePage === 'function' && window._currentGameId) closeGamePage();
+      });
+    },
+    /* [Req6] إعلان انتهاء الرهان (المُنشئ فقط) → تعود الغرفة للانتظار ويُسمح بالإغلاق */
+    endBet: function () {
+      if (!Rooms.state) return;
+      var u = me();
+      if (Rooms.state.owner_id !== (u && u.id)) return;
+      API.post('/api/rooms/endBet', { room_id: Rooms.state.id }).then(function (r) {
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+      });
+    },
+    /* [Req3] بدء تصويت المباراة الجديدة (المُنشئ، عند نهاية المباراة) */
+    startRematch: function () {
+      if (!Rooms.state) return;
+      API.post('/api/rooms/rematch/start', { room_id: Rooms.state.id }).then(function (r) {
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+      });
+    },
+    /* [Req3] تصويت مشارك: agree/refuse */
+    voteRematch: function (vote) {
+      if (!Rooms.state) return;
+      API.post('/api/rooms/rematch/vote', { room_id: Rooms.state.id, vote: vote }).then(function (r) {
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
       });
     },
     /* مغادرة صامتة عند الخروج من صفحة اللعبة */
@@ -182,8 +424,11 @@
           toast((r.data && r.data.message) || T('ui.roomError'), 'err');
           return;
         }
-        /* تزامن حالة الغرفة الرسمية (room_state) مع استجابة السيرفر */
-        if (r.data && r.data.room) Rooms._onUpdate(r.data.room);
+        /* مزامنة room_state فقط من استجابة الحركة (الحقل الذي تغيّره فعلاً)؛
+           لا نطمس joinQueue/players المتغيّرة عبر بثّ SSE الحيّ بلقطة قديمة */
+        if (r.data && r.data.room && Rooms.state && Rooms.state.id === r.data.room.id) {
+          Rooms.state.room_state = r.data.room.room_state;
+        }
       });
       return true;
     },
@@ -205,6 +450,22 @@
       API.post('/api/rooms/spectate', { room_id: Rooms.state.id, spectate: target }).then(function (r) {
         if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
       });
+    },
+    /* [Spectator] طلب الانضمام كمشغل عند تفرّغ مقعد */
+    requestJoin: function () {
+      if (!Rooms.state) return;
+      var u = me();
+      if (!u) { if (typeof openAuthModal === 'function') openAuthModal(); return; }
+      API.post('/api/rooms/joinRequest', { room_id: Rooms.state.id }).then(function (r) {
+        if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
+        else toast(T('rami.specJoinSent') || '✅ تم تسجيل طلب الانضمام — ستنضمّ عند تفرّغ مقعد', 'ok');
+      });
+    },
+    /* هل طلبتي الحالي في طابور الانضمام؟ */
+    myJoinPending: function () {
+      var u = me();
+      if (!Rooms.state || !Rooms.state.joinQueue || !u) return false;
+      return Rooms.state.joinQueue.some(function (r) { return r.id === u.id; });
     },
 
     /* ═══════ مودال الغرفة ═══════ */
@@ -252,13 +513,43 @@
       if (!Rooms.state) {
         var gid = window._currentGameId;
         if (!Rooms.isGameSupported(gid)) return;
+        /* [B10] الشطرنج: أنشئ غرفة برهان اللاعب المختار في الإعدادات */
+        if (gid === 'ch' && typeof CHESS !== 'undefined' && CHESS && CHESS.bet > 0) {
+          Rooms.createRoom(gid, CHESS.bet);
+          return;
+        }
         Rooms.createRoom(gid);
         return;
       }
       Rooms.openModal();
     },
+    /* [MP-AI] غرفة تدريب ضد الآلي: إنشاء غرفة + ملؤها بلاعبين آليين + بدء فوري */
+    practiceVsAi: function (gameId) {
+      var u = me();
+      if (!u) { toast(T('ui.roomNeedLogin'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
+      if (!Rooms.isGameSupported(gameId)) return;
+      Rooms.createRoom(gameId).then(function () {
+        if (!Rooms.state) return;
+        var rid = Rooms.state.id;
+        var max = Rooms.maxFor(gameId) || 4;
+        var n = Math.max(1, max - 1);   /* لاعب بشري واحد + بقية المقاعد آليون */
+        function addNext(k) {
+          if (k <= 0) {
+            Rooms.setReady(true);
+            setTimeout(function () { Rooms.startGame(); }, 500);
+            return;
+          }
+          API.post('/api/rooms/addBot', { room_id: rid }).then(function (r) {
+            if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+            setTimeout(function () { addNext(k - 1); }, 180);
+          });
+        }
+        addNext(n);
+      });
+    },
 
     render: function () {
+      Rooms._syncReactWidget();
       var body = document.getElementById('roomBody');
       if (!body) return;
       var st = Rooms.state;
@@ -276,15 +567,20 @@
         var rd = p.ready ? '✅' : '⏳';
         var you = p.id === (u && u.id) ? ' (' + T('ui.roomYou') + ')' : '';
         var mode = p.spectate ? ' 👁️' : '';
+        var botTag = p.isBot ? ' 🤖' : '';
+        /* [MP-AI] زر حذف البوت (للمضيف فقط) */
+        var rmBot = (isOwner && p.isBot && st.status === 'waiting')
+          ? '<button class="rchat-pm" onclick="Rooms.removeBot(\'' + p.id + '\')" title="إزالة الآلي" aria-label="إزالة الآلي">✖</button>'
+          : '';
         /* زر مراسلة فردية لكل لاعب (عدا نفسي) */
         var pm = p.id !== (u && u.id)
           ? '<button class="rchat-pm" onclick="Rooms.setRecipient(' + p.id + ',\'' + esc(p.username).replace(/'/g, "\\'") + '\')" title="مراسلة ' + esc(p.username) + '" aria-label="مراسلة فردية">💬</button>'
           : '';
         return '<div class="cmsg" style="margin-bottom:6px;align-items:center">' +
           '<div class="cav" style="background:var(--accent)">' + esc(p.username.slice(-1)) + '</div>' +
-          '<div style="flex:1"><div class="cname">' + esc(p.username) + crown + you + mode + '</div>' +
-          '<div class="ctext2">' + rd + (p.spectate ? ' ' + T('ui.roomSpectator') : (p.ready ? ' ' + T('ui.roomReady') : ' ' + T('ui.roomNotReady'))) + '</div></div>' +
-          pm +
+          '<div style="flex:1"><div class="cname">' + esc(p.username) + crown + you + mode + botTag + '</div>' +
+          '<div class="ctext2">' + rd + (p.isBot ? ' ' + T('ui.roomBot') : (p.spectate ? ' ' + T('ui.roomSpectator') : (p.ready ? ' ' + T('ui.roomReady') : ' ' + T('ui.roomNotReady')))) + '</div></div>' +
+          pm + rmBot +
         '</div>';
       }).join('');
 
@@ -302,6 +598,11 @@
             (mySpect ? '🎮 ' + T('ui.roomPlay') : '👁️ ' + T('ui.roomSpectate')) + '</button>';
         }
         if (isOwner) {
+          /* [MP-AI] ملء مقعد بلاعب آلي إن بقيت مقاعد شاغرة */
+          var freeSeats = (st.max_players || 4) - st.players.filter(function (p) { return !p.spectate; }).length;
+          if (freeSeats > 0) {
+            btns += '<button class="btn half" onclick="Rooms.addBot()">🤖 ' + T('ui.roomAddBot') + '</button>';
+          }
           btns += '<button class="btn half gold" onclick="Rooms.startGame()" ' +
             (allReady ? '' : 'disabled') + '>' + T('ui.roomStart') + '</button>';
         }
@@ -403,12 +704,29 @@
       }
     },
 
-    /* انضمام تلقائي من الرابط ?room=CODE (بعد استعادة الجلسة) */
+    /* انضمام تلقائي من الرابط ?room=CODE (مع دعم الدخول التلقائي بعد المصادقة) */
     tryAutoJoin: function () {
       var m = /[?&]room=([A-Za-z0-9]+)/.exec(location.search);
       if (!m) return;
       var code = m[1].toUpperCase();
+      if (!AUTH || !AUTH.user) {
+        try { sessionStorage.setItem('rc_pending_room', code); } catch (e) {}
+        toast(T('ui.chatLogin') || 'يرجى تسجيل الدخول للانضمام للغرفة', 'warn');
+        if (typeof openAuthModal === 'function') openAuthModal();
+        return;
+      }
       Rooms.joinRoom(code);
+    },
+    checkPendingRoom: function () {
+      try {
+        var code = sessionStorage.getItem('rc_pending_room');
+        if (code && AUTH && AUTH.user) {
+          sessionStorage.removeItem('rc_pending_room');
+          setTimeout(function () {
+            Rooms.joinRoom(code);
+          }, 300);
+        }
+      } catch (e) {}
     },
 
     reset: function () {
@@ -417,6 +735,11 @@
       Rooms.state = null;
       _messages = [];
       _recipient = null;
+      /* [Req7] إزالة ودجت الرموز/الرسائل عند مغادرة الغرفة */
+      var btn = document.getElementById('roomReactBtn');
+      var panel = document.getElementById('roomReactPanel');
+      if (btn) btn.parentNode && btn.parentNode.removeChild(btn);
+      if (panel) panel.parentNode && panel.parentNode.removeChild(panel);
     }
   };
 

@@ -234,6 +234,24 @@ function slSettle(r) {
 
 /* ═══════════ 2. Mines ═══════════ */
 let mState = { grid: [], opened: 0, mines: 5, playing: false, mult: 1 };
+/* ── حساب مضاعف الألغام الرياضي العادل (Hypergeometric بدون إرجاع) ── */
+function nCr(n, r) {
+  if (r < 0 || r > n) return 0;
+  if (r === 0 || r === n) return 1;
+  let res = 1;
+  for (let i = 1; i <= r; i++) res = (res * (n - i + 1)) / i;
+  return res;
+}
+function calcMinesMultiplier(minesCount, openedCount) {
+  const total = 25;
+  const safe = total - minesCount;
+  if (openedCount <= 0 || openedCount > safe) return 1;
+  const houseEdge = 0.97;
+  const prob = nCr(safe, openedCount) / nCr(total, openedCount);
+  const mult = (1 / prob) * houseEdge;
+  return Math.max(1.01, Math.round(mult * 100) / 100);
+}
+
 function eMines(g) {
   let cells = '';
   for (let i = 0; i < 25; i++) {
@@ -309,7 +327,7 @@ function mClick(i) {
     return;
   }
   mState.opened++;
-  mState.mult = Math.round((1 / (1 - mState.mines / 25)) ** mState.opened * 100) / 100;
+  mState.mult = calcMinesMultiplier(mState.mines, mState.opened);
   cell.innerHTML = '<div class="mSafe">💎</div>';
   cell.classList.add('safe');
   const c = document.getElementById('mnCnt');
@@ -883,6 +901,7 @@ function initWheel() {
   wLastIdx = -1;
 }
 function drawWheel(ctx, rot, winIdx) {
+  if (!ctx) return;
   const cx = 160, cy = 160, r = 145, a = (Math.PI * 2) / wSegments.length;
   ctx.clearRect(0, 0, 320, 320);
   ctx.save();
@@ -1875,6 +1894,7 @@ function initRoulette() {
   if (redBtn) redBtn.classList.add('active');
 }
 function drawRoulette(ctx, rot, ball, winIdx) {
+  if (!ctx) return;
   const S = 320, cx = S / 2, cy = S / 2, r = 146;
   ctx.clearRect(0, 0, S, S);
   /* حلقة خارجية ذهبية مزدوجة */
@@ -3321,9 +3341,12 @@ function swGo() {
 /* ═══════════ سجل المحركات ═══════════ */
 const ENG = {
   ronda: eRonda,
+  chess: eChess,
+  dama: eDama,
   /* crash.js هو module (يُنفَّذ بعد كل السكربتات العادية) — لذلك نقرأ eCrash
      كسولاً عند الفتح عبر window.eCrash بدلاً من الإشارة المباشرة (ReferenceError) */
   get crash() { return (typeof window.eCrash !== 'undefined') ? window.eCrash : null; },
+  rami: eRami,
   andarbahar: eAndarbahar,
   bj: eBj,
   slots: eSlots,
