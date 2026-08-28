@@ -125,6 +125,69 @@ font-size: 0.8rem;
 margin-top: 4px;
 line-height: 1.6;
 }
+/* ── أداة التحقق التفاعلية Provably Fair ── */
+.pf-tool {
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+  padding: 22px 20px;
+  margin: 26px 0 10px;
+}
+.pf-tool h2 {
+  font-size: 1.1rem;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.pf-tool h2 i { color: var(--gold); }
+.pf-tool-desc { color: var(--t2); font-size: 0.9rem; line-height: 1.8; margin: 0 0 16px; }
+.pf-field { margin-bottom: 14px; }
+.pf-field label { display: block; color: var(--t3); font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; }
+.pf-field input, .pf-field select, .pf-field textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  color: var(--t1);
+  padding: 11px 13px;
+  font-family: 'Cairo', system-ui, sans-serif;
+  font-size: 0.92rem;
+  box-sizing: border-box;
+}
+.pf-field input:focus, .pf-field select:focus, .pf-field textarea:focus {
+  outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,210,63,0.15);
+}
+.pf-field textarea { resize: vertical; font-family: 'Courier New', monospace; }
+.pf-field-inline { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.pf-field-inline > div { flex: 1; min-width: 160px; }
+.pf-actions { margin-top: 4px; }
+.btn.primary {
+  background: var(--gg);
+  color: #0A0E1A;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-weight: 800;
+  font-family: 'Cairo', sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn.primary:hover { filter: brightness(1.06); }
+.pf-result {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  display: none;
+}
+.pf-result.show { display: block; }
+.pf-result.ok { background: rgba(46, 204, 113, 0.12); border: 1px solid rgba(46, 204, 113, 0.4); color: #7CF0A8; }
+.pf-result.bad { background: rgba(231, 76, 60, 0.12); border: 1px solid rgba(231, 76, 60, 0.4); color: #FF9B8E; }
+.pf-result code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 6px; }
 </style>
 </head>
 <body>
@@ -159,6 +222,38 @@ line-height: 1.6;
 </div>
 
 <p data-k="pf.outro">لمزيد من التفاصيل التقنية، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.</p>
+<!-- أداة التحقق التفاعلية Provably Fair -->
+<section class="pf-tool" aria-labelledby="pf-tool-title">
+  <h2 id="pf-tool-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> أداة التحقق التفاعلية</h2>
+  <p class="pf-tool-desc">ألصق بذرة الجولة (Seed) ونتيجتها المعلنة، ثم اضغط «تحقّق» لتأكيد عدالتها محلياً على جهازك عبر <code>SHA-256</code> — دون أي اتصال بالخادم.</p>
+
+  <div class="pf-field">
+    <label for="pf-seed">Seed (بذرة الجولة المُعلنة)</label>
+    <input id="pf-seed" type="text" spellcheck="false" placeholder="مثال: 3a7f9c1e…e9c1" autocomplete="off">
+  </div>
+
+  <div class="pf-field pf-field-inline">
+    <div>
+      <label for="pf-game">اللعبة</label>
+      <select id="pf-game">
+        <option value="ke">كينو (Keno)</option>
+        <option value="av">أفياتور / كراش (Crash)</option>
+      </select>
+    </div>
+    <button id="pf-calc" class="btn ghost small" type="button"><i class="fa-solid fa-calculator" aria-hidden="true"></i> احسب النتيجة</button>
+  </div>
+
+  <div class="pf-field">
+    <label for="pf-outcome">النتيجة المعلنة (JSON)</label>
+    <textarea id="pf-outcome" spellcheck="false" rows="3" placeholder='{"numbers":[3,17,42,...]}  أو  {"crash_at":1.97}'></textarea>
+  </div>
+
+  <div class="pf-actions">
+    <button id="pf-verify-btn" class="btn primary" type="button"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> تحقّق من العدالة</button>
+  </div>
+
+  <div id="pf-result" class="pf-result" role="status" aria-live="polite"></div>
+</section>
 <p><a class="btn ghost small" href="index.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <span data-k="pf.back">العودة للموقع</span></a></p>
 </main>
 </article>
@@ -168,6 +263,7 @@ line-height: 1.6;
 <script src="js/core/utils.js"></script>
 <script src="js/i18n/translations.js"></script>
 <script src="js/ui/legal-ui.js"></script>
+<script src="js/core/fair.js"></script>
 <script>
 /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
 var D = {
@@ -308,6 +404,58 @@ if (_origSetLang) _origSetLang(l);
 /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
 injectLegalUI('pf');
 applyLang();
+</script>
+<script>
+/* ── أداة التحقق التفاعلية Provably Fair ── */
+document.addEventListener('DOMContentLoaded', function () {
+  var seedEl = document.getElementById('pf-seed');
+  var gameEl = document.getElementById('pf-game');
+  var outEl = document.getElementById('pf-outcome');
+  var verifyBtn = document.getElementById('pf-verify-btn');
+  var calcBtn = document.getElementById('pf-calc');
+  var resEl = document.getElementById('pf-result');
+
+  function showResult(cls, html) {
+    resEl.className = 'pf-result show ' + cls;
+    resEl.innerHTML = html;
+  }
+  function parseOutcome(text) {
+    try { return JSON.parse(text); } catch (e) { return null; }
+  }
+
+  verifyBtn.addEventListener('click', function () {
+    if (!window.Fair) { showResult('bad', 'تعذّر تحميل وحدة التحقق (fair.js).'); return; }
+    var seed = (seedEl.value || '').trim();
+    var game = gameEl.value;
+    if (!seed) { showResult('bad', 'أدخل بذرة الجولة (Seed).'); return; }
+    var outcome = parseOutcome(outEl.value || '');
+    if (outcome === null) {
+      showResult('bad', 'صيغة النتيجة غير صالحة — يجب أن تكون JSON مثل <code>{"numbers":[...]}</code> أو <code>{"crash_at":1.97}</code>.');
+      return;
+    }
+    var ok = false;
+    try { ok = window.Fair.verify(seed, game, outcome); } catch (e) { ok = false; }
+    if (ok) {
+      showResult('ok', '✅ <b>النتيجة عادلة 100%</b> — تتطابق تماماً مع الخوارزمية المحلية. لم يتم التلاعب بها.');
+    } else {
+      var expected = null;
+      try { expected = window.Fair.outcome(seed, game); } catch (e) {}
+      var expStr = expected ? '<code>' + JSON.stringify(expected) + '</code>' : 'تعذّر الحساب';
+      showResult('bad', '❌ <b>النتيجة غير متطابقة.</b><br>النتيجة المتوقعة من البذرة هي: ' + expStr + '<br>قارنها بالنتيجة المعلنة للتأكد من عدم التلاعب.');
+    }
+  });
+
+  calcBtn.addEventListener('click', function () {
+    if (!window.Fair) { showResult('bad', 'تعذّر تحميل وحدة التحقق (fair.js).'); return; }
+    var seed = (seedEl.value || '').trim();
+    if (!seed) { showResult('bad', 'أدخل بذرة الجولة (Seed) أولاً.'); return; }
+    var derived = null;
+    try { derived = window.Fair.outcome(seed, gameEl.value); } catch (e) {}
+    if (!derived) { showResult('bad', 'تعذّر حساب النتيجة لهذه اللعبة.'); return; }
+    outEl.value = JSON.stringify(derived);
+    showResult('ok', '🧮 النتيجة المُشتقّة من البذرة: <code>' + JSON.stringify(derived) + '</code><br>انسخها إلى خانة النتيجة المعلنة ثم اضغط «تحقّق».');
+  });
+});
 </script>
 </body>
 </html>

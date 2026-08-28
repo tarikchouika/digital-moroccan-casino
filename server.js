@@ -20,18 +20,89 @@ const MIME_TYPES = {
   '.wav': 'audio/wav'
 };
 
-/* ═══════ متجر ذاكري: مستخدمون + جلسات + غرف ═══════ */
+/* ═══════ تخزين الحسابات: SQLite (نفس باك-أند المنصة القديم royalcoin.db) ═══════ */
+const { DatabaseSync } = require('node:sqlite');
+const DB_DIR = path.join(__dirname, 'data');
+fs.mkdirSync(DB_DIR, { recursive: true });
+const db = new DatabaseSync(path.join(DB_DIR, 'royalcoin.db'));
+db.exec('PRAGMA journal_mode = WAL;');
+db.exec(`
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  pass_hash TEXT NOT NULL,
+  pass_salt TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin','super')),
+  gold INTEGER NOT NULL DEFAULT 1000,
+  lang TEXT NOT NULL DEFAULT 'ar',
+  banned INTEGER NOT NULL DEFAULT 0,
+  last_claim INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL DEFAULT 0
+);
+`);
+
+/* مخطط تشفير كلمات المرور مطابق للباك-أند القديم (scrypt) */
+function hashPassword(password, saltHex) {
+  const salt = saltHex ? Buffer.from(saltHex, 'hex') : crypto.randomBytes(16);
+  const hash = crypto.scryptSync(password, salt, 64);
+  return { salt: salt.toString('hex'), hash: hash.toString('hex') };
+}
+function verifyPassword(password, saltHex, expectedHash) {
+  const { hash } = hashPassword(password, saltHex);
+  const a = Buffer.from(hash, 'hex');
+  const b = Buffer.from(expectedHash, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 let nextUserId = 100;
-const users = {};               // userId -> {id, username, password, role, gold, lang}
+const users = {};               // userId -> {id, username, passHash, passSalt, role, gold, lang, banned}
 const sessions = {};            // sid -> userId
 const rooms = {};               // roomId -> room object
 let nextRoomId = 1;
 /* رسم الرهان على المنصة: نسبة تُقتطع من الرهان عند تسوية الجولة بين لاعبَين */
 const BET_FEE_RATE = 0.05;      /* 5% رسوم المنصة على الرهان */
 
-/* بذور: مستخدمون افتراضيون */
-users[1] = { id: 1, username: 'player1', password: '123', role: 'user', gold: 5000, lang: 'ar' };
-users[2] = { id: 2, username: 'admin', password: 'admin', role: 'admin', gold: 100000, lang: 'ar' };
+/* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
+function loadUsersFromDB() {
+  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned FROM users').all();
+  rows.forEach(function (r) {
+    users[r.id] = {
+      id: r.id, username: r.username,
+      passHash: r.pass_hash, passSalt: r.pass_salt,
+      role: r.role, gold: r.gold, lang: r.lang, banned: !!r.banned
+    };
+    if (r.id >= nextUserId) nextUserId = r.id + 1;
+  });
+}
+/* حفظ مستخدم جديد في قاعدة البيانات وربطه بالذاكرة */
+function persistUser(u) {
+  const t = Math.floor(Date.now() / 1000);
+  const info = db.prepare('INSERT INTO users (username, pass_hash, pass_salt, role, gold, lang, created_at, last_seen) VALUES (?,?,?,?,?,?,?,?)').run(
+    u.username, u.passHash, u.passSalt, u.role || 'user', u.gold || 0, u.lang || 'ar', t, t
+  );
+  u.id = Number(info.lastInsertRowid);
+  if (u.id >= nextUserId) nextUserId = u.id + 1;
+  users[u.id] = u;
+}
+/* إنشاء الحسابات الافتراضية فقط إن كانت القاعدة فارغة (نفس حسابات الباك-أند القديم) */
+(function seedIfEmpty() {
+  const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
+  if (count > 0) return;
+  const t = Math.floor(Date.now() / 1000);
+  const seeds = [
+    ['super', 'RoyalCoin@Super1', 'super'],
+    ['admin', 'RoyalCoin@Admin1', 'admin'],
+    ['player', 'RoyalCoin@User1', 'user']
+  ];
+  const ins = db.prepare('INSERT INTO users (username, pass_hash, pass_salt, role, gold, created_at, last_seen) VALUES (?,?,?,?,?,?,?)');
+  for (const [name, pass, role] of seeds) {
+    const { salt, hash } = hashPassword(pass, null);
+    ins.run(name, hash, salt, role, 1000, t, t);
+  }
+  console.log('[seed] created default accounts: super, admin, player');
+})();
+loadUsersFromDB();
 
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
@@ -276,20 +347,33 @@ const server = http.createServer((req, res) => {
       }
       if (pathname === '/api/login') {
         const existing = Object.values(users).find(function (u) { return u.username === (data.username || ''); });
-        const u = existing || { id: nextUserId++, username: data.username || 'player', password: data.password || '', role: 'user', gold: 2500, lang: 'ar' };
-        if (!existing) users[u.id] = u;
+        if (existing) {
+          if (existing.banned) { json({ ok: false, message: 'تم حظر هذا الحساب' }, 403); return; }
+          if (existing.passHash && !verifyPassword(data.password || '', existing.passSalt, existing.passHash)) {
+            json({ ok: false, message: 'كلمة المرور غير صحيحة' }, 401); return;
+          }
+          try { db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), existing.id); } catch (e) {}
+          startSession(res, existing);
+          json({ ok: true, user: publicUser(existing) });
+          return;
+        }
+        /* مستخدم جديد غير مسجّل: أنشئه بكلمة مشفّرة واحفظه في نفس القاعدة */
+        const { salt, hash } = hashPassword(data.password || '', null);
+        const u = { id: nextUserId++, username: data.username || 'player', passHash: hash, passSalt: salt, role: 'user', gold: 2500, lang: 'ar', banned: false };
+        persistUser(u);
         startSession(res, u);
         json({ ok: true, user: publicUser(u) });
         return;
       }
       if (pathname === '/api/register') {
         let u = Object.values(users).find(function (x) { return x.username === (data.username || ''); });
-        if (u && u.password) {
+        if (u && u.passHash) {
           json({ ok: false, message: 'اسم المستخدم محجوز' }, 400);
           return;
         }
-        u = { id: nextUserId++, username: data.username || 'new_player', password: data.password || '', role: 'user', gold: 1000, lang: 'ar' };
-        users[u.id] = u;
+        const { salt, hash } = hashPassword(data.password || '', null);
+        u = { id: nextUserId++, username: data.username || 'new_player', passHash: hash, passSalt: salt, role: 'user', gold: 1000, lang: 'ar', banned: false };
+        persistUser(u);
         startSession(res, u);
         json({ ok: true, user: publicUser(u) });
         return;
@@ -302,14 +386,20 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/sync') {
-        if (me) { if (data.gold !== undefined) me.gold = data.gold; if (data.lang) me.lang = data.lang; }
+        if (me) {
+          if (data.gold !== undefined) me.gold = data.gold;
+          if (data.lang) me.lang = data.lang;
+          try { db.prepare('UPDATE users SET gold = ?, lang = ? WHERE id = ?').run(me.gold, me.lang, me.id); } catch (e) {}
+        }
         json({ ok: true, gold: me ? me.gold : 0 });
         return;
       }
       if (pathname === '/api/change-password') {
         if (!me) { json({ ok: false, message: 'غير مسجّل' }, 401); return; }
-        if (me.password && me.password !== data.oldPassword) { json({ ok: false, message: 'كلمة المرور القديمة خاطئة' }, 400); return; }
-        me.password = data.newPassword;
+        if (me.passHash && !verifyPassword(data.oldPassword || '', me.passSalt, me.passHash)) { json({ ok: false, message: 'كلمة المرور القديمة خاطئة' }, 400); return; }
+        const { salt, hash } = hashPassword(data.newPassword || '', null);
+        me.passHash = hash; me.passSalt = salt;
+        try { db.prepare('UPDATE users SET pass_hash = ?, pass_salt = ? WHERE id = ?').run(hash, salt, me.id); } catch (e) {}
         json({ ok: true, message: 'تم تغيير كلمة المرور' });
         return;
       }
