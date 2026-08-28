@@ -416,8 +416,8 @@ var D = {
       applyLang(currentLang);
     });
     applyLang(currentLang);
-if (_origSetLang) _origSetLang(l);
-};
+
+    if (typeof _origSetLang === 'function') _origSetLang(currentLang);
 /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
 injectLegalUI('pf');
 applyLang();

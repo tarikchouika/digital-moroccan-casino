@@ -648,9 +648,11 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
 /* ═══════════════════ مودال التحقق بخطوتين (2FA) ═══════════════════ */
 #twofaModal {
   position: fixed; inset: 0; z-index: 1200;
-  display: flex; align-items: center; justify-content: center; padding: 14px;
+  align-items: center; justify-content: center; padding: 14px;
   background: rgba(0, 0, 0, .85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
+/* يبقى مخفياً افتراضياً؛ يظهر فقط عند إضافة صنف .show (كباقي المودالات) */
+#twofaModal:not(.show) { display: none; }
 /* الصندوق الداخلي سواء كان .modal أو .twofa-card أو عنصراً مباشراً */
 #twofaModal .modal,
 #twofaModal > div,
