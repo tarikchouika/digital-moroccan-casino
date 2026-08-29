@@ -605,7 +605,10 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
 #rsCancel:hover { border-color: var(--red, #EF4444); color: var(--red, #EF4444); }
 
 /* ═══════════════════ صفحة الأصدقاء (#pg-friends) ═══════════════════ */
-#pg-friends {
+/* [Fix] أظهر صفحة الأصدقاء فقط عند تفعيلها (.active) — كان المحدّد #id
+   يتجاوز .page{display:none} فيبقى الصفحة ظاهرة دائماً فيتداخل مع باقي
+   الصفحات (يظهر فوق وتحت). الآن يُخفى ما لم يُفعَّل. */
+#pg-friends.page.active {
   display: flex; flex-direction: column;
   height: calc(100dvh - 160px); min-height: 420px;
 }
