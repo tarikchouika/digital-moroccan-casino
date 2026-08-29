@@ -808,6 +808,8 @@ function isRotateRelevant() {
 function checkRotateHint() {
   const hint = document.getElementById('rotateHint');
   if (!hint) return;
+  /* فلات دوغ: لا نجبر اتجاهاً — التخطيط متجاوب ويتكيّف تلقائياً مع قلب الشاشة */
+  if (window._currentGameId === 'rn') { hint.hidden = true; return; }
   let wide = false;
   if (isRotateRelevant()) {
     const body = document.getElementById('gamePageBody');

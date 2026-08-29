@@ -2235,6 +2235,18 @@ canvas.game {
 #pg-game:-webkit-full-screen .game-foot {
   display: none !important;
 }
+/* [FLATDOG] إخفاء شريط أزرار صفحة اللعبة في ملء الشاشة — يظهر فقط حاوية اللعبة بأزرارها وعناصرها */
+#pg-game.app-fs .gp-head,
+#pg-game:fullscreen .gp-head,
+#pg-game:-webkit-full-screen .gp-head {
+  display: none !important;
+}
+/* في ملء الشاشة: حاوية اللعبة تملأ الصفحة بلا ترك فراغ للشريط المخفي */
+#pg-game.app-fs #gamePageBody,
+#pg-game:fullscreen #gamePageBody {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
 /* منع فيضان مرحلة اللعبة خارج عرض الشاشة */
 #gamePageBody {
   min-width: 0;

@@ -817,3 +817,36 @@ body.app-fs-on #pg-game { background: transparent !important; }
 }
 .fd-sym-btn span { font-size: clamp(1.1rem, 5vw, 2rem) !important; }
 .fd-nums { gap: clamp(4px, 1vw, 9px) !important; }
+
+/* ═══════════ [FLATDOG-FS] ملء الشاشة: تموضع هندسي حسب الاتجاه + تمرير عند الحاجة ═══════════ */
+/* الطاولة تملأ الشاشة، والشريط السفلي يبقى ظاهراً مثبّتاً؛ يُسمح بالتمرير
+   عندما يتعذّر على المحتوى أن يفي الشاشة (اللاندسكيب على الهواتف القصيرة) */
+body.app-fs-on .fd-stage {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+}
+/* الشريط السفلي يلتصق بالأسفل ويفضح كل الأزرار حتى في حال التمرير */
+body.app-fs-on .fd-bottombar {
+  position: sticky;
+  bottom: 0;
+  background: transparent;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  margin-top: auto;
+}
+/* لئلا يغطّي زر الخروج الذهبي شريط المتفرجين في اللاندسكيب */
+body.app-fs-on .fd-spec-strip {
+  top: calc(50px + env(safe-area-inset-top, 0px)) !important;
+}
+/* ── لاندسكيب (هواتف قصيرة / أجهزة عريضة) ──
+   ألغِ الحد الأدنى لارتفاع الطاولة كي تفي الشاشة بلا قصّ، ووزّع العناصر
+   هندسياً حسب العرض دون تكدّس رأسي يقطع الأزرار */
+@media (orientation: landscape) {
+  body.app-fs-on .fd-table { min-height: 0 !important; }
+  body.app-fs-on .fd-stage { gap: 8px; padding: 8px !important; }
+  /* بطاقات أصغر قليلاً في اللاندسكيب الضيّق لإبقاء الوسط والشريط السفلي ظاهرين */
+  body.app-fs-on .fd-card { width: clamp(48px, 11vw, 72px) !important; height: clamp(66px, 15vw, 100px) !important; }
+  body.app-fs-on .fd-ic-btn { width: clamp(34px, 7vw, 44px) !important; height: clamp(34px, 7vw, 44px) !important; }
+}
+/* ── بورتريه (الهواتف — الوضع التلقائي) ── لا حاجة لقفل اتجاه: التخطيط متجاوب
+   ويتكيّف تلقائياً إن قلب المستخدم الشاشة */
