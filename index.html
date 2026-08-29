@@ -494,9 +494,8 @@
         <button class="mclose" onclick="closeAuthModal()" aria-label="إغلاق">✕</button>
       </div>
       <div class="mbody">
-        <div class="atabs" role="tablist" aria-label="تسجيل الدخول أو إنشاء حساب">
+        <div class="atabs" role="tablist" aria-label="تسجيل الدخول">
           <button class="atab active" role="tab" aria-selected="true" data-auth-tab="login" onclick="authTab('login')"><i class="fa-solid fa-key" aria-hidden="true"></i> دخول</button>
-          <button class="atab" role="tab" aria-selected="false" data-auth-tab="register" onclick="authTab('register')"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> تسجيل</button>
         </div>
         <form id="authForm" data-mode="login" onsubmit="event.preventDefault()">
           <label class="aflabel" for="authUsername"><i class="fa-solid fa-user" aria-hidden="true"></i> اسم المستخدم</label>

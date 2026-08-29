@@ -451,6 +451,8 @@
     createRoom: function (gameId, opts) {
       var u = me();
       if (!u) { toast(T('ui.roomNeedLogin'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
+      /* [Auth] المشرفون (admin/super) لا يفتحون غرفاً كلاعبين ولا يراهنون */
+      if (u.role && u.role !== 'user') { toast(T('auth.adminNoPlay'), 'err'); return; }
       var max = Rooms.maxFor(gameId);
       var bet = 0;
       var roomType = 'hour';
@@ -476,6 +478,8 @@
     joinRoom: function (code) {
       var u = me();
       if (!u) { toast(T('ui.roomNeedLogin'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
+      /* [Auth] المشرفون (admin/super) لا ينضمون كلاعبين ولا يراهنون */
+      if (u.role && u.role !== 'user') { toast(T('auth.adminNoPlay'), 'err'); return; }
       code = String(code || '').trim().toUpperCase();
       if (!code) return;
       return API.post('/api/rooms/join', { code: code }).then(function (r) {

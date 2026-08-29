@@ -118,6 +118,14 @@
       try { if (typeof window.RC_groupEvent === 'function') window.RC_groupEvent('av', JSON.parse(e.data)); }
       catch (err) { console.error('[live] gr:av', err); }
     });
+    /* [Auth] رسائل تنسيق المشرفين (admin ⇄ super) */
+    _source.addEventListener('admin_msg', function (e) {
+      try {
+        var d = JSON.parse(e.data);
+        if (typeof window.RC_admin_msg === 'function') window.RC_admin_msg(d);
+        else window.dispatchEvent(new CustomEvent('RC_admin_msg', { detail: d }));
+      } catch (err) { console.error('[live] admin_msg', err); }
+    });
     _source.onerror = function () {
       /* EventSource يغلق ويعيد المحاولة — نتركه يعمل */
     };

@@ -1002,16 +1002,19 @@ function renderAdmin() {
   adminLoadStats();
   const tabs = isSuper
     ? '<button class="atab' + (ADMIN_TAB === 'users' ? ' active' : '') + '" role="tab" onclick="adminTab(\'users\')">' + T('admin.usersTab') + '</button>' +
+      '<button class="atab' + (ADMIN_TAB === 'coord' ? ' active' : '') + '" role="tab" onclick="adminTab(\'coord\')">💬 ' + T('admin.coordTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'tourneys' ? ' active' : '') + '" role="tab" onclick="adminTab(\'tourneys\')">🏆 ' + T('ui.tourney') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'games' ? ' active' : '') + '" role="tab" onclick="adminTab(\'games\')">' + T('admin.gamesTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'rewards' ? ' active' : '') + '" role="tab" onclick="adminTab(\'rewards\')">' + T('admin.rewardsTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'fin' ? ' active' : '') + '" role="tab" onclick="adminTab(\'fin\')">' + T('admin.finTab') + '</button>'
     : '<button class="atab' + (ADMIN_TAB === 'users' ? ' active' : '') + '" role="tab" onclick="adminTab(\'users\')">👥 ' + T('admin.myPlayers') + '</button>' +
+      '<button class="atab' + (ADMIN_TAB === 'coord' ? ' active' : '') + '" role="tab" onclick="adminTab(\'coord\')">💬 ' + T('admin.coordTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'tourneys' ? ' active' : '') + '" role="tab" onclick="adminTab(\'tourneys\')">🏆 ' + T('ui.tourney') + '</button>';
   el.innerHTML =
     '<div class="atabs" role="tablist">' + tabs + '</div>' +
     '<div id="adminContent"><div class="note">…</div></div>';
   if (ADMIN_TAB === 'users') adminLoadUsers();
+  else if (ADMIN_TAB === 'coord') adminLoadCoordination();
   else if (ADMIN_TAB === 'tourneys') adminLoadTourneys();
   else if (ADMIN_TAB === 'games') adminLoadGames();
   else if (ADMIN_TAB === 'rewards') adminLoadRewards();
@@ -1432,6 +1435,58 @@ function adminLoadFinance() {
       '</div>' + rows;
   }).catch(function () {
     c.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+}
+/* ═══════════ تنسيق المشرفين (admin ⇄ super) ═══════════ */
+/* [Auth] قناة مراسلة مباشرة مخصّصة للمشرفين — لا يراها اللاعبون */
+function adminLoadCoordination() {
+  const c = document.getElementById('adminContent');
+  if (!c) return;
+  c.innerHTML =
+    '<div class="coord-wrap">' +
+      '<div class="coord-head"><i class="fa-solid fa-comments" aria-hidden="true"></i> ' + T('admin.coordTitle') + '</div>' +
+      '<div class="coord-msgs" id="coordMsgs"><div class="note">…</div></div>' +
+      '<div class="coord-input">' +
+        '<input class="afinput" id="coordInput" placeholder="' + T('admin.coordPlaceholder') + '" maxlength="4000" onkeydown="if(event.key===\'Enter\')adminSendCoordination()">' +
+        '<button class="btn" id="coordSend" onclick="adminSendCoordination()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>' +
+      '</div>' +
+    '</div>';
+  loadAdminCoordinationMessages();
+}
+function loadAdminCoordinationMessages() {
+  const box = document.getElementById('coordMsgs');
+  if (!box) return;
+  API.get('/api/admin/messages').then(function (r) {
+    if (!r.ok || !r.data) { box.innerHTML = '<div class="note">' + T('auth.error') + '</div>'; return; }
+    const msgs = r.data.messages || [];
+    if (!msgs.length) { box.innerHTML = '<div class="note">' + T('admin.coordEmpty') + '</div>'; return; }
+    box.innerHTML = msgs.map(function (m) {
+      const mine = (AUTH.user && m.sender_id === AUTH.user.id);
+      return '<div class="coord-msg' + (mine ? ' mine' : '') + '">' +
+        '<div class="cm-head"><span class="cm-name">' + esc(m.sender_name || ('user' + m.sender_id)) + '</span>' +
+        '<span class="cm-time">' + new Date(m.created_at).toLocaleString('ar') + '</span></div>' +
+        '<div class="cm-text">' + esc(m.text) + '</div></div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }).catch(function () { box.innerHTML = '<div class="note">' + T('auth.error') + '</div>'; });
+}
+function adminSendCoordination() {
+  const inp = document.getElementById('coordInput');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  const btn = document.getElementById('coordSend');
+  if (btn) btn.disabled = true;
+  API.post('/api/admin/messages', { text: text }).then(function (r) {
+    if (r.ok) { inp.value = ''; loadAdminCoordinationMessages(); }
+    else toast(r.data && r.data.message ? r.data.message : T('auth.error'), 'err');
+  }).catch(function () { toast(T('auth.error'), 'err'); })
+    .then(function () { if (btn) btn.disabled = false; });
+}
+/* بثّ SSE للرسائل المشرفين */
+if (typeof window !== 'undefined') {
+  window.addEventListener('RC_admin_msg', function (e) {
+    if (ADMIN_TAB === 'coord') loadAdminCoordinationMessages();
   });
 }
 /* ═══════════ Ticker ═══════════ */

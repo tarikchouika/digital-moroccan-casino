@@ -66,6 +66,12 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_msg_created ON messages(created_at);
+CREATE TABLE IF NOT EXISTS admin_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `);
 
 /* مخطط تشفير كلمات المرور مطابق للباك-أند القديم (scrypt) */
@@ -449,41 +455,65 @@ const server = http.createServer((req, res) => {
       }
       if (pathname === '/api/login') {
         const existing = Object.values(users).find(function (u) { return u.username === (data.username || ''); });
-        if (existing) {
-          if (existing.banned) { json({ ok: false, message: 'تم حظر هذا الحساب' }, 403); return; }
-          if (existing.passHash && !verifyPassword(data.password || '', existing.passSalt, existing.passHash)) {
-            json({ ok: false, message: 'كلمة المرور غير صحيحة' }, 401); return;
-          }
-          /* [2FA] إذا كانت المصادقة الثنائية مفعّلة يلزم رمز TOTP صالح قبل إصدار الجلسة */
-          if (existing.twofaEnabled) {
-            if (!data.totp || !totpVerify(existing.totpSecret, data.totp)) {
-              json({ twofa_required: true, userId: existing.id });
-              return;
-            }
-          }
-          try { db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), existing.id); } catch (e) {}
-          startSession(res, existing);
-          json({ ok: true, user: publicUser(existing) });
+        /* [Auth] لا إنشاء تلقائي عند الدخول — الحسابات تُنشأ فقط عبر المشرفين */
+        if (!existing) {
+          json({ ok: false, message: 'الحساب غير موجود. تواصل مع المشرف لإنشاء حساب.' }, 404);
           return;
         }
-        /* مستخدم جديد غير مسجّل: أنشئه بكلمة مشفّرة واحفظه في نفس القاعدة */
-        const { salt, hash } = hashPassword(data.password || '', null);
-        const u = { id: nextUserId++, username: data.username || 'player', passHash: hash, passSalt: salt, role: 'user', gold: 2500, lang: 'ar', banned: false };
+        if (existing.banned) { json({ ok: false, message: 'تم حظر هذا الحساب' }, 403); return; }
+        if (existing.passHash && !verifyPassword(data.password || '', existing.passSalt, existing.passHash)) {
+          json({ ok: false, message: 'كلمة المرور غير صحيحة' }, 401); return;
+        }
+        /* [2FA] إذا كانت المصادقة الثنائية مفعّلة يلزم رمز TOTP صالح قبل إصدار الجلسة */
+        if (existing.twofaEnabled) {
+          if (!data.totp || !totpVerify(existing.totpSecret, data.totp)) {
+            json({ twofa_required: true, userId: existing.id });
+            return;
+          }
+        }
+        try { db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), existing.id); } catch (e) {}
+        startSession(res, existing);
+        json({ ok: true, user: publicUser(existing) });
+        return;
+      }
+      if (pathname === '/api/admin/register') {
+        /* [Auth] إنشاء حساب لاعب من طرف المشرف (super/admin) — يبدأ بدون جلسة */
+        if (!me || (me.role !== 'admin' && me.role !== 'super')) {
+          json({ ok: false, message: 'صلاحية غير كافية: إنشاء الحسابات متاح للمشرفين فقط' }, 403); return;
+        }
+        const username = (data.username || '').toString().trim();
+        const password = (data.password || '').toString();
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+          json({ ok: false, message: 'اسم المستخدم غير صالح (3-20 حرفاً: حروف/أرقام/_)' }, 400); return;
+        }
+        if (password.length < 6) { json({ ok: false, message: 'كلمة المرور 6 أحرف على الأقل' }, 400); return; }
+        if (Object.values(users).some(function (x) { return x.username === username; })) {
+          json({ ok: false, message: 'اسم المستخدم محجوز' }, 400); return;
+        }
+        const { salt, hash } = hashPassword(password, null);
+        const u = { username: username, passHash: hash, passSalt: salt, role: 'user', gold: 0, lang: 'ar', banned: false };
         persistUser(u);
-        startSession(res, u);
         json({ ok: true, user: publicUser(u) });
         return;
       }
       if (pathname === '/api/register') {
-        let u = Object.values(users).find(function (x) { return x.username === (data.username || ''); });
-        if (u && u.passHash) {
-          json({ ok: false, message: 'اسم المستخدم محجوز' }, 400);
-          return;
+        /* [Auth] إنشاء الحسابات مخصّص للمشرفين فقط (super/admin) — لا تسجيل ذاتي من نافذة الدخول */
+        if (!me || (me.role !== 'admin' && me.role !== 'super')) {
+          json({ ok: false, message: 'صلاحية غير كافية: إنشاء الحسابات متاح للمشرفين فقط' }, 403); return;
         }
-        const { salt, hash } = hashPassword(data.password || '', null);
-        u = { id: nextUserId++, username: data.username || 'new_player', passHash: hash, passSalt: salt, role: 'user', gold: 1000, lang: 'ar', banned: false };
+        const username = (data.username || '').toString().trim();
+        const password = (data.password || '').toString();
+        const role = (data.role === 'admin' || data.role === 'super' || data.role === 'user') ? data.role : 'user';
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+          json({ ok: false, message: 'اسم المستخدم غير صالح (3-20 حرفاً: حروف/أرقام/_)' }, 400); return;
+        }
+        if (password.length < 6) { json({ ok: false, message: 'كلمة المرور 6 أحرف على الأقل' }, 400); return; }
+        if (Object.values(users).some(function (x) { return x.username === username; })) {
+          json({ ok: false, message: 'اسم المستخدم محجوز' }, 400); return;
+        }
+        const { salt, hash } = hashPassword(password, null);
+        const u = { username: username, passHash: hash, passSalt: salt, role: role, gold: (data.gold != null ? Number(data.gold) : 0), lang: 'ar', banned: false };
         persistUser(u);
-        startSession(res, u);
         json({ ok: true, user: publicUser(u) });
         return;
       }
@@ -661,6 +691,33 @@ const server = http.createServer((req, res) => {
         json({ ok: true, conversations: conversations, unread: totalUnread });
         return;
       }
+      /* ── مراسلة المشرفين (admin ⇄ super) ── */
+      if (pathname === '/api/admin/messages' && req.method === 'GET') {
+        /* للأدمن والسوبر فقط — قناة تنسيق مخصّصة */
+        if (!me || (me.role !== 'admin' && me.role !== 'super')) { json({ ok: false, message: 'غير مصرّح' }, 403); return; }
+        const since = Date.now() - 7 * 24 * 3600 * 1000;
+        const msgs = db.prepare('SELECT id, sender_id, text, created_at FROM admin_messages WHERE created_at >= ? ORDER BY created_at ASC').all(since);
+        json({ ok: true, messages: msgs.map(function (m) { const u = users[m.sender_id]; return { id: m.id, sender_id: m.sender_id, sender_name: u ? u.username : ('user' + m.sender_id), text: m.text, created_at: m.created_at }; }) });
+        return;
+      }
+      if (pathname === '/api/admin/messages' && req.method === 'POST') {
+        if (!me || (me.role !== 'admin' && me.role !== 'super')) { json({ ok: false, message: 'غير مصرّح' }, 403); return; }
+        const text = String(data.text || '').slice(0, 4000);
+        if (!text) { json({ ok: false, message: 'الرسالة فارغة' }, 400); return; }
+        const now = Date.now();
+        let msg;
+        try {
+          const info = db.prepare('INSERT INTO admin_messages (sender_id, text, created_at) VALUES (?,?,?)').run(me.id, text, now);
+          msg = { id: Number(info.lastInsertRowid), sender_id: me.id, sender_name: me.username, text: text, created_at: now };
+        } catch (e) { json({ ok: false, message: 'تعذّر إرسال الرسالة' }, 500); return; }
+        /* بثّ لكل المشرفين المتصلين */
+        Object.keys(users).forEach(function (uid) {
+          const u = users[uid];
+          if (u && (u.role === 'admin' || u.role === 'super')) sendToUser(Number(uid), 'admin_msg', msg);
+        });
+        json({ ok: true, message: msg });
+        return;
+      }
       if (pathname === '/api/claim') { if (me) me.gold = (me.gold || 0) + 100; json({ ok: true, amount: 100, gold: me ? me.gold : 100 }); return; }
       if (pathname === '/api/chat') {
         const msg = { username: me ? me.username : 'زائر', message: data.message || '', created_at: Date.now() };
@@ -687,6 +744,8 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms' && req.method === 'POST') {
         /* إنشاء غرفة — الرهان مدفوع إلزامياً (لا غرف مجانية) */
         if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        /* [Auth] المشرفون (admin/super) لا يفتحون غرفاً كلاعبين ولا يراهنون */
+        if (me.role !== 'user') { json({ ok: false, message: 'المشرفون لا يمكنهم الدخول كلاعبين أو المراهنة' }, 403); return; }
         const room_type = data.room_type;
         if (room_type !== 'hour' && room_type !== 'percentage') { json({ ok: false, error: 'room_type_required' }, 400); return; }
         const bet = Number(data.bet);
@@ -710,6 +769,8 @@ const server = http.createServer((req, res) => {
       }
       if (pathname === '/api/rooms/join') {
         if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        /* [Auth] المشرفون (admin/super) لا ينضمون كلاعبين ولا يراهنون */
+        if (me.role !== 'user') { json({ ok: false, message: 'المشرفون لا يمكنهم الدخول كلاعبين أو المراهنة' }, 403); return; }
         const code = String(data.code || '').toUpperCase();
         const room = Object.values(rooms).find(function (r) { return r.code === code; });
         if (!room) { json({ ok: false, message: 'رمز الغرفة غير موجود' }, 404); return; }
@@ -767,6 +828,8 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/rooms/start') {
+        /* [Auth] المشرفون (admin/super) لا يبدؤون جولات كلاعبين ولا يراهنون */
+        if (me && me.role !== 'user') { json({ ok: false, message: 'المشرفون لا يمكنهم الدخول كلاعبين أو المراهنة' }, 403); return; }
         const room = rooms[data.room_id];
         if (room && me && room.owner_id === me.id) {
           const bet = Number(room.bet) || 0;

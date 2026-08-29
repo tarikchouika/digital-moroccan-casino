@@ -120,13 +120,8 @@ function applyAuthUser(user) {
 
 /* ── تسجيل الدخول / إنشاء حساب ── */
 function authSubmit() {
-  const form = document.getElementById('authForm');
-  const mode = form ? form.getAttribute('data-mode') : 'login';
-  if (mode === 'register') {
-    authRegister();
-  } else {
-    authLogin();
-  }
+  /* [Auth] نافذة الدخول للدخول فقط — لا إنشاء حساب (الحسابات عبر المشرفين) */
+  authLogin();
 }
 
 function authLogin() {

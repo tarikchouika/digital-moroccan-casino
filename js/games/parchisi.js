@@ -183,7 +183,11 @@ class ParchisiEngine {
       this.doublesStreak = 0;
       let far = null;
       for (const fpc of p.pieces) {
-        if (fpc.state === 'onboard' && (!far || fpc.pos > far.pos)) far = fpc;
+        /* [B10] القطع داخل منطقة اللاعب الآمنة (ممره الملوّن 64..70) معفاة من
+           عقوبة 3 متشابهات — لا تُرجَع أبداً. تُزال فقط القطع خارج المنطقة الآمنة،
+           وأبعدها (أكبر pos) أي الأقرب للممر الآمن. المربّع الرمادي الآمن على
+           المسار (pos < 64) ليس من منطقة اللاعب الآمنة فيظل قابلاً للإزالة. */
+        if (fpc.state === 'onboard' && fpc.pos < 64 && (!far || fpc.pos > far.pos)) far = fpc;
       }
       let applied = false;
       if (far) {
@@ -535,12 +539,10 @@ class ParchisiEngine {
     if (target >= 71) {
       piece.state = 'finished';
       piece.pos = 71;
-      if (!isBonus) {
-        /* مكافأة الوصول: +10 ببيدق آخر */
-        this.bonus = { dist: 10, kind: 10, excludeOwner: piece.owner, excludeId: piece.id };
-      } else {
-        this.notices.push({ key: 'parchisi.entry10', pid: this.current });
-      }
+      /* [B10] هدية الوصول: +10 ببيدق آخر — دائماً، سواء أُكمِلت بالنرد العادي
+         أو بطلعة الهدية نفسها (إتمام الدورة بالهدية يمنح هدية أخرى) */
+      if (isBonus) this.notices.push({ key: 'parchisi.entry10', pid: this.current });
+      this.bonus = { dist: 10, kind: 10, excludeOwner: piece.owner, excludeId: piece.id };
       return;
     }
     piece.pos = target;
