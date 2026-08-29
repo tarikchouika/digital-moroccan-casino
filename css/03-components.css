@@ -548,6 +548,8 @@
 .cmsg {
   display: flex;
   gap: 8px;
+  /* [F6] عزل الطلاء/التخطيط يمنع تداخل/تشوّه صفوف اللاعبين عند التمرير السريع */
+  contain: layout paint;
 }
 .cav {
   width: 32px;
@@ -827,11 +829,18 @@
 .mwrap {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  /* [F2] خلفية التطبيق (النقش) لا الأسود الخالص — لا أشرطة سوداء حول المودال */
+  background:
+    linear-gradient(rgba(7, 11, 18, 0.82), rgba(7, 11, 18, 0.82)),
+    url('../assets/logo/dark-bg.webp') center/cover fixed no-repeat;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 1000;
   display: none;
+  /* [F2] طبقة موحّدة: شبكة توسيط + تمرير عند الحاجة (تتكيّف مع لوحة المفاتيح) */
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
   align-items: center;
   justify-content: center;
   padding: 14px;
@@ -846,7 +855,9 @@
   width: 100%;
   max-width: 820px;
   max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
+  margin: auto; /* [F2] توسيط آمن: إن كان أطول من الشاشة يُمرَّر بلا قصّ أعلى */
   animation: mIn 0.3s var(--ease);
 }
 .modal-lg {
@@ -903,6 +914,7 @@
   padding: 18px;
 }
 /* ── Toasts ── */
+/* [F3] الحاوية لا تintercept النقرات (pointer-events:none) كي لا تغطّي العنوان */
 #toasts {
   position: fixed;
   top: calc(8px + var(--safe-top));
@@ -914,6 +926,9 @@
   align-items: center;
   gap: 7px;
   width: max-content;
+  max-width: calc(100vw - 24px);
+  pointer-events: none;
+}
   max-width: calc(100vw - 24px);
   pointer-events: none;
 }

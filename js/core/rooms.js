@@ -282,14 +282,31 @@
       if (!btn || btn._dragBound) return;
       btn._dragBound = true;
       btn.style.touchAction = 'none';
-      /* استعادة الموضع المحفوظ */
+      /* [F7] دالة clamp تعيد الزر داخل الشاشة عند أي تغيّر حجم/اتجاه */
+      btn._clamp = function () {
+        var w = btn.offsetWidth, h = btn.offsetHeight;
+        if (!w) return;
+        var maxX = window.innerWidth - w - 4, maxY = window.innerHeight - h - 4;
+        var x = parseFloat(btn.style.left) || 0, y = parseFloat(btn.style.top) || 0;
+        x = Math.max(4, Math.min(x, maxX)); y = Math.max(4, Math.min(y, maxY));
+        btn.style.right = 'auto'; btn.style.bottom = 'auto';
+        btn.style.left = x + 'px'; btn.style.top = y + 'px';
+      };
+      /* استعادة الموضع المحفوظ (نسبة مئوية إن وُجدت، وإلا px قديم) */
       try {
         var saved = localStorage.getItem('rc_fab_pos');
         if (saved) {
           var pos = JSON.parse(saved);
-          if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+          if (pos && typeof pos.rx === 'number' && typeof pos.ry === 'number') {
+            var x = Math.round(pos.rx * window.innerWidth);
+            var y = Math.round(pos.ry * window.innerHeight);
             btn.style.right = 'auto'; btn.style.bottom = 'auto';
-            btn.style.left = pos.x + 'px'; btn.style.top = pos.y + 'px';
+            btn.style.left = x + 'px'; btn.style.top = y + 'px';
+            btn._clamp();
+          } else if (pos && typeof pos.x === 'number') {
+            btn.style.right = 'auto'; btn.style.bottom = 'auto';
+            btn.style.left = pos.x + 'px'; btn.style.top = (pos.y || 0) + 'px';
+            btn._clamp();
           }
         }
       } catch (e) {}
@@ -325,8 +342,14 @@
         btn.classList.remove('dragging');
         try { btn.releasePointerCapture(pid); } catch (err) {}
         if (wasDrag) {
+          if (btn._clamp) btn._clamp();
           var r = btn.getBoundingClientRect();
-          try { localStorage.setItem('rc_fab_pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); } catch (err) {}
+          try {
+            /* [F7] نخزّن النسبة المئوية (مركز الزر) لا px — لتتكيّف مع أي حجم شاشة */
+            var rx = (r.left + r.width / 2) / window.innerWidth;
+            var ry = (r.top + r.height / 2) / window.innerHeight;
+            localStorage.setItem('rc_fab_pos', JSON.stringify({ rx: rx, ry: ry }));
+          } catch (err) {}
           /* منع النقرة اللاحقة من فتح اللوحة بعد السحب */
           var block = function (ev) { ev.stopPropagation(); ev.preventDefault(); btn.removeEventListener('click', block, true); };
           btn.addEventListener('click', block, true);
@@ -334,6 +357,15 @@
       }
       btn.addEventListener('pointerup', endDrag);
       btn.addEventListener('pointercancel', endDrag);
+      /* [F7] إعادة clamp عند تغيّر الحجم/الاتجاه/ملء الشاشة (لا حسابات داخل حلقة تمرير) */
+      if (!Rooms._fabListenersBound) {
+        Rooms._fabListenersBound = true;
+        var clampFn = function () { if (btn && btn._clamp) btn._clamp(); };
+        window.addEventListener('resize', clampFn, { passive: true });
+        window.addEventListener('orientationchange', clampFn, { passive: true });
+        document.addEventListener('fullscreenchange', clampFn, { passive: true });
+        document.addEventListener('webkitfullscreenchange', clampFn, { passive: true });
+      }
     },
     /* [B-migrate] شارة نوع الغرفة في الشريط العلوي للمودال (#roomTypeBadge) */
     _renderBadge: function () {
@@ -350,6 +382,16 @@
     _initSettings: function () {
       if (Rooms._settingsBound) return;
       Rooms._settingsBound = true;
+      /* [F4] تعبئة قائمة اللعبة بالألعاب المدعومة في الغرف (لا تفتح فارغة) */
+      var sel = document.getElementById('rsGame');
+      if (sel && !sel.options.length) {
+        var ids = Object.keys(Rooms.roomGameIds);
+        sel.innerHTML = ids.map(function (id) {
+          var g = (typeof GAMES !== 'undefined') && GAMES.filter(function (x) { return x.id === id; })[0];
+          var label = g ? (g.em + ' ' + (typeof gname === 'function' ? gname(g) : g.n[0])) : id;
+          return '<option value="' + id + '">' + esc(label) + '</option>';
+        }).join('');
+      }
       var gear = document.getElementById('roomGearBtn');
       var save = document.getElementById('rsSave');
       var cancel = document.getElementById('rsCancel');
@@ -369,7 +411,11 @@
       var rt = document.getElementById('rsRoomType');
       var bet = document.getElementById('rsBet');
       var game = document.getElementById('rsGame');
-      if (game) game.value = window._currentGameId || (Rooms.state && Rooms.state.game_id) || '';
+      /* [F4] قيمة افتراضية (اللعبة الحالية أو رامي) كي لا تفتح القائمة فارغة أبداً */
+      if (game) {
+        var def = window._currentGameId || (Rooms.state && Rooms.state.game_id) || 'rm';
+        game.value = def;
+      }
       if (Rooms.state) {
         if (rt && Rooms.state.room_type) rt.value = Rooms.state.room_type;
         if (bet && typeof Rooms.state.bet === 'number') bet.value = Rooms.state.bet;
@@ -381,7 +427,8 @@
         cancel.style.opacity = lock ? '0.5' : '';
         cancel.title = lock ? T('rm.required') : '';
       }
-      sm.style.display = 'block';
+      /* [F2] نعرض المظلّة كطبقة مرنة توسّط البطاقة (لا block) */
+      sm.style.display = 'flex';
       if (rt) rt.focus();
     },
     _saveSettings: function () {
@@ -658,14 +705,12 @@
     closeModal: function () {
       var m = document.getElementById('roomModal');
       if (m) m.classList.remove('show');
-      /* إعادة ملء الشاشة إذا كانت اللعبة ممتلئة قبل فتح المودال */
+      /* [F1] إعادة ملء الشاشة على جذر المستند (المودال داخله فيبقى ظاهراً) */
       if (Rooms._fsBefore) {
         Rooms._fsBefore = false;
-        var g = document.getElementById('pg-game');
-        if (g) {
-          var rq = g.requestFullscreen || g.webkitRequestFullscreen;
-          if (rq) { try { var p = rq.call(g); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
-        }
+        var rootEl = document.documentElement;
+        var rq = rootEl.requestFullscreen || rootEl.webkitRequestFullscreen;
+        if (rq) { try { var p = rq.call(rootEl); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
       }
     },
     toggleFromGame: function () {
@@ -785,7 +830,7 @@
           '<div class="ctext2" style="color:var(--t3);font-size:0.78rem">' + T('rm.betDeducted') + '</div>' +
         '</div>' +
         '<div class="ctext" style="padding:4px 0">' + T('ui.roomPlayers') + ' (' + st.players.length + '/' + st.max_players + ')</div>' +
-        '<div style="max-height:150px;overflow-y:auto;margin-bottom:10px">' + rows + '</div>' +
+        '<div style="max-height:150px;overflow-y:auto;margin-bottom:10px;padding-inline-end:8px;scroll-padding-inline-end:8px">' + rows + '</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' + btns + '</div>' +
         /* ── محادثة الغرفة (جماعية + فردية) ── */
         '<div class="rchat">' +

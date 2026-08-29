@@ -309,7 +309,7 @@ body.app-fs-on .main { padding-top: 0 !important; }
   z-index: 900;
   background: linear-gradient(180deg, #2a1a0c, #170b03);
 }
-#pg-game.app-fs .gp-head,
+/* [F1] نُبقي هيدر اللعبة (HUD) ظاهراً في ملء الشاشة؛ نخفي سجل الجولات فقط */
 #pg-game.app-fs .ghist { display: none !important; }
 #pg-game.app-fs #gamePageBody {
   flex: 1 1 auto;
@@ -321,6 +321,16 @@ body.app-fs-on .main { padding-top: 0 !important; }
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
+}
+/* [F1] جذر ملء الشاشة: خلفية التطبيق وكامل الارتفاع (لا فراغ أسود حول المحتوى) */
+html:fullscreen,
+html:-webkit-full-screen {
+  height: 100%;
+  background: var(--bg, #070B12);
+}
+html:fullscreen body,
+html:-webkit-full-screen body {
+  min-height: 100%;
 }
 
 /* زر الخروج الذهبي العائم — أعلى يمين الشاشة (يظهر فقط في الشاشة الممتلئة) */
@@ -426,14 +436,16 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
 .room-react-btn,
 #roomReactBtn {
   position: fixed;
-  inset-inline-end: 16px;   /* default bottom-right; JS overrides with left/top when dragged */
-  bottom: 84px;
+  /* [F7/C3] زاوية آمنة أسفل اليمين فوق شريط التنقل السفلي (لا تتداخل مع المحتوى) */
+  inset-inline-end: 16px;
+  bottom: calc(76px + var(--safe-bottom));
   z-index: 14000;           /* floats above game UI and the fullscreen-exit button (z 5100) */
   width: 52px; height: 52px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.6rem; line-height: 1;
   cursor: grab; touch-action: none;
   user-select: none; -webkit-user-select: none;
+  pointer-events: auto;     /* [F7] النقرات على الزر فقط */
   background: rgba(20,20,28,0.82); color: #fff;
   border: 1px solid rgba(245,197,24,0.55);
   box-shadow: 0 6px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.3) inset;
@@ -548,12 +560,24 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
   padding: 4px 12px; border-radius: 999px;
   background: rgba(245, 197, 24, 0.14); border: 1px solid rgba(245, 197, 24, 0.45);
   color: var(--gold, #F5C518); font-size: .74rem; font-weight: 800;
-  letter-spacing: .03em; white-space: nowrap;
+  letter-spacing: .03em; white-space: nowrap; flex-shrink: 0;
 }
-/* زر الترس: دائري أعلى يمين المودال */
+/* [F3] رأس الغرفة: صف واحد — العنوان جهة، و(الشارة + الترس + ✕) جهة أخرى بلا تداخل */
+#roomModal .room-topbar,
+.room-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 12px 14px;
+  background: var(--bg2, #0D1320);
+  border-bottom: 1px solid var(--bd, #22304A);
+}
+#roomModal .room-topbar-actions {
+  display: flex; align-items: center; gap: 8px;
+  padding-inline-end: 4px; flex-shrink: 0; min-width: 0;
+}
+/* زر الترس: ضمن الصف (لا تموضع مطلق يتداخل مع العنوان/الشارة) */
 #roomGearBtn {
-  position: absolute; top: 12px; inset-inline-end: 12px; z-index: 5;
-  width: 38px; height: 38px; border-radius: 50%;
+  position: static; top: auto; inset-inline-end: auto; z-index: auto;
+  width: 34px; height: 34px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg3, #141C2E); border: 1px solid var(--bd, #22304A);
   color: var(--t1, #F6F8FC); cursor: pointer;
@@ -562,17 +586,21 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
 #roomGearBtn:hover { border-color: var(--gold, #FFD23F); color: var(--gold, #FFD23F); box-shadow: 0 0 18px rgba(245, 197, 24, .4); }
 #roomGearBtn i { font-size: 1rem; }
 
-/* ═══ مودال إعدادات الغرفة (وسط الشاشة ~75%) ═══ */
+/* ═══ مودال إعدادات الغرفة (طبقة موحّدة + بطاقة) ═══ */
+/* [F2] المظلّة = .mwrap (نقش التطبيق)؛ هنا نلغي الإحداثيات المطلقة والارتفاع
+   الثابت وظلّ 100vmax الأسود، فتختفي الأشرطة السوداء والفراغ الميت أسفل الأزرار. */
 #roomSettingsModal {
-  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 75vw; height: 75vh; max-width: 1100px; max-height: 800px;
   z-index: 16000;
-  background: var(--surface, #1b2030);
-  border: 1px solid var(--bd2, #3A4C70);
-  border-radius: 16px; padding: 24px;
-  overflow: auto; box-sizing: border-box;
-  /* الظلّ الكبير يُحاكي مظلّة داكنة فوق كامل الشاشة + ظلّ عمق للمودال */
-  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .6), 0 20px 60px rgba(0, 0, 0, .5);
+  display: none;            /* يُعرض عبر style.display = 'flex' من JS */
+  padding: clamp(12px, 4vw, 24px);
+  box-sizing: border-box;
+}
+#roomSettingsModal .modal {
+  width: min(92vw, 560px);
+  max-width: 560px;
+  max-height: min(92dvh, 92vh);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
 }
 #roomSettingsModal h3 { font-size: 1.1rem; font-weight: 900; margin: 0 0 6px; }
 #roomSettingsModal .rs-sub { font-size: .78rem; color: var(--t2); margin-bottom: 14px; }

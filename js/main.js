@@ -560,16 +560,15 @@ function openGame(id) {
      تُخفي هيدر اللعبة وسجل الجولات وتبقي محيط اللعبة وأزرارها + زر الخروج الذهبي العائم.
      نطلب أيضاً ملء شاشة المتصفح إن سُمح (للانغماس الكامل) ونتجاهل الرفض بصمت. */
   enterAppFullscreen();
+  /* [F1] اطلب ملء الشاشة على جذر المستند (وليس #pg-game) كي تبقى كل الطبقات ظاهرة */
   if (gameFsSupported()) {
-    const pgEl = document.getElementById('pg-game');
-    if (pgEl) {
-      const fn = pgEl.requestFullscreen || pgEl.webkitRequestFullscreen;
-      if (fn) {
-        try {
-          const p = fn.call(pgEl);
-          if (p && typeof p.catch === 'function') p.catch(function () { /* مرفوض — لا مشكلة */ });
-        } catch (e) { /* غير مدعوم في هذا السياق */ }
-      }
+    const rootEl = document.documentElement;
+    const fn = rootEl.requestFullscreen || rootEl.webkitRequestFullscreen;
+    if (fn) {
+      try {
+        const p = fn.call(rootEl);
+        if (p && typeof p.catch === 'function') p.catch(function () { /* مرفوض — لا مشكلة */ });
+      } catch (e) { /* غير مدعوم في هذا السياق */ }
     }
   }
   /* نافذة القواعد لا تُفتح إلا عند الضغط على أيقونة «القواعد» */
@@ -725,12 +724,13 @@ function toggleGameFullscreen() {
     exitAppFullscreen();
   } else {
     enterAppFullscreen();
-    /* محاولة ملء شاشة المتصفح أيضاً للانغماس الكامل (نتجاهل الرفض بصمت) */
+    /* [F1] ملء شاشة المتصفح على جذر المستند ليبقى HUD والزر العائم والمودالات ظاهرة */
     if (gameFsSupported()) {
-      const fn = pg.requestFullscreen || pg.webkitRequestFullscreen;
+      const rootEl = document.documentElement;
+      const fn = rootEl.requestFullscreen || rootEl.webkitRequestFullscreen;
       if (fn) {
         try {
-          const p = fn.call(pg);
+          const p = fn.call(rootEl);
           if (p && typeof p.catch === 'function') p.catch(function () {});
         } catch (e) {}
       }
@@ -756,14 +756,22 @@ function syncVisualViewport() {
   const h = vv ? vv.height : window.innerHeight;
   document.documentElement.style.setProperty('--vvh', Math.round(h) + 'px');
 }
+/* [F8] عند فتح لوحة المفاتيح: وسّط الحقل المركّز عمودياً كي لا يُقطَع (داخل المودال أيضاً) */
+function centerFocusedOnKeyboard() {
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+  }
+}
 window.syncVisualViewport = syncVisualViewport;
+window.centerFocusedOnKeyboard = centerFocusedOnKeyboard;
 syncVisualViewport();
 if (typeof window !== 'undefined') {
   window.addEventListener('resize', syncVisualViewport);
   window.addEventListener('orientationchange', function () { setTimeout(syncVisualViewport, 250); });
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', syncVisualViewport);
-    window.visualViewport.addEventListener('scroll', syncVisualViewport);
+    window.visualViewport.addEventListener('resize', function () { syncVisualViewport(); centerFocusedOnKeyboard(); }, { passive: true });
+    window.visualViewport.addEventListener('scroll', syncVisualViewport, { passive: true });
   }
 }
 

@@ -226,7 +226,7 @@ line-height: 1.6;
 <!-- أداة التحقق التفاعلية Provably Fair -->
 <section class="pf-tool" aria-labelledby="pf-tool-title">
   <h2 id="pf-tool-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-i18n="fair.calcTitle">أداة التحقق التفاعلية (Provably Fair)</span></h2>
-  <p class="pf-tool-desc">أدخل بذرة الخادم (Server Seed) وSeed اللاعب (Client Seed) ورقم الجولة (Nonce)، ثم اضغط «احسب» لاشتقاق تجزئة <code>HMAC-SHA256</code> والنتيجة محلياً عبر <code>SHA-256</code> — دون أي اتصال بالخادم.</p>
+  <p class="pf-tool-desc" data-i18n-html="fair.toolDesc">أدخل بذرة الخادم (Server Seed) وSeed اللاعب (Client Seed) ورقم الجولة (Nonce)، ثم اضغط «احسب» لاشتقاق تجزئة <code>HMAC-SHA256</code> والنتيجة محلياً عبر <code>SHA-256</code> — دون أي اتصال بالخادم.</p>
 
   <div class="pf-field">
     <label for="pf-server" data-i18n="fair.serverSeed">Seed الخادم (المفتاح السري)</label>
@@ -244,16 +244,16 @@ line-height: 1.6;
       <input id="pf-nonce" type="number" min="0" step="1" value="0" spellcheck="false" autocomplete="off">
     </div>
     <div>
-      <label for="pf-game">اللعبة</label>
+      <label for="pf-game" data-i18n="fair.game">اللعبة</label>
       <select id="pf-game">
-        <option value="ke">كينو (Keno)</option>
-        <option value="av">أفياتور / كراش (Crash)</option>
+        <option value="ke" data-i18n="fair.gameKeno">كينو (Keno)</option>
+        <option value="av" data-i18n="fair.gameCrash">أفياتور / كراش (Crash)</option>
       </select>
     </div>
   </div>
 
   <div class="pf-actions">
-    <button id="pf-calc" class="btn ghost small" type="button"><i class="fa-solid fa-calculator" aria-hidden="true"></i> <span>احسب النتيجة</span></button>
+    <button id="pf-calc" class="btn ghost small" type="button"><i class="fa-solid fa-calculator" aria-hidden="true"></i> <span data-i18n="fair.calcBtn">احسب النتيجة</span></button>
   </div>
 
   <div class="pf-field">
@@ -262,7 +262,7 @@ line-height: 1.6;
   </div>
 
   <div class="pf-field">
-    <label for="pf-outcome">النتيجة المُشتقّة (JSON)</label>
+    <label for="pf-outcome" data-i18n="fair.outcome">النتيجة المُشتقّة (JSON)</label>
     <textarea id="pf-outcome" spellcheck="false" rows="3" placeholder='{"numbers":[3,17,42,...]}  أو  {"crash_at":1.97}'></textarea>
   </div>
 

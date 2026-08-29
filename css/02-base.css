@@ -33,12 +33,13 @@ html[data-theme="radiant"] body {
   background-color: var(--bg);
 }
 /* ── Scrollbar ── */
+/* [F5] شريط تمرير رفيع وموحّد (لا شريط أصفر عريض) — نفس النمط على كل الحاويات */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg2);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--gold);
@@ -46,6 +47,11 @@ html[data-theme="radiant"] body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gold2);
+}
+/* Firefox: نفس السُمك الرفيع كي لا يظهر شريط نظام رمادي مزدوج */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) transparent;
 }
 /* ── العناصر الأساسية ── */
 button {
