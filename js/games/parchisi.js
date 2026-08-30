@@ -1587,8 +1587,20 @@ const ParchisiApp = {
     if (!opts || !opts.length) return;
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width) return;
-    const mx = (ev.clientX - rect.left) * (600 / rect.width);
-    const my = (ev.clientY - rect.top) * (600 / rect.height);
+    let mx = (ev.clientX - rect.left) * (600 / rect.width);
+    let my = (ev.clientY - rect.top) * (600 / rect.height);
+    /* [Rotate] عكس دوران الرسم للحصول على إحداثيات الخلية الأصلية:
+       الرسم يدور -90°*rot حول المركز؛ النقر على النقطة المدارة يجب أن يُحوَّل
+       للإطار غير-المدار حيث تُخزَّن مواقع القطع في pieceLayout. */
+    const rot = (e.boardRotation || 0);
+    if (rot) {
+      const cx = 300, cy = 300;
+      const dx = mx - cx, dy = my - cy;
+      const ang = Math.PI / 2 * rot;
+      const cs = Math.cos(ang), sn = Math.sin(ang);
+      mx = cx + dx * cs - dy * sn;
+      my = cy + dx * sn + dy * cs;
+    }
     const layout = this.pieceLayout();
     let best = null, bd = 26;
     for (const pc of opts) {
