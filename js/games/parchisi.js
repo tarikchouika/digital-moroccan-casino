@@ -125,6 +125,7 @@ class ParchisiEngine {
     this.winner = null;
     this.winnerTeam = null;
     this.lastCapture = null;
+    this.boardRotation = 0;     /* [Rotate] عدد التدويرات عكس عقارب الساعة (0..3) */
     this.notices = [];
     this.rollCount = [];                              /* [B7] عدّاد رميات تصاعدي لكل لاعب */
     this.onStateChange = null;
@@ -138,18 +139,12 @@ class ParchisiEngine {
     if (this.onStateChange) this.onStateChange();
   }
 
-  /* [Rotate] تدوير مقاعد اللاعبين حول اللوحة (الترتيب محفوظ، الألوان تتبادل الزوايا).
-     لاعبان = مبادلة بين الزاويتين المتقابلتين. أربعة لاعبين = إزاحة بمقدار 1. */
+  /* [Rotate] تدوير اللوحة عكس عقارب الساعة — اللاعبون يبقون في مناطقهم
+     (الأحمر يبقى أحمر ومعه قطعه) لكن الزوايا تتحرك: الأحمر يأخذ مكان الأخضر،
+     الأخضر مكان الأصفر، الأصفر مكان الأزرق، الأزرق مكان الأحمر. */
   rotateBoard() {
     if (this.gameOver) return false;
-    const n = this.playerCount;
-    if (n === 2) {
-      this.seats = [this.seats[1], this.seats[0]];
-    } else {
-      const last = this.seats[n - 1];
-      for (let i = n - 1; i > 0; i--) this.seats[i] = this.seats[i - 1];
-      this.seats[0] = last;
-    }
+    this.boardRotation = ((this.boardRotation || 0) + 1) % 4;
     /* مسح قيود تعتمد على خانات عالمية محددة (مثل _noReform) لأن الهندسة تغيّرت */
     this._noReform = null;
     this.mustBreak = false;
@@ -1309,10 +1304,12 @@ const ParchisiApp = {
       { x: '93.5%', y: '93.5%', side: 'left' },
       { x: '93.5%', y: '6.5%', side: 'left' }
     ];
+    /* [Rotate] إزاحة مواقع الأيقونات مع تدوير اللوحة */
+    const rot = e.boardRotation || 0;
     let html = '';
     for (let i = 0; i < e.players.length; i++) {
       const seat = e.seats[i];
-      const pos = seatPos[seat] || seatPos[0];
+      const pos = seatPos[(seat + rot) % 4] || seatPos[0];
       const col = PR_COLORS.main[seat];
       const on = (i === e.current && !e.gameOver && this.gameActive) ? ' on' : '';
       const ini = String(this.iconInitials(i)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1487,15 +1484,19 @@ const ParchisiApp = {
     if (!wrap || !this.engine) return;
     const e = this.engine;
     const corners = ['tl', 'bl', 'br', 'tr'];
+    /* [Rotate] زاوية كل لاعب تتحول مع تدوير اللوحة: مقعد + تدوير = زاوية.
+       ركن مقعد i بعد r تدويرات عكس عقارب الساعة = corners[(i + r) % 4]. */
+    const rot = e.boardRotation || 0;
     let html = '';
     for (let i = 0; i < e.players.length; i++) {
       const seat = e.seats[i];
+      const visualCorner = corners[(seat + rot) % 4] || 'tl';
       const rolls = (e.rollLog && e.rollLog[i]) || [];
       const last = rolls.length ? rolls[rolls.length - 1] : null;
       const vals = last ? last.slice() : [];
       while (vals.length < e.mode.dice) vals.push(1);          /* قبل أول رمية */
       const on = (i === e.current && !e.gameOver && this.gameActive) ? ' on' : '';
-      html += '<div class="pr-cd' + on + '" data-corner="' + (corners[seat] || 'tl') + '"'
+      html += '<div class="pr-cd' + on + '" data-corner="' + visualCorner + '"'
             + ' style="--cdc:' + PR_COLORS.main[seat] + '">';
       for (let k = 0; k < e.mode.dice; k++) html += this._dieFaceHTML(vals[k] | 0 || 1);
       html += '</div>';
@@ -1985,6 +1986,16 @@ const ParchisiApp = {
     this._frameDt = Math.max(0, Math.min(64, now - (this._lastT == null ? now : this._lastT)));
     this._lastT = now;
     const W = 600;
+    /* [Rotate] تدوير اللوحة عكس عقارب الساعة: اللاعبون ومنازلهم وقطعهم كلها تدور
+       كوحدة واحدة حول مركز اللوحة — اللاعب الأحمر يبقى أحمر ومعه قطعه لكن زاويته
+       تنتقل لمكان الأخضر، وهكذا. */
+    const rot = this.boardRotation || 0;
+    if (rot) {
+      ctx.save();
+      ctx.translate(W / 2, W / 2);
+      ctx.rotate(-Math.PI / 2 * rot);
+      ctx.translate(-W / 2, -W / 2);
+    }
     /* خلفية بنية دافئة */
     const bg = ctx.createRadialGradient(300, 280, 60, 300, 320, 460);
     bg.addColorStop(0, PR_COLORS.wood.bg1);
@@ -2029,6 +2040,8 @@ const ParchisiApp = {
     this.drawBarriers(ctx);
     /* القطع */
     this.drawPieces(ctx, now);
+    /* [Rotate] استرجاع الحالة بعد التدوير */
+    if (rot) ctx.restore();
   },
 
   rr(ctx, x, y, w, h, r) {

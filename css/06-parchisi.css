@@ -194,8 +194,8 @@
 }
 /* [Rotate] زر تدوير اللوحة — ذهبي فاخر تحت العنوان والمجموع، قابل للنقر، يدور عند المرور */
 .pr-rotate-btn {
-  margin-top: 6px;
-  display: inline-flex;
+  margin-top: 8px;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -209,6 +209,9 @@
   font-size: 1rem;
   transition: transform 0.25s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;
+  /* تأكيد أنه تحت المجموع وليس بجانبه — عنصر كتلي يتمركز أفقياً */
+  margin-left: auto;
+  margin-right: auto;
 }
 .pr-rotate-btn:hover { box-shadow: 0 0 0 2px rgba(255,215,94,0.55), 0 3px 12px rgba(217,169,78,0.6); }
 .pr-rotate-btn:active { transform: scale(0.94); }
@@ -220,8 +223,6 @@
   gap: 7px;
   margin-top: 3px;
   padding: 1px 14px;
-  border-top: 1px solid rgba(217, 169, 78, 0.35);
-  border-bottom: 1px solid rgba(217, 169, 78, 0.2);
 }
 .pr-pot-num {
   font-size: 1.12rem;
