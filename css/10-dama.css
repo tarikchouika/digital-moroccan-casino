@@ -187,7 +187,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;        /* [Owner] مرجع تموضع مقاعد اللاعبين فوق/تحت اللوحة */
 }
+/* [Owner] المقاعد مطلقة داخل صندوق اللوحة — تتمركز فوق/تحت حافتها بغض النظر عن الاتجاه */
+.dama-boardbox > .dama-seat {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 6;
+}
+.dama-boardbox > .dama-seat-top { top: 0; }
+.dama-boardbox > .dama-seat-bottom { top: 100%; }
 /* ── [Owner] شريط المتفرجين (شفاف 100%) ── */
 .dama-spectators {
   display: flex;
@@ -506,4 +517,77 @@
   .dama-mini { padding: 5px 10px; font-size: 11px; }
   .dama-boardbox { min-height: 110px; }
   #damaStage .res { font-size: 0.85rem; margin-top: 3px; }
+}
+
+/* ═══════════ LANDSCAPE FIX — Dama (CSS-only) ═══════════
+   The board is JS-sized to its box (damaFitBoard), so we only need a
+   landscape grid: board fills the right column height, while the
+   spectator bar + seats + info/controls stack in a left side panel.
+   Portrait/base rules are NOT modified. */
+@media (orientation: landscape) {
+  /* حاوية المرحلة (.stage#damaStage) تملأ حاوية اللعبة بلا فراغ — كي تتمدّد
+     شبكة .dama-play لكامل الارتفاع */
+  #pg-game.app-fs #damaStage {
+    height: 100%;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  /* .dama-wrap يحيط بشاشتي الإعداد/اللعب — يملأ ارتفاع المرحلة كاملاً */
+  #pg-game.app-fs #damaStage .dama-wrap {
+    flex: 1 1 0%;                  /* أساس 0% كي يمتص كل الفراغ المتبقي بعد bets/res */
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  #pg-game.app-fs #damaStage .dama-wrap .dama-play {
+    display: grid !important;
+    flex: 1 1 auto;                 /* يملأ عمود .dama-wrap بأكمله */
+    min-height: 0;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    /* 7 صفوف 1fr فقط — شريط المتفرجين مطلق (لا يسرق مساراً) كي يمتدّ اللوح لكامل الارتفاع */
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+    gap: 6px 10px;
+    max-width: none;
+    width: 100%;
+    position: relative;
+  }
+  /* شريط المتفرجين الشفاف 100% — مطلق فوق اللوحة بلا تأثير على شبكة الارتفاع */
+  #pg-game.app-fs #damaStage .dama-play > .dama-spectators {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 7;
+    width: 100%;
+    pointer-events: none;
+  }
+  /* اللوحة تملأ عمودها (يمين) وكل الارتفاع المتبقي */
+  #pg-game.app-fs #damaStage .dama-play > .dama-boardbox {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    min-height: 0;
+    align-self: stretch;
+    position: relative;
+  }
+  /* لوحة جانبية (يسار): الرهان/المؤقت/الحالة/الأزرار تتكدّس وتتمدد عمودياً */
+  #pg-game.app-fs #damaStage .dama-play > .dama-stake,
+  #pg-game.app-fs #damaStage .dama-play > .dama-timer,
+  #pg-game.app-fs #damaStage .dama-play > .dama-status,
+  #pg-game.app-fs #damaStage .dama-play > .dama-ctrls,
+  #pg-game.app-fs #damaStage .dama-play > .dama-drawbar {
+    grid-column: 1;
+    align-self: start;
+    width: 100%;
+    min-width: 0;
+  }
+  /* [Owner] شريط الرهان السفلي (مكرر مع .dama-stake) يُخفى في اللاندسكيب
+     لفسح أكبر مساحة عمودية للوحة — الرهان يُعرض أصلاً في .dama-stake أعلى اللوحة */
+  #pg-game.app-fs #damaStage > .bets { display: none; }
+  #pg-game.app-fs #damaStage > .res { margin-top: 0; }
 }

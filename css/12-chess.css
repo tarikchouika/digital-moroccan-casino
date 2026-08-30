@@ -185,6 +185,31 @@
    Portrait/base rules above are NOT modified.
    ════════════════════════════════════════════════════════════════ */
 @media (orientation: landscape) {
+  /* [Owner] الشطرنج يدير تخطيطه داخلياً عبر .dama-play — نلغي شبكة المرحلة
+     العامة (:has(.ch-wrap)) التي تخلق صفّاً مهدراً مع .res، ونملأ الارتفاع */
+  #pg-game.app-fs .stage:has(.ch-wrap) {
+    display: block;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+  #pg-game.app-fs .stage:has(.ch-wrap) > .ch-wrap {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    height: 100%;
+  }
+  /* شريط النتيجة (.res) يُعرض عائماً أسفل المرحلة بلا تأثير على التخطيط */
+  #pg-game.app-fs .stage:has(.ch-wrap) > .res {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 8;
+    margin: 0;
+    text-align: center;
+  }
   .ch-wrap {
     max-width: none;
     width: 100%;

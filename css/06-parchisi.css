@@ -643,3 +643,42 @@
 @media (max-width: 380px) {
   .pr-die { padding: 5px 9px; font-size: 0.8rem; }
 }
+
+/* ═══════════ LANDSCAPE FIX — Parchisi (CSS-only) ═══════════
+   The canvas is JS-sized to #parchisiBoardArea (setupBoardFit), so we only
+   need a landscape grid: board fills the right column height while the
+   header + roll log + dice/controls stack in a left side panel. The big
+   vertical padding used for the dice in portrait is trimmed so the board
+   gets the full height. Portrait/base rules are NOT modified. */
+@media (orientation: landscape) {
+  /* !important: parchisi.js يضبط display:flex بشكل inline عند بدء اللعبة
+     (style.display='flex') وهذا يلغي قاعدة الـgrid — نجبرها هنا */
+  #pg-game.app-fs #parchisiGame {
+    display: grid !important;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px 12px;
+    height: 100%;
+    width: 100%;
+  }
+  #pg-game.app-fs #parchisiGame > #parchisiHeader {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    width: 100%;
+  }
+  #pg-game.app-fs #parchisiGame > .parchisi-info {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    width: 100%;
+  }
+  #pg-game.app-fs #parchisiGame > #parchisiBoardArea {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    min-height: 0;
+    align-self: stretch;
+    padding: 8px 4px;
+  }
+}

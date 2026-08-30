@@ -537,11 +537,12 @@ function eDama(g) {
       /* ── play screen ── */
       '<div class="dama-play" id="damaPlay" hidden>' +
         '<div class="dama-spectators" id="damaSpectators" aria-hidden="true"></div>' +   /* [Owner] شريط متفرجين شفاف 100% — فارغ بلا متفرجين */
-        '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface">⚑</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
         '<div class="dama-stake" id="damaStake" hidden></div>' +   /* [B10] الرهان الجاري (عرض ساكن فقط) */
         '<div class="dama-timer" id="damaTimer"></div>' +
-        '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div></div>' +
-        '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface">★</span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
+        '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div>' +
+          '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface">⚑</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
+          '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface">★</span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
+        '</div>' +
         '<div class="dama-status" id="damaStatus"></div>' +
         '<div class="dama-ctrls">' +
           '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()">' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */

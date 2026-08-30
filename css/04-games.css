@@ -3964,6 +3964,9 @@ body.rami-game-open { overflow: hidden; }
     min-height: 0;
     align-self: stretch;
   }
+  /* Chess: .dama-play lays out its own board+controls 2-column grid, so let
+     .ch-wrap span the full stage width instead of the reserved side column. */
+  #pg-game.app-fs .stage:has(.ch-wrap) > .ch-wrap { grid-column: 1 / -1; }
   /* controls / stats: right column, each in its own row, compact at the top */
   #pg-game.app-fs .stage:has(.mn-wrap) > .bets,
   #pg-game.app-fs .stage:has(.mn-wrap) > .res,
