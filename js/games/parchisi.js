@@ -1989,7 +1989,7 @@ const ParchisiApp = {
     /* [Rotate] تدوير اللوحة عكس عقارب الساعة: اللاعبون ومنازلهم وقطعهم كلها تدور
        كوحدة واحدة حول مركز اللوحة — اللاعب الأحمر يبقى أحمر ومعه قطعه لكن زاويته
        تنتقل لمكان الأخضر، وهكذا. */
-    const rot = this.boardRotation || 0;
+    const rot = (this.engine && this.engine.boardRotation) || 0;
     if (rot) {
       ctx.save();
       ctx.translate(W / 2, W / 2);
