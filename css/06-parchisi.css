@@ -697,6 +697,28 @@
   #pg-game.app-fs #parchisiGame .pr-cd {
     --cdsz: clamp(30px, 5.5vw, 46px);
   }
+  /* [Landscape] إعادة توزيع النرد الدائم على يمين/يسار اللوحة (عكس البورتريه):
+     - tl (أحمر) → يسار اللوحة، الثلث العلوي
+     - bl (أخضر) → يسار اللوحة، الثلث السفلي
+     - tr (أزرق)  → يمين اللوحة، الثلث العلوي
+     - br (أصفر) → يمين اللوحة، الثلث السفلي
+     تُحاذى إلى حافة اللوحة مع فجوة واضحة، وتبقى قابلة للنقر (pointer-events:auto) */
+  #pg-game.app-fs #parchisiGame .pr-cd[data-corner="tl"] {
+    top: 25%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
+  }
+  #pg-game.app-fs #parchisiGame .pr-cd[data-corner="bl"] {
+    top: 75%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
+  }
+  #pg-game.app-fs #parchisiGame .pr-cd[data-corner="tr"] {
+    top: 25%; right: 0; left: auto; bottom: auto;
+    transform: translate(calc(100% + 10px), -50%);
+  }
+  #pg-game.app-fs #parchisiGame .pr-cd[data-corner="br"] {
+    top: 75%; right: 0; left: auto; bottom: auto;
+    transform: translate(calc(100% + 10px), -50%);
+  }
 }
 
 /* ── لاندسكيب: النموذج (يسار) يأخذ معظم الارتفاع ويتمرّر داخلياً،

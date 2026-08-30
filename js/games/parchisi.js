@@ -165,8 +165,7 @@ class ParchisiEngine {
     if (typeof SND !== 'undefined' && SND.dice) { try { SND.dice(); } catch (e) {} }
     this.dice = diceArr.slice(0, this.mode.dice).map(d => Math.max(1, Math.min(6, d | 0)));
     this.used = this.dice.map(() => false);
-    this.bonus = null;
-    this.bonusLegal = [];
+    /* [Gift-priority] لا نمسح الهدية المعلّقة من دور سابق — ستُلعَب قبل النرد. */
     this._noReform = null;
     /* سجل الرميات: آخر خمس رميات لكل لاعب */
     if (!this.rollLog[this.current]) this.rollLog[this.current] = [];
@@ -228,6 +227,14 @@ class ParchisiEngine {
        [B8] بشرط وجود الاشتراك قبل الرمية (لا ما تكوّن بخروج الدبل نفسه) */
     this.mustBreak = !!(isDouble && this.mode.breakOnDouble && this.used.some(u => !u) && sharedBeforeRoll);
     if (this.mustBreak) this.notices.push({ key: 'parchisi.mustBreak', pid: p.id });
+
+    /* [Gift-priority] هدية القتل/الوصول المعلّقة من دور سابق لها الأولوية على النرد:
+       تُلعَب الهدية أولاً (طور BONUS)، وبعد انتهائها تعود اللعبة إلى طور MOVING
+       لتُستهلَك بقية قيم النرد. إن لم يكن للهدية خانة قانونية تُلغى وتُكمَل الرمية بالنرد. */
+    if (this.bonus && this._setupBonus()) {
+      if (this.onStateChange) this.onStateChange();
+      return;
+    }
 
     this.phase = 'MOVING';
     if (!this.hasAnyOption()) {
@@ -642,8 +649,8 @@ class ParchisiEngine {
     this.phase = 'WAIT_ROLL';
     this.dice = [];
     this.used = [];
-    this.bonus = null;
-    this.bonusLegal = [];
+    /* [Gift-priority] لا نمسح الهدية المعلّقة — إذا بقيت هدية غير قابلة للعب
+       في الدور الحالي، تبقى في الانتظار حتى الرمية التالية وتُلعَب قبل النرد. */
     this.mustBreak = false;
     if (isDouble && this.mode.doubles && this.doublesStreak > 0 && this.doublesStreak < 3) {
       /* إسبانيول: الدبل يمنح رمية إضافية لنفس اللاعب */
@@ -659,8 +666,7 @@ class ParchisiEngine {
     this.phase = 'WAIT_ROLL';
     this.dice = [];
     this.used = [];
-    this.bonus = null;
-    this.bonusLegal = [];
+    /* [Gift-priority] نفس القاعدة — الهدية المعلّقة تبقى للدور التالي. */
     this.mustBreak = false;
     this.doublesStreak = 0;
     this.current = (this.current + 1) % this.playerCount;
@@ -668,6 +674,12 @@ class ParchisiEngine {
 
   forcePass() {
     if (this.gameOver) return;
+    /* [Gift-priority] إذا كان اللاعب يتخلّى عن هدية معلّقة، تُلغى فوراً —
+       التمرير القسري أثناء طور BONUS يعني تنازل اللاعب عن حقه في الهدية. */
+    if (this.phase === 'BONUS') {
+      this.bonus = null;
+      this.bonusLegal = [];
+    }
     this._passTurn();
     if (this.onStateChange) this.onStateChange();
   }
