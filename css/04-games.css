@@ -2247,6 +2247,13 @@ canvas.game {
   flex: 1 1 auto !important;
   min-height: 0 !important;
 }
+/* app-fs: السماح بالتمرير داخل حاوية اللعبة كي تبقى لوحة الإعداد/الرهان وأزرار
+   البدء ظاهرة وممكن الوصول إليها على الشاشات القصيرة (لاندسكيب الهواتف) بلا قصّ.
+   يطغى على overflow:hidden الأساسي عبر !important ويعمل فقط عند الفيضان الفعلي. */
+#pg-game.app-fs #gamePageBody {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
 /* منع فيضان مرحلة اللعبة خارج عرض الشاشة */
 #gamePageBody {
   min-width: 0;
