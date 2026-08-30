@@ -138,6 +138,24 @@ class ParchisiEngine {
     if (this.onStateChange) this.onStateChange();
   }
 
+  /* [Rotate] تدوير مقاعد اللاعبين حول اللوحة (الترتيب محفوظ، الألوان تتبادل الزوايا).
+     لاعبان = مبادلة بين الزاويتين المتقابلتين. أربعة لاعبين = إزاحة بمقدار 1. */
+  rotateBoard() {
+    if (this.gameOver) return false;
+    const n = this.playerCount;
+    if (n === 2) {
+      this.seats = [this.seats[1], this.seats[0]];
+    } else {
+      const last = this.seats[n - 1];
+      for (let i = n - 1; i > 0; i--) this.seats[i] = this.seats[i - 1];
+      this.seats[0] = last;
+    }
+    /* مسح قيود تعتمد على خانات عالمية محددة (مثل _noReform) لأن الهندسة تغيّرت */
+    this._noReform = null;
+    this.mustBreak = false;
+    return true;
+  }
+
   /* ── أدوات هندسية ── */
   toGlobal(pid, rel) {
     return (PR_OFF[this.seats[pid]] + rel) % 68;
@@ -1440,6 +1458,26 @@ const ParchisiApp = {
     this.activeValue = v;
     this.activeSrc = src;
     this.renderDice();
+  },
+
+  /* [Rotate] تدوير مقاعد اللاعبين حول اللوحة — تُغيَّر الزوايا مع الحفاظ على
+     ترتيب الألوان. ثم يُعاد رسم اللوحة والأيقونات والنرد الدائم. */
+  rotateBoard() {
+    if (!this.engine || this.engine.gameOver) return;
+    if (!this.engine.rotateBoard()) return;
+    /* تأثير بصري: تدوير الزر نفسه */
+    const btn = document.getElementById('parchisiRotateBtn');
+    if (btn) {
+      btn.classList.remove('spinning');
+      void btn.offsetWidth;
+      btn.classList.add('spinning');
+    }
+    /* إعادة الرسم */
+    this.renderIcons();
+    this.renderCornerDice();
+    this.renderDice();
+    this.draw();   /* حلقرة الرسم — تستعمل seats الجديد في رسم القواعد والقطع */
+    if (this.engine.onStateChange) this.engine.onStateChange();
   },
 
   /* ═══ [B9] النرد الدائم لكل لاعب فوق الزاوية الخارجية لقاعدته ═══

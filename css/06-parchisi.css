@@ -192,6 +192,28 @@
     drop-shadow(0 3px 1px rgba(60, 37, 3, 0.6))
     drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
 }
+/* [Rotate] زر تدوير اللوحة — ذهبي فاخر تحت العنوان والمجموع، قابل للنقر، يدور عند المرور */
+.pr-rotate-btn {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff6cf 0%, #ffe08a 30%, #f2b93b 58%, #b97f1e 82%, #8a5a10 100%);
+  color: #2b1a05;
+  border: 2px solid #d9a94e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45), inset 0 -2px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.pr-rotate-btn:hover { box-shadow: 0 0 0 2px rgba(255,215,94,0.55), 0 3px 12px rgba(217,169,78,0.6); }
+.pr-rotate-btn:active { transform: scale(0.94); }
+.pr-rotate-btn.spinning { animation: prRotateSpin 0.5s linear; }
+@keyframes prRotateSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .pr-pot {
   display: inline-flex;
   align-items: baseline;
@@ -679,10 +701,10 @@
     min-width: 0;
     min-height: 0;
     align-self: stretch;
-    /* [Landscape] حجز هوامش عمودية كافية للنرد الدائم خارج اللوحة (أعلى/أسفل):
-       النرد بحجم حتى ~46px + إزاحة 10px ≈ 56px، فنحجز ≥52px فعلياً على الهواتف
-       وصولاً إلى 70px على الشاشات العالية — بديلاً عن 8px التي كانت تُقصّ النرد */
-    padding: clamp(52px, 9vh, 70px) 4px;
+    /* [Landscape] النرد الدائم انتقل إلى يمين/يسار اللوحة (الزوايا الأربع الأفقية)
+       فأصبحت حواف اللوحة تلتصق بالحدود الذهبية العلوية والسفلية للشاشة بلا هامش
+       عمودي — اللوحة تُملأ الارتفاع كاملاً (الهامش 4px جانبي فقط للنرد الأيمن/الأيسر) */
+    padding: 0 4px;
   }
   /* [Landscape] لوحة التحكم (صف النرد + زر الرمي) في العمود الجانبي الأفقي
      الم freeing — توسيطها وترتيبها عمودياً في العمود الضيّق لتظل ظاهرة ومتاحة */
