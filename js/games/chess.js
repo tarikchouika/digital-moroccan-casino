@@ -518,9 +518,6 @@ function eChess(g) {
         '<div class="dama-logo"><span class="ch-logo-em">♞</span></div>' +
         '<div class="dama-title">' + T('chess.title') + '</div>' +
         '<div class="dama-sub">' + T('chess.sub') + '</div>' +
-        '<div class="dama-field"><div class="dama-flab">' + T('chess.roomBet') + '</div>' +
-          '<div class="dama-pick" id="chessBet">' + betChips + '</div>' +
-        '</div>' +
         '<div class="dama-field"><div class="dama-flab">' + T('dama.timer') + ' (' + T('chess.localOnly') + ')</div>' +
           '<div class="dama-timer-row" id="chessTimerRow">' + timerChips + '</div>' +
         '</div>' +
@@ -539,13 +536,11 @@ function eChess(g) {
             '<div class="dama-side" id="chessBot"><b id="chessMatBot">0</b><span class="dama-lab" id="chessBotName">' + T('chess.white') + '</span><span class="ch-cap" id="chessCapBot"></span></div>' +
           '</div>' +
           '<div class="dama-timer" id="chessTimer"></div>' +
-          '<div class="dama-stake" id="chessStake" hidden></div>' +
           '<div class="ch-log" id="chessLog"></div>' +
           '<div class="dama-status" id="chessStatus"></div>' +
           '<div class="dama-ctrls">' +
             '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()">🤝 ' + T('chess.drawBtn') + '</button>' +
             '<button class="dama-mini" onclick="chessResign()">🏳️ ' + T('dama.resignBtn') + '</button>' +
-            '<button class="dama-mini" onclick="chessToSetup()">↩️ ' + T('dama.newGame') + '</button>' +
           '</div>' +
           '<div class="dama-drawbar" id="chessDrawBar" hidden>' +
             '<span id="chessDrawTxt"></span>' +
@@ -553,7 +548,12 @@ function eChess(g) {
             '<button class="dama-mini no" onclick="chessDrawAccept(false)">' + T('dama.drawDecline') + '</button>' +
           '</div>' +
         '</div>' +
-        '<div class="ch-boardbox" id="chessBoardBox"><div class="ch-board" id="chessBoard"></div></div>' +
+        '<div class="ch-boardbox" id="chessBoardBox">' +
+          /* أيقونتا اللاعبين: فوق/تحت في البورتريه، يمين/يسار في اللاندسكيه */
+          '<div class="ch-seat ch-seat-top"><div class="ch-picon" id="chessTopIcon"><span class="ch-pface">♚</span></div></div>' +
+          '<div class="ch-seat ch-seat-bot"><div class="ch-picon" id="chessBotIcon"><span class="ch-pface">♔</span></div></div>' +
+          '<div class="ch-board" id="chessBoard"></div>' +
+        '</div>' +
         /* اختيار الترقية */
         '<div class="ch-promo" id="chessPromo" hidden>' +
           '<div class="ch-promo-card">' +
@@ -701,6 +701,11 @@ function chessUpdateHUD() {
     else if (s.turn === 'w') { el.textContent = T('chess.whiteTurn'); el.className = 'dama-turn you'; }
     else { el.textContent = T('chess.blackTurn'); el.className = 'dama-turn bot'; }
   }
+  /* [Owner] حلقة ذهبية على أيقونة صاحب الدور: الأبيض ♔ = أسفل، الأسود ♚ = أعلى */
+  var topIcon = document.getElementById('chessTopIcon');
+  var botIcon = document.getElementById('chessBotIcon');
+  if (topIcon) topIcon.classList.toggle('on', !s.over && s.turn === 'b');
+  if (botIcon) botIcon.classList.toggle('on', !s.over && s.turn === 'w');
   /* صواني الأسرى (فعلية من الحالة) + فرق المواد */
   var val = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
   var cap = s.captured || { w: [], b: [] };

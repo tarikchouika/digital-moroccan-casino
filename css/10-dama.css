@@ -575,8 +575,8 @@
     grid-row: 1 / -1;
     min-width: 0;
     min-height: 0;
-    align-self: center;        /* يُمركز عمودياً في عاموده — يُترك فراغ لأيقونات اللاعبين فوق/تحت */
-    justify-self: center;
+    align-self: stretch;        /* يتمدد ليملأ كل ارتفاع العمود */
+    justify-self: stretch;      /* يتمدد ليملأ كل عرض العمود */
     position: relative;
   }
   /* لوحة جانبية (يسار): الرهان/المؤقت/الحالة/الأزرار تتكدّس وتتمدد عمودياً */

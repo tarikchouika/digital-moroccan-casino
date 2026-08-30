@@ -581,11 +581,18 @@ function damaFitBoard() {
       ? window.matchMedia('(orientation: landscape)').matches
       : (window.innerWidth > window.innerHeight);
     if (!host.clientWidth || !host.clientHeight) return; // الخلية مخفية — ننتظر الظهور
-    /* حجم اللوحة محكوم بـ CSS (flex + aspect-ratio) — لا حاجة لتثبيت px هنا.
-       نُحدّد الحد الأقصى لمنع اللوحة من أن تتجاوز الشاشة على الأجهزة الصغيرة. */
-    var maxSz = landscape ? 480 : 560;
-    box.style.maxWidth = maxSz + 'px';
-    box.style.maxHeight = maxSz + 'px';
+    /* حجم اللوحة = أصغر بُعد متاح (مربّع) — نحسبه هنا لأن CSS aspect-ratio
+       وحده قد يوسّع اللوحة خارج الشاشة في اللاندسكيه إذا كان العمود أعرض من طوله */
+    var reserve = landscape ? 10 : 6;   // هامش أمان
+    var w = host.clientWidth, h = host.clientHeight - reserve * 2;
+    if (w < 10 || h < 10) return;
+    var maxSz = landscape ? 9999 : 560;  // اللاندسكيه: لا حد أقصى
+    var sz = Math.max(150, Math.min(w, h, maxSz));
+    box.style.width = sz + 'px';
+    box.style.height = sz + 'px';
+    box.style.maxWidth = sz + 'px';
+    box.style.maxHeight = sz + 'px';
+    box.style.flex = '0 0 auto';
   };
   apply();
   if (typeof ResizeObserver !== 'undefined') {

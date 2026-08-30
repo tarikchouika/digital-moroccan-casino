@@ -15,6 +15,36 @@
   align-items: center;
   margin: 4px auto 2px;
   min-height: 200px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  position: relative;   /* مرجع تموضع مقاعد اللاعبين */
+}
+/* مقاعد اللاعبين (أعلى/أسفل البورتريه) — مطلقة داخل صندوق اللوحة */
+.ch-boardbox > .ch-seat {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  pointer-events: auto;
+}
+.ch-boardbox > .ch-seat-top { top: 0; }
+.ch-boardbox > .ch-seat-bot { top: 100%; }
+.ch-picon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(22, 11, 4, 0.85);
+  border: 2px solid rgba(255, 215, 94, 0.55);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  font-size: 18px; line-height: 1;
+  color: #fff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+/* صاحب الدور: حلقة ذهبية محيطة بالأيقونة */
+.ch-picon.on {
+  border-color: #ffd75e;
+  box-shadow: 0 0 0 3px #ffd75e, 0 2px 12px rgba(255,215,94,0.6);
 }
 /* لوحة المعلومات/التحكم مغلّفة في .ch-side (نفس تباعد الشاشة العمودية
    السابق بين العناصر المباشرة لـ .dama-play) — لا تغيير على الشكل العمودي */
@@ -26,7 +56,7 @@
   gap: 7px;
 }
 .ch-board {
-  width: min(94vw, 440px);
+  width: 100%;
   max-width: 100%;
   aspect-ratio: 1/1;
   display: grid;
@@ -277,6 +307,15 @@
     max-width: 100% !important;
     max-height: 100% !important;
     margin: 0;
+  }
+  /* [Landscape] مقاعد اللاعبين تنقل لليمين/اليسار اللوحة (عكس البورتريه) */
+  .ch-wrap .dama-play > .ch-boardbox > .ch-seat-top {
+    top: 25%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
+  }
+  .ch-wrap .dama-play > .ch-boardbox > .ch-seat-bot {
+    top: 75%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
   }
 
   /* ── Compact, non-overlapping controls ── */
