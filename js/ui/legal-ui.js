@@ -61,7 +61,7 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<span data-i18n="ui.transactions">سجل المعاملات</span>' +
 '</a>' +
 '<div class="side-title" data-i18n="ui.tools">الأدوات</div>' +
-'<a class="nav-item" data-nav="fair" href="index.html#fair">' +
+'<a class="nav-item" data-nav="fair" href="index.html#fair" onclick="nav(\'fair\', this); return false;">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>' +
 '<span data-i18n="ui.fair">Provably Fair</span>' +
 '</a>' +

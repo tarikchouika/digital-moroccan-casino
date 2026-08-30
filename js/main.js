@@ -977,6 +977,72 @@ function renderFair() {
   const nonceEl = document.getElementById('nonceD');
   if (hSeedEl) hSeedEl.textContent = simpleHash(ST.serverSeed);
   if (nonceEl) nonceEl.textContent = ST.nonce;
+  /* سجّل معالجات الأداة التفاعلية مرة واحدة فقط */
+  if (!window.__pfInAppBound) {
+    window.__pfInAppBound = true;
+    bindInAppFairTool();
+  }
+}
+
+/* ── أداة التحقق التفاعلية (داخل التطبيق) — تعتمد على window.Fair (fair.js) ── */
+function bindInAppFairTool() {
+  var serverEl  = document.getElementById('pf-server');
+  var clientEl  = document.getElementById('pf-client');
+  var nonceEl   = document.getElementById('pf-nonce');
+  var gameEl    = document.getElementById('pf-game');
+  var hashEl    = document.getElementById('pf-hash');
+  var outEl     = document.getElementById('pf-outcome');
+  var verifyBtn = document.getElementById('pf-verify-btn');
+  var calcBtn   = document.getElementById('pf-calc');
+  var resEl     = document.getElementById('pf-result');
+  if (!serverEl || !verifyBtn || !calcBtn) return;
+  if (!window.Fair) return;
+
+  function showResult(cls, html) {
+    resEl.className = 'pf-result show ' + cls;
+    resEl.innerHTML = html;
+  }
+  function parseOutcome(text) {
+    try { return JSON.parse(text); } catch (e) { return null; }
+  }
+  function readInputs() {
+    return {
+      server: (serverEl.value || '').trim(),
+      client: (clientEl.value || '').trim(),
+      nonce:  (nonceEl.value || '0').trim(),
+      game:   gameEl ? gameEl.value : 'ke'
+    };
+  }
+
+  calcBtn.addEventListener('click', function () {
+    var i = readInputs();
+    if (!i.server || !i.client) { showResult('bad', (window.T ? T('fair.errMissing') : 'أدخل بذرة الخادم وSeed اللاعب.')); return; }
+    var seed = window.Fair.roundSeed(i.server, i.client, i.nonce);
+    if (hashEl) hashEl.value = seed;
+    var derived = window.Fair.outcome(i.server, i.client, i.nonce, i.game);
+    if (!derived) { showResult('bad', (window.T ? T('fair.errGame') : 'تعذّر حساب النتيجة لهذه اللعبة.')); return; }
+    if (outEl) outEl.value = JSON.stringify(derived);
+    showResult('ok', (window.T ? T('fair.computedOk') : '🧮 تم الحساب: ') + '<br>Hash: <code>' + seed + '</code><br>Outcome: <code>' + JSON.stringify(derived) + '</code>');
+  });
+
+  verifyBtn.addEventListener('click', function () {
+    var i = readInputs();
+    if (!i.server || !i.client) { showResult('bad', (window.T ? T('fair.errMissing') : 'أدخل بذرة الخادم وSeed اللاعب.')); return; }
+    var outcome = parseOutcome(outEl ? (outEl.value || '') : '');
+    if (outcome === null) {
+      showResult('bad', (window.T ? T('fair.errJson') : 'صيغة النتيجة غير صالحة — يجب أن تكون JSON.'));
+      return;
+    }
+    var expected = null;
+    try { expected = window.Fair.outcome(i.server, i.client, i.nonce, i.game); } catch (e) { expected = null; }
+    if (expected && JSON.stringify(expected) === JSON.stringify(outcome)) {
+      var validMsg = (window.T ? T('fair.valid') : '✅ النتيجة عادلة ومطابقة للتشفير بنسبة 100%');
+      showResult('ok', validMsg);
+    } else {
+      var expStr = expected ? '<code>' + JSON.stringify(expected) + '</code>' : '—';
+      showResult('bad', (window.T ? T('fair.mismatch') : '❌ النتيجة غير متطابقة.') + '<br>' + expStr);
+    }
+  });
 }
 /* ═══════════ لوحة الإدارة (حقيقية — من الـ API) ═══════════ */
 let ADMIN_TAB = 'users';

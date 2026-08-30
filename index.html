@@ -247,6 +247,61 @@
           <div class="phead"><div class="ptitle" id="tourneyTitle"><div class="ibox"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div> <span data-i18n="ui.weekly">البطولات الأسبوعية</span></div></div>
           <div class="grid g2" id="tourneyList"></div>
         </section>
+        <!-- Provably Fair (أداة التحقق التفاعلية داخل التطبيق) -->
+        <section class="page" id="pg-fair" aria-labelledby="fairTitle">
+          <div class="phead">
+            <div class="ptitle" id="fairTitle"><div class="ibox"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div> <span data-i18n="ui.fair">Provably Fair</span></div>
+            <div class="psub" data-i18n="ui.fairSub">تحقق محليًا من عدالة كل جولة — دون اتصال بالخادم</div>
+          </div>
+          <div class="card pf-tool" aria-labelledby="pf-tool-title">
+            <div class="ctitle" id="pf-tool-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-i18n="fair.calcTitle">أداة التحقق التفاعلية (Provably Fair)</span></div>
+            <p class="ctext" data-i18n-html="fair.toolDesc">أدخل بذرة الخادم (Server Seed) وSeed اللاعب (Client Seed) ورقم الجولة (Nonce)، ثم اضغط «احسب» لاشتقاق تجزئة <code>HMAC-SHA256</code> والنتيجة محليًا عبر <code>SHA-256</code> — دون أي اتصال بالخادم.</p>
+
+            <div class="pf-field">
+              <label for="pf-server" data-i18n="fair.serverSeed">Seed الخادم (المفتاح السري)</label>
+              <input id="pf-server" type="text" spellcheck="false" placeholder="a1b2c3… (Server Seed)" autocomplete="off">
+            </div>
+            <div class="pf-field">
+              <label for="pf-client" data-i18n="fair.clientSeed">Seed اللاعب (مفتاحك الخاص)</label>
+              <input id="pf-client" type="text" spellcheck="false" placeholder="my-secret-seed (Client Seed)" autocomplete="off">
+            </div>
+            <div class="pf-field pf-field-inline">
+              <div>
+                <label for="pf-nonce" data-i18n="fair.nonce">رقم الجولة التسلسلي (Nonce)</label>
+                <input id="pf-nonce" type="number" min="0" step="1" value="0" spellcheck="false" autocomplete="off">
+              </div>
+              <div>
+                <label for="pf-game" data-i18n="fair.game">اللعبة</label>
+                <select id="pf-game">
+                  <option value="ke" data-i18n="fair.gameKeno">كينو (Keno)</option>
+                  <option value="av" data-i18n="fair.gameCrash">أفياتور / كراش (Crash)</option>
+                </select>
+              </div>
+            </div>
+            <div class="pf-actions">
+              <button id="pf-calc" class="btn ghost" type="button"><i class="fa-solid fa-calculator" aria-hidden="true"></i> <span data-i18n="fair.calcBtn">احسب النتيجة</span></button>
+            </div>
+            <div class="pf-field">
+              <label for="pf-hash" data-i18n="fair.hashResult">تجزئة HMAC-SHA256 الناتجة</label>
+              <textarea id="pf-hash" spellcheck="false" rows="2" readonly placeholder="HMAC-SHA256(serverSeed, clientSeed:nonce)"></textarea>
+            </div>
+            <div class="pf-field">
+              <label for="pf-outcome" data-i18n="fair.outcome">النتيجة المُشتقّة (JSON)</label>
+              <textarea id="pf-outcome" spellcheck="false" rows="3" placeholder='{"numbers":[3,17,42,...]}  أو  {"crash_at":1.97}'></textarea>
+            </div>
+            <div class="pf-actions">
+              <button id="pf-verify-btn" class="btn" type="button"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> <span data-i18n="fair.verifyBtn">تحقّق من العدالة</span></button>
+            </div>
+            <div id="pf-result" class="pf-result" role="status" aria-live="polite"></div>
+          </div>
+          <div class="card" style="margin-top:14px">
+            <div class="ctitle"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> <span data-i18n="fair.currentSession">بذور جلستك الحالية</span></div>
+            <div class="ctext" style="display:grid;gap:6px;grid-template-columns:max-content 1fr;align-items:center">
+              <span data-i18n="fair.hashedServer">تجزئة Seed الخادم</span><code id="hSeed" dir="ltr" style="word-break:break-all;color:var(--gold)">—</code>
+              <span data-i18n="fair.nonce">رقم الجولة التسلسلي (Nonce)</span><code id="nonceD" dir="ltr" style="word-break:break-all;color:var(--t1)">—</code>
+            </div>
+          </div>
+        </section>
         <!-- غرف اللعب المفتوحة (مشاركة أو فرجة) -->
         <section class="page" id="pg-rooms" aria-labelledby="roomsTitle">
           <div class="phead"><div class="ptitle" id="roomsTitle"><div class="ibox"><i class="fa-solid fa-users" aria-hidden="true"></i></div> <span data-i18n="ui.roomsTitle">غرف اللعب المفتوحة</span></div></div>

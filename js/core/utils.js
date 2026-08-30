@@ -116,6 +116,7 @@ function nav(id, el) {
   if (id === 'rooms' && typeof renderRooms === 'function') renderRooms();
   if (id === 'transactions' && typeof renderTransactions === 'function') renderTransactions();
   if (id === 'account' && typeof renderAccountLog === 'function') renderAccountLog();
+  if (id === 'fair' && typeof renderFair === 'function') renderFair();
   /* صفحة الأصدقاء: إظهارها وتهيئتها (إن وُجدت) */
   if (id === 'friends' && typeof Friends !== 'undefined' && Friends.init) Friends.init();
   closeSide();
