@@ -540,8 +540,9 @@ class ParchisiEngine {
       piece.state = 'finished';
       piece.pos = 71;
       /* [B10] هدية الوصول: +10 ببيدق آخر — دائماً، سواء أُكمِلت بالنرد العادي
-         أو بطلعة الهدية نفسها (إتمام الدورة بالهدية يمنح هدية أخرى) */
-      if (isBonus) this.notices.push({ key: 'parchisi.entry10', pid: this.current });
+         أو بطلعة الهدية نفسها (إتمام الدورة بالهدية يمنح هدية أخرى).
+         الإشعار يُعرض في كل إكمال (عادي أو هدية) ليُرى اللاعب المِنحة دائماً. */
+      this.notices.push({ key: 'parchisi.entry10', pid: this.current });
       this.bonus = { dist: 10, kind: 10, excludeOwner: piece.owner, excludeId: piece.id };
       return;
     }
