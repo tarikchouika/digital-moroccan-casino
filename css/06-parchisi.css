@@ -698,3 +698,22 @@
     --cdsz: clamp(30px, 5.5vw, 46px);
   }
 }
+
+/* ── لاندسكيب: النموذج (يسار) يأخذ معظم الارتفاع ويتمرّر داخلياً،
+   ولوحة المعاينة (يمين/أسفل) مقيّدة الارتفاع — كي لا تقع أزرار
+   التحكم و«ابدأ اللعبة» خارج الشاشة القصيرة ── */
+@media (orientation: landscape) {
+  #pg-game.app-fs #gamePageBody.parchisi-setup #parchisiSetup {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  #pg-game.app-fs #gamePageBody.parchisi-setup #parchisiGame {
+    flex: 0 0 auto;
+    max-height: 30%;
+    overflow: hidden;
+  }
+}

@@ -907,6 +907,9 @@ const ParchisiApp = {
     this.stopLoop();
     this.renderModeChips();
     this.updateSetup();
+    /* [Landscape] وسم طور الإعداد على حاوية اللعبة لتخصيص تخطيط اللاندسكيب */
+    var _gb = document.getElementById('gamePageBody');
+    if (_gb) { _gb.classList.add('parchisi-setup'); _gb.classList.remove('parchisi-playing'); }
     /* ترجمة نصوص القالب المستنسخ حسب اللغة الحالية */
     if (typeof translateStatic === 'function') { try { translateStatic(); } catch (err) {} }
     /* [Resilience] غرفة جارية عند فتح اللعبة → استئناف + إعادة بناء من السجل */
@@ -1158,6 +1161,8 @@ const ParchisiApp = {
     SND.click();
     document.getElementById('parchisiSetup').style.display = 'none';
     document.getElementById('parchisiGame').style.display = 'flex';
+    var _gb = document.getElementById('gamePageBody');
+    if (_gb) { _gb.classList.remove('parchisi-setup'); _gb.classList.add('parchisi-playing'); }
     this.gameActive = true;
     this._autoTurn = false;
     this._lastBadges = '';
@@ -1812,6 +1817,8 @@ const ParchisiApp = {
     const st = document.getElementById('parchisiSetup');
     if (g) g.style.display = 'none';
     if (st) st.style.display = 'block';
+    var _gb = document.getElementById('gamePageBody');
+    if (_gb) { _gb.classList.add('parchisi-setup'); _gb.classList.remove('parchisi-playing'); }
   },
 
   overExit() {

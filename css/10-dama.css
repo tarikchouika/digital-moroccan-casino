@@ -592,4 +592,14 @@
      لفسح أكبر مساحة عمودية للوحة — الرهان يُعرض أصلاً في .dama-stake أعلى اللوحة */
   #pg-game.app-fs #damaStage > .bets { display: none; }
   #pg-game.app-fs #damaStage > .res { margin-top: 0; }
+  /* [Landscape] شاشة الإعداد تملأ مرحلة اللعبة وتتمرّر داخلياً إن طال المحتوى،
+     كي لا يُقصّ زر «ابدأ المباراة» أسفل الشاشة القصيرة */
+  #pg-game.app-fs #damaStage .dama-wrap .dama-setup {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
