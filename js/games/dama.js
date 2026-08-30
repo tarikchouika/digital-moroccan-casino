@@ -528,16 +528,12 @@ function eDama(g) {
             '<button class="dama-chip" data-t="300" onclick="damaSetTimer(300)">300 ' + T('dama.seconds') + '</button>' +
           '</div>' +
         '</div>' +
-        '<div class="dama-field"><div class="dama-flab">' + T('dama.yourBet') + '</div>' +
-          '<div class="dama-betrow">' + betRow() + '</div>' +   /* [B10] خانة الرهان في الإعدادات فقط */
-        '</div>' +
         '<div class="dama-pay" id="damaPay"></div>' +
         '<button class="big dama-go" id="damaGo" onclick="damaStart()">' + T('dama.startMatch') + '</button>' +
       '</div>' +
       /* ── play screen ── */
       '<div class="dama-play" id="damaPlay" hidden>' +
         '<div class="dama-spectators" id="damaSpectators" aria-hidden="true"></div>' +   /* [Owner] شريط متفرجين شفاف 100% — فارغ بلا متفرجين */
-        '<div class="dama-stake" id="damaStake" hidden></div>' +   /* [B10] الرهان الجاري (عرض ساكن فقط) */
         '<div class="dama-timer" id="damaTimer"></div>' +
         '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div>' +
           '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface">⚑</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
@@ -547,7 +543,6 @@ function eDama(g) {
         '<div class="dama-ctrls">' +
           '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()">' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
           '<button class="dama-mini" onclick="damaResign()">' + T('dama.resignBtn') + '</button>' +
-          '<button class="dama-mini" onclick="damaToSetup()">' + T('dama.newGame') + '</button>' +
         '</div>' +
         '<div class="dama-drawbar" id="damaDrawBar" hidden>' +   /* [B10] شريط مصادقة التعادل الوارد من الخصم */
           '<span id="damaDrawTxt"></span>' +
@@ -585,12 +580,12 @@ function damaFitBoard() {
     var landscape = (typeof window.matchMedia === 'function')
       ? window.matchMedia('(orientation: landscape)').matches
       : (window.innerWidth > window.innerHeight);
-    var reserve = landscape ? 34 : 6;         // فراغ لأيقونات اللاعبين فوق/تحت الحافة
-    var w = host.clientWidth, h = host.clientHeight - reserve * 2;
-    if (w < 10 || h < 10) return;             // الخلية مخفية بعد — ننتظر الظهور
-    var sz = Math.max(150, Math.min(w, h, 430));
-    box.style.width = sz + 'px';
-    box.style.height = sz + 'px';
+    if (!host.clientWidth || !host.clientHeight) return; // الخلية مخفية — ننتظر الظهور
+    /* حجم اللوحة محكوم بـ CSS (flex + aspect-ratio) — لا حاجة لتثبيت px هنا.
+       نُحدّد الحد الأقصى لمنع اللوحة من أن تتجاوز الشاشة على الأجهزة الصغيرة. */
+    var maxSz = landscape ? 480 : 560;
+    box.style.maxWidth = maxSz + 'px';
+    box.style.maxHeight = maxSz + 'px';
   };
   apply();
   if (typeof ResizeObserver !== 'undefined') {
@@ -1047,6 +1042,16 @@ function damaClick(r, c) {
   if (piece && piece.owner === DAMA.human) {
     if (s.cont && (s.cont[0] !== r || s.cont[1] !== c)) return; /* must continue with the jumping piece */
     var lm = DAMA.eng.legalMovesForPiece(s, r, c);
+    /* [Mandatory] الأكل إلزامي — إن كانت القطعة بلا أكل لكن يوجد أكل إلزامي
+       لقطعة أخرى، ارفض الحركة الهادئة وأَعلم اللاعب */
+    if (lm.length > 0 && DAMA.eng.rules.mandatoryCapture && !s.cont
+        && DAMA.eng.allCaptures(s.grid, s.turn).length > 0
+        && !lm.some(function (m) { return m.cap; })) {
+      damaSetStatus(T('dama.mustCaptureOther'));
+      if (typeof SND !== 'undefined' && SND.tick) SND.tick();
+      damaRender();
+      return;
+    }
     if (!lm.length) {
       /* [B10] إن كان الأكل إلزامياً بقطعة أخرى فوضّح ذلك بدل الرسالة العامة */
       if (DAMA.eng.rules.mandatoryCapture && !s.cont

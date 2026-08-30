@@ -172,23 +172,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 7px;
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
   padding: 2px 0;
 }
-/* صندوق اللوحة يتمدد عمودياً وتُقاس اللوحة بقياسه (JS) — لا قصّ في أي اتجاه */
+/* صندوق اللوحة يتمدد ليملأ المساحة المتاحة مع الحفاظ على شكل مربّع */
 .dama-boardbox {
-  flex: 0 0 auto;            /* يُحجَّم بالـ JS (damaFitBoard) كمربّع يلفّ اللوحة تماماً */
+  flex: 1 1 auto;
   min-height: 0;
-  width: auto;
+  width: 100%;
   max-width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  position: relative;        /* [Owner] مرجع تموضع مقاعد اللاعبين فوق/تحت اللوحة */
+  position: relative;        /* [Owner] مرجع تموضع مقاعد اللاعبين */
 }
 /* [Owner] المقاعد مطلقة داخل صندوق اللوحة — تتمركز فوق/تحت حافتها بغض النظر عن الاتجاه */
 .dama-boardbox > .dama-seat {
@@ -601,5 +603,17 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+  }
+  /* [Landscape] أيقونات اللاعبين تنقل لليسار اللوحة (عكس البورتريه):
+     - الخصم (⚑) → يسار اللوحة، الثلث العلوي
+     - الأساسي (★) → يسار اللوحة، الثلث السفلي
+     تبقى قابلة للنقر وتظهر مع حلقة ذهبية لمن هو دوره */
+  #pg-game.app-fs #damaStage .dama-boardbox > .dama-seat-top {
+    top: 25%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
+  }
+  #pg-game.app-fs #damaStage .dama-boardbox > .dama-seat-bottom {
+    top: 75%; left: 0; right: auto; bottom: auto;
+    transform: translate(calc(-100% - 10px), -50%);
   }
 }
