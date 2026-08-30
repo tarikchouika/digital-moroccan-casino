@@ -827,11 +827,10 @@ function checkRotateHint() {
     }
   }
   if (wide) {
-    hint.hidden = false;
-    /* محاولة قفل الاتجاه العرضي في ملء الشاشة (حيث يُدعم) */
-    if (document.fullscreenElement && screen.orientation && typeof screen.orientation.lock === 'function') {
-      try { screen.orientation.lock('landscape').catch(function () {}); } catch (e) { /* غير مدعوم */ }
-    }
+    /* لا قفل إجباري للاتجاه: الوضع يتكيّف تلقائياً مع اتجاه الجهاز واختيار المستخدم
+       (بورتريه على الهواتف، لاندسكيب على التابليت/الديسكتوب، يتغيّر عند قلب الشاشة).
+       التخطيط متجاوب عبر media queries، فلا حاجة لفرض اتجاه. */
+    hint.hidden = true;
   } else {
     hint.hidden = true;
   }
