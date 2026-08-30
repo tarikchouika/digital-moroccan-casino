@@ -3909,3 +3909,167 @@ body.rami-game-open { overflow: hidden; }
     max-height: 55vh !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   LANDSCAPE FIX — Chess / Mines / Plinko / Dice  (CSS-only)
+   Each game's .stage becomes a full-height 2-column grid:
+     • left  = the playfield wrapper (board / grid / canvas / dice),
+       spanning the full stage height;
+     • right = the controls + stats that were stacked vertically in
+       portrait, now auto-flowing into a side panel.
+   This makes the stage's NATURAL aspect ratio wide (~viewport), so
+   fitGameStage() scales it UP to fill the landscape screen instead of
+   shrinking the portrait .stage into a tiny centred column.
+   Portrait/base rules above are NOT modified.
+   ════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) {
+  /* The .stage is pinned to the full-screen game page (RTL document, so the
+     first grid column renders on the RIGHT). We therefore put the controls in
+     column 1 (right) and the playfield in column 2 (left). The stage uses
+     position:absolute;inset:0 so its natural box is exactly the viewport —
+     fitGameStage() then scales it 1:1 to fill. */
+  #pg-game.app-fs .stage:has(.ch-wrap),
+  #pg-game.app-fs .stage:has(.mn-wrap),
+  #pg-game.app-fs .stage:has(.pl-wrap),
+  #pg-game.app-fs .stage:has(.sb-wrap),
+  #pg-game.app-fs .stage:has(.dc-wrap) {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
+    gap: 12px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  /* Explicit row tracks (NOT grid-auto-rows) so the playfield's
+     grid-row:1/-1 spans every control row. In CSS Grid, -1 is the last
+     EXPLICIT line, so implicit auto-rows would leave the playfield stuck in
+     row 1. The control counts below are measured per game. */
+  #pg-game.app-fs .stage:has(.ch-wrap) { grid-template-rows: minmax(0, 1fr); }
+  #pg-game.app-fs .stage:has(.mn-wrap) { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+  #pg-game.app-fs .stage:has(.pl-wrap) { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+  #pg-game.app-fs .stage:has(.sb-wrap) { grid-template-rows: repeat(7, minmax(0, 1fr)); }
+  #pg-game.app-fs .stage:has(.dc-wrap) { grid-template-rows: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  /* playfield wrapper: left column, full height */
+  #pg-game.app-fs .stage:has(.ch-wrap) > .ch-wrap,
+  #pg-game.app-fs .stage:has(.mn-wrap) > .mn-wrap,
+  #pg-game.app-fs .stage:has(.pl-wrap) > .pl-wrap,
+  #pg-game.app-fs .stage:has(.sb-wrap) > .sb-wrap,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-wrap {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    min-height: 0;
+    align-self: stretch;
+  }
+  /* controls / stats: right column, each in its own row, compact at the top */
+  #pg-game.app-fs .stage:has(.mn-wrap) > .bets,
+  #pg-game.app-fs .stage:has(.mn-wrap) > .res,
+  #pg-game.app-fs .stage:has(.pl-wrap) > .bets,
+  #pg-game.app-fs .stage:has(.pl-wrap) > .mn-hint,
+  #pg-game.app-fs .stage:has(.pl-wrap) > .res,
+  #pg-game.app-fs .stage:has(.sb-wrap) > .bets,
+  #pg-game.app-fs .stage:has(.sb-wrap) > .res,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-hint,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-target,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-mult,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .bets,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .res,
+  #pg-game.app-fs .stage:has(.ch-wrap) > .res {
+    grid-column: 1;
+    align-self: start;
+    width: 100%;
+  }
+
+  /* ── Mines: the 5×5 grid fills the left column height ── */
+  .mn-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 100%;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+  }
+  .mn-wrap .mGrid {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 0;
+  }
+
+  /* ── Plinko: the peg triangle (canvas) fills the left column height, centred ── */
+  .pl-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+  }
+  /* Override the base "#gamePageBody canvas { max-height: 55vh !important }"
+     (inside @media (max-height:600px)) that would otherwise cap the Plinko
+     canvas at 55vh in short landscape viewports. */
+  #gamePageBody .pl-wrap canvas.game {
+    display: block !important;
+    width: auto !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  /* ── Dice: Sic Bo (.sb-wrap) and Dice (.dc-wrap) dice centred, fill height ── */
+  .sb-wrap,
+  .dc-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+  }
+  .sb-wrap .sb-dice,
+  .dc-wrap .sb-dice { margin: 0; }
+  .sb-die { width: clamp(64px, 16vh, 96px); height: clamp(64px, 16vh, 96px); }
+
+  /* Dice has 7 controls in a short landscape viewport: compress them so each
+     fits its 1fr row instead of overlapping the next control. */
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-hint,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-target,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-mult,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .bets,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .res {
+    margin: 0 !important;
+    min-height: 0;
+  }
+  #pg-game.app-fs .stage:has(.dc-wrap) > .bets .rb {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 8px !important;
+  }
+  #pg-game.app-fs .stage:has(.dc-wrap) > .bets .dc-roll {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    min-width: 0 !important;
+  }
+  #pg-game.app-fs .stage:has(.dc-wrap) > .bets .bbtn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.82rem !important;
+  }
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-target,
+  #pg-game.app-fs .stage:has(.dc-wrap) > .dc-hint {
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+  }
+}

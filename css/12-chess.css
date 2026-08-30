@@ -176,3 +176,59 @@
   .ch-pc.king { font-size: clamp(22px, 9.1vw, 32px); }
   .ch-log { font-size: 11px; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   LANDSCAPE FIX — Chess (CSS-only)
+   The outer .stage is turned into a 2-column grid by 04-games.css
+   (board wrapper left, .res right). Here the play screen itself is
+   laid out as board (left, full height) + info/controls panel (right).
+   Portrait/base rules above are NOT modified.
+   ════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) {
+  .ch-wrap {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    display: block;
+  }
+  .ch-wrap .dama-play {
+    display: grid;
+    grid-template-columns: minmax(170px, 250px) minmax(0, 1fr);
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    height: 100%;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  .ch-wrap .dama-play > .ch-boardbox {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-width: 0;
+    align-self: stretch;
+    margin: 0;
+  }
+  .ch-wrap .dama-play > .ch-board {
+    height: 100%;
+    width: auto;
+    max-height: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+  }
+  .ch-wrap .dama-play > .dama-hud,
+  .ch-wrap .dama-play > .dama-timer,
+  .ch-wrap .dama-play > .dama-stake,
+  .ch-wrap .dama-play > .ch-log,
+  .ch-wrap .dama-play > .dama-status,
+  .ch-wrap .dama-play > .dama-ctrls,
+  .ch-wrap .dama-play > .dama-drawbar {
+    grid-column: 1;
+    align-self: start;
+    width: 100%;
+  }
+  .ch-wrap .dama-play > .ch-log {
+    flex-wrap: wrap;
+    overflow-x: auto;
+  }
+}
