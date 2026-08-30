@@ -16,6 +16,15 @@
   margin: 4px auto 2px;
   min-height: 200px;
 }
+/* لوحة المعلومات/التحكم مغلّفة في .ch-side (نفس تباعد الشاشة العمودية
+   السابق بين العناصر المباشرة لـ .dama-play) — لا تغيير على الشكل العمودي */
+.ch-side {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
 .ch-board {
   width: min(94vw, 440px);
   max-width: 100%;
@@ -178,38 +187,42 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   LANDSCAPE FIX — Chess (CSS-only)
-   The outer .stage is turned into a 2-column grid by 04-games.css
-   (board wrapper left, .res right). Here the play screen itself is
-   laid out as board (left, full height) + info/controls panel (right).
+   LANDSCAPE FIX — Chess
+   The generic 04-games.css pins .stage to the viewport via
+   position:absolute;inset:0 and turns it into a 2-column grid. Here we
+   cancel that grid and lay the play screen out as:
+     • one column  = the info/controls panel  (.ch-side)
+     • other column = the board, scaled to the FULL available height
+   The board is a square sized from the box height (aspect-ratio), which
+   overrides the 440px inline cap set by chessFitBoard(), so it grows on
+   tablets/desktops instead of "shrinking too much". Controls sit in a
+   compact, scroll-safe side panel — no overlap, nothing clipped.
    Portrait/base rules above are NOT modified.
    ════════════════════════════════════════════════════════════════ */
 @media (orientation: landscape) {
-  /* [Owner] الشطرنج يدير تخطيطه داخلياً عبر .dama-play — نلغي شبكة المرحلة
-     العامة (:has(.ch-wrap)) التي تخلق صفّاً مهدراً مع .res، ونملأ الارتفاع */
+  /* cancel the generic stage grid; keep position:absolute;inset:0 from 04-games */
   #pg-game.app-fs .stage:has(.ch-wrap) {
-    display: block;
+    display: block !important;
     grid-template-columns: none !important;
     grid-template-rows: none !important;
     gap: 0 !important;
     padding: 0 !important;
+    overflow: hidden;
   }
-  #pg-game.app-fs .stage:has(.ch-wrap) > .ch-wrap {
-    grid-column: auto;
-    grid-row: auto;
-    width: 100%;
-    height: 100%;
-  }
-  /* شريط النتيجة (.res) يُعرض عائماً أسفل المرحلة بلا تأثير على التخطيط */
+  /* result bar (.res) floats pinned to the bottom, out of the play flow */
   #pg-game.app-fs .stage:has(.ch-wrap) > .res {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 8;
+    z-index: 9;
     margin: 0;
+    padding: 3px 0;
     text-align: center;
+    font-size: 0.92rem;
+    background: rgba(8, 12, 22, 0.82);
   }
+
   .ch-wrap {
     max-width: none;
     width: 100%;
@@ -219,41 +232,114 @@
   }
   .ch-wrap .dama-play {
     display: grid;
-    grid-template-columns: minmax(170px, 250px) minmax(0, 1fr);
-    grid-template-rows: repeat(7, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: clamp(150px, 22vw, 260px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 14px;
     height: 100%;
     width: 100%;
     max-width: none;
     margin: 0;
+    padding: 10px 12px 26px;
+    box-sizing: border-box;
   }
+
+  /* ── Control panel: vertical stack, scrolls only if it ever overflows ── */
+  .ch-wrap .dama-play > .ch-side {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px;
+  }
+
+  /* ── Board area: full height, square board centered ── */
   .ch-wrap .dama-play > .ch-boardbox {
     grid-column: 2;
-    grid-row: 1 / -1;
+    grid-row: 1;
     min-width: 0;
+    min-height: 0;
+    height: 100%;
     align-self: stretch;
     margin: 0;
   }
+  /* square board scaled to the box height; !important beats the JS 440px cap */
   .ch-wrap .dama-play > .ch-board {
-    height: 100%;
-    width: auto;
-    max-height: 100%;
-    aspect-ratio: 1 / 1;
-    max-width: 100%;
+    height: 100% !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0;
   }
-  .ch-wrap .dama-play > .dama-hud,
-  .ch-wrap .dama-play > .dama-timer,
-  .ch-wrap .dama-play > .dama-stake,
-  .ch-wrap .dama-play > .ch-log,
-  .ch-wrap .dama-play > .dama-status,
-  .ch-wrap .dama-play > .dama-ctrls,
-  .ch-wrap .dama-play > .dama-drawbar {
-    grid-column: 1;
-    align-self: start;
-    width: 100%;
-  }
-  .ch-wrap .dama-play > .ch-log {
+
+  /* ── Compact, non-overlapping controls ── */
+  .ch-side > .dama-hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 9px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(217, 169, 78, 0.28);
+    font-size: 12px;
+    color: #e9dcb8;
+  }
+  .ch-side > .dama-hud .dama-side { display: flex; align-items: center; gap: 4px; }
+  .ch-side > .dama-hud .ch-cap { font-size: 14px; letter-spacing: -1px; }
+  .ch-side > .dama-turn { text-align: center; font-weight: 800; color: #ffd75e; font-size: 13px; }
+  .ch-side > .dama-timer { text-align: center; font-weight: 800; color: #ffe9a8; font-size: 13px; }
+  .ch-side > .dama-stake { text-align: center; font-weight: 800; color: #ffd75e; font-size: 12px; }
+  .ch-side > .ch-log {
+    flex: 0 0 auto;
+    max-height: 60px;
     overflow-x: auto;
   }
+  .ch-side > .dama-status {
+    text-align: center;
+    font-weight: 800;
+    color: #f0e3c0;
+    font-size: 13px;
+    min-height: 0;
+  }
+  .ch-side > .dama-ctrls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ch-side > .dama-ctrls .dama-mini { flex: 1 1 auto; min-width: 84px; }
+  .ch-side > .dama-drawbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ch-side > .dama-drawbar .dama-mini { flex: 1 1 auto; min-width: 84px; }
+}
+
+/* ── Very short / narrow landscape phones ──
+   Shrink the panel so the square board still fits the available height
+   without being clipped or distorted. */
+@media (orientation: landscape) and (max-height: 420px) {
+  .ch-wrap .dama-play {
+    grid-template-columns: clamp(120px, 30vw, 200px) minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 10px 24px;
+  }
+  .ch-side > .dama-hud { font-size: 11px; padding: 4px 6px; gap: 4px; }
+  .ch-side > .dama-hud .ch-cap { font-size: 12px; }
+  .ch-side > .dama-turn,
+  .ch-side > .dama-timer,
+  .ch-side > .dama-stake,
+  .ch-side > .dama-status { font-size: 11.5px; }
+  .ch-side > .dama-ctrls .dama-mini { font-size: 11px; padding: 6px 8px; min-width: 70px; }
 }

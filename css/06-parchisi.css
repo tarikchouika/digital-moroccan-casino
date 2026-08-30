@@ -679,6 +679,22 @@
     min-width: 0;
     min-height: 0;
     align-self: stretch;
-    padding: 8px 4px;
+    /* [Landscape] حجز هوامش عمودية كافية للنرد الدائم خارج اللوحة (أعلى/أسفل):
+       النرد بحجم حتى ~46px + إزاحة 10px ≈ 56px، فنحجز ≥52px فعلياً على الهواتف
+       وصولاً إلى 70px على الشاشات العالية — بديلاً عن 8px التي كانت تُقصّ النرد */
+    padding: clamp(52px, 9vh, 70px) 4px;
+  }
+  /* [Landscape] لوحة التحكم (صف النرد + زر الرمي) في العمود الجانبي الأفقي
+     الم freeing — توسيطها وترتيبها عمودياً في العمود الضيّق لتظل ظاهرة ومتاحة */
+  #pg-game.app-fs #parchisiGame > .parchisi-info {
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+  /* [Landscape] تصغير النرد الدائم (خارج اللوحة) ليُحتوى في الهامش العمودي
+     المحجوز أعلاه — لا يتجاوز الاحتياج حتى على الهواتف القصيرة */
+  #pg-game.app-fs #parchisiGame .pr-cd {
+    --cdsz: clamp(30px, 5.5vw, 46px);
   }
 }

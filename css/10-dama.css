@@ -181,9 +181,10 @@
 }
 /* صندوق اللوحة يتمدد عمودياً وتُقاس اللوحة بقياسه (JS) — لا قصّ في أي اتجاه */
 .dama-boardbox {
-  flex: 1 1 auto;
-  min-height: 150px;
-  width: 100%;
+  flex: 0 0 auto;            /* يُحجَّم بالـ JS (damaFitBoard) كمربّع يلفّ اللوحة تماماً */
+  min-height: 0;
+  width: auto;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,9 +265,9 @@
 
 /* ── Board ── */
 .dama-board {
-  width: min(94vw, 430px);
+  width: 100%;               /* [Layout] تملأ صندوق اللوحة الذي يُحجَّم بالـ JS كمربّع */
+  height: 100%;
   max-width: 100%;
-  aspect-ratio: 1/1;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
@@ -572,7 +573,8 @@
     grid-row: 1 / -1;
     min-width: 0;
     min-height: 0;
-    align-self: stretch;
+    align-self: center;        /* يُمركز عمودياً في عاموده — يُترك فراغ لأيقونات اللاعبين فوق/تحت */
+    justify-self: center;
     position: relative;
   }
   /* لوحة جانبية (يسار): الرهان/المؤقت/الحالة/الأزرار تتكدّس وتتمدد عمودياً */

@@ -532,26 +532,28 @@ function eChess(g) {
       '</div>' +
       /* ── شاشة اللعب ── */
       '<div class="dama-play" id="chessPlay" hidden>' +
-        '<div class="dama-hud">' +
-          '<div class="dama-side" id="chessTop"><span class="ch-cap" id="chessCapTop"></span><span class="dama-lab" id="chessTopName">' + T('chess.black') + '</span><b id="chessMatTop">0</b></div>' +
-          '<div class="dama-turn" id="chessTurn">' + T('chess.whiteTurn') + '</div>' +
-          '<div class="dama-side" id="chessBot"><b id="chessMatBot">0</b><span class="dama-lab" id="chessBotName">' + T('chess.white') + '</span><span class="ch-cap" id="chessCapBot"></span></div>' +
+        '<div class="ch-side">' +
+          '<div class="dama-hud">' +
+            '<div class="dama-side" id="chessTop"><span class="ch-cap" id="chessCapTop"></span><span class="dama-lab" id="chessTopName">' + T('chess.black') + '</span><b id="chessMatTop">0</b></div>' +
+            '<div class="dama-turn" id="chessTurn">' + T('chess.whiteTurn') + '</div>' +
+            '<div class="dama-side" id="chessBot"><b id="chessMatBot">0</b><span class="dama-lab" id="chessBotName">' + T('chess.white') + '</span><span class="ch-cap" id="chessCapBot"></span></div>' +
+          '</div>' +
+          '<div class="dama-timer" id="chessTimer"></div>' +
+          '<div class="dama-stake" id="chessStake" hidden></div>' +
+          '<div class="ch-log" id="chessLog"></div>' +
+          '<div class="dama-status" id="chessStatus"></div>' +
+          '<div class="dama-ctrls">' +
+            '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()">🤝 ' + T('chess.drawBtn') + '</button>' +
+            '<button class="dama-mini" onclick="chessResign()">🏳️ ' + T('dama.resignBtn') + '</button>' +
+            '<button class="dama-mini" onclick="chessToSetup()">↩️ ' + T('dama.newGame') + '</button>' +
+          '</div>' +
+          '<div class="dama-drawbar" id="chessDrawBar" hidden>' +
+            '<span id="chessDrawTxt"></span>' +
+            '<button class="dama-mini ok" onclick="chessDrawAccept(true)">' + T('dama.drawAccept') + '</button>' +
+            '<button class="dama-mini no" onclick="chessDrawAccept(false)">' + T('dama.drawDecline') + '</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="dama-timer" id="chessTimer"></div>' +
-        '<div class="dama-stake" id="chessStake" hidden></div>' +
         '<div class="ch-boardbox" id="chessBoardBox"><div class="ch-board" id="chessBoard"></div></div>' +
-        '<div class="ch-log" id="chessLog"></div>' +
-        '<div class="dama-status" id="chessStatus"></div>' +
-        '<div class="dama-ctrls">' +
-          '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()">🤝 ' + T('chess.drawBtn') + '</button>' +
-          '<button class="dama-mini" onclick="chessResign()">🏳️ ' + T('dama.resignBtn') + '</button>' +
-          '<button class="dama-mini" onclick="chessToSetup()">↩️ ' + T('dama.newGame') + '</button>' +
-        '</div>' +
-        '<div class="dama-drawbar" id="chessDrawBar" hidden>' +
-          '<span id="chessDrawTxt"></span>' +
-          '<button class="dama-mini ok" onclick="chessDrawAccept(true)">' + T('dama.drawAccept') + '</button>' +
-          '<button class="dama-mini no" onclick="chessDrawAccept(false)">' + T('dama.drawDecline') + '</button>' +
-        '</div>' +
         /* اختيار الترقية */
         '<div class="ch-promo" id="chessPromo" hidden>' +
           '<div class="ch-promo-card">' +

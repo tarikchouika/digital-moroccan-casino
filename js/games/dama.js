@@ -570,23 +570,33 @@ function eDama(g) {
   ).replace('<div class="stage">', '<div class="stage" id="damaStage">');
 }
 
-/* حجم اللوحة = أصغر بُعد متاح في صندوقها (يتأقلم مع ملء الشاشة والاتجاهين) */
+/* [Layout] نُحجِّم «صندوق اللوحة» (المربّع) لا اللوحة نفسها: الصندوق يلفّ اللوحة
+   تماماً (اللوحة width/height:100%) فيلتصق مقعدا اللاعبين (فوق/تحت) بحافتي
+   اللوحة في كلا الاتجاهين. وفي اللاندسكيب نترك فراغاً رأسياً كافياً للأيقونات
+   كي لا تُقصّ عند حافة الشاشة. نراقب الخلية (.dama-play) لا الصندوق كي لا يحدث
+   تغذية راجعة (تقلّص ذاتي) عند تغيّر حجم اللوحة. */
 var _damaBoardRO = null;
 function damaFitBoard() {
   var box = document.getElementById('damaBoardBox');
   var board = document.getElementById('damaBoard');
   if (!box || !board) return;
+  var host = box.parentElement || box;       // خلية .dama-play
   var apply = function () {
-    var w = box.clientWidth - 6, h = box.clientHeight - 6;
+    var landscape = (typeof window.matchMedia === 'function')
+      ? window.matchMedia('(orientation: landscape)').matches
+      : (window.innerWidth > window.innerHeight);
+    var reserve = landscape ? 34 : 6;         // فراغ لأيقونات اللاعبين فوق/تحت الحافة
+    var w = host.clientWidth, h = host.clientHeight - reserve * 2;
+    if (w < 10 || h < 10) return;             // الخلية مخفية بعد — ننتظر الظهور
     var sz = Math.max(150, Math.min(w, h, 430));
-    board.style.width = sz + 'px';
-    board.style.height = sz + 'px';
+    box.style.width = sz + 'px';
+    box.style.height = sz + 'px';
   };
   apply();
   if (typeof ResizeObserver !== 'undefined') {
     if (_damaBoardRO) _damaBoardRO.disconnect();
     _damaBoardRO = new ResizeObserver(apply);
-    _damaBoardRO.observe(box);
+    _damaBoardRO.observe(host);
   }
 }
 
@@ -696,6 +706,7 @@ function damaStart() {
   document.getElementById('damaSetup').hidden = true;
   document.getElementById('damaOver').hidden = true;
   document.getElementById('damaPlay').hidden = false;
+  damaFitBoard();          /* [Layout] احسب حجم اللوحة بعد ظهور شاشة اللعب */
   /* [Owner] أيقونات اللاعبين فوق/تحت اللوحة + حلقة الدور الذهبية */
   damaSetupIcons();
   DAMA.drawBanUntil = 0;
