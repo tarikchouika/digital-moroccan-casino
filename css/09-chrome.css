@@ -638,7 +638,13 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
    الصفحات (يظهر فوق وتحت). الآن يُخفى ما لم يُفعَّل. */
 #pg-friends.page.active {
   display: flex; flex-direction: column;
-  height: calc(100dvh - 160px); min-height: 420px;
+  /* [Fix] تملأ الصفحة الشاشة حتى أسفلها بلا فراغ نافي (كانت calc(100dvh-160px)
+     تترك فجوة سفلية ~60px تظهر كـ«شريط أسود»). نعتمد إزاحة رأس التطبيق
+     الفعلية (~106px على سطح المكتب/التابليت). */
+  height: calc(100dvh - 106px);
+  /* شريط تمرير احتياطي إن ضاقت الشاشة (لاندسكيب قصير) كي يبقى المحتوى
+     والمرسل ظاهرين وممكن الوصول إليهما */
+  overflow-y: auto;
 }
 /* شريط إضافة صديق (يُلفّ عادة بـ .friends-add) */
 .friends-add { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
@@ -731,7 +737,7 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
 
 /* ═══ استجابة: تكديس اللوحين على الجوال + توسيط مودالات ═══ */
 @media (max-width: 768px) {
-  #pg-friends { height: auto; }
+  #pg-friends { height: calc(100dvh - 100px); }
   .friends-panes { flex-direction: column; }
   #friendList { flex: 0 0 auto; max-width: none; max-height: 42vh; }
   .friends-conv { min-height: 50vh; }
