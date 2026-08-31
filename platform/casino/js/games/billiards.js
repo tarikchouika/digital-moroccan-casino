@@ -981,11 +981,9 @@ function blFitCanvas() {
     var rowW, colW;
     var fxb = document.getElementById('gameFsExit');
     var fxr = fxb ? fxb.getBoundingClientRect() : null;
-    if (!(fxr && fxr.width > 4)) {   /* الوضع المصغّر: زر المنصة العائم بنفس الموضع */
-      var fb2 = document.getElementById('gameFsBtn');
-      var r2 = fb2 ? fb2.getBoundingClientRect() : null;
-      if (r2 && r2.width > 4) { fxb = fb2; fxr = r2; }
-    }
+    /* v12: التثبيت العلوي بحلقة زر الخروج في وضع ملء الشاشة فقط —
+       في الوضع المصغّر عاد الهيدر القياسي وسجل الجولات، فزر gameFsBtn
+       داخل الهيدر ولم يعد عائماً فوق ساحة اللعبة */
     B._blTopAnchor = !!(fxr && fxr.width > 4);
     B._blFx = B._blTopAnchor ? { cx: fxr.left + fxr.width / 2, cy: fxr.top + fxr.height / 2, rr: fxr.width / 2 } : null;
     var ring = document.getElementById('blRing');

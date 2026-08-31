@@ -508,49 +508,9 @@ body.bl-game-open #pg-game {
     linear-gradient(180deg, #4a1a10, #33110a 55%, #200a06) !important;
 }
 
-/* ═══ v11: توحيد الحاوية بين وضعي الشاشة — المصغّر يطابق الممتلئ ═══ */
-body.bl-game-open:not(.app-fs-on) #pg-game {
-  position: fixed; top: 0; left: 0; right: 0;
-  height: var(--vvh, 100dvh);
-  padding: 0; margin: 0; z-index: 900;
-}
-body.bl-game-open:not(.app-fs-on) #pg-game .ghist { display: none !important; }
-body.bl-game-open:not(.app-fs-on) #pg-game .gp-head {
-  display: block !important; height: 0; overflow: visible;
-  position: fixed; top: 0; left: 0; right: 0; z-index: 950;
-  background: transparent !important; border: none !important; box-shadow: none !important;
-  padding: 0; margin: 0; pointer-events: none;
-}
-body.bl-game-open:not(.app-fs-on) #pg-game .gp-head .ptitle { display: none !important; }
-body.bl-game-open:not(.app-fs-on) #pg-game .gp-head-right > *:not(#gameFsBtn) { display: none !important; }
-/* زر الرجوع وحده يبقى متاحاً كأيقونة صغيرة بجانب التدوير */
-body.bl-game-open:not(.app-fs-on) #pg-game .gp-head-left > .btn.icon-btn:first-child {
-  pointer-events: auto; position: fixed; display: inline-flex;
-  align-items: center; justify-content: center;
-  top: calc(12px + var(--safe-top, 0px)); left: 50px;
-  width: 32px; height: 32px; border-radius: 50%;
-  color: #3a2a05;
-  background: linear-gradient(160deg, #ffe27a, #f5c518 40%, #c99050);
-  border: 1px solid rgba(240, 220, 160, .7);
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-  z-index: 960;
-}
-/* زر ملء الشاشة الأصلي عائماً كحلقة وصل الشريطين — نفس موضع زر الخروج تماماً */
-body.bl-game-open:not(.app-fs-on) #gameFsBtn {
-  pointer-events: auto; position: fixed; display: inline-flex;
-  align-items: center; justify-content: center;
-  top: calc(8px + var(--safe-top, 0px)); right: 10px; z-index: 960;
-  width: clamp(40px, 11vw, 50px); height: clamp(40px, 11vw, 50px);
-  border-radius: 50% !important; padding: 0 !important; cursor: pointer;
-  color: #3a2a05 !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 45%),
-    linear-gradient(160deg, #ffe27a, #f5c518 40%, #c99050) !important;
-  border: 1px solid rgba(255, 240, 180, .7) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.55) inset,
-    0 -3px 6px rgba(120, 80, 0, .5) inset,
-    0 6px 16px rgba(0,0,0,.45),
-    0 0 14px rgba(245, 197, 24, .5) !important;
-}
-body.bl-game-open:not(.app-fs-on) #gameFsBtn i { font-size: clamp(1rem, 3.6vw, 1.2rem); color: #3a2a05 !important; filter: none !important; }
+/* ═══ v12: الوضع المصغّر يعرض تخطيط صفحة اللعبة القياسي ═══
+   (إصلاح: كانت قواعد v11 تخفي شريط أيقونات الهيدر وسجل رهان الجولات —
+   أُعيد الهيدر الكامل والسجل في الوضع المصغّر؛ وضع ملء الشاشة يبقى
+   غامراً كما هو عبر قواعد app-fs-on/:fullscreen دون تغيير) */
+body.bl-game-open:not(.app-fs-on) #pg-game .gp-head { position: sticky; top: 0; z-index: 60; }
+body.bl-game-open:not(.app-fs-on) #pg-game .ghist { display: block; }
