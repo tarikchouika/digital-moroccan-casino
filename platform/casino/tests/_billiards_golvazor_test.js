@@ -218,7 +218,19 @@ sec('10) أنونص');
   ok('لم يعد الإعلان مطلوباً', G.needAnnounce() === false);
   const bk = G.S.balls.filter(b => b.type === 'BLACK')[0];
   const ev = aimAt(G, { x: 200, y: 200 }, { x: bk.x + 3, y: bk.y + 3 }, 70);
-  ok('السوداء في الحفرة المعلنة = فوز', ev.loss_of_frame && ev.frame_effect.winner === 0 && ev.frame_effect.reason === 'GV_WIN');
+  ok('إسقاط مباشر في المعلنة بلا وسادة = انتحار GV_SUICIDE_NORAIL',
+     ev.loss_of_frame && ev.frame_effect.reason === 'GV_SUICIDE_NORAIL' && ev.frame_effect.winner === 1);
+
+  /* الإنهاء القانوني في الأنونص: السوداء تلمس الوسادة العلوية ثم تدخل المعلنة (TL) */
+  const GA = newGame({ finish: 'ANNONCE' });
+  setup(GA, { groups: ['BLACK', 'YELLOW'] });
+  only(GA, [YL(GA, 0).id, BK(GA).id]);
+  put(GA, YL(GA, 0), 900, 400);
+  const bkA = put(GA, BK(GA), 80, 30);          /* قرب الوسادة العلوية والزاوية TL */
+  GA.nominatePocket('TL');
+  const evA = aimAt(GA, { x: 300, y: 120 }, { x: bkA.x, y: bkA.y }, 50);
+  ok('وسادة قبل السقوط في المعلنة = فوز GV_WIN',
+     evA.loss_of_frame && evA.frame_effect.winner === 0 && evA.frame_effect.reason === 'GV_WIN');
 
   const G2 = newGame({ finish: 'ANNONCE' });
   setup(G2, { groups: ['BLACK', 'YELLOW'] });

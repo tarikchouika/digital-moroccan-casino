@@ -517,7 +517,8 @@ function blEndFrame() {
     BLACK_ON_FOUL: T('bl.reasonBlackFoul'), POINTS: T('bl.reasonPoints'), TARGET: T('bl.reasonTarget'),
     GV_WIN: T('bl.reasonGvWin'), GV_WIN_BREAK: T('bl.reasonGvWinBreak'), GV_SUICIDE_EARLY: T('bl.reasonGvEarly'),
     GV_SUICIDE_CUEBLACK: T('bl.reasonGvCue'), GV_SUICIDE_TOUCH: T('bl.reasonGvTouch'),
-    GV_SUICIDE_POCKET: T('bl.reasonGvPocket'), GV_SUICIDE_BOUND: T('bl.reasonGvBound')
+    GV_SUICIDE_POCKET: T('bl.reasonGvPocket'), GV_SUICIDE_BOUND: T('bl.reasonGvBound'),
+    GV_SUICIDE_NORAIL: T('bl.reasonGvNoRail')
   };
   var snScore = (B.variant === 'snooker' && S.scores) ? ' (' + S.scores[0] + ' – ' + S.scores[1] + ')' : '';
   var reasonTxt = reasons[S.endReason] || '';

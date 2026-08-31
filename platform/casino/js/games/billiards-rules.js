@@ -929,6 +929,8 @@
      • الطاولة والكرات: نسخة طبق الأصل عن بلاكبول WEPF
      • 5 أنواع إنهاء: DIRECT | DERNIER (آخر حفرة) | BOUND(2-5 وسائد)
        | ANNONCE (حفرة معلنة) | ANNONCE_BOUND (معلنة + وسائد)
+     • أنونص: يجب أن تلمس البيضاء أو السوداء وسادة واحدة على الأقل
+       قبل سقوط السوداء — الإسقاط المباشر في المعلنة = انتحار
      • الخطأ القياسي = ضربتان متتاليتان للخصم والبيضاء من مكانها
      • سقوط البيضاء = كرة بيد في الثلث الأسفل + ضربتان
      • الضربة الأولى من الجزاء: يحق لمس/إسقاط كرات الخصم الملونة
@@ -1108,6 +1110,24 @@
         }
       }
 
+      /* ── أنونص: وسادة إلزامية قبل سقوط السوداء ──
+         تصحيح المستخدم: في الإنهاء مع تحديد الحفرة يجب أن تلمس البيضاء
+         أو السوداء وسادة مرة أو أكثر قبل دخول السوداء الحفرة —
+         الإسقاط المباشر (بيضاء ← سوداء ← حفرة بلا وسادة) = انتحار */
+      var annRailOk = false;
+      if (wantAnn) {
+        for (i = 0; i < rec.events.length; i++) {
+          var eA = rec.events[i];
+          if (eA.t === 'pocket') {
+            var pbA = byId(eA.ball);
+            if (pbA && pbA.type === 'BLACK') break;          /* الوسائد بعد السقوط لا تُحتسب */
+          } else if (eA.t === 'rail') {
+            var rbA = byId(eA.ball);
+            if (rbA && (rbA.type === 'CUE' || rbA.type === 'BLACK')) { annRailOk = true; break; }
+          }
+        }
+      }
+
       /* ── الأخطاء ── */
       var fc = rec.first;
       var scratched = !!(rec.cuePocketed || rec.cueOff);
@@ -1160,6 +1180,7 @@
           var pk = blackP.pocket || null, why = null;
           if (S.finish === 'DERNIER' && S.lastPocket[sh] && pk !== S.lastPocket[sh]) why = 'GV_SUICIDE_POCKET';
           if (wantAnn && pk !== S.annPocket[sh]) why = 'GV_SUICIDE_POCKET';
+          if (wantAnn && !why && !annRailOk) why = 'GV_SUICIDE_NORAIL';   /* إسقاط مباشر بلا وسادة */
           if (wantBound && blackRails < S.boundN) why = 'GV_SUICIDE_BOUND';
           if (!why && foul) why = 'GV_SUICIDE_TOUCH';
           frameResult = why ? { winner: op, reason: why } : { winner: sh, reason: 'GV_WIN' };
@@ -1353,14 +1374,15 @@
             }
             tgt = { d: Math.hypot(pq.x - bk.x, pq.y - bk.y), p: pq };
           }
-          if (tgt && !wantBound) {
+          /* أنونص: الإسقاط المباشر بلا وسادة انتحار — الآلي يلعب ضربة آمنة بدلاً منه */
+          if (tgt && !wantBound && !wantAnn) {
             var tpB = Math.atan2(tgt.p.y - bk.y, tgt.p.x - bk.x);
             var gxB = bk.x - Math.cos(tpB) * 2 * table.R, gyB = bk.y - Math.sin(tpB) * 2 * table.R;
             var dB = Math.hypot(gxB - c.x, gyB - c.y);
             return fire(Math.atan2(gyB - c.y, gxB - c.x), Math.min(100, Math.round(22 + dB * 0.2)), null);
           }
         }
-        /* بوند أو بلا حفرة معروفة: ضربة آمنة ليّنة نحو السوداء */
+        /* بوند/أنونص أو بلا حفرة معروفة: ضربة آمنة ليّنة نحو السوداء */
         return fire(Math.atan2(bk.y - c.y, bk.x - c.x), 30, null);
       }
       var targets = [];
