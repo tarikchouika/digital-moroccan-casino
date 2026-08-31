@@ -962,8 +962,9 @@ function blFitCanvas() {
   else { s = Math.min(cw / S2, ch / L); ox = cw / 2; }
   /* الإلصاق: الضلع الأيسر والأسفل للطاولة (الإطار الخشبي ±60) يمسّان حافتي العلبة تماماً */
   var EDGE = 60;
-  /* وضع الشاشة الممتلئة: الزاوية العليا للطاولة تلامس حلقة زر الخروج الأصلي ⇒ التصاق علوي */
-  var topAnchor = !!B._blTopAnchor;
+  /* v12c: التصاق علوي دائم — وضع الصفحة يحاكي الشاشة الممتلئة تماماً:
+     الطاولة تلتصق بأعلى العلبة (تحت الصينية مباشرة) وفائض الأسفل يُطلى خشباً */
+  var topAnchor = true;
   if (!portrait) B.VT = { a: s, b: 0, c: 0, d: s, e: EDGE * s, f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: false, s: s };
   else if (!B.flip) B.VT = { a: 0, b: -s, c: s, d: 0, e: EDGE * s, f: topAnchor ? s * (W + EDGE) : ch - s * EDGE, portrait: true, s: s };
   else B.VT = { a: 0, b: s, c: -s, d: 0, e: s * (H + EDGE), f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: true, s: s };   /* مقلوب 180° */
@@ -981,11 +982,16 @@ function blFitCanvas() {
     var rowW, colW;
     var fxb = document.getElementById('gameFsExit');
     var fxr = fxb ? fxb.getBoundingClientRect() : null;
-    /* v12: التثبيت العلوي بحلقة زر الخروج في وضع ملء الشاشة فقط —
-       في الوضع المصغّر عاد الهيدر القياسي وسجل الجولات، فزر gameFsBtn
-       داخل الهيدر ولم يعد عائماً فوق ساحة اللعبة */
-    B._blTopAnchor = !!(fxr && fxr.width > 4);
-    B._blFx = B._blTopAnchor ? { cx: fxr.left + fxr.width / 2, cy: fxr.top + fxr.height / 2, rr: fxr.width / 2 } : null;
+    /* v12c: وضع الصفحة يطابق الممتلئ تماماً — إن غاب زر الخروج العائم
+       (الوضع المصغّر) نستعمل حلقة افتراضية بنفس موضعه وقطره (top:8/right:10،
+       قطر 40-50px) فتُنتج معادلات الشريطين نفس أبعاد الوضع الممتلئ حرفياً */
+    var realFx = !!(fxr && fxr.width > 4);
+    B._blTopAnchor = true;
+    B._blFx = realFx ? { cx: fxr.left + fxr.width / 2, cy: fxr.top + fxr.height / 2, rr: fxr.width / 2 } : null;
+    if (!realFx) {
+      var vd = Math.max(40, Math.min(50, Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.11)));
+      fxr = { left: F.right - 10 - vd, top: F.top + 8, width: vd, height: vd };
+    }
     var ring = document.getElementById('blRing');
     if (ring) {
       if (B._blFx) {
@@ -995,25 +1001,11 @@ function blFitCanvas() {
         ring.style.top = Math.round(B._blFx.cy - B._blFx.rr - F.top) + 'px';
       } else ring.style.display = 'none';
     }
-    if (B._blTopAnchor) {
+    {
       /* مماس الحلقة أسفل-يسارها: الزاوية العليا اليمنى للطاولة تمرّ بها تماماً */
       var rcx = fxr.left + fxr.width / 2, rcy = fxr.top + fxr.height / 2, rrr = fxr.width / 2;
       rowW = Math.max(22, Math.min(Math.round(rcy + rrr * 0.7071 - F.top), 240));
       colW = Math.max(30, Math.min(Math.round(F.right - rcx + rrr * 0.7071), 190));
-    } else if (portrait) {
-      var sWp = (F.width - railB) / S2;
-      if (sWp * L <= F.height - rowB) {   /* العرض هو القيد → الشريط العلوي يبتلع */
-        colW = railB;
-        rowW = Math.max(48, Math.min(Math.round(F.height - sWp * L), Math.round(F.height) - 140));
-      } else {                            /* الارتفاع هو القيد → الشريط الأيمن يبتلع فيلتصق الضلع الأيمن */
-        rowW = rowB;
-        var sHp = (F.height - rowB) / L;
-        colW = Math.max(railB, Math.min(Math.round(F.width - sHp * S2), Math.round(F.width) - 240));
-      }
-    } else {
-      var sW2 = (F.width - railB) / L, sH2 = (F.height - rowB) / S2;
-      if (sW2 <= sH2) { colW = railB; rowW = Math.max(48, Math.min(Math.round(F.height - sW2 * S2), Math.round(F.height) - 140)); }
-      else { rowW = rowB; colW = Math.max(railB, Math.min(Math.round(F.width - sH2 * L), Math.round(F.width) - 240)); }
     }
     if (frame._blRows !== rowW || frame._blCols !== colW) {
       frame._blRows = rowW; frame._blCols = colW;
