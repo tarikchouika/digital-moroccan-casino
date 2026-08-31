@@ -728,6 +728,79 @@ function blSay(t) {
   BILLIARDS.msgT = setTimeout(function () { el.classList.remove('show'); }, 2800);
 }
 
+/* ═══ v13: انزلاق الكرة في الحفرة (بصري بحت — الفيزياء والقواعد بلا تغيير) ═══ */
+function blPocketCenter(t, id) {
+  /* مراكز أقراص الحفر المرسومة (blDrawPockets) — لا مراكز القنص الفيزيائي */
+  var W = t.W, H = t.H;
+  switch (id) {
+    case 'TL': return { x: -20, y: -20 };
+    case 'TR': return { x: W + 20, y: -20 };
+    case 'BL': return { x: -20, y: H + 20 };
+    case 'BR': return { x: W + 20, y: H + 20 };
+    case 'TC': return { x: W / 2, y: -28 };
+    case 'BC': return { x: W / 2, y: H + 28 };
+  }
+  return { x: -20, y: -20 };
+}
+function blBallCol(b) {
+  if (b.type === 'CUE' || b.group === 'WHITE') return null;   /* أبيض */
+  return BL_SNCOLORS[b.group] || BL_BBCOLORS[b.type] || BL_COLORS[b.value] || '#c0392b';
+}
+function blTrackSinks() {
+  var B = BILLIARDS;
+  if (!B || !B.G) return;
+  var rec = B.G.S.rec;
+  if (!rec) { B._sinkRec = null; return; }
+  if (B._sinkRec !== rec) { B._sinkRec = rec; B._sinkSeen = 0; }
+  if (!B._sinks) B._sinks = [];
+  while ((B._sinkSeen || 0) < rec.pocketed.length) {
+    var pb = rec.pocketed[B._sinkSeen++];
+    var pc = blPocketCenter(B.G.S.table, pb.pocket || null);
+    B._sinks.push({
+      x: pb.x, y: pb.y, tx: pc.x, ty: pc.y,
+      col: blBallCol(pb), stripe: (pb.type === 'STRIPE'), value: pb.value,
+      t0: performance.now()
+    });
+  }
+}
+function blDrawSinks(ctx, R) {
+  var B = BILLIARDS;
+  if (!B || !B._sinks || !B._sinks.length) return;
+  var nowT = performance.now(), keep = [];
+  for (var i = 0; i < B._sinks.length; i++) {
+    var sk = B._sinks[i];
+    var p = Math.min(1, (nowT - sk.t0) / 240);          /* ~ربع ثانية */
+    if (p >= 1) continue;
+    keep.push(sk);
+    var e = p * p;                                       /* تسارع نحو الفوهة */
+    var sx = sk.x + (sk.tx - sk.x) * p;
+    var sy = sk.y + (sk.ty - sk.y) * p;
+    var rr = R * (1 - 0.62 * e);                         /* تقلّص الغوص */
+    ctx.save();
+    ctx.globalAlpha = 1 - 0.9 * e * e;                   /* تعتيم متأخر داخل الفوهة */
+    var col = sk.col;
+    ctx.beginPath(); ctx.arc(sx, sy, rr, 0, 7);
+    if (!col || sk.stripe) {
+      var g0 = ctx.createRadialGradient(sx - rr * 0.35, sy - rr * 0.4, rr * 0.1, sx, sy, rr);
+      g0.addColorStop(0, '#ffffff'); g0.addColorStop(.8, '#dcdcd2'); g0.addColorStop(1, '#9a9a8e');
+      ctx.fillStyle = g0;
+    } else {
+      var g1 = ctx.createRadialGradient(sx - rr * 0.35, sy - rr * 0.4, rr * 0.1, sx, sy, rr);
+      g1.addColorStop(0, blShade(col, .5)); g1.addColorStop(.7, col); g1.addColorStop(1, blShade(col, -.5));
+      ctx.fillStyle = g1;
+    }
+    ctx.fill();
+    if (sk.stripe && col) {
+      ctx.save(); ctx.clip();
+      ctx.fillStyle = col;
+      ctx.fillRect(sx - rr, sy - rr * 0.45, 2 * rr, rr * 0.9);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  B._sinks = keep;
+}
+
 /* ═══════════ حلقة المحاكاة ═══════════ */
 function blTick(now) {
   var B = BILLIARDS;
@@ -742,6 +815,7 @@ function blTick(now) {
     var Hstep = 1000 / BilliardsPhysics.HZ;
     var guard = 0;
     while (B.acc >= Hstep && guard++ < 60) { B.G.stepPhysics(); B.acc -= Hstep; }
+    blTrackSinks();   /* v13: التقاط الساقطات لتحريك انزلاقها في الفوهة */
     if (!B.G.shotRunning()) {
       B.acc = 0;
       var ev = B.G.resolve();
@@ -1109,6 +1183,8 @@ function blDraw() {
     if (b.status !== 'ON_TABLE') continue;
     blDrawBall(ctx, b, R, S);
   }
+  /* v13: الكرات المنزلقة داخل الفوهات (تحريك بصري قصير بعد القنص) */
+  blDrawSinks(ctx, R);
   /* العصا */
   if (S.phase === 'AIM' && (blHumanTurn() || B._aiAim)) {
     var c = B.G.cue();
