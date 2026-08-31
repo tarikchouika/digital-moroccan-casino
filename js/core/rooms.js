@@ -76,12 +76,20 @@
           } catch (er) {}
         } catch (err) { console.error('[rooms] replay', err); }
       });
+      /* [B-settle] تسوية نهاية الجولة: فائز/خاسر/تعادل + احتساب الرسم وفق نوع الغرفة */
+      _source.addEventListener('room:settle', function (e) {
+        try { Rooms._onSettle(JSON.parse(e.data)); } catch (err) { console.error('[rooms] settle', err); }
+      });
     },
 
     _onUpdate: function (room) {
       var prev = Rooms.state;
       var prevStatus = prev ? prev.status : null;
       Rooms.state = room;
+      /* [B-rooms] مؤقّت واحد للعدّاد التنازلي (غرف الساعة) — يُنشأ مرة ويُزال في reset() */
+      if (room && room.room_type === 'hour' && room.expires_at && !Rooms._cdTi) {
+        Rooms._cdTi = setInterval(function () { Rooms._renderCountdown(); }, 1000);
+      }
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
         Rooms.closeModal();
@@ -397,6 +405,12 @@
       var cancel = document.getElementById('rsCancel');
       if (gear) gear.addEventListener('click', function () { Rooms._openSettings(false); });
       if (save) save.addEventListener('click', Rooms._saveSettings);
+      /* [B-rooms] تحديث وصف نوع الغرفة عند تغيير rsRoomType */
+      var rtSel = document.getElementById('rsRoomType');
+      if (rtSel && !rtSel._descBound) {
+        rtSel._descBound = true;
+        rtSel.addEventListener('change', function () { Rooms._typeDesc(); });
+      }
       if (cancel) cancel.addEventListener('click', function () {
         /* إن وُجدت غرفة نغلق الإعدادات (نعود للغرفة)؛ وإلا نبقيها مفتوحة (الإلغاء معطّل) */
         if (Rooms.state) {
@@ -411,6 +425,7 @@
       var rt = document.getElementById('rsRoomType');
       var bet = document.getElementById('rsBet');
       var game = document.getElementById('rsGame');
+      var vis = document.getElementById('rsVisibility');
       /* [F4] قيمة افتراضية (اللعبة الحالية أو رامي) كي لا تفتح القائمة فارغة أبداً */
       if (game) {
         var def = window._currentGameId || (Rooms.state && Rooms.state.game_id) || 'rm';
@@ -419,7 +434,13 @@
       if (Rooms.state) {
         if (rt && Rooms.state.room_type) rt.value = Rooms.state.room_type;
         if (bet && typeof Rooms.state.bet === 'number') bet.value = Rooms.state.bet;
+        /* [B-rooms] خصوصية الغرفة الحالية (عامة/خاصة) */
+        if (vis) vis.value = (Rooms.state.visibility === 'private') ? 'private' : 'public';
+      } else if (vis) {
+        vis.value = 'public';
       }
+      /* [B-rooms] وصف نوع الغرفة الحالي (رسوم الساعة/النسبة المئوية) */
+      Rooms._typeDesc();
       var cancel = document.getElementById('rsCancel');
       if (cancel) {
         var lock = !!(forceNoRoom || !Rooms.state);
@@ -431,13 +452,23 @@
       sm.style.display = 'flex';
       if (rt) rt.focus();
     },
+    /* [B-rooms] وصف نوع الغرفة: رسم الساعة الثابت مقابل النسبة المئوية على الجولات */
+    _typeDesc: function () {
+      var el = document.getElementById('rsTypeDesc');
+      if (!el) return;
+      var rt = document.getElementById('rsRoomType');
+      var t = rt ? rt.value : '';
+      el.textContent = (t === 'hour') ? T('rm.hourDesc') : (t === 'percentage' ? T('rm.pctDesc') : '');
+    },
     _saveSettings: function () {
       var rt = document.getElementById('rsRoomType');
       var bet = document.getElementById('rsBet');
       var game = document.getElementById('rsGame');
+      var vis = document.getElementById('rsVisibility');
       var gid = (game && game.value) || window._currentGameId || (Rooms.state && Rooms.state.game_id);
       var roomType = rt ? rt.value : '';
       var betVal = bet ? (parseInt(bet.value, 10) || 0) : 0;
+      var visVal = (vis && vis.value === 'private') ? 'private' : 'public';
       if (!roomType) {
         toast(T('rm.needType'), 'err');
         if (rt) { rt.classList.add('err'); rt.focus(); }
@@ -450,7 +481,7 @@
       }
       if (rt) rt.classList.remove('err');
       if (bet) bet.classList.remove('err');
-      Rooms.createRoom(gid, { room_type: roomType, bet: betVal }).then(function () {
+      Rooms.createRoom(gid, { room_type: roomType, bet: betVal, visibility: visVal }).then(function () {
         var sm = document.getElementById('roomSettingsModal');
         if (sm) sm.style.display = 'none';
       });
@@ -503,13 +534,15 @@
       var max = Rooms.maxFor(gameId);
       var bet = 0;
       var roomType = 'hour';
+      var visibility = 'public';
       if (typeof opts === 'number') {
         bet = opts;
       } else if (opts && typeof opts === 'object') {
         bet = (typeof opts.bet === 'number') ? opts.bet : 0;
         if (opts.room_type) roomType = opts.room_type;
+        if (opts.visibility === 'private') visibility = 'private';
       }
-      var payload = { game_id: gameId, max_players: max, bet: bet, room_type: roomType };
+      var payload = { game_id: gameId, max_players: max, bet: bet, room_type: roomType, visibility: visibility };
       return API.post('/api/rooms', payload).then(function (r) {
         if (!r.ok) {
           var msg = (r.data && r.data.message) || T('ui.roomError');
@@ -827,6 +860,8 @@
         /* ── نوع الغرفة + الرهان (يُقتطع عند بدء الجولة) ── */
         '<div style="text-align:center;margin-bottom:8px">' +
           '<div class="ctext2">' + T('rm.bet') + ': ' + fmt(st.bet || 0) + '</div>' +
+          /* [B-rooms] العدّاد التنازلي لغرف الساعة (يُحدَّث من Rooms._renderCountdown) */
+          (st.room_type === 'hour' && st.expires_at ? '<div class="ctext2" id="roomCountdown"></div>' : '') +
           '<div class="ctext2" style="color:var(--t3);font-size:0.78rem">' + T('rm.betDeducted') + '</div>' +
         '</div>' +
         '<div class="ctext" style="padding:4px 0">' + T('ui.roomPlayers') + ' (' + st.players.length + '/' + st.max_players + ')</div>' +
@@ -847,6 +882,66 @@
       var newInp = document.getElementById('roomChatInput');
       if (newInp) newInp.value = prevInput;
       Rooms.renderChat();
+      Rooms._renderCountdown();
+    },
+
+    /* [B-rooms] تحديث نص العدّاد التنازلي (#roomCountdown) — يُستدعى من render ومن المؤقّت */
+    _renderCountdown: function () {
+      var el = document.getElementById('roomCountdown');
+      if (!el) return;
+      var st = Rooms.state;
+      if (!st || st.room_type !== 'hour' || !st.expires_at) { el.textContent = ''; return; }
+      var left = Math.floor((Number(st.expires_at) - Date.now()) / 1000);
+      if (left > 0) {
+        var m = Math.floor(left / 60), s = left % 60;
+        el.textContent = T('rm.endsIn') + ' ' + m + ':' + (s < 10 ? '0' : '') + s;
+      } else if (st.status === 'playing') {
+        el.textContent = T('rm.expiredPlaying');
+      } else {
+        el.textContent = T('rm.expired');
+      }
+    },
+
+    /* [B-settle] تسوية نهاية الجولة: تحديث الأرصدة + إشعارات فوز/خسارة/استرجاع،
+       وإن حُلّت الغرفة (انتهاء ساعة/طرد) نغلقها ونخرج من صفحة اللعبة.
+       d = { winner, loser, refunds, pot, fee, dissolved } */
+    _onSettle: function (d) {
+      if (!d) return;
+      var u = me();
+      var uid = u && u.id;
+      var isWinner = !!(d.winner && d.winner.id != null && d.winner.id == uid);
+      var isLoser = !!(d.loser && d.loser.id != null && d.loser.id == uid);
+      var isRefund = !!(d.refunds && d.refunds.some && d.refunds.some(function (r) { return r && r.id != null && r.id == uid; }));
+      if (isWinner) {
+        if (typeof d.winner.gold === 'number') { AUTH.user.gold = d.winner.gold; ST.gold = d.winner.gold; }
+        wallet();
+        toast(T('rm.winRound') + ' (+' + fmt(Math.max(0, (d.pot || 0) - (d.fee || 0))) + ' 🪙)', 'ok');
+      } else if (isLoser) {
+        if (typeof d.loser.gold === 'number') { AUTH.user.gold = d.loser.gold; ST.gold = d.loser.gold; }
+        wallet();
+        toast(T('rm.loseRound') + ' (-' + fmt(Math.max(0, d.pot || 0)) + ' 🪙)', 'err');
+      } else if (isRefund) {
+        var mine = d.refunds.filter(function (r) { return r && r.id != null && r.id == uid; })[0];
+        if (mine && typeof mine.gold === 'number') { AUTH.user.gold = mine.gold; ST.gold = mine.gold; wallet(); }
+        toast(T('rm.drawRefund'), 'ok');
+      }
+      save();
+      if (d.dissolved) {
+        toast(T('rm.roomEnded'), 'info');
+        Rooms.reset();
+        Rooms.closeModal();
+        if (typeof closeGamePage === 'function' && window._currentGameId) closeGamePage();
+      }
+    },
+
+    /* [B-settle] إعلان نتيجة الجولة من اللعبة (المضيف فقط) — تُستدعى من لعبة ضاما */
+    roomSettle: function (result) {
+      if (!Rooms.state) return;
+      var u = me();
+      if (!u || Rooms.state.owner_id !== u.id) return;
+      API.post('/api/rooms/settleRound', { room_id: Rooms.state.id, result: result }).then(function (r) {
+        if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
+      });
     },
 
     /* رسم منطقة المحادثة فقط (بلا إعادة بناء بقية المودال) */
@@ -941,6 +1036,8 @@
       Rooms.state = null;
       _messages = [];
       _recipient = null;
+      /* [B-rooms] إزالة مؤقّت العدّاد التنازلي عند مغادرة الغرفة */
+      if (Rooms._cdTi) { clearInterval(Rooms._cdTi); Rooms._cdTi = null; }
       /* [Req7] إزالة ودجت الرموز/الرسائل عند مغادرة الغرفة */
       var btn = document.getElementById('roomReactBtn');
       var panel = document.getElementById('roomReactPanel');

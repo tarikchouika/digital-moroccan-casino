@@ -402,6 +402,11 @@
 /* ── [B10] خانة الرهان داخل شاشة الإعدادات ── */
 .dama-betrow .bets { margin: 0 auto; width: max-content; }
 
+/* ── [UI] شريط النتيجة الفارغ: يُخفى كي لا يترك هامشاً ذهبياً أسفل اللوحة.
+   يظهر تلقائياً عند وجود رسالة فعلية (فوز/خسارة/تعادل gres) — عنصر .res
+   يبدأ بلا محتوى نصي فيختفي بـ :empty ويبقى معروضاً عند وجود رسالة. ── */
+#damaStage > .res:empty { display: none !important; margin: 0 !important; min-height: 0 !important; }
+
 /* ── [B9] طبقة الطيران: القطعة تنزلق/تقفز قوساً والضحية تتلاشى ── */
 .dm-fly {
   position: absolute;

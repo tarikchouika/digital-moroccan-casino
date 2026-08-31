@@ -1169,6 +1169,17 @@ const TR = {
   'rm.needType': [ 'اختر نوع الغرفة أولاً', "Choisissez d'abord le type de salle", 'Pick a room type first', 'اختار نوع الغرفة أولاً' ],
   'rm.betDeducted': [ 'رهان يُقتطع عند بدء الجولة', 'La mise est prélevée au démarrage de la manche', 'Bet is deducted at round start', 'الرهان كيتقطع وقت بداية الجولة' ],
 
+  /* ── [B-rooms] Group rooms: خصوصية + وصف الرسوم + عدّاد الساعة + تسوية الجولة ── */
+  'rm.hourDesc': [ 'رسم ثابت 100 🪙 عند الفتح — الغرفة مفتوحة ساعة واحدة، وبلا رسوم على الجولات. عند انتهاء الساعة لا تُقفل الغرفة حتى تنتهي الجولة الجارية.', 'Frais fixes de 100 🪙 à l\'ouverture — la salle reste ouverte une heure, sans frais par manche. À la fin de l\'heure, la salle ne se verrouille pas avant la fin de la manche en cours.', 'A fixed 100 🪙 fee on opening — the room stays open for one hour, with no fee on rounds. When the hour ends, the room does not lock until the current round finishes.', 'رسم ثابت 100 🪙 وقت الفتح — الشومبر كيبقى محلول ساعة، وبلا رسوم على الجولات. منين تسالي الساعة الشومبر ما كيتقفش حتى تسالي الجولة اللي جارية.' ],
+  'rm.pctDesc': [ 'بلا رسم على الفتح وبلا حد زمني — رسم 5% من رهان اللاعب الفائز في كل جولة.', 'Sans frais à l\'ouverture et sans limite de temps — 5% de la mise du joueur gagnant à chaque manche.', 'No opening fee and no time limit — a 5% fee on the winning player\'s bet each round.', 'بلا رسوم وقت الفتح وبلا حد للوقت — 5% من الرهان ديال اللي ربح فكل جولة.' ],
+  'rm.endsIn': [ 'تنتهي خلال', 'Se termine dans', 'Ends in', 'كيسالي من' ],
+  'rm.expired': [ 'انتهت مدة الغرفة', 'Durée écoulée', 'Room time ended', 'سالت المدة' ],
+  'rm.expiredPlaying': [ 'انتهت المدة — تُغلق بعد الجولة الجارية', 'Durée écoulée — fermeture après la manche en cours', 'Time is up — closes after the current round', 'سالت المدة — غادي تتقف من بعد الجولة اللي جارية' ],
+  'rm.roomEnded': [ 'انتهت مدة الغرفة — تم إغلاقها', 'Durée écoulée — salle fermée', 'Room time ended — room closed', 'سالت المدة — تقفل الشومبر' ],
+  'rm.winRound': [ '🏆 فزت بالجولة', '🏆 Manche gagnée', '🏆 Round won', '🏆 ربحت الجولة' ],
+  'rm.loseRound': [ '💔 خسرت الجولة', '💔 Manche perdue', '💔 Round lost', '💔 خسرت الجولة' ],
+  'rm.drawRefund': [ '🤝 تعادل — استُرجع رهانك', '🤝 Égalité — mise remboursée', '🤝 Draw — your bet was refunded', '🤝 تعادل — ترجع الرهان ديالك' ],
+
   /* ── Friends (ui.*) ── */
   'ui.friends': [ 'الأصدقاء', 'Amis', 'Friends', 'الصحاب' ],
   'ui.addFriend': [ 'إضافة صديق', 'Ajouter un ami', 'Add Friend', 'زيد صديق' ],
@@ -1189,6 +1200,9 @@ const TR = {
   /* ── Room settings overlay (rs.*) ── */
   'rs.title': [ 'إعدادات الغرفة والجولة', 'Paramètres de la salle et de la manche', 'Room & Round Settings', 'إعدادات الشومبر والجولة' ],
   'rs.type': [ 'نوع الغرفة', 'Type de salle', 'Room type', 'نوع الشومبر' ],
+  'rs.visibility': [ 'خصوصية الغرفة', 'Visibilité de la salle', 'Room visibility', 'خصوصية الشومبر' ],
+  'rs.public': [ 'عامة', 'Publique', 'Public', 'عامة' ],
+  'rs.private': [ 'خاصة', 'Privée', 'Private', 'خاصة' ],
   'rs.game': [ 'اللعبة', 'Jeu', 'Game', 'اللعبة' ],
   'rs.hour': [ 'بالساعة', "À l'heure", 'Per hour', 'بالساعة' ],
   'rs.percentage': [ 'بالنسبة المئوية', 'En pourcentage', 'Percentage', 'بالنسبة المئوية' ],

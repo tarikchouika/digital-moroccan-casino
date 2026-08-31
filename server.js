@@ -157,6 +157,9 @@ const rooms = {};               // roomId -> room object
 let nextRoomId = 1;
 /* رسم الرهان على المنصة: نسبة تُقتطع من الرهان عند تسوية الجولة بين لاعبَين */
 const BET_FEE_RATE = 0.05;      /* 5% رسوم المنصة على الرهان */
+/* [B-rooms] غرف الساعة: رسم افتتاح ثابت يُقتطع من المضيف + مدة صلاحية الغرفة */
+const HOUR_ROOM_FEE = 100;      /* 🪙 رسم إنشاء غرفة الساعة */
+const HOUR_ROOM_MS = 3600000;   /* ساعة واحدة */
 
 /* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
 function loadUsersFromDB() {
@@ -204,6 +207,13 @@ loadUsersFromDB();
 setInterval(() => {
   try { db.prepare('DELETE FROM messages WHERE created_at < ?').run(Date.now() - 24 * 3600 * 1000); } catch (e) {}
 }, 5 * 60 * 1000);
+
+/* [B-rooms] sweeper غرف الساعة كل 60ث: المنتهية في الانتظار تُحلّ، والجاري جولتها تُعلَّم فقط */
+setInterval(() => {
+  Object.values(rooms).forEach(function (room) {
+    try { sweepExpiredRoom(room); } catch (e) {}
+  });
+}, 60 * 1000);
 
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
@@ -255,6 +265,10 @@ function serializeRoom(room) {
     status: room.status,
     bet: room.bet || 0,   /* [B10] رهان الغرفة */
     room_type: room.room_type || null,   /* [B10] نوع الرهان: 'hour' | 'percentage' */
+    expires_at: room.expires_at != null ? Number(room.expires_at) : null,   /* [B-rooms] نهاية صلاحية غرف الساعة */
+    visibility: room.visibility === 'private' ? 'private' : 'public',       /* [B-rooms] عامة/خاصة */
+    settled: !!room.settled,   /* [B-settle] هل حُلّت الجولة الجارية */
+    expired: !!room.expired,   /* [B-rooms] انتهت مدة الساعة والجولة الجارية آخر جولة */
     players: room.players.map(function (p) {
       return { id: p.id, username: p.username, ready: !!p.ready, spectate: !!p.spectate, seat: p.seat, isBot: !!p.isBot };
     }),
@@ -288,6 +302,34 @@ function broadcastRoom(room, event, payload) {
   });
 }
 function updateRoom(room) { broadcastRoom(room, 'room:update', serializeRoom(room)); }
+
+/* ═══════ [B-rooms] غرف الساعة: انتهاء المدة والحلّ بعد الجولة الجارية ═══════ */
+/* هل انتهت صلاحية غرفة الساعة؟ (الغرف النسبية بلا حدّ زمني) */
+function roomTimeUp(room) { return !!(room && room.room_type === 'hour' && room.expires_at != null && Date.now() > room.expires_at); }
+/* حُلّ الغرفة: بثّ room:update بقيمة null ثم حذفها (يغلقها عند الجميع) */
+function dissolveRoom(room) {
+  if (!room || !rooms[room.id]) return;
+  broadcastRoom(room, 'room:update', null);
+  delete rooms[room.id];
+}
+/* انتهاء الصلاحية عند أي حدث غرفة: إن كانت الغرفة في الانتظار تُحلّ فوراً؛
+   وإن كانت جولة جارية تُعلَّم فقط expired=true وتُحلّ عند أول نهاية جولة (endBet/settle/rematch/vote) */
+function sweepExpiredRoom(room) {
+  if (!roomTimeUp(room)) return false;
+  if (room.status === 'playing') {
+    if (!room.expired) room.expired = true;   /* لا تُقفل حتى تنتهي الجولة الجارية */
+    return false;
+  }
+  dissolveRoom(room);
+  return true;
+}
+/* ما بعد الجولة: إن كانت غرفة ساعة منتهية/معلَّمة → حُلّها (يعيد true إن حُلّت) */
+function dissolveIfExpired(room) {
+  if (!room || room.room_type !== 'hour') return false;
+  if (!room.expired && !roomTimeUp(room)) return false;
+  dissolveRoom(room);
+  return true;
+}
 /* [Friends] إرسال حدث SSE لمستخدم محدّد (يطابق بنية sseClients الموجودة) */
 function sendToUser(userId, event, data) {
   sseClients.forEach(function (c) {
@@ -319,6 +361,7 @@ function tryResolveRematch(room) {
     room.rematch = null;
     room.moveHistory = [];           /* [Resilience] مباراة جديدة = سجل جديد (يسمح للمالك بالاستضافة) */
     room.dedupSeen = {};
+    room.settled = null;             /* [B-settle] جولة جديدة قابلة للتسوية */
   } else {
     rm.rematch = false; rm.agreed = agreed; /* لا موافقة كافية */
   }
@@ -735,8 +778,8 @@ const server = http.createServer((req, res) => {
 
       /* ── الغرف ── */
       if (pathname === '/api/rooms' && req.method === 'GET') {
-        const list = Object.values(rooms).filter(function (r) { return r.status === 'waiting'; }).map(function (r) {
-          return { id: r.id, code: r.code, game_id: r.game_id, owner_name: r.owner_name, max_players: r.max_players, players_count: r.players.length, status: r.status, bet: r.bet || 0, room_type: r.room_type || null };
+        const list = Object.values(rooms).filter(function (r) { return r.status === 'waiting' && r.visibility !== 'private'; }).map(function (r) {
+          return { id: r.id, code: r.code, game_id: r.game_id, owner_name: r.owner_name, max_players: r.max_players, players_count: r.players.length, status: r.status, bet: r.bet || 0, room_type: r.room_type || null, expires_at: r.expires_at != null ? Number(r.expires_at) : null, visibility: r.visibility === 'private' ? 'private' : 'public' };
         });
         json({ ok: true, rooms: list });
         return;
@@ -750,6 +793,16 @@ const server = http.createServer((req, res) => {
         if (room_type !== 'hour' && room_type !== 'percentage') { json({ ok: false, error: 'room_type_required' }, 400); return; }
         const bet = Number(data.bet);
         if (isNaN(bet) || bet <= 0) { json({ ok: false, error: 'bet_required' }, 400); return; }
+        const visibility = (data.visibility === 'private') ? 'private' : 'public';   /* [B-rooms] عامة/خاصة */
+        /* [B-rooms] غرفة الساعة: رسم افتتاح ثابت يُقتطع من المضيف — لا غرفة بلا رسم */
+        if (room_type === 'hour') {
+          if ((me.gold || 0) < HOUR_ROOM_FEE) {
+            json({ ok: false, error: 'insufficient_funds', message: 'رصيد غير كافٍ لرسوم الغرفة (' + HOUR_ROOM_FEE + ')' }, 400);
+            return;
+          }
+          me.gold = (me.gold || 0) - HOUR_ROOM_FEE;
+          try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id); } catch (e) {}
+        }
         const gid = data.game_id || 'rm';
         const maxp = Math.max(2, Math.min(8, parseInt(data.max_players, 10) || 4));
         const rid = 'r' + (nextRoomId++);
@@ -758,6 +811,8 @@ const server = http.createServer((req, res) => {
           id: rid, code: code, game_id: gid,
           owner_id: me.id, owner_name: me.username,
           max_players: maxp, status: 'waiting', bet: bet, room_type: room_type,
+          visibility: visibility,
+          expires_at: room_type === 'hour' ? Date.now() + HOUR_ROOM_MS : null,   /* [B-rooms] ساعة واحدة */
           players: [{ id: me.id, username: me.username, ready: false, spectate: false, seat: 0 }],
           moveHistory: [], dedupSeen: {}, driverId: me.id, online: {},
           room_state: {}, chat: []
@@ -774,6 +829,8 @@ const server = http.createServer((req, res) => {
         const code = String(data.code || '').toUpperCase();
         const room = Object.values(rooms).find(function (r) { return r.code === code; });
         if (!room) { json({ ok: false, message: 'رمز الغرفة غير موجود' }, 404); return; }
+        /* [B-rooms] غرفة ساعة منتهية في الانتظار → لا انضمام جديد (تُحلّ) */
+        if (sweepExpiredRoom(room)) { json({ ok: false, message: 'انتهت صلاحية الغرفة' }, 410); return; }
         if (room.status === 'playing' && !room.players.some(function (p) { return p.id === me.id; })) {
           json({ ok: false, message: 'اللعبة بدأت بالفعل' }, 400); return;
         }
@@ -796,6 +853,10 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/leave') {
         const room = rooms[data.room_id];
         if (room) {
+          /* [B-rooms] انتهاء صلاحية غرفة الساعة عند المغادرة: قيد اللعب تُعلَّم فقط */
+          sweepExpiredRoom(room);
+        }
+        if (room && rooms[data.room_id]) {
           /* [Req6] المُنشئ لا يغلق الغرفة حتى ينتهي الرهان الجاري */
           if (room.status === 'playing' && room.owner_id === (me && me.id)) {
             json({ ok: false, message: 'لا يمكن إغلاق الغرفة حتى انتهاء الرهان الجاري — انتظر نهاية المباراة' }, 400);
@@ -820,6 +881,8 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/ready') {
         const room = rooms[data.room_id];
         if (room && me) {
+          /* [B-rooms] فحص انتهاء صلاحية غرفة الساعة عند أي حدث غرفة (جولة منتهية → حُلّت فوراً) */
+          if (sweepExpiredRoom(room)) { json({ ok: false, message: 'انتهت صلاحية الغرفة' }, 410); return; }
           const p = room.players.find(function (x) { return x.id === me.id; });
           if (p) p.ready = !!data.ready;
           updateRoom(room);
@@ -832,6 +895,8 @@ const server = http.createServer((req, res) => {
         if (me && me.role !== 'user') { json({ ok: false, message: 'المشرفون لا يمكنهم الدخول كلاعبين أو المراهنة' }, 403); return; }
         const room = rooms[data.room_id];
         if (room && me && room.owner_id === me.id) {
+          /* [B-rooms] لا بدء جولة جديدة في غرفة ساعة منتهية الصلاحية */
+          if (sweepExpiredRoom(room)) { json({ ok: false, message: 'انتهت صلاحية الغرفة' }, 410); return; }
           const bet = Number(room.bet) || 0;
           /* [B10] اقتطاع الرهان من كل لاعب غير متفرّج (وليس بوتّاً) عند بدء المباراة */
           const payers = room.players.filter(function (p) { return !p.spectate && users[p.id]; });
@@ -846,6 +911,7 @@ const server = http.createServer((req, res) => {
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
           });
           room.status = 'playing';
+          room.settled = null;   /* [B-settle] جولة جديدة قابلة للتسوية (مسار endBet→start) */
           updateRoom(room);
         }
         json({ ok: true, room: room ? serializeRoom(room) : null });
@@ -854,6 +920,8 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/spectate') {
         const room = rooms[data.room_id];
         if (room && me) {
+          /* [B-rooms] فحص انتهاء صلاحية غرفة الساعة عند أي حدث غرفة */
+          if (sweepExpiredRoom(room)) { json({ ok: false, message: 'انتهت صلاحية الغرفة' }, 410); return; }
           let p = room.players.find(function (x) { return x.id === me.id; });
           if (!p) { p = { id: me.id, username: me.username, ready: true, spectate: false, seat: room.players.length }; room.players.push(p); }
           /* [B10] لا يجوز الترقّي من مشاهد إلى لاعب والمقاعد ممتلئة */
@@ -875,6 +943,8 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/joinRequest') {
         const room = rooms[data.room_id];
         if (room && me) {
+          /* [B-rooms] فحص انتهاء الصلاحية عند أي حدث غرفة */
+          if (sweepExpiredRoom(room)) { json({ ok: false, message: 'انتهت صلاحية الغرفة' }, 410); return; }
           let p = room.players.find(function (x) { return x.id === me.id; });
           if (!p) { p = { id: me.id, username: me.username, ready: true, spectate: true, seat: room.players.length }; room.players.push(p); }
           if (p.spectate) {
@@ -895,6 +965,8 @@ const server = http.createServer((req, res) => {
         if (room && me && room.owner_id === me.id && room.status === 'playing') {
           room.status = 'waiting';
           room.players.forEach(function (p) { if (!p.spectate) p.ready = false; });
+          /* [B-rooms] انتهت الساعة → حُلّ الغرفة بعد انتهاء الجولة الجارية */
+          if (dissolveIfExpired(room)) { json({ ok: true, room: null }); return; }
           updateRoom(room);
         }
         json({ ok: true, room: room ? serializeRoom(room) : null });
@@ -905,6 +977,60 @@ const server = http.createServer((req, res) => {
       /* [MP-AI] المضيف يضيف لاعباً آلياً لملء مقعد (لاعب آلي يلعب وفق القواعد) */
       /* [Settle] تسوية رهان فلات دوچ بين لاعبَين: يُقتطع من الخاسر ويُضاف للرابح
          بعد اقتطاع رسم الرهان (BET_FEE_RATE). للمالك فقط (نتيجة حتمية). */
+      /* [B-settle] تسوية رهان المباريات الحتمية (ضاما/شطرنج — العميل يعرف الفائز): للمضيف فقط.
+         result: 'w0' فاز صاحب order[0] | 'w1' فاز صاحب order[1] | 'draw' تعادل.
+         الرهانات اقتُطعت عند /api/rooms/start — هنا تُوزَّع فقط:
+         draw → استرجاع كامل بلا رسوم؛ w0/w1 → الرابح يأخذ pot كاملاً بعد رسم 5% (غرف percentage فقط) */
+      if (pathname === '/api/rooms/settleRound') {
+        const room = rooms[data.room_id];
+        if (!room) { json({ ok: false, message: 'الغرفة غير موجودة' }, 404); return; }
+        if (!me || room.owner_id !== me.id) { json({ ok: false, message: 'غير مصرّح — للمضيف فقط' }, 403); return; }
+        if (room.status !== 'playing') { json({ ok: false, message: 'لا جولة جارية للتسوية' }, 400); return; }
+        if (room.settled) { json({ ok: false, message: 'تمت تسوية هذه الجولة مسبقاً' }, 400); return; }
+        const result = data.result;
+        if (result !== 'w0' && result !== 'w1' && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
+        const order = serializeRoom(room).order;   /* غير المتفرجين حسب المقعد (بشر + بوتّات) */
+        const pot = Number(room.bet) || 0;   /* رهان كل لاعب — اقتُطع عند البدء */
+        /* اللاعبون البشريون الحقيقيون (البوتّات بلا رصيد تُتجاهل في الحساب) */
+        const humans = order.filter(function (pid) { return users[pid]; })
+          .map(function (pid) { return users[pid]; });
+        let fee = 0;
+        if (result === 'draw') {
+          /* استرجاع كامل لكل لاعب بشري بلا رسوم */
+          humans.forEach(function (u) {
+            u.gold = (u.gold || 0) + pot;
+            try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
+          });
+        } else {
+          const wIdx = (result === 'w0') ? 0 : 1;
+          const winner = order[wIdx] != null ? users[order[wIdx]] : null;
+          const loser = order[1 - wIdx] != null ? users[order[1 - wIdx]] : null;   /* بوت/غائب → null */
+          if (!winner) { json({ ok: false, message: 'الرابح لاعب آلي أو غير موجود — لا تسوية' }, 400); return; }
+          /* المال الفعلي على الطاولة: رهانات البشريين فقط (رهان الخصم البوتّي لا يُخلق من فراغ) */
+          const stake = humans.length * pot;
+          /* الرسم: 5% في غرف percentage فقط — غرف الساعة مدفوعة مسبقاً */
+          fee = (room.room_type === 'percentage') ? Math.round(stake * BET_FEE_RATE) : 0;
+          winner.gold = (winner.gold || 0) + (stake - fee);
+          try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(winner.gold, winner.id); } catch (e) {}
+        }
+        room.settled = true;   /* منع تكرار التسوية للجولة نفسها */
+        const shape = function (u) { return u ? { id: u.id, username: u.username, gold: u.gold } : null; };
+        const winnerOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 0 : 1]]);
+        const loserOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 1 : 0]]);
+        const refunds = (result === 'draw') ? humans.map(function (u) { return shape(u); }) : [];
+        const payout = (result === 'draw') ? pot : ((room.room_type === 'percentage') ? (humans.length * pot) - Math.round(humans.length * pot * BET_FEE_RATE) : humans.length * pot);
+        const payload = {
+          ok: true, result: result, pot: pot, fee: fee,
+          winner: winnerOut, loser: loserOut, refunds: refunds,
+          dissolved: false, payout: payout
+        };
+        /* بثّ التسوية لكل أعضاء الغرفة (لاعبين + متفرجين) — العميل يزامن الأرصدة ويغلق عند dissolved */
+        broadcastRoom(room, 'room:settle', payload);
+        /* غرفة الساعة منتهية الصلاحية → تُحلّ بعد التسوية مباشرة */
+        if (dissolveIfExpired(room)) payload.dissolved = true;
+        json(payload);
+        return;
+      }
       if (pathname === '/api/rooms/settle') {
         const room = rooms[data.room_id];
         const isHost = room && me && room.owner_id === me.id;
@@ -915,7 +1041,8 @@ const server = http.createServer((req, res) => {
         const winner = Object.values(users).find(function (u) { return u.username === data.winner; });
         if (!loser || !winner) { json({ ok: false, message: 'لاعب غير موجود' }, 400); return; }
         if ((loser.gold || 0) < amt) { json({ ok: false, message: 'رصيد الخاسر غير كافٍ' }, 400); return; }
-        const fee = Math.round(amt * BET_FEE_RATE);
+        /* [B-rooms] غرف الساعة مدفوعة مسبقاً — لا رسم 5% عليها؛ البقية كالمعتاد */
+        const fee = (room.room_type === 'hour') ? 0 : Math.round(amt * BET_FEE_RATE);
         loser.gold = (loser.gold || 0) - amt;
         winner.gold = (winner.gold || 0) + (amt - fee);
         transfersList.unshift({ id: Date.now(), from_id: loser.id, from_name: loser.username, to_name: winner.username, amount: amt, created_at: Math.floor(Date.now() / 1000) });
@@ -966,6 +1093,8 @@ const server = http.createServer((req, res) => {
         const room = rooms[data.room_id];
         const mePart = room && me && room.players.some(function (p) { return p.id === me.id && !p.spectate; });
         if (mePart && !room.rematch) {
+          /* [B-rooms] انتهت الساعة: في الانتظار تُحلّ فوراً؛ والجاري جولته تُعلَّم فقط وتُحلّ عند حلّ التصويت */
+          if (sweepExpiredRoom(room)) { json({ ok: true, room: null }); return; }
           const parts = room.players.filter(function (p) { return !p.spectate; });
           const names = {};
           parts.forEach(function (p) { names[p.id] = p.username; });
@@ -979,6 +1108,8 @@ const server = http.createServer((req, res) => {
             if (r && r.rematch && !r.rematch.resolved) {
               r.rematch.participants.forEach(function (id) { if (!r.rematch.votes[id]) r.rematch.votes[id] = 'refuse'; });
               if (tryResolveRematch(r)) updateRoom(r);
+              /* [B-rooms] صلاحية منتهية بعد رفض المباراة الجديدة → حُلّ الغرفة */
+              if (r.rematch && r.rematch.resolved && !r.rematch.rematch) dissolveIfExpired(r);
             }
           }, 60000);
         }
@@ -991,6 +1122,10 @@ const server = http.createServer((req, res) => {
         if (room && me && room.rematch && !room.rematch.resolved && room.rematch.participants.indexOf(me.id) !== -1) {
           room.rematch.votes[me.id] = (data.vote === 'agree') ? 'agree' : 'refuse';
           if (tryResolveRematch(room)) updateRoom(room); else updateRoom(room);
+          /* [B-rooms] انتهت الساعة مع رفض المباراة الجديدة (لا جولة جارية) → حُلّ الغرفة */
+          if (room.rematch && room.rematch.resolved && !room.rematch.rematch && rooms[room.id]) {
+            if (dissolveIfExpired(room)) { json({ ok: true, room: null }); return; }
+          }
         }
         json({ ok: true, room: room ? serializeRoom(room) : null });
         return;

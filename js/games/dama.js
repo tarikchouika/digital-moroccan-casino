@@ -511,6 +511,9 @@ function eDama(g) {
             '<button class="dama-chip" data-t="300" onclick="damaSetTimer(300)">300 ' + T('dama.seconds') + '</button>' +
           '</div>' +
         '</div>' +
+        '<div class="dama-field"><div class="dama-flab">' + T('dama.yourBet') + '</div>' +
+          '<div class="dama-betrow">' + betRow() + '</div>' +   /* [B10] خانة الرهان في الإعدادات فقط */
+        '</div>' +
         '<div class="dama-pay" id="damaPay"></div>' +
         '<button class="big dama-go" id="damaGo" onclick="damaStart()">' + T('dama.startMatch') + '</button>' +
       '</div>' +
@@ -542,8 +545,7 @@ function eDama(g) {
           '<button class="big dama-go" onclick="damaNewMatch()">' + T('dama.newMatch') + '</button>' +
         '</div>' +
       '</div>' +
-    '</div>' +
-    betRow(),
+    '</div>',
     g
   ).replace('<div class="stage">', '<div class="stage" id="damaStage">');
 }
@@ -697,7 +699,7 @@ function damaStart() {
   DAMA.drawBanUntil = 0;
   var db = document.getElementById('damaDrawBar'); if (db) db.hidden = true;
   damaRender();
-  damaSetStatus(T('dama.yourMove') + ' ' + (human === WHITE ? T('dama.white') : T('dama.blackAdj')));
+  damaSetStatus('');   /* [UI] مباراة جديدة = شريط حالة نظيف (بلا نصوص دور/إلزامي وبلا رسائل قديمة عالقة) */
   if (DAMA.state.turn === DAMA.ai) setTimeout(damaAiTurn, 600);
   else { damaStartTimer(); damaAutoHint(); }   /* [B10] إبراز القطعة الملزَمة منذ البداية */
 }
@@ -1068,7 +1070,6 @@ function damaHumanMove(mv) {
     DAMA.sel = [mv.to[0], mv.to[1]];
     DAMA.legal = DAMA.eng.continuationMoves(s);   /* [B9] متمِّمة للسلسلة المثلى فقط */
     damaRender();
-    if (!info.pendingPromotion) damaSetStatus(T('dama.continueCapture'));
     damaStartTimer();
     return;
   }
@@ -1143,7 +1144,8 @@ function damaAfterAi() {
 }
 
 /* [B10] عند بداية دور البشري: إن كان الأكل إلزامياً حدِّد القطعة الملزَمة
-   تلقائياً وأظهر تلميحاتها — يمنع الشعور بأن اللعبة «مجمدة» */
+   تلقائياً وأظهر تلميحاتها — يمنع الشعور بأن اللعبة «مجمدة».
+   [UI] لا نص في شريط الحالة — التحديد التلقائي + التلميحات البصرية كافية. */
 function damaAutoHint() {
   if (!DAMA || !DAMA.state || DAMA.state.over || DAMA.isSpectator) return;
   if (DAMA.state.turn !== DAMA.human) return;
@@ -1151,7 +1153,7 @@ function damaAutoHint() {
   if (s.cont) return;                     /* استمرارية السلسلة محددة أصلاً */
   if (!DAMA.eng.rules.mandatoryCapture) return;
   var caps = DAMA.eng.allCaptures(s.grid, s.turn);
-  if (!caps.length) { damaSetStatus(T('dama.turn')); return; }
+  if (!caps.length) return;
   /* أول قطعة تملك قفزة من السلسلة الكبرى */
   for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
     var p = s.grid[r][c];
@@ -1161,12 +1163,10 @@ function damaAutoHint() {
         DAMA.sel = [r, c];
         DAMA.legal = lm;
         damaRender();
-        damaSetStatus(T('dama.mustCapture'));
         return;
       }
     }
   }
-  damaSetStatus(T('dama.turn'));
 }
 
 /* Settle the wager: humanWin boolean. */
@@ -1175,9 +1175,10 @@ function damaSettle(humanWin) {
   if (!DAMA || !DAMA.state) return;
   if (DAMA.state.over) return;
   DAMA.state.over = true;
-  /* [MP] مباراة ودية في الغرفة: لا رهان — بثّ الانسحاب للخصم البشري فقط */
+  /* [MP] غرفة: بثّ الانسحاب للخصم البشري + تسوية الرهان خادمياً (المضيف) */
   if (DAMA.mode === 'room') {
     if (!DAMA.oppBot) damaEmit('resign', {});
+    damaRoomSettleOutcome(humanWin ? DAMA.human : DAMA.eng.opponent(DAMA.human));
     damaShowOverRoom(humanWin ? DAMA.human : DAMA.eng.opponent(DAMA.human));
     return;
   }
@@ -1201,8 +1202,9 @@ function damaFinalize(outcome) {
   DAMA.state.outcome = outcome;
   DAMA.busy = false;
   var dbar = document.getElementById('damaDrawBar'); if (dbar) dbar.hidden = true;   /* [B10] */
-  /* [MP] غرفة: نتيجة محايدة بلا رهان (تتطابق عند الطرفين — المحرك حتمي) */
+  /* [MP] غرفة: النتيجة واحدة عند الطرفين (المحرك حتمي) — المضيف يُسوّي الرهان خادمياً */
   if (DAMA.mode === 'room') {
+    damaRoomSettleOutcome(outcome);
     damaShowOverRoom(outcome);
     return;
   }
@@ -1364,8 +1366,6 @@ function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
   if (DAMA.state.turn === DAMA.ai) {
     if (DAMA.oppBot) setTimeout(damaAiTurn, 600);   /* خصم آلي في الغرفة */
     else damaSetStatus(T('dama.waitOpp'));
-  } else {
-    damaSetStatus((T('dama.yourMove') || 'دورك — حرّك قطعة') + ' ' + (DAMA.human === WHITE ? 'بيضاء' : 'سوداء'));
   }
 }
 
@@ -1448,7 +1448,6 @@ function damaApplyRemoteMove(mv) {
   var out = DAMA.eng.detectOutcome(DAMA.state);
   if (out !== null) { damaFinalize(out); return; }
   if (DAMA.isSpectator) { damaSetStatus('👁️ ' + T('dama.spec')); damaUpdateTurn(); return; }
-  damaSetStatus(T('dama.yourMove'));
   damaUpdateTurn();
   damaStartTimer();
   damaAutoHint();   /* [B10] إبراز القطعة الملزَمة */
@@ -1462,12 +1461,11 @@ function damaResetBoardOnly() {
   DAMA.lastFrom = null; DAMA.lastTo = null;
   var over = document.getElementById('damaOver'); if (over) over.hidden = true;
   damaRender();
+  damaSetStatus('');   /* [UI] مباراة جديدة = شريط حالة نظيف (حالات الانتظار تُضبط أدناه) */
   if (DAMA.isSpectator) { damaSetStatus('👁️ ' + T('dama.newMatch')); return; }
   if (DAMA.state.turn === DAMA.ai) {
     if (DAMA.oppBot) setTimeout(damaAiTurn, 600);
     else damaSetStatus(T('dama.waitOpp'));
-  } else {
-    damaSetStatus(T('dama.yourMove'));
   }
 }
 
@@ -1478,6 +1476,17 @@ function damaRoomNewGame() {
 }
 
 /* نتيجة المباراة في الغرفة (بلا رهان) */
+/* [B-settle] تسوية رهان غرفة ضاما خادمياً: المضيف فقط يُعلن النتيجة للسيرفر
+   (result: 'w0' فاز صاحب order[0]=الأبيض | 'w1' فاز الأسود | 'draw').
+   السيرفر يقتطع رسومه آلياً حسب نوع الغرفة (ساعة بلا رسوم / نسبة 5%)
+   ويبثّ room:settle للجميع — الأرصدة تُزامَن عند الطرفين في _onSettle. */
+function damaRoomSettleOutcome(outcome) {
+  if (typeof Rooms === 'undefined' || !Rooms || typeof Rooms.roomSettle !== 'function') return;
+  if (!Rooms.state || Rooms.state.game_id !== 'dm') return;
+  var result = (outcome === 'draw') ? 'draw' : (outcome === WHITE ? 'w0' : 'w1');
+  try { Rooms.roomSettle(result); } catch (e) {}
+}
+
 function damaShowOverRoom(outcome) {
   var ov = document.getElementById('damaOver');
   var em = document.getElementById('damaOverEm');
