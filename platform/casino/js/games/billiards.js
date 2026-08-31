@@ -731,17 +731,19 @@ function blSay(t) {
 
 /* ═══ v13: انزلاق الكرة في الحفرة (بصري بحت — الفيزياء والقواعد بلا تغيير) ═══ */
 function blPocketCenter(t, id) {
-  /* مراكز أقراص الحفر المرسومة (blDrawPockets) — لا مراكز القنص الفيزيائي */
-  var W = t.W, H = t.H;
+  /* مراكز أقراص الحفر المرسومة (blDrawPockets) — لا مراكز القنص الفيزيائي
+     v15: تتبع إزاحتي cc/cm المُحجّمتين (سنوكر −10%) */
+  var W = t.W, H = t.H, ns = blNeckScale(t.id);
+  var oc = 20 * ns, om = 28 * ns;
   switch (id) {
-    case 'TL': return { x: -20, y: -20 };
-    case 'TR': return { x: W + 20, y: -20 };
-    case 'BL': return { x: -20, y: H + 20 };
-    case 'BR': return { x: W + 20, y: H + 20 };
-    case 'TC': return { x: W / 2, y: -28 };
-    case 'BC': return { x: W / 2, y: H + 28 };
+    case 'TL': return { x: -oc, y: -oc };
+    case 'TR': return { x: W + oc, y: -oc };
+    case 'BL': return { x: -oc, y: H + oc };
+    case 'BR': return { x: W + oc, y: H + oc };
+    case 'TC': return { x: W / 2, y: -om };
+    case 'BC': return { x: W / 2, y: H + om };
   }
-  return { x: -20, y: -20 };
+  return { x: -oc, y: -oc };
 }
 function blBallCol(b) {
   if (b.type === 'CUE' || b.group === 'WHITE') return null;   /* أبيض */
@@ -1146,10 +1148,10 @@ function blDraw() {
   ctx.fillRect(-3, -3, W + 6, H + 6);
 
   /* 3. الأعناق الستة بلون فراش الأرضية تماماً (بلا تدرج ولا خشب) */
-  if (hasPk) blDrawNecks(ctx, W, H, bed, t.id === 'snooker' ? 0.75 : 1);
+  if (hasPk) blDrawNecks(ctx, W, H, bed, t.id === 'snooker' ? 0.75 : 1, blNeckScale(t.id));
 
   /* 4. الوسائد بلون القماش معتّم 30% بنهايات حادة */
-  blDrawCushions(ctx, W, H, bed, hasPk, t.id === 'snooker' ? 0.75 : 1);
+  blDrawCushions(ctx, W, H, bed, hasPk, t.id === 'snooker' ? 0.75 : 1, blNeckScale(t.id));
   /* 5. أقراص الحفر فوق الوسائد */
   if (hasPk) blDrawPockets(ctx, t, W, H);
   /* علامات الطاولة */
@@ -1213,8 +1215,14 @@ function blDrawOrnate(ctx, W, H) {
   }
 }
 
-function blJawTips(W, H, pk) {
-  var g = { rc: 26 * pk, rm: 24 * pk, cc: 20, cm: 28,
+/* v15: معامل تحجيم هندسة الوسائد والأعناق — سنوكر −10% بطلب المستخدم
+   (الوسائد أرفع والأعناق أقصر وأضيق نسبةً لكرات السنوكر الصغيرة R=7.65)
+   بصري بحت: لا يمسّ الفيزياء ولا بقية الطاولات (ns=1) */
+function blNeckScale(tid) { return tid === 'snooker' ? 0.9 : 1; }
+
+function blJawTips(W, H, pk, ns) {
+  ns = ns || 1;
+  var g = { rc: 26 * pk, rm: 24 * pk, cc: 20 * ns, cm: 28 * ns,
             aC: Math.atan2(3, 26), aM: Math.atan2(18, -16) };
   g.cTop  = [ -g.cc + g.rc * Math.cos(g.aC), -g.cc + g.rc * Math.sin(g.aC) ];          /* فك الزاوية على الشريط العلوي */
   g.cLeft = [ -g.cc + g.rc * Math.sin(g.aC), -g.cc + g.rc * Math.cos(g.aC) ];          /* فك الزاوية على الشريط الأيسر */
@@ -1226,8 +1234,9 @@ function blJawTips(W, H, pk) {
 }
 
 /* الأعناق: بلون فراش الأرضية تماماً (بلا تدرّج/خشب/داكن) — تسدّ فم الجيب حتى مركز القرص */
-function blDrawNecks(ctx, W, H, bed, pk) {
-  var g = blJawTips(W, H, pk);
+function blDrawNecks(ctx, W, H, bed, pk, ns) {
+  ns = ns || 1;
+  var g = blJawTips(W, H, pk, ns);
   function poly(pts, mx, my) {
     ctx.beginPath();
     for (var i = 0; i < pts.length; i++) {
@@ -1236,25 +1245,28 @@ function blDrawNecks(ctx, W, H, bed, pk) {
     }
     ctx.closePath(); ctx.fill();
   }
-  var corner = [[30, 0], g.cTop, [-g.cc, -g.cc], g.cLeft, [0, 30]];
-  var mid = [[W / 2 - 26, 0], g.mL, [W / 2, -g.cm], g.mR, [W / 2 + 26, 0]];
+  var corner = [[30 * ns, 0], g.cTop, [-g.cc, -g.cc], g.cLeft, [0, 30 * ns]];
+  var mid = [[W / 2 - 26 * ns, 0], g.mL, [W / 2, -g.cm], g.mR, [W / 2 + 26 * ns, 0]];
   ctx.fillStyle = bed;
   poly(corner, false, false); poly(corner, true, false);
   poly(corner, false, true); poly(corner, true, true);
   poly(mid, false, false); poly(mid, false, true);
 }
 
-function blDrawCushions(ctx, W, H, cc, hasPk, pk) {
+function blDrawCushions(ctx, W, H, cc, hasPk, pk, ns) {
+  ns = ns || 1;
+  var CT = 20 * ns;                      /* سماكة الوسادة البصرية (v15: −10% للسنوكر) */
+  var jc = 28 * ns, jm = 26 * ns;        /* بدايتا فكّي الزاوية والوسط على حافة الفراش */
   ctx.fillStyle = blShade(cc, -0.30);   /* لون القماش معتّم 30% */
-  var g = hasPk ? blJawTips(W, H, pk || 1) : null;
+  var g = hasPk ? blJawTips(W, H, pk || 1, ns) : null;
   var segs = hasPk ? [
     /* كل وسادة تنتهي برأسين حادّين (فكّين) يمسّان محيطي قرصي الجيبين تماماً */
-    [g.cTop, [28, 0], [W / 2 - 26, 0], g.mL, [W / 2 - 26, -20], [10, -20]],
-    [[W - g.cTop[0], g.cTop[1]], [W - 28, 0], [W / 2 + 26, 0], g.mR, [W / 2 + 26, -20], [W - 10, -20]],
-    [g.cTopB, [28, H], [W / 2 - 26, H], g.mLB, [W / 2 - 26, H + 20], [10, H + 20]],
-    [[W - g.cTopB[0], g.cTopB[1]], [W - 28, H], [W / 2 + 26, H], g.mRB, [W / 2 + 26, H + 20], [W - 10, H + 20]],
-    [g.cLeft, [0, 28], [0, H - 28], g.cLeftB, [-20, H - 12], [-20, 12]],
-    [[W - g.cLeft[0], g.cLeft[1]], [W, 28], [W, H - 28], [W - g.cLeftB[0], g.cLeftB[1]], [W + 20, H - 12], [W + 20, 12]]
+    [g.cTop, [jc, 0], [W / 2 - jm, 0], g.mL, [W / 2 - jm, -CT], [10, -CT]],
+    [[W - g.cTop[0], g.cTop[1]], [W - jc, 0], [W / 2 + jm, 0], g.mR, [W / 2 + jm, -CT], [W - 10, -CT]],
+    [g.cTopB, [jc, H], [W / 2 - jm, H], g.mLB, [W / 2 - jm, H + CT], [10, H + CT]],
+    [[W - g.cTopB[0], g.cTopB[1]], [W - jc, H], [W / 2 + jm, H], g.mRB, [W / 2 + jm, H + CT], [W - 10, H + CT]],
+    [g.cLeft, [0, jc], [0, H - jc], g.cLeftB, [-CT, H - 12], [-CT, 12]],
+    [[W - g.cLeft[0], g.cLeft[1]], [W, jc], [W, H - jc], [W - g.cLeftB[0], g.cLeftB[1]], [W + CT, H - 12], [W + CT, 12]]
   ] : [   /* طاولة بلا جيوب (كاروم): وسائد متصلة بزوايا مشطوفة 45° */
     [[6, -17], [28, 0], [W - 28, 0], [W - 6, -17], [W - 10, -20], [10, -20]],
     [[6, H + 17], [28, H], [W - 28, H], [W - 6, H + 17], [W - 10, H + 20], [10, H + 20]],
@@ -1273,22 +1285,25 @@ function blDrawCushions(ctx, W, H, cc, hasPk, pk) {
   }
   ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(28, 0.8); ctx.lineTo(W / 2 - 26, 0.8); ctx.moveTo(W / 2 + 26, 0.8); ctx.lineTo(W - 28, 0.8);
-  ctx.moveTo(28, H - 0.8); ctx.lineTo(W / 2 - 26, H - 0.8); ctx.moveTo(W / 2 + 26, H - 0.8); ctx.lineTo(W - 28, H - 0.8);
-  ctx.moveTo(0.8, 28); ctx.lineTo(0.8, H - 28); ctx.moveTo(W - 0.8, 28); ctx.lineTo(W - 0.8, H - 28);
+  ctx.moveTo(jc, 0.8); ctx.lineTo(W / 2 - jm, 0.8); ctx.moveTo(W / 2 + jm, 0.8); ctx.lineTo(W - jc, 0.8);
+  ctx.moveTo(jc, H - 0.8); ctx.lineTo(W / 2 - jm, H - 0.8); ctx.moveTo(W / 2 + jm, H - 0.8); ctx.lineTo(W - jc, H - 0.8);
+  ctx.moveTo(0.8, jc); ctx.lineTo(0.8, H - jc); ctx.moveTo(W - 0.8, jc); ctx.lineTo(W - 0.8, H - jc);
   ctx.stroke();
 }
 
 function blDrawPockets(ctx, t, W, H) {
-  /* v11: الأقراص فوق الوسائد ومحيطها يمرّ تماماً من رؤوس الأفكاك (نصف القطر نفسه المستخدم للأفكاك) */
+  /* v11: الأقراص فوق الوسائد ومحيطها يمرّ تماماً من رؤوس الأفكاك (نصف القطر نفسه المستخدم للأفكاك)
+     v15: مراكز الأقراص تتبع cc/cm المُحجّمة (سنوكر −10%) فتبقى ملامسة لرؤوس الأفكاك */
   var pk = t.id === 'snooker' ? 0.75 : 1;
+  var ns = blNeckScale(t.id);
+  var oc = 20 * ns, om = 28 * ns;        /* إزاحتا مركزي قرص الزاوية والوسط */
   var rc = 26 * pk, rm = 24 * pk;
   function grad(cx, cy, r) {
     var g = ctx.createRadialGradient(cx, cy, 3, cx, cy, r);
     g.addColorStop(0, '#000'); g.addColorStop(.7, '#160404'); g.addColorStop(1, '#2b0a0a');
     return g;
   }
-  var corners = [[-20, -20], [W + 20, -20], [-20, H + 20], [W + 20, H + 20]];
+  var corners = [[-oc, -oc], [W + oc, -oc], [-oc, H + oc], [W + oc, H + oc]];
   for (var i = 0; i < corners.length; i++) {
     var cx = corners[i][0], cy = corners[i][1];
     ctx.beginPath(); ctx.arc(cx, cy, rc, 0, 7);
@@ -1296,7 +1311,7 @@ function blDrawPockets(ctx, t, W, H) {
   }
   var half = Math.sqrt(rm * rm - (0.75 * rm) * (0.75 * rm));   /* نصف وتر القص الخارجي */
   for (var sgn = -1; sgn <= 1; sgn += 2) {
-    var mx = W / 2, my = (sgn < 0) ? -28 : H + 28, chord = (sgn < 0) ? -(28 + 0.75 * rm) : H + 28 + 0.75 * rm;
+    var mx = W / 2, my = (sgn < 0) ? -om : H + om, chord = (sgn < 0) ? -(om + 0.75 * rm) : H + om + 0.75 * rm;
     ctx.save();
     ctx.beginPath();
     if (sgn < 0) ctx.rect(mx - (rm + 8), chord, 2 * (rm + 8), rm + 12);
