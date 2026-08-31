@@ -508,9 +508,21 @@ body.bl-game-open #pg-game {
     linear-gradient(180deg, #4a1a10, #33110a 55%, #200a06) !important;
 }
 
-/* ═══ v12: الوضع المصغّر يعرض تخطيط صفحة اللعبة القياسي ═══
-   (إصلاح: كانت قواعد v11 تخفي شريط أيقونات الهيدر وسجل رهان الجولات —
-   أُعيد الهيدر الكامل والسجل في الوضع المصغّر؛ وضع ملء الشاشة يبقى
-   غامراً كما هو عبر قواعد app-fs-on/:fullscreen دون تغيير) */
+/* ═══ v12b: وضع صفحة اللعبة = هيدر قياسي + حاوية بتناسق الوضع الممتلئ + سجل ═══
+   (الهيدر وسجل الجولات ظاهران — وحاوية اللعبة تملأ كامل المساحة المتبقية
+   من الشاشة تحت الهيدر بلا حشوات، بنفس أبعاد ونِسَب وضع ملء الشاشة تماماً؛
+   السجل يظهر بالتمرير أسفلها. وضع ملء الشاشة نفسه لم يُمسّ.) */
 body.bl-game-open:not(.app-fs-on) #pg-game .gp-head { position: sticky; top: 0; z-index: 60; }
 body.bl-game-open:not(.app-fs-on) #pg-game .ghist { display: block; }
+/* الحاوية بلا حشو: الخشب يلتصق بحواف المساحة كما في الوضع الممتلئ */
+body.bl-game-open:not(.app-fs-on) #gamePageBody {
+  padding: 0 !important;
+  min-width: 0;
+}
+/* المسرح يملأ الحاوية بالضبط — نفس قواعد الامتلاء المستعملة في الوضع الممتلئ */
+body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
+  height: 100%;
+  width: 100%;
+  margin: 0 !important;
+  transform: none !important;
+}
