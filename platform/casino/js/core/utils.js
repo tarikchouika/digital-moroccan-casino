@@ -1,0 +1,541 @@
+/* ═══════════════════════════════════════════
+   Digital Moroccan casino — Utility Functions
+   ═══════════════════════════════════════════ */
+"use strict";
+/* ── فهرس اللغة الحالي ── */
+function langIndex() {
+  if (typeof ST !== 'undefined' && ST.lang === 'fr') return 1;
+  if (typeof ST !== 'undefined' && ST.lang === 'en') return 2;
+  if (typeof ST !== 'undefined' && ST.lang === 'da') return 3;
+  return 0;
+}
+/* ── الترجمة ── */
+function T(key) {
+  if (typeof TR === 'undefined') return key;
+  const entry = TR[key];
+  if (entry) {
+    return entry[langIndex()] || entry[0] || key;
+  }
+  return key;
+}
+/* ── تنسيق الأرقام حسب اللغة ── */
+function fmt(n) {
+  try {
+    const lang = typeof ST !== 'undefined' ? ST.lang : 'ar';
+    const locale = lang === 'ar' ? 'ar-MA' :
+                   lang === 'fr' ? 'fr-FR' : 'en-US';
+    return n.toLocaleString(locale);
+  } catch (e) {
+    return String(n);
+  }
+}
+/* ── ربط الدوال بالنطاق العام window ── */
+if (typeof window !== 'undefined') {
+  window.langIndex = langIndex;
+  window.T = T;
+  window.fmt = fmt;
+}
+/* ── Toast Notifications ── */
+function toast(message, type) {
+  type = type || 'info';
+  const icons = {
+    Ok: '✅',
+    ok: '✅',
+    Err: '❌',
+    err: '❌',
+    Warn: '⚠️',
+    warn: '⚠️',
+    Info: 'ℹ️',
+    info: 'ℹ️'
+  };
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('toasts');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.setAttribute('role', 'alert');
+  el.innerHTML =
+    '<span class="toast-ico">' + (icons[type] || 'ℹ️') + '</span>' +
+    '<span class="toast-msg">' + message + '</span>' +
+    '<button class="toast-close" type="button" aria-label="' + (T('ui.close') || 'إغلاق') + '">×</button>';
+  container.appendChild(el);
+  let timer = null;
+  function dismiss() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-8px)';
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 300);
+  }
+  const closeBtn = el.querySelector('.toast-close');
+  if (closeBtn) closeBtn.onclick = dismiss;
+  /* داخل اللعبة: تظهر الرسالة 10 ثوانٍ (مع زر إغلاق يدوي)؛ خارجها: 3.5 ثوانٍ */
+  var inGame = document.body && document.body.classList.contains('pg-game');
+  timer = setTimeout(dismiss, inGame ? 10000 : 3500);
+}
+if (typeof window !== 'undefined') {
+  window.toast = toast;
+}
+/* ── التنقل بين الصفحات ── */
+function nav(id, el) {
+  /* إخفاء كل الصفحات */
+  const pages = document.querySelectorAll('.page');
+  for (let i = 0; i < pages.length; i++) {
+    pages[i].classList.remove('active');
+  }
+  /* تتبّع الصفحة الحالية على <body> للتحكم بإظهار الدوك/الهيدر */
+  const body = document.body;
+  body.className = body.className.replace(/\bpg-[a-z0-9-]+\b/g, '').trim();
+  body.classList.add('pg-' + id);
+  /* الخروج من وضع الشاشة الممتلئة عند مغادرة صفحة اللعبة */
+  if (id !== 'game' && body.classList.contains('app-fs-on') && typeof exitAppFullscreen === 'function') {
+    exitAppFullscreen();
+  }
+  /* إظهار الصفحة المطلوبة */
+  const target = document.getElementById('pg-' + id);
+  if (target) {
+    target.classList.add('active');
+  }
+  /* تحديث القائمة الجانبية وشريط التنقل السفلي */
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(function (n) {
+    const isAct = n.getAttribute('data-nav') === id;
+    n.classList.toggle('active', isAct);
+    if (isAct) n.setAttribute('aria-current', 'page');
+    else n.removeAttribute('aria-current');
+  });
+  const bnavItems = document.querySelectorAll('.bnav-item');
+  bnavItems.forEach(function (b) {
+    const isAct = b.getAttribute('data-bnav') === id;
+    b.classList.toggle('active', isAct);
+    if (isAct) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  /* إعادة رسم صفحة الإدارة والبطولات عند فتحها (تحديث حي من الـ API) */
+  if (id === 'admin' && typeof renderAdmin === 'function') renderAdmin();
+  if (id === 'tourney' && typeof renderTourney === 'function') renderTourney();
+  if (id === 'rooms' && typeof renderRooms === 'function') renderRooms();
+  if (id === 'transactions' && typeof renderTransactions === 'function') renderTransactions();
+  if (id === 'account' && typeof renderAccountLog === 'function') renderAccountLog();
+  closeSide();
+  SND.click();
+  /* ── Hash routing: update URL hash without triggering hashchange loop ── */
+  _syncHash(id);
+
+  /* حصر الأيقونة العائمة للتفاعلات داخل صفحة اللعبة فقط */
+  const fab = document.getElementById('floatingReactionsFab');
+  if (fab) fab.style.display = (id === 'game') ? 'flex' : 'none';
+}
+/* ── Hash routing (hash ↔ section) ── */
+var _hashUpdating = false;
+function _syncHash(id) {
+  if (_hashUpdating) return;
+  var hash = window.location.hash.replace('#', '');
+  if (hash !== id) {
+    _hashUpdating = true;
+    window.history.replaceState(null, '', id === 'home' ? '' : '#' + id);
+    _hashUpdating = false;
+  }
+}
+function navFromHash() {
+  var hash = window.location.hash.replace('#', '') || 'home';
+  var el = document.querySelector('[data-nav="' + hash + '"]');
+  if (typeof nav === 'function') nav(hash, el);
+}
+window.addEventListener('hashchange', function () {
+  if (_hashUpdating) return;
+  navFromHash();
+});
+/* ── القائمة الجانبية للموبايل ── */
+function openSide() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('backdrop');
+  if (sidebar) sidebar.classList.add('open');
+  if (backdrop) backdrop.classList.add('show');
+  const menu = document.querySelector('.dock-menu, .burger');
+  if (menu) menu.setAttribute('aria-expanded', 'true');
+}
+function closeSide() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('backdrop');
+  if (sidebar) sidebar.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('show');
+  const menu = document.querySelector('.dock-menu, .burger');
+  if (menu) menu.setAttribute('aria-expanded', 'false');
+}
+/* ── تغيير اللغة ── */
+function setLang(lang) {
+  ST.lang = lang;
+  sSet('rc_lang', lang);
+  applyI18n();
+  translateStatic();
+  syncLangDrop();
+  if (typeof renderAll === 'function') renderAll();
+  updateCopyright();
+}
+/* ── قائمة اللغة المنسدلة (ع / FR / EN) ── */
+const LANG_MENU_LABEL = { ar: 'ع', da: '🇲🇦', fr: 'FR', en: 'EN' };
+function syncLangDrop() {
+  const abbr = document.getElementById('langAbbr');
+  if (abbr) abbr.textContent = LANG_MENU_LABEL[ST.lang] || 'ع';
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.setAttribute('aria-label', T('ui.lang'));
+  const menu = document.getElementById('langMenu');
+  if (menu) {
+    const opts = menu.querySelectorAll('.lang-opt');
+    opts.forEach(function (o) {
+      o.classList.toggle('active', o.getAttribute('data-lang') === ST.lang);
+    });
+  }
+}
+function toggleLangMenu() {
+  const menu = document.getElementById('langMenu');
+  const btn = document.getElementById('langBtn');
+  if (!menu) return;
+  const open = menu.classList.toggle('open');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function pickLang(lang) {
+  closeLangMenu();
+  if (ST.lang !== lang) setLang(lang);
+}
+function closeLangMenu(evt) {
+  const menu = document.getElementById('langMenu');
+  const btn = document.getElementById('langBtn');
+  if (!menu) return;
+  if (evt && btn && menu.classList.contains('open') && (evt.target === btn || btn.contains(evt.target))) {
+    return;
+  }
+  if (menu.classList.contains('open')) {
+    menu.classList.remove('open');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+}
+/* ── ترجمة العناصر الثابتة (data-i18n / data-i18n-html) ── */
+function translateStatic() {
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    const v = T(el.getAttribute('data-i18n'));
+    if (v) el.textContent = v;
+  });
+  document.querySelectorAll('[data-k]').forEach(function (el) {
+    const v = T(el.getAttribute('data-k'));
+    if (v) el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+    const v = T(el.getAttribute('data-i18n-html'));
+    if (v) el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+    const v = T(el.getAttribute('data-i18n-placeholder'));
+    if (v) el.setAttribute('placeholder', v);
+  });
+  /* ترجمة الـ title (للأزرار والأيقونات بدون نص) */
+  document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+    const v = T(el.getAttribute('data-i18n-title'));
+    if (v) el.setAttribute('title', v);
+  });
+  /* زر ملء الشاشة في صفحة اللعبة — نصه يُدار ديناميكياً حسب الوضع */
+  if (typeof syncGameFsBtn === 'function') syncGameFsBtn();
+}
+/* ── تحديث سنة حقوق النشر بناءً على التوقيت المحلي ── */
+function updateCopyright() {
+  var year = new Date().getFullYear();
+  document.querySelectorAll('[data-i18n-year]').forEach(function (el) {
+    el.textContent = year;
+  });
+}
+/* ── تطبيق اتجاه الصفحة ── */
+function applyI18n() {
+  const dir = ST.lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('dir', dir);
+  document.documentElement.setAttribute('lang', ST.lang);
+}
+/* ── أدوات الورق ── */
+const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const CARD_SUITS = ['♠', '♥', '♦', '♣'];
+function randomRank() {
+  return CARD_RANKS[Math.floor(Math.random() * CARD_RANKS.length)];
+}
+function randomSuit() {
+  return CARD_SUITS[Math.floor(Math.random() * CARD_SUITS.length)];
+}
+/* ── توافق مع محركات ألعاب الورق (أسماء rr/rs2/hVal) ── */
+function rr() {
+  return randomRank();
+}
+function rs2() {
+  return randomSuit();
+}
+function hVal(rank) {
+  return CARD_RANKS.indexOf(rank);
+}
+function cardValue(rank) {
+  return CARD_RANKS.indexOf(rank);
+}
+function cardDisplayValue(card) {
+  if (card.rank === 'A') return 11;
+  if (['J', 'Q', 'K'].includes(card.rank)) return 10;
+  return parseInt(card.rank, 10);
+}
+function handValue(hand) {
+  let value = 0;
+  let aces = 0;
+  for (let i = 0; i < hand.length; i++) {
+    value += cardDisplayValue(hand[i]);
+    if (hand[i].rank === 'A') aces++;
+  }
+  while (value > 21 && aces > 0) {
+    value -= 10;
+    aces--;
+  }
+  return value;
+}
+/* ── مسار صورة ورقة من الأصول الموحدة (assets/cards) ── */
+const SUIT_FILE = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
+function suitKey(s) {
+  return SUIT_FILE[s] || 'spades';
+}
+function cardSrc(card) {
+  const rank = card.rank || card.r || 'A';
+  const suit = card.suit || card.s || '♠';
+  return 'assets/cards/' + rank + '-' + suitKey(suit) + '.webp';
+}
+/* ── توليد HTML لبطاقة ورق (صور موحدة + شعار) ── */
+function cardHTML(card, isBack, isHold) {
+  if (isBack) {
+    return '<div class="bjc back" aria-hidden="true"><img src="assets/cards/back.webp" alt="" draggable="false"></div>';
+  }
+  const rank = card.rank || card.r;
+  const suit = card.suit || card.s;
+  const isRed = suit === '♥' || suit === '♦';
+  const colorClass = isRed ? ' red' : '';
+  const holdBadge = isHold ? '<span class="hold">HOLD</span>' : '';
+  return '<div class="bjc' + colorClass + '" aria-label="' + rank + ' ' + suit + '">' +
+    holdBadge +
+    '<img src="' + cardSrc(card) + '" alt="' + rank + ' ' + suit + '" draggable="false">' +
+    '</div>';
+}
+/* ── إنشاء مجموعة ورق مخلوطة ── */
+function createDeck() {
+  const deck = [];
+  for (let s = 0; s < 4; s++) {
+    for (let r = 0; r < 13; r++) {
+      deck.push({ suit: CARD_SUITS[s], rank: CARD_RANKS[r] });
+    }
+  }
+  /* Fisher-Yates shuffle */
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = deck[i];
+    deck[i] = deck[j];
+    deck[j] = temp;
+  }
+  return deck;
+}
+/* ── تأثير الفوز ── */
+function winFX(winAmount, bigThreshold) {
+  if (winAmount > 0) {
+    const big = winAmount >= (bigThreshold || GB * 5);
+    celebrate(big);
+    if (big && typeof coinRain === 'function') coinRain(16);
+  } else {
+    SND.lose();
+  }
+}
+/* ── Hash بسيط لـ Provably Fair ── */
+function simpleHash(str) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  let output = '';
+  for (let j = 0; j < 64; j++) {
+    output += ((hash + str.charCodeAt(j % str.length) * 31 + j * 17) & 15).toString(16);
+    hash = (hash * 31 + j) | 0;
+  }
+  return output;
+}
+
+/* ── تبديل الوضع المشع / القاتم ── */
+function themeToggle() {
+  const html = document.documentElement;
+  const radiant = html.getAttribute('data-theme') === 'radiant';
+  if (radiant) {
+    html.removeAttribute('data-theme');
+    sSet('rc_theme', 'dark');
+  } else {
+    html.setAttribute('data-theme', 'radiant');
+    sSet('rc_theme', 'radiant');
+  }
+  updateThemeIcon();
+  if (typeof SND !== 'undefined' && SND.click) SND.click();
+}
+function updateThemeIcon() {
+  const b = document.getElementById('themeBtn');
+  if (!b) return;
+  const radiant = document.documentElement.getAttribute('data-theme') === 'radiant';
+  const ico = document.getElementById('themeIco');
+  if (ico) ico.className = radiant ? 'fa-solid fa-lightbulb' : 'fa-regular fa-lightbulb';
+  b.setAttribute('aria-pressed', radiant ? 'true' : 'false');
+}
+if (typeof window !== 'undefined') {
+  window.themeToggle = themeToggle;
+  window.updateThemeIcon = updateThemeIcon;
+}
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateThemeIcon);
+  } else {
+    updateThemeIcon();
+  }
+}
+
+/* ── فتح الحساب أو مودال الدخول للزائر ── */
+function openAccountOrAuth(el) {
+  if (typeof AUTH !== 'undefined' && AUTH.user) {
+    nav('account', el);
+  } else {
+    if (typeof openAuthModal === 'function') openAuthModal();
+  }
+}
+window.openAccountOrAuth = openAccountOrAuth;
+
+/* ═══════════ VIP Level System ═══════════ */
+function getVipLevel(gold) {
+  const g = parseInt(gold, 10) || 0;
+  if (g >= 500000) return { id: 'royal', name: T('vip.royal') || '👑 VIP ملكي', badge: 'vip-royal', icon: 'fa-crown', color: '#F5C518' };
+  if (g >= 100000) return { id: 'plat', name: T('vip.plat') || '💎 بلاتيني', badge: 'vip-plat', icon: 'fa-gem', color: '#38BDF8' };
+  if (g >= 25000) return { id: 'gold', name: T('vip.gold') || '🥇 ذهبي', badge: 'vip-gold', icon: 'fa-medal', color: '#F59E0B' };
+  if (g >= 5000) return { id: 'silver', name: T('vip.silver') || '🥈 فضي', badge: 'vip-silver', icon: 'fa-shield', color: '#94A3B8' };
+  return { id: 'bronze', name: T('vip.bronze') || '🥉 برونزي', badge: 'vip-bronze', icon: 'fa-certificate', color: '#CD7F32' };
+}
+function sanitizeAmount(val) {
+  const num = parseInt(val, 10);
+  return isNaN(num) || num <= 0 ? 0 : Math.min(num, 1000000000);
+}
+window.getVipLevel = getVipLevel;
+window.sanitizeAmount = sanitizeAmount;
+
+/* ═══════════ Floating Emoji Reactions ═══════════ */
+function sendReaction(emoji) {
+  spawnFloatingReaction(emoji);
+  if (typeof SND !== 'undefined' && SND.click) SND.click();
+  if (typeof Rooms !== 'undefined' && Rooms.state && Rooms.sendMove) {
+    Rooms.sendMove('reaction', { emoji: emoji });
+  }
+}
+function spawnFloatingReaction(emoji, startX) {
+  const el = document.createElement('div');
+  el.className = 'floating-reaction';
+  el.textContent = emoji;
+  const x = startX !== undefined ? startX : (window.innerWidth / 2 + (Math.random() * 120 - 60));
+  el.style.left = x + 'px';
+  el.style.bottom = '90px';
+  document.body.appendChild(el);
+  setTimeout(function () {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }, 2200);
+}
+window.sendReaction = sendReaction;
+window.spawnFloatingReaction = spawnFloatingReaction;
+
+
+function toggleReactionsFab() {
+  const menu = document.getElementById('fabReactionsMenu');
+  const btn = document.querySelector('.fab-main-btn');
+  if (!menu) return;
+  const isOpen = menu.classList.toggle('open');
+  if (btn) btn.classList.toggle('active', isOpen);
+  if (isOpen) {
+    setTimeout(function () {
+      const inp = document.getElementById('fabQuickMsgInput');
+      if (inp) inp.focus();
+    }, 100);
+  }
+}
+
+function sendFabQuickMsg() {
+  const inp = document.getElementById('fabQuickMsgInput');
+  if (!inp) return;
+  const txt = (inp.value || '').trim();
+  if (!txt) return;
+  inp.value = '';
+  toggleReactionsFab();
+  spawnFloatingReaction('💬 ' + txt);
+  if (typeof SND !== 'undefined' && SND.click) SND.click();
+  if (typeof Rooms !== 'undefined' && Rooms.state && Rooms.sendMove) {
+    Rooms.sendMove('chat', { text: txt });
+  }
+}
+
+window.toggleReactionsFab = toggleReactionsFab;
+window.sendFabQuickMsg = sendFabQuickMsg;
+
+/* ═══════════ أيقونة التفاعلات العائمة القابلة للسحب يدوياً ═══════════ */
+/* النقر = فتح قائمة التفاعلات؛ السحب = تحريك الأيقونة لأي مكان ضمن الشاشة. */
+var _fabDrag = null;
+function initFabDrag() {
+  if (typeof document === 'undefined') return;
+  var fab = document.getElementById('floatingReactionsFab');
+  var handle = document.querySelector('.fab-main-btn');
+  if (!fab || !handle || fab._dragBound) return;
+  fab._dragBound = true;
+  handle.style.touchAction = 'none';
+
+  /* استعادة الموضع المحفوظ من الجلسة السابقة */
+  try {
+    var saved = localStorage.getItem('rc_fab_pos');
+    if (saved) {
+      var pos = JSON.parse(saved);
+      if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+        fab.style.right = 'auto'; fab.style.bottom = 'auto';
+        fab.style.left = pos.x + 'px'; fab.style.top = pos.y + 'px';
+      }
+    }
+  } catch (e) {}
+
+  handle.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    var r = fab.getBoundingClientRect();
+    _fabDrag = { startX: e.clientX, startY: e.clientY, origX: r.left, origY: r.top,
+      moved: false, id: e.pointerId, w: r.width, h: r.height };
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  handle.addEventListener('pointermove', function (e) {
+    if (!_fabDrag || e.pointerId !== _fabDrag.id) return;
+    var dx = e.clientX - _fabDrag.startX;
+    var dy = e.clientY - _fabDrag.startY;
+    if (!_fabDrag.moved && (dx * dx + dy * dy) < 100) return; /* عتبة 10px لفصل النقرة عن السحب */
+    if (!_fabDrag.moved) { _fabDrag.moved = true; fab.classList.add('dragging'); }
+    var nx = _fabDrag.origX + dx;
+    var ny = _fabDrag.origY + dy;
+    /* تقييد ضمن حدود الشاشة */
+    var maxX = window.innerWidth - _fabDrag.w - 4;
+    var maxY = window.innerHeight - _fabDrag.h - 4;
+    nx = Math.max(4, Math.min(nx, maxX));
+    ny = Math.max(4, Math.min(ny, maxY));
+    fab.style.right = 'auto'; fab.style.bottom = 'auto';
+    fab.style.left = nx + 'px'; fab.style.top = ny + 'px';
+    if (e.cancelable) e.preventDefault();
+  });
+
+  function endDrag(e) {
+    if (!_fabDrag || (e && e.pointerId !== _fabDrag.id)) return;
+    var wasDrag = _fabDrag.moved;
+    var pid = _fabDrag.id;
+    _fabDrag = null;
+    fab.classList.remove('dragging');
+    try { handle.releasePointerCapture(pid); } catch (err) {}
+    if (wasDrag) {
+      var r = fab.getBoundingClientRect();
+      try { localStorage.setItem('rc_fab_pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); } catch (err) {}
+      /* منع النقرة اللاحقة من فتح القائمة بعد السحب */
+      var block = function (ev) { ev.stopPropagation(); ev.preventDefault(); handle.removeEventListener('click', block, true); };
+      handle.addEventListener('click', block, true);
+    }
+  }
+  handle.addEventListener('pointerup', endDrag);
+  handle.addEventListener('pointercancel', endDrag);
+}
+window.initFabDrag = initFabDrag;

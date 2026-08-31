@@ -1,0 +1,17 @@
+{
+  "name": "digital-moroccan-casino",
+  "version": "2.5.1",
+  "description": "Digital Moroccan Casino — منصة الألعاب التراثية المغربية والكازينو العالمية (Vanilla JS + Node.js SSE)",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

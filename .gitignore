@@ -1,0 +1,11 @@
+node_modules/
+.pki/
+*.log
+.DS_Store
+project.zip
+uploads/
+screenshots/
+_shot_*.png
+_rn_*.png
+mp3_deal.png
+mp_deal_A.png

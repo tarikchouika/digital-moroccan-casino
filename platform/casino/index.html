@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Digital Moroccan casino — 41 لعبة مجانية. Ronda، Crash، Blackjack، Parchisi والمزيد!">
+  <meta name="theme-color" content="#070B12">
+  <meta property="og:title" content="Digital Moroccan Casino">
+  <meta property="og:description" content="41 لعبة + Moroccan Ronda + Parchisi — ترفيه بأفضل الجرافيك">
+  <title>Digital Moroccan Casino | 41 لعبة</title>
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <!-- Icons: Font Awesome (أيقونات فنية موحّدة بدل الإيموجي) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <!-- Import Map for ES Modules (only for Three.js and Crash) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/assets/vendor/three.module.min.js",
+      "/js/games/crash.js": "/js/games/crash.js"
+    }
+  }
+  </script>
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="css/01-variables.css">
+  <link rel="stylesheet" href="css/02-base.css">
+  <link rel="stylesheet" href="css/03-components.css">
+  <link rel="stylesheet" href="css/04-games.css">
+  <link rel="stylesheet" href="css/05-ronda.css">
+  <link rel="stylesheet" href="css/06-parchisi.css">
+  <link rel="stylesheet" href="css/07-responsive.css">
+  <link rel="stylesheet" href="css/08-rami.css">
+  <link rel="stylesheet" href="css/09-chrome.css">
+  <link rel="stylesheet" href="css/10-dama.css">
+  <link rel="stylesheet" href="css/12-chess.css">
+  <link rel="stylesheet" href="css/11-game-theme.css">
+  <link rel="stylesheet" href="css/13-billiards.css?v=260831gv4">
+  <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
+  <script>
+    (function () {
+      var t = 'dark';
+      try { t = localStorage.getItem('rc_theme') || 'dark'; } catch (e) {}
+      if (t === 'radiant') {
+        document.documentElement.setAttribute('data-theme', 'radiant');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- ═══════════ تأثيرات بصرية ═══════════ -->
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <div id="flash" aria-hidden="true"></div>
+  <!-- ═══════════ التطبيق ═══════════ -->
+  <div class="app">
+    <!-- ═══ Sidebar ═══ -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="القائمة الرئيسية">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <img src="assets/logo/moroccan-casino-logo-main.webp" alt="Digital Moroccan Casino">
+        </div>
+        <div class="brand-name">
+          <b>Digital</b> Moroccan Casino
+          <small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> المغرب • 41 لعبة</small>
+        </div>
+      </div>
+      <div class="side-title" id="sideTitleMain" data-i18n="ui.home">الرئيسية</div>
+      <button class="nav-item active" data-nav="home" onclick="nav('home', this)" aria-current="page">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-house"></i></span>
+        <span data-i18n="ui.home">الرئيسية</span>
+      </button>
+      <button class="nav-item" data-nav="games" onclick="nav('games', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-gamepad"></i></span>
+        <span data-i18n="ui.games">الألعاب</span>
+        <span class="badge" id="gamesCountBadge" aria-label="الألعاب">35</span>
+      </button>
+      <button class="nav-item" data-nav="lb" onclick="nav('lb', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-ranking-star"></i></span>
+        <span data-i18n="ui.lb">المتصدرون</span>
+      </button>
+      <button class="nav-item" data-nav="chat" onclick="nav('chat', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-comments"></i></span>
+        <span data-i18n="ui.chat">الدردشة</span>
+      </button>
+      <button class="nav-item" data-nav="tourney" onclick="nav('tourney', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-award"></i></span>
+        <span data-i18n="ui.tourney">البطولات</span>
+      </button>
+      <button class="nav-item" data-nav="rooms" onclick="nav('rooms', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+        <span data-i18n="ui.rooms">غرف اللعب</span>
+      </button>
+      <div class="side-title" data-i18n="ui.tools">الأدوات</div>
+      <button class="nav-item" data-nav="fair" onclick="nav('fair', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+        <span data-i18n="ui.fair">Provably Fair</span>
+      </button>
+      <button class="nav-item" data-nav="admin" id="navAdmin" onclick="nav('admin', this)">
+        <span class="ic" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+        <span data-i18n="ui.admin">الإدارة</span>
+      </button>
+      <div class="side-foot">
+<div class="sf-icons">
+          <a class="sf-icon" href="2fa.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('2fa')" data-i18n-title="ui.fb2fa" title="حماية الحساب 2FA" aria-label="حماية الحساب 2FA"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></a>
+          <a class="sf-icon" href="provably-fair.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('provably-fair')" data-i18n-title="ui.fbFair" title="Provably Fair" aria-label="العدالة المشفرة"><i class="fa-solid fa-dice" aria-hidden="true"></i></a>
+          <a class="sf-icon" href="fairness.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('fairness')" data-i18n-title="ui.fbSecure" title="العدالة والشفافية" aria-label="العدالة والشفافية"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></a>
+        </div>
+      </div>
+    </aside>
+    <!-- ═══ Backdrop ═══ -->
+    <div id="backdrop" onclick="closeSide()" aria-hidden="true"></div>
+    <!-- ═══ Main Content ═══ -->
+    <div class="main">
+      <!-- ═══ App Dock (أيقونات عائمة دائرية بلا هيدر) ═══ -->
+      <div class="app-dock" id="appDock">
+        <div class="dock-left">
+          <!-- الحساب -->
+          <div id="authChip" class="authchip"></div>
+          <!-- اللغة -->
+          <div class="lang-drop">
+            <button class="lang-btn dock-ic" id="langBtn" onclick="toggleLangMenu()" aria-haspopup="menu" aria-expanded="false" aria-label="اختيار اللغة">
+              <span class="lang-abbr" id="langAbbr">ع</span>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="lang-menu" id="langMenu" role="menu" aria-label="اللغة">
+              <button class="lang-opt" role="menuitem" data-lang="ar" onclick="pickLang('ar')">العربية</button>
+              <button class="lang-opt" role="menuitem" data-lang="da" onclick="pickLang('da')">🇲🇦 الدارجة المغربية</button>
+              <button class="lang-opt" role="menuitem" data-lang="fr" onclick="pickLang('fr')">Français</button>
+              <button class="lang-opt" role="menuitem" data-lang="en" onclick="pickLang('en')">English</button>
+            </div>
+          </div>
+          <!-- الوضع قاتم/مشع -->
+          <button class="dock-ic" id="themeBtn" onclick="window.themeToggle()"
+                  aria-label="تبديل الوضع المشع/القاتم" aria-pressed="false" title="تبديل الوضع"><i class="fa-regular fa-lightbulb" id="themeIco" aria-hidden="true"></i></button>
+        </div>
+        <div class="dock-right">
+          <!-- القائمة المنسدلة -->
+          <button class="dock-ic dock-menu" onclick="openSide()" aria-label="فتح القائمة" aria-expanded="false"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <!-- ═══ Ticker ═══ -->
+      <div class="ticker" role="marquee" aria-label="آخر الفائزين">
+        <div class="ticker-track" id="ticker"></div>
+      </div>
+      <!-- ═══ Pages ═══ -->
+      <main class="content" role="main">
+        <!-- الصفحة الرئيسية -->
+        <section class="page active" id="pg-home" aria-labelledby="homeTitle">
+          <div class="home-banner" aria-hidden="true">
+            <img src="assets/logo/moroccan-casino-banner.webp" alt="">
+          </div>
+          <div class="hero">
+            <h1 id="homeTitle" data-i18n-html="ui.heroTitle">41 لعبة فريدة <b>بجرافيك وصوتيات</b></h1>
+            <p data-i18n="ui.heroSub">كل لعبة بمؤثرات صوتية وبصرية، شرح قواعد مفصّل، وجرافيك Canvas احترافي — العب مجاناً الآن.</p>
+            <div class="hero-btns">
+              <button class="btn" onclick="nav('games', document.querySelector('[data-nav=games]'))"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-i18n="ui.playNow">العب الآن</span></button>
+              <button class="btn ghost" onclick="claimDaily()"><i class="fa-solid fa-gift" aria-hidden="true"></i> <span data-i18n="ui.claim">مكافأة</span></button>
+            </div>
+            <div class="hero-stats" role="list">
+              <div class="hs" role="listitem"><div class="v">12,458</div><div class="l" data-i18n="ui.players">لاعب</div></div>
+              <div class="hs" role="listitem"><div class="v" id="onlineN">892</div><div class="l" data-i18n="ui.online">متصل</div></div>
+              <div class="hs" role="listitem"><div class="v" id="statGamesCount">35</div><div class="l" data-i18n="ui.games">لعبة</div></div>
+              <div class="hs" role="listitem"><div class="v">99.9%</div><div class="l" data-i18n="ui.uptime">Uptime</div></div>
+            </div>
+          </div>
+          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-star" aria-hidden="true"></i> <span data-i18n="ui.featured">ألعاب مميزة</span></div></div>
+          <div class="grid g4" id="rowFeatured"></div>
+          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-rocket" aria-hidden="true"></i> Crash</div></div>
+          <div class="grid g4" id="rowCrash"></div>
+          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-bolt" aria-hidden="true"></i> <span data-i18n="ui.instant">فورية</span></div></div>
+          <div class="grid g4" id="rowInstant"></div>
+        </section>
+        <!-- صفحة الألعاب -->
+        <section class="page" id="pg-games" aria-labelledby="gamesTitle">
+          <div class="phead">
+            <div class="ptitle" id="gamesTitle"><div class="ibox"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></div> <span data-i18n="ui.allGames">جميع الألعاب (35)</span></div>
+            <div class="psub" data-i18n="ui.gamesSub">كل لعبة بمحرك مستقل — Moroccan Ronda و Parchisi جديدتان!</div>
+          </div>
+          <div class="fbar" id="gameFilters" role="tablist" aria-label="تصفية الألعاب">
+            <button class="fchip active" role="tab" aria-selected="true" onclick="filterG('all', this)" data-i18n="ui.all">الكل</button>
+            <button class="fchip" role="tab" onclick="filterG('slots', this)"><i class="fa-solid fa-dice-d6" aria-hidden="true"></i> Slots</button>
+            <button class="fchip" role="tab" onclick="filterG('crash', this)"><i class="fa-solid fa-rocket" aria-hidden="true"></i> <span data-i18n="ui.crashCat">كراش</span></button>
+            <button class="fchip" role="tab" onclick="filterG('instant', this)"><i class="fa-solid fa-bolt" aria-hidden="true"></i> <span data-i18n="ui.instant">فورية</span></button>
+            <button class="fchip" role="tab" onclick="filterG('card', this)"><i class="fa-solid fa-clubs" aria-hidden="true"></i> <span data-i18n="ui.card">ورق</span></button>
+            <button class="fchip" role="tab" onclick="filterG('casino', this)"><i class="fa-solid fa-dice" aria-hidden="true"></i> <span data-i18n="ui.casino">كازينو</span></button>
+            <button class="fchip" role="tab" onclick="filterG('traditional', this)"><i class="fa-solid fa-crown" aria-hidden="true"></i> <span data-i18n="ui.traditional">تقليدية</span></button>
+          </div>
+          <div class="grid g4" id="allGames"></div>
+        </section>
+        <!-- المتصدرون -->
+        <section class="page" id="pg-lb" aria-labelledby="lbTitle">
+          <div class="phead"><div class="ptitle" id="lbTitle"><div class="ibox"><i class="fa-solid fa-ranking-star" aria-hidden="true"></i></div> <span data-i18n="ui.lb">المتصدرون</span></div></div>
+          <div class="lb" id="lbList" role="list"></div>
+        </section>
+        <!-- الدردشة -->
+        <section class="page" id="pg-chat" aria-labelledby="chatTitle">
+          <div class="phead"><div class="ptitle" id="chatTitle"><div class="ibox"><i class="fa-solid fa-comments" aria-hidden="true"></i></div> <span data-i18n="ui.chat">الدردشة</span></div></div>
+          <div class="chatpanel">
+            <div class="chead"><b><i class="fa-solid fa-comments" aria-hidden="true"></i> <span data-i18n="ui.chatChannel">القناة العامة</span></b><span class="ctext"><span id="chatOn">342</span><span data-i18n="ui.chatOnline"> متصل</span></span></div>
+            <div class="cmsgs" id="chatMsgs" role="log" aria-live="polite"></div>
+            <div class="crow">
+              <label for="chatIn" class="sr-only">اكتب رسالتك</label>
+              <input class="cin" id="chatIn" placeholder="رسالتك..." data-i18n-placeholder="ui.chatPlaceholder"
+                     onkeypress="if(event.key==='Enter') sendChat()">
+              <button class="btn" onclick="sendChat()" data-i18n="ui.send">إرسال</button>
+            </div>
+          </div>
+        </section>
+        <!-- البطولات -->
+        <section class="page" id="pg-tourney" aria-labelledby="tourneyTitle">
+          <div class="phead"><div class="ptitle" id="tourneyTitle"><div class="ibox"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div> <span data-i18n="ui.weekly">البطولات الأسبوعية</span></div></div>
+          <div class="grid g2" id="tourneyList"></div>
+        </section>
+        <!-- غرف اللعب المفتوحة (مشاركة أو فرجة) -->
+        <section class="page" id="pg-rooms" aria-labelledby="roomsTitle">
+          <div class="phead"><div class="ptitle" id="roomsTitle"><div class="ibox"><i class="fa-solid fa-users" aria-hidden="true"></i></div> <span data-i18n="ui.roomsTitle">غرف اللعب المفتوحة</span></div></div>
+          <div class="note" id="roomsInfo" data-i18n="rooms.info">انضم إلى غرفة مفتوحة أو أنشئ غرفتك الخاصة من صفحة أي لعبة جماعية.</div>
+          <div class="card rooms-join-code" style="max-width:520px;margin:0 auto 16px;text-align:center">
+            <div class="ctitle"><i class="fa-solid fa-key" aria-hidden="true"></i> <span data-i18n="rooms.joinCode">الانضمام برمز الغرفة</span></div>
+            <div class="ctext" style="margin-bottom:10px" data-i18n="rooms.joinHint">لولوج غرفة خاصة أدخل كودها هنا — انضمام كلاعب أو متفرج.</div>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+              <input class="afinput" id="roomCodeInput" dir="ltr" placeholder="MAROC7" data-i18n-placeholder="rooms.enterCode" maxlength="24" style="flex:1;min-width:180px;max-width:300px;text-align:center" onkeypress="if(event.key==='Enter') joinRoomByCode()">
+              <button class="btn" onclick="joinRoomByCode()"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> <span data-i18n="rooms.join">🎮 انضم</span></button>
+            </div>
+          </div>
+          <div class="grid g2" id="roomsList"></div>
+        </section>
+        <!-- Provably Fair -->
+        <section class="page legal-page" id="pg-fair" aria-labelledby="fairTitle">
+          <div class="phead">
+            <div class="ptitle" id="fairTitle">
+              <div class="ibox"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+              <span data-i18n="legal.fair.title">العدالة والشفافية والتحقق الرياضي</span>
+            </div>
+          </div>
+          <div class="legal-card card">
+            
+            <div class="legal-section">
+              <h3><i class="fa-solid fa-check-circle" style="color:var(--gold);font-size:0.95rem" aria-hidden="true"></i> مبدأ العدالة المثبتة (Provably Fair)</h3>
+              <p>يعتمد كازينو المغرب الرقمي على نظام Provably Fair القائم على علم التشفير الرياضي، والذي يضمن بشكل قاطع عدم إمكانية معرفة أو تعديل نتيجة أي جولة مسبقاً من طرف السيرفر أو اللاعب.</p>
+            </div>
+            <div class="legal-section">
+              <h3><i class="fa-solid fa-check-circle" style="color:var(--gold);font-size:0.95rem" aria-hidden="true"></i> أركان الخوارزمية الثلاثية</h3>
+              <p>1. Server Seed: مفتاح سري يُولّده الخادم ويُعرض عليك مشفراً بتجزئة SHA-256 قبل بدء الجولة.<br>2. Client Seed: مفتاح يُولده جهازك أو تختاره بنفسك، مما يمنع الخادم من التنبؤ بالنتيجة.<br>3. Nonce: رقم تسلسلي تصاعدي لكل جولة يضمن فرادة النتائج وعدم تكرارها.</p>
+            </div>
+            <div class="legal-section">
+              <h3><i class="fa-solid fa-check-circle" style="color:var(--gold);font-size:0.95rem" aria-hidden="true"></i> أداة التدقيق المستقلة المدمجة</h3>
+              <p>توفر المنصة صفحة مستقلة (Provably Fair Calculator) تتيح لك إدخال Server Seed و Client Seed و Nonce لأي جولة سابقة ومطابقة التجزئة رياضياً للتأكد التام من نزاهة النتيجة.</p>
+            </div>
+          </div>
+        </section>
+        <!-- الإدارة -->
+        <section class="page" id="pg-admin" aria-labelledby="adminTitle">
+          <div class="phead"><div class="ptitle" id="adminTitle"><div class="ibox"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div> <span data-i18n="ui.adminPanel">لوحة المسؤول</span></div></div>
+          <div class="grid g4" style="margin-bottom:14px" role="list">
+            <div class="stat" role="listitem"><div class="si"><i class="fa-solid fa-users" aria-hidden="true"></i></div><div><div class="sv" id="adminStatUsers">—</div><div class="sl" data-i18n="admin.users">المستخدمون</div></div></div>
+            <div class="stat" role="listitem"><div class="si"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div><div><div class="sv green" id="adminStatOnline">—</div><div class="sl" data-i18n="admin.online">متصل</div></div></div>
+            <div class="stat" role="listitem"><div class="si"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></div><div><div class="sv" id="adminStatPlays">—</div><div class="sl" data-i18n="admin.games">ألعاب اليوم</div></div></div>
+            <div class="stat" role="listitem"><div class="si"><i class="fa-solid fa-coins" aria-hidden="true"></i></div><div><div class="sv" id="adminStatCoins">—</div><div class="sl" data-i18n="admin.coins">الكوينز</div></div></div>
+          </div>
+          <div id="adminBox"></div>
+        </section>
+        <!-- سجل المعاملات -->
+        <section class="page" id="pg-transactions" aria-labelledby="txTitle">
+          <div class="phead"><div class="ptitle" id="txTitle"><div class="ibox"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div> <span data-i18n="auth.transactionHistory">سجل المعاملات</span></div></div>
+          <div class="card">
+            <div class="ctitle"><i class="fa-solid fa-exchange-alt" aria-hidden="true"></i> <span data-i18n="tr.title">التحويلات</span></div>
+            <div id="txTransfers" class="ctext"><div class="note" data-i18n="tr.needLogin">سجّل الدخول لعرض السجل</div></div>
+          </div>
+          <div class="card" style="margin-top:14px">
+            <div class="ctitle"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-i18n="tr.rounds">المراهنات</span></div>
+            <div id="txRounds" class="ctext"><div class="note" data-i18n="tr.needLogin">سجّل الدخول لعرض السجل</div></div>
+          </div>
+        </section>
+        <!-- سجل الحساب -->
+        <section class="page" id="pg-account" aria-labelledby="acctTitle">
+          <div class="phead"><div class="ptitle" id="acctTitle"><div class="ibox"><i class="fa-solid fa-user" aria-hidden="true"></i></div> <span data-i18n="auth.accountLog">سجل الحساب</span></div></div>
+          <div class="card">
+            <div class="ctitle"><i class="fa-solid fa-info-circle" aria-hidden="true"></i> <span data-i18n="auth.accountName">معلومات الحساب</span></div>
+            <div id="accountInfo" class="ctext"><div class="note" data-i18n="tr.needLogin">سجّل الدخول لعرض المعلومات</div></div>
+          </div>
+        </section>
+
+        <!-- ═══════════ الصفحات القانونية والمعلوماتية السبعة ═══════════ -->
+
+        <!-- ═══════════ من نحن (about.html) ═══════════ -->
+        <section class="page legal-page" id="pg-about" aria-labelledby="aboutTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-building-columns"></i></div>
+<h1 data-k="a.title">من نحن</h1>
+<div class="updated" data-k="a.updated">آخر تحديث: 12 أغسطس 2026</div>
+<p data-k="a.intro">Digital Moroccan Casino — منصة مغربية تجمع بين المتعة والترفيه والربح. يمكنك شحن حسابك بمال حقيقي، ومبادلة الكوينز بحرية بين اللاعبين، وسحب أرباحك بالطريقة التي تناسبك.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-flag"></i> <span data-k="a.missionTitle">ما هي منصتنا</span></h2>
+<p data-k="a.missionP">منصة ترفيهية مغربية تتيح للاعبين اللعب والتحدي في أجواء آمنة ومنظمة، مع نظام اقتصادي داخلي واضح وشفاف: الكوينز لها قيمة، واللعب له قواعد، والأرباح تُسحب بأمان.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-coins"></i> <span data-k="a.coinTitle">نظام الكوينز</span></h2>
+<ul>
+<li data-k="a.coin1">10 كوينز = 1 درهم مغربي.</li>
+<li data-k="a.coin2">الكوينز تُستخدم في الألعاب والغرف الجماعية والإرسال بين اللاعبين.</li>
+<li data-k="a.coin3">مبادلة الكوينز بين اللاعبين حرة عبر المنصة وبدون أي رسوم للمنصة.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-credit-card"></i> <span data-k="a.topupTitle">الشحن</span></h2>
+<p data-k="a.topupP">يمكن للاعب شحن حسابه بمال حقيقي عبر أحد أدمنز المنصة. يتم التحويل فوراً إلى كوينز وفق المعادلة: 10 كوينز = 1 درهم.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-right-left"></i> <span data-k="a.tradeTitle">مبادلة الكوينز</span></h2>
+<p data-k="a.tradeP">يمكن للاعبين مبادلة الكوينز فيما بينهم بشكل حر عبر المنصة، بدون أي رسوم تُفرض على عملية المبادلة نفسها.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-money-bill-transfer"></i> <span data-k="a.withdrawTitle">السحب</span></h2>
+<p data-k="a.withdrawP">يمكن للاعب سحب أرباحه مقابل مال حقيقي بإحدى الطرق الثلاث، والاختيار للاعب حسب رغبته:</p>
+<ul>
+<li data-k="a.withdraw1">حوالة بنكية.</li>
+<li data-k="a.withdraw2">كاش وجه لوجه عن طريق أحد الأدمنز.</li>
+<li data-k="a.withdraw3">عملات رقمية.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-user-plus"></i> <span data-k="a.referTitle">الإحالة</span></h2>
+<div class="legal-note">
+<b data-k="a.referTitle2">كافأة الإحالة:</b>
+<span data-k="a.referP">يمكن للاعب إحالة صديق، ويُكافأ بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.</span>
+</div>
+<h2><i aria-hidden="true" class="fa-solid fa-hand-holding-dollar"></i> <span data-k="a.commTitle">عمولات الأدمنز</span></h2>
+<p data-k="a.commP">يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:</p>
+<div class="comm-grid">
+<div class="comm-card"><div class="rate">25%</div><div class="desc" data-k="a.comm1">من الشحن فوق 1000 درهم = 12500 كوينز</div></div>
+<div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 10000 درهم = 130000 كوينز</div></div>
+<div class="comm-card"><div class="rate">35%</div><div class="desc" data-k="a.comm3">من الشحن فوق 100000 درهم = 1350000 كوينز</div></div>
+<div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm4">من الشحن فوق 1000000 درهم = 14000000 كوينز</div></div>
+</div>
+<div class="legal-note" style="margin-top:14px"><p data-k="a.adminWithdraw">يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.</p></div>
+<h2><i aria-hidden="true" class="fa-solid fa-users"></i> <span data-k="a.roomsTitle">الغرف الجماعية</span></h2>
+<p data-k="a.roomsP">يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:</p>
+<ul>
+<li data-k="a.rooms1">غرف مجانية وغرف للمراهنة — يحدد الداعي ما إذا كانت الغرفة عمومية أو خاصة، ومجانية أو للمراهنة.</li>
+<li data-k="a.rooms2">غرف مراهنة برسوم ثابتة 10 كوينز لغرفة تبقى مفتوحة لساعتين بدون رسوم على الجولات.</li>
+<li data-k="a.rooms3">غرف مراهنة تفتح بدون قيد الوقت مع رسوم 1٪ من قيمة رهان اللاعب الرابح في كل جولة.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-comments"></i> <span data-k="a.chatTitle">قواعد الدردشة</span></h2>
+<p data-k="a.chatP">في الدردشة داخل الغرف وفي دردشة المنصة يمنع الكلام النابي والعبارات الهجومية والجارحة والخادشة للحياء. يٌحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة كلما تكرر الأمر، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-envelope"></i> <span data-k="a.contactTitle">تواصل معنا</span></h2>
+<p data-k="a.contactP">لأي استفسار حول الشحن أو السحب أو الإحالة أو الغرف، تفضل بزيارة صفحة التواصل معنا.</p>
+<p><a class="btn ghost small" href="contact.html"><i aria-hidden="true" class="fa-solid fa-headset"></i> <span data-k="a.contactBtn">صفحة تواصل معنا</span></a>
+</p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ شروط الاستخدام (terms.html) ═══════════ -->
+        <section class="page legal-page" id="pg-terms" aria-labelledby="termsTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-file-contract"></i></div>
+<h1 data-k="t.title">شروط الاستخدام</h1>
+<div class="updated" data-k="t.updated">آخر تحديث: 12 أغسطس 2026</div>
+<p data-k="t.intro">باستخدامك موقع Digital Moroccan Casino فأنت توافق على هذه الشروط. إذا كنت لا توافق، يرجى عدم استخدام الموقع.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-circle-check"></i> <span data-k="t.acceptTitle">قبول الشروط</span></h2>
+<p data-k="t.acceptP">استخدامك للموقع يعني موافقتك التامة على هذه الشروط، وقد نقوم بتحديثها من وقت لآخر مع إشعار بالتغييرات الجوهرية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-user"></i> <span data-k="t.accTitle">الحسابات</span></h2>
+<ul>
+<li data-k="t.acc1">يجب أن يكون عمرك 18 عاماً على الأقل.</li>
+<li data-k="t.acc2">أنت مسؤول عن الحفاظ على سرية كلمة مرورك وحسابك.</li>
+<li data-k="t.acc3">حساب واحد لكل شخص؛ الحسابات المتعددة قد تُحظر.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-coins"></i> <span data-k="t.coinTitle">الكوينز وقيمتها</span></h2>
+<ul>
+<li data-k="t.coin1">10 كوينز = 1 درهم مغربي.</li>
+<li data-k="t.coin2">يمكن شحن الحساب بمال حقيقي عبر أدمنز المنصة، وسحب الأرباح مقابل مال حقيقي.</li>
+<li data-k="t.coin3">مبادلة الكوينز بين اللاعبين حرة عبر المنصة وبدون رسوم على المبادلة.</li>
+</ul>
+<p data-k="t.adminWithdraw" style="margin-top:8px">يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-credit-card"></i> <span data-k="t.topupTitle">الشحن</span></h2>
+<p data-k="t.topupP">يتم الشحن بمال حقيقي عبر أحد أدمنز المنصة، ويُحوَّل المبلغ فوراً إلى كوينز وفق المعادلة: 10 كوينز = 1 درهم مغربي.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-money-bill-transfer"></i> <span data-k="t.withdrawTitle">السحب</span></h2>
+<p data-k="t.withdrawP">يمكن سحب الأرباح مقابل مال حقيقي بإحدى الطرق التالية، والاختيار للاعب:</p>
+<ul>
+<li data-k="t.withdraw1">حوالة بنكية.</li>
+<li data-k="t.withdraw2">كاش وجه لوجه عن طريق أحد الأدمنز.</li>
+<li data-k="t.withdraw3">عملات رقمية.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-user-plus"></i> <span data-k="t.referTitle">الإحالة</span></h2>
+<p data-k="t.referP">يُكافأ اللاعب المحيل بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-users"></i> <span data-k="t.roomsTitle">الغرف الجماعية</span></h2>
+<ul>
+<li data-k="t.rooms1">الغرف الجماعية نوعان: مجاني ومدفوع. يحدد الداعي ما إذا كانت الغرفة عمومية أو خاصة، وما إذا كانت مجانية أو للمراهنة.</li>
+<li data-k="t.rooms2">غرف المراهنة بنوعين: غرف برسوم ثابتة 10 كوينز لغرفة تبقى مفتوحة لساعتين بدون رسوم على الجولات، وغرف تفتح بدون قيد الوقت مع رسوم 1٪ من قيمة رهان اللاعب الرابح في كل جولة.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-comments"></i> <span data-k="t.chatTitle">قواعد الدردشة</span></h2>
+<p data-k="t.chatP">في الدردشة داخل الغرف وفي دردشة المنصة يمنع الكلام النابي والعبارات الهجومية والجارحة والخادشة للحياء. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة كلما تكرر الأمر، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-ban"></i> <span data-k="t.bannedTitle">الأنشطة المحظورة</span></h2>
+<ul>
+<li data-k="t.banned1">الغش أو استغلال الثغرات أو التلاعب بنتائج الألعاب.</li>
+<li data-k="t.banned2">بيع أو شراء الحسابات أو الكوينز بطرق غير المنصة.</li>
+<li data-k="t.banned3">إساءة استخدام الدردشة: التحرش، البريد العشوائي، أو المحتوى غير اللائق.</li>
+<li data-k="t.banned4">استخدام الروبوتات أو سكريبتات الأتمتة أو أي أدوات تلقائية للعب أو التحكم بالحساب.</li>
+<li data-k="t.banned5">محاولة اختراق النظام أو تخريب الخدمة أو إغراقها بطلبات آلية.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-circle-stop"></i> <span data-k="t.endTitle">الإنهاء</span></h2>
+<p data-k="t.endP">نحتفظ بحق تعليق أو حذف أي حساب يخالف هذه الشروط، أو للأسباب الأمنية، مع إمكانية استئناف القرار عبر الدردشة.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-pen"></i> <span data-k="t.modTitle">تعديل الشروط</span></h2>
+<p data-k="t.modP">قد نحدّث هذه الشروط دورياً. استمرار استخدامك للموقع بعد التحديث يعني موافقتك على النسخة المحدّثة.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-scale-balanced"></i> <span data-k="t.respTitle">المسؤولية</span></h2>
+<p data-k="t.respP">يُقدَّم الموقع "كما هو". عمليات الشحن والسحب تتم عبر أدمنز المنصة وفق هذه الشروط، ويلتزم اللاعب بسن الرشد (18 عاماً فما فوق) واللعب بمسؤولية ووعي.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-envelope"></i> <span data-k="t.contactTitle">الاتصال</span></h2>
+<p data-k="t.contactP">لأي استفسار عن الشروط، تواصل معنا عبر صفحة تواصل معنا أو الدردشة في الموقع الرئيسي.</p>
+<p><a class="btn ghost small" href="contact.html"><i aria-hidden="true" class="fa-solid fa-headset"></i> <span data-k="t.contactBtn">تواصل معنا</span></a>
+</p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ سياسة الخصوصية (privacy.html) ═══════════ -->
+        <section class="page legal-page" id="pg-privacy" aria-labelledby="privacyTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-shield-halved"></i></div>
+<h1 data-k="p.title">سياسة الخصوصية</h1>
+<div class="updated" data-k="p.updated">آخر تحديث: 12 أغسطس 2026</div>
+<p data-k="p.intro">نحترم خصوصيتك في Digital Moroccan Casino. توضح هذه السياسة البيانات التي نجمعها عند استخدام الموقع وكيف نستخدمها ونحميها ونشاركها، بما في ذلك معالجة عمليات الشحن والسحب المالية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-database"></i> <span data-k="p.collectTitle">جمع البيانات</span></h2>
+<ul>
+<li data-k="p.collect1">بيانات الحساب: اسم المستخدم وكلمة المرور (مشفّرة) عند تسجيل حساب.</li>
+<li data-k="p.collect2">بيانات مالية: سجل عمليات الشحن والسحب ومبادلة الكوينز اللازمة لإدارة حسابك المالي.</li>
+<li data-k="p.collect3">بيانات اللعب: الرهانات، الرصيد، وسجل الجولات لحفظ تقدمك ومنع الغش.</li>
+<li data-k="p.collect4">بيانات الدردشة: الرسائل المرسلة داخل الغرف وفي دردشة المنصة لفرض قواعد السلوك.</li>
+<li data-k="p.collect5">بيانات تقنية: المتصفح، اللغة، والعنوان التقريبي عبر خوادمنا لتحسين الأداء والحماية من الهجمات.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-gears"></i> <span data-k="p.useTitle">استخدام البيانات</span></h2>
+<p data-k="p.useP">نستخدم بياناتك لحفظ رصيدك وتقدمك، وتنفيذ عمليات الشحن والسحب، وتقديم مكافآت الإحالة والعمولات، وتحسين تجربة اللعب، ومنع إساءة الاستخدام والغش والهجمات الآلية، ودعم حسابات اللاعبين.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-money-bill-transfer"></i> <span data-k="p.payTitle">معالجة المدفوعات</span></h2>
+<p data-k="p.payP">تتم عمليات الشحن والسحب عبر أدمنز المنصة بوسائل آمنة: حوالة بنكية، كاش وجه لوجه، أو عملات رقمية حسب اختيار اللاعب. لا نخزن أرقام البطاقات البنكية ولا بياناتها في خوادمنا، ولا تُطلب منك إلا مباشرة عند تنفيذ العملية من قبل وسيلة الدفع نفسها.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-lock"></i> <span data-k="p.secTitle">الأمن</span></h2>
+<p data-k="p.secP">نحمي بياناتك بتشفير HTTPS، وكلمات مرور مشفّرة، وجلسات آمنة، وأنظمة حماية من البوتات وسكريبتات الأتمتة. لا نبيع بياناتك أبداً لأي طرف ثالث.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-cookie-bite"></i> <span data-k="p.cookieTitle">ملفات الكوكيز والتخزين المحلي</span></h2>
+<p data-k="p.cookieP">نستخدم التخزين المحلي (localStorage) لحفظ تفضيلاتك (اللغة، الثيم، الرصيد). لا نستخدم كوكيز تتبع إعلانية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-share-nodes"></i> <span data-k="p.shareTitle">المشاركة مع الآخرين</span></h2>
+<p data-k="p.shareP">لا نشارك بياناتك إلا مع أدمنز المنصة عند الحاجة فقط لتنفيذ عمليات السحب أو دعم الحساب. لا يتم بيع بياناتك أو مشاركتها مع جهات إعلانية أو تجارية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-user-check"></i> <span data-k="p.rightsTitle">حقوق المستخدم</span></h2>
+<p data-k="p.rightsP">يمكنك حذف بيانات حسابك في أي وقت بطلب عبر الدردشة أو صفحة تواصل معنا، ويحق لك معرفة البيانات المحفوظة عنك وتصحيحها.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-clock"></i> <span data-k="p.retTitle">مدة الاحتفاظ بالبيانات</span></h2>
+<p data-k="p.retP">نحتفظ ببيانات الحساب والمالية طالما كان الحساب نشطاً، أو بالقدر اللازم لفرض الشروط والالتزامات القانونية، ثم نحذفها أو نجعلها مجهولة الهوية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-scale-balanced"></i> <span data-k="p.respTitle">اللعب المسؤول — 18+</span></h2>
+<p data-k="p.respP">المنصة مخصصة للبالغين (18 عاماً فما فوق). ننصح باللعب بمسؤولية ووعي، ويمكنك طلب تقييد أو تعليق حسابك مؤقتاً عبر الدردشة أو صفحة تواصل معنا.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-envelope"></i> <span data-k="p.contactTitle">الاتصال</span></h2>
+<p data-k="p.contactP">لأي استفسار عن الخصوصية أو بياناتك، تواصل معنا عبر صفحة تواصل معنا أو الدردشة في الموقع الرئيسي.</p>
+<p><a class="btn ghost small" href="contact.html"><i aria-hidden="true" class="fa-solid fa-headset"></i> <span data-k="p.contactBtn">تواصل معنا</span></a>
+</p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ العدالة والشفافية (fairness.html) ═══════════ -->
+        <section class="page legal-page" id="pg-fairness" aria-labelledby="fairnessTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+<h1 data-k="fairness.title">العدالة والشفافية</h1>
+<div class="updated" data-k="fairness.updated">آخر تحديث: 14 أغسطس 2026</div>
+<p data-k="fairness.intro">نلتزم بأعلى معايير <strong>العدالة والشفافية</strong> في جميع ألعابنا. نؤمن بأن كل لاعب له الحق في معرفة أن النتائج لم يتم التلاعب بها، وله القدرة على التحقق من ذلك بنفسه.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-eye"></i> <span data-k="fairness.transparencyTitle">الشفافية الكاملة</span></h2>
+<p data-k="fairness.transparencyBody">جميع قواعد كل لعبة مذكورة بوضوح في صفحة . لا توجد شروط خفية أو قواعد تتغير أثناء اللعب. ما تراه هو ما تحصل عليه.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-ban"></i> <span data-k="fairness.noRiggingTitle">لا مجال للتلاعب</span></h2>
+<p data-k="fairness.noRiggingBody">باستخدام نظام <strong>Provably Fair</strong>، لا يمكن لأي شخص داخل المنصة ولا حتى لنا تعديل نتيجة جورة بعد بدئها. الخوارزمية تُقفل بمجرد انطلاق الجولة.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-clipboard-check"></i> <span data-k="fairness.auditTitle">تدقيق مستقل</span></h2>
+<p data-k="fairness.auditBody">نقوم بإجراء تدقيقات دورية على كل الألعاب من طرف خبراء مستقلين في التشفير. تقارير التدقيق تُنشر بانتظام وتظل متاحة للجميع.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-file-shield"></i> <span data-k="fairness.commitmentTitle">التزامنا</span></h2>
+<ul>
+<li data-k="fairness.commit1">كل جولة يمكن التحقق منها محلياً</li>
+<li data-k="fairness.commit2">لا يوجد سيرفر يملك مفاتيح تغيير النتائج</li>
+<li data-k="fairness.commit3">ال seeds تُبدل تلقائياً بعد كل جولة</li>
+<li data-k="fairness.commit4">نشر تقارير التدقيق بشكل دوري</li>
+</ul>
+<div class="legal-note">
+<b data-k="fairness.noteTitle">ضمان العدالة</b><br/>
+<span data-k="fairness.noteBody">إذا لم تكن مقتنعاً بالنتيجة، يمكنك دائماً التحقق منها باستخدام القيم المعروضة (Server Seed Hash، Client Seed، Nonce). العملية تتم كاملاً على جهازك ولا نحتاج لثقتنا.</span>
+</div>
+<p data-k="fairness.outro">لمزيد من التفاصيل التقنية، زر صفحة <a href="provably-fair.html">Provably Fair</a> أو <a href="contact.html">تواصل معنا</a>.</p>
+<p></p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ Provably Fair (provably-fair.html) ═══════════ -->
+        <section class="page legal-page" id="pg-provably-fair" aria-labelledby="provably-fairTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-dice"></i></div>
+<h1 data-k="pf.title">Provably Fair — عدل النتائج</h1>
+<div class="updated" data-k="pf.updated">آخر تحديث: 14 أغسطس 2026</div>
+<p data-k="pf.intro">نظام <strong>Provably Fair</strong> يمنحك القدرة على التحقق من أن كل جولة كانت عادلة وبدون تدخل أو تلاعب. باستخدام خوارزميات التشفير، يمكنك التأكد من أن النتيجة لم يتم التلاعب بها بعد بدء الجولة.</p>
+<div class="legal-note">
+<b data-k="pf.noteTitle">المبدأ الأساسي</b><br/>
+<span data-k="pf.noteBody">كل جولة تستخدم three عناصر غير متوقعة: Seed من الخادم، Seed من اللاعب، و Nonce. بعد انتهاء الجولة يمكنك التحقق من النتيجة محلياً باستخدام هذه القيم.</span>
+</div>
+<h2><i aria-hidden="true" class="fa-solid fa-server"></i> <span data-k="pf.step1Title">1. Seed الخادم</span></h2>
+<p data-k="pf.step1Body">قبل بدء الجولة، يُولد الخادم قيمة سرية عشوائية (Server Seed) ويقوم بتشفيرها عبر SHA-256. النسخة المشفرة تظهر لك قبل الجولة، بينما النسخة الأصلية تبقى مخفية حتى انتهاء الجولة.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-user"></i> <span data-k="pf.step2Title">2. Seed اللاعب</span></h2>
+<p data-k="pf.step2Body">يمكنك إدخال seed خاص بك (Client Seed) أو استخدام قيمة عشوائية مولّدة تلقائياً. هذا يضمن أن الخادم لا يستطيع التنبؤ بناتجة الجولة مسبقاً.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-hashtag"></i> <span data-k="pf.step3Title">3. Nonce</span></h2>
+<p data-k="pf.step3Body">هو عدّاد يزداد تلقائياً مع كل جولة. يجمع بين Server Seed و Client Seed لضمان أن كل جولة لها نتيجة فريدة لا يمكن تكرارها.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-magnifying-glass"></i> <span data-k="pf.verifyTitle">كيف تتحقق؟</span></h2>
+<p data-k="pf.verifyBody">بعد انتهاء الجولة، يُكشف الخادم عن النسخة الأصلية من Seed. يمكنك الآن تطبيق الخوارزمية محلياً على جهازك: ادمج الـ Seeds + Nonce، ثم احسب النتيجة. إذا تطابقت مع النتيجة المعروضة، فهذا يعني أن الجولة كانت عادلة 100%.</p>
+<div class="legal-note">
+<b data-k="pf.techTitle">التقنيات المستخدمة</b><br/>
+<span data-k="pf.techBody">نستخدم <code>SHA-256</code> لتشفير Seed الخادم، و <code>HMAC-SHA512</code> لدمج القيم، و <code>combined seeds</code> لضمان عدم التوقع. التحقق يتم كاملاً على جهازك (client-side verify) بدون الحاجة لاتصال بالخادم.</span>
+</div>
+<p data-k="pf.outro">لمزيد من التفاصيل التقنية، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.</p>
+<p></p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ حماية الحساب — 2FA (2fa.html) ═══════════ -->
+        <section class="page legal-page" id="pg-2fa" aria-labelledby="2faTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-shield-halved"></i></div>
+<h1 data-k="2fa.title">حماية الحساب — المصادقة الثنائية 2FA</h1>
+<div class="updated" data-k="2fa.updated">آخر تحديث: 14 أغسطس 2026</div>
+<p data-k="2fa.intro">نستخدم <strong>المصادقة الثنائية (2FA)</strong> كطبقة حماية إضافية فوق كلمة المرور. حتى لو عرف شخص ما كلمة مرورك، لن يستطيع الدخول إلى حسابك بدون الرمز الثاني الموجود فقط على جهازك.</p>
+<div class="legal-note">
+<b data-k="2fa.noteTitle">كيف تعمل 2FA؟</b><br/>
+<span data-k="2fa.noteBody">ينشئ الخادم رمزاً زمنياً TOTP يتغير كل 30 ثانية. عند تسجيل الدخول نتحقق من رمزك المحلي + كلمتك السرية. لا يُرسل الرمز عبر الإنترنت أبداً.</span>
+</div>
+<h2><i aria-hidden="true" class="fa-solid fa-mobile-screen-button"></i> <span data-k="2fa.step1Title">1. تفعيل 2FA</span></h2>
+<p data-k="2fa.step1Body">ادخل إلى إعدادات الحساب → الأمان → فعّل المصادقة الثنائية. ستظهر لك شفرة QR يمكنك مسحها بـ Google Authenticator أو أي تطبيق TOTP آخر.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-qrcode"></i> <span data-k="2fa.step2Title">2. مسح الشفرة</span></h2>
+<p data-k="2fa.step2Body">افتح تطبيق المصادقة، امسح الشفرة، وأضف الحساب. سيعطيك التطبيق رمزاً مكوناً من 6 أرقام يتغير تلقائياً كل 30 ثانية.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-right-to-bracket"></i> <span data-k="2fa.step3Title">3. تسجيل الدخول</span></h2>
+<p data-k="2fa.step3Body">عند كل دخول، أدخل كلمة المرور + الرمز الزمني المظهر في تطبيقك. إذا كان الرمز خاطئاً أو منتهياً، يُرفض الدخول فوراً.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-fingerprint"></i> <span data-k="2fa.techTitle">التقنيات المستخدمة</span></h2>
+<ul>
+<li><code>TOTP</code> <span data-k="2fa.tech1">— رمز زمني مؤقت صالح لـ 30 ثانية</span></li>
+<li><code>HMAC-SHA256</code> <span data-k="2fa.tech2">— خوارزمية التوقيع الرقمي</span></li>
+<li><code>localStorage</code> <span data-k="2fa.tech3">— تخزين سر التشفير محلياً فقط</span></li>
+<li><code>QR secrets</code> <span data-k="2fa.tech4">— نقل السر من الخادم إلى جهازك بشكل آمن</span></li>
+</ul>
+<div class="legal-note">
+<b data-k="2fa.securityNoteTitle">معلومة أمنية:</b> <span data-k="2fa.securityNoteBody">الرمز الزمني يُحسب محلياً على جهازك ولا يُرسل أبداً عبر الشبكة. حتى لو اعترض مخترق Traffic، لن يحصل على الرمز الصالح إلا في نافذة 30 ثانية.</span>
+</div>
+<p data-k="2fa.outro">لمزيد من المعلومات حول حماية الحساب، يمكنك زيارة <a href="about.html#security">صفحة الأمان</a> أو <a href="contact.html">التواصل معنا</a>.</p>
+<p></p>
+
+          </div>
+        </section>
+
+        <!-- ═══════════ تواصل معنا (contact.html) ═══════════ -->
+        <section class="page legal-page" id="pg-contact" aria-labelledby="contactTitle">
+          <div class="legal-wrap card" style="margin: 0 auto; max-width: 960px;">
+            
+<div aria-hidden="true" class="legal-icon"><i class="fa-solid fa-headset"></i></div>
+<h1 data-k="c.title">تواصل معنا</h1>
+<div class="updated" data-k="c.updated">آخر تحديث: 12 أغسطس 2026</div>
+<p data-k="c.intro">فريق Digital Moroccan Casino جاهز لمساعدتك في كل ما يخص الشحن والسحب والإحالة والغرف. اختر الطريقة الأنسب لك.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-comments"></i> <span data-k="c.chatTitle">الدردشة داخل المنصة</span></h2>
+<p data-k="c.chatP">أسرع طريقة للتواصل معنا هي عبر الدردشة في الموقع الرئيسي، حيث يتواجد فريق الدعم والأدمنز.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-money-bill-transfer"></i> <span data-k="c.withdrawTitle">طلبات السحب</span></h2>
+<p data-k="c.withdrawP">لطلب سحب أرباحك، تواصل مع أحد الأدمنز واختر طريقة السحب التي تناسبك:</p>
+<ul>
+<li data-k="c.withdraw1">حوالة بنكية — نحوّل المبلغ إلى حسابك البنكي.</li>
+<li data-k="c.withdraw2">كاش وجه لوجه — لقاء أحد الأدمنز في مكان عام آمن.</li>
+<li data-k="c.withdraw3">عملات رقمية — نحوّل إلى محفظتك الرقمية.</li>
+</ul>
+<h2><i aria-hidden="true" class="fa-solid fa-credit-card"></i> <span data-k="c.topupTitle">الشحن</span></h2>
+<p data-k="c.topupP">لشحن حسابك بمال حقيقي، تواصل مع أحد الأدمنز لإتمام العملية. يُضاف الرصيد فوراً ككوينز (10 كوينز = 1 درهم).</p>
+<h2><i aria-hidden="true" class="fa-solid fa-user-plus"></i> <span data-k="c.referTitle">الإحالة</span></h2>
+<p data-k="c.referP">ادعُ صديقاً عبر رابط الإحالة الخاص بحسابك، واحصل تلقائياً على 10٪ من قيمة أول عملية شحن له.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-flag"></i> <span data-k="c.reportTitle">الإبلاغ عن مخالفة</span></h2>
+<p data-k="c.reportP">إذا تعرضت لكلام نابٍ أو هجومي أو خادش للحياء في الدردشة أو الغرف، أبلغ أحد الأدمنز. يُحظر المخالف من الدردشة لمدة 24 ساعة قابلة للمضاعفة مع كل تكرار، ويُحظر من يخل بالآداب العامة أو بخصوصية اللاعبين.</p>
+<h2><i aria-hidden="true" class="fa-solid fa-shield-halved"></i> <span data-k="c.safetyTitle">أمان حسابك</span></h2>
+<div class="legal-note">
+<b data-k="c.safetyTitle2">تنبيه أمني:</b>
+<span data-k="c.safetyP">لن يطلب منك أي أدمن كلمة المرور الخاصة بك أبداً. لا تشارك كلمة مرورك أو رمز التحقق مع أي شخص.</span>
+</div>
+<h2><i aria-hidden="true" class="fa-solid fa-whatsapp"></i> <span data-k="c.whatsappTitle">الدعم عبر واتساب</span></h2>
+<p data-k="c.whatsappIntro">تواصل مع الدعم عبر واتساب — متاح 7/24.</p>
+<div class="whatsapp-btns">
+<a aria-label="واتساب 1" class="btn ghost small" href="https://wa.me/212766672027" rel="noopener" target="_blank">
+<i aria-hidden="true" class="fa-brands fa-whatsapp"></i> <span data-k="c.whatsapp1">واتساب 1</span>
+</a>
+<a aria-label="واتساب 2" class="btn ghost small" href="https://wa.me/212706865019" rel="noopener" target="_blank">
+<i aria-hidden="true" class="fa-brands fa-whatsapp"></i> <span data-k="c.whatsapp2">واتساب 2</span>
+</a>
+</div>
+<h2><i aria-hidden="true" class="fa-solid fa-envelope"></i> <span data-k="c.formTitle">نموذج التواصل</span></h2>
+<p data-k="c.formIntro">أرسل رسالتك إلى فريق الدعم عبر النموذج أدناه.</p>
+<form autocomplete="on" id="contactForm">
+<div class="form-row">
+<label class="aflabel" for="cName"><i aria-hidden="true" class="fa-solid fa-user"></i> <span data-k="c.formName">الاسم</span> <span aria-label="مطلوب" class="required">*</span></label>
+<input class="afinput" id="cName" maxlength="100" name="name" required="" type="text"/>
+</div>
+<div class="form-row">
+<label class="aflabel" for="cEmail"><i aria-hidden="true" class="fa-solid fa-envelope"></i> <span data-k="c.formEmail">البريد الإلكتروني</span> <span aria-label="مطلوب" class="required">*</span></label>
+<input class="afinput" id="cEmail" maxlength="254" name="email" required="" type="email"/>
+</div>
+<div class="form-row">
+<label class="aflabel" for="cSubject"><i aria-hidden="true" class="fa-solid fa-tag"></i> <span data-k="c.formSubject">الموضوع</span></label>
+<input class="afinput" id="cSubject" maxlength="120" name="subject" type="text"/>
+</div>
+<div class="form-row">
+<label class="aflabel" for="cMessage"><i aria-hidden="true" class="fa-solid fa-pen"></i> <span data-k="c.formMessage">الرسالة</span> <span aria-label="مطلوب" class="required">*</span></label>
+<textarea class="afinput" id="cMessage" maxlength="3000" name="message" required="" rows="5"></textarea>
+</div>
+<div aria-live="polite" class="authmsg" id="contactMsg" role="alert"></div>
+<button class="btn full" id="contactSubmit" type="submit"><i aria-hidden="true" class="fa-solid fa-paper-plane"></i> <span data-k="c.formSubmit">إرسال الرسالة</span></button>
+</form>
+<p><a class="btn ghost small" href="about.html"><i aria-hidden="true" class="fa-solid fa-building-columns"></i> <span data-k="c.aboutBtn">صفحة من نحن</span></a>
+</p>
+
+          </div>
+        </section>
+        <section class="page" id="pg-game" aria-labelledby="gamePageName">
+          <div class="gp-head">
+            <div class="gp-head-left">
+              <button class="btn icon-btn" onclick="closeGamePage()" aria-label="رجوع" title="رجوع"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+              <div class="ptitle" id="gamePageTitle">
+                <div class="ibox" id="gamePageIcon"><i class="fa-solid fa-dice" aria-hidden="true"></i></div>
+                <span id="gamePageName" class="gp-name-text"></span>
+              </div>
+            </div>
+            <div class="gp-head-right">
+              <button class="game-gold-chip" id="gameGoldChip" onclick="claimDaily()" title="الرصيد / المكافأة اليومية" aria-label="رصيد الكوينز">
+                <i class="fa-solid fa-coins g" aria-hidden="true"></i>
+                <span class="gold-val" id="goldD">1,000</span>
+              </button>
+              <button class="btn icon-btn sound-btn" id="muteBtn" onclick="toggleMute()" aria-label="كتم/تشغيل الصوت" aria-pressed="false" title="كتم/تشغيل الصوت">
+                <i class="fa-solid fa-volume-high" id="muteIco" aria-hidden="true"></i>
+              </button>
+              <button class="btn icon-btn" onclick="showFullRules()" aria-label="القواعد الكاملة" title="القواعد الكاملة"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>
+              <button class="btn icon-btn" id="gameFsBtn" onclick="toggleGameFullscreen()" aria-label="ملء الشاشة" aria-pressed="false" title="ملء الشاشة"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
+              <button class="btn icon-btn" id="roomBtn" onclick="Rooms.toggleFromGame()" aria-label="العب مع صديق" title="العب مع صديق"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></button>
+              <button class="btn icon-btn" id="aiBtn" onclick="Rooms.practiceVsAi(window._currentGameId)" style="display:none" aria-label="العب ضد الآلي" title="العب ضد الآلي"><i class="fa-solid fa-robot" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div id="gamePageBody"></div>
+          <div class="ghist">
+            <div class="ghist-head">
+              <div class="ghist-title"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> <span data-i18n="ui.ghistTitle">سجل الجولات</span></div>
+              <span class="live-badge"><span class="dot" aria-hidden="true"></span> <span data-i18n="ui.liveBadge">حي</span></span>
+            </div>
+            <div class="ghist-wrap" id="gameHistory"></div>
+          </div>
+        </section>
+      </main>
+      <footer role="contentinfo" class="watermark">
+        <div class="foot-inner">
+          <div class="foot-legal" role="navigation" aria-label="روابط قانونية ومعلوماتية">
+            <a href="about.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('about')" data-i18n="legal.about.link">من نحن</a>
+            <a href="terms.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('terms')" data-i18n="legal.terms.link">شروط الاستخدام</a>
+            <a href="privacy.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('privacy')" data-i18n="legal.privacy.link">سياسة الخصوصية</a>
+            <a href="fairness.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('fairness')" data-i18n="legal.fairness.link">العدالة والشفافية</a>
+            <a href="provably-fair.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('provably-fair')" data-i18n="legal.pf.link">Provably Fair</a>
+            <a href="2fa.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('2fa')" data-i18n="legal.2fa.link">حماية الحساب (2FA)</a>
+            <a href="contact.html" onclick="if(event.ctrlKey||event.metaKey)return;event.preventDefault();nav('contact')" data-i18n="legal.contact.link">تواصل معنا</a>
+          </div>
+          <div class="foot-brand">
+            <span class="foot-name">Digital Moroccan Casino</span>
+            <span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+  <!-- ═══════════ Parchisi Template (يُستنسخ داخل صفحة اللعبة) ═══════════ -->
+  <template id="parchisiTpl">
+    <div id="parchisiSetup" class="setup-screen">
+      <div class="ctitle" data-i18n="parchisi.setupTitle">إعدادات اللعبة</div>
+      <div class="bets">
+        <span class="ctext" data-i18n="parchisi.modeLabel">الصنف:</span>
+        <div id="parchisiModes" class="pr-modes"></div>
+      </div>
+      <div id="parchisiModeDesc" class="pr-mode-desc"></div>
+      <div class="bets">
+        <span class="ctext" data-i18n="parchisi.playersLabel">اللاعبين:</span>
+        <select id="parchisiPlayerCount" onchange="ParchisiApp.updateSetup()" aria-label="عدد اللاعبين">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+        </select>
+      </div>
+      <div class="bets">
+        <span class="ctext" data-i18n="parchisi.oppLabel">الخصوم:</span>
+        <select id="parchisiOppType" onchange="ParchisiApp.updateSetup()" aria-label="نوع الخصوم">
+          <option value="ai" data-i18n="parchisi.oppAI">🤖 ذكاء اصطناعي</option>
+          <option value="hotseat" data-i18n="parchisi.oppHotseat">👥 وجهاً لوجه</option>
+        </select>
+      </div>
+      <div class="bets" id="parchisiTeamsRow" style="display:none">
+        <span class="ctext" data-i18n="parchisi.teamsLabel">نمط اللعب:</span>
+        <button id="parchisiTeamsBtn" class="pr-chip" onclick="ParchisiApp.toggleTeams()"></button>
+      </div>
+      <div class="bets">
+        <span class="ctext" data-i18n="parchisi.timerLabel">مؤقت الدور:</span>
+        <select id="parchisiTimerSel" onchange="ParchisiApp.updateSetup()" aria-label="مؤقت الدور بالثواني">
+          <option value="0" data-i18n="parchisi.timerOff">بدون مؤقت</option>
+          <option value="30">30</option>
+          <option value="60" selected>60</option>
+          <option value="90">90</option>
+          <option value="120">120</option>
+          <option value="180">180</option>
+          <option value="240">240</option>
+          <option value="300">300</option>
+        </select>
+      </div>
+      <div class="bets">
+        <button class="bbtn" onclick="ParchisiApp.changeBet(-10)" aria-label="تقليل الرهان">−</button>
+        <div class="bamt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span id="parchisiBet">20</span></div>
+        <button class="bbtn" onclick="ParchisiApp.changeBet(10)" aria-label="زيادة الرهان">+</button>
+      </div>
+      <button class="big" onclick="ParchisiApp.start()" style="margin-top:14px" data-i18n="parchisi.startBtn">ابدأ اللعبة</button>
+    </div>
+    <div id="parchisiGame" style="display:none">
+      <div id="prRollLog" class="pr-rolllog" aria-live="polite"></div>
+      <div id="parchisiHeader" class="pr-header">
+        <div class="pr-title" id="prTitle">PARCHI</div>
+        <div class="pr-pot" id="prPotWrap" style="display:none"><span class="pr-pot-num" id="prPot"></span></div>
+      </div>
+      <div id="parchisiBoardArea" class="pr-boardarea">
+        <!-- [B6] شارة المكافأة 20/10: دائرية بلا خلفية أعلى الشاشة أسفل العنوان والمجموع -->
+        <span id="parchisiBonus" class="pr-bonus" style="display:none"></span>
+        <div id="parchisiBoardWrap" class="pr-boardwrap">
+          <canvas id="parchisiCanvas" width="600" height="600" aria-label="لوحة Parchisi"></canvas>
+          <div id="prIcons" class="pr-icons" aria-hidden="true"></div>
+          <!-- [B9] النرد الدائم لكل لاعب فوق الزاوية الخارجية لقاعدته (خارج زوايا اللوحة):
+               الأحمر/الأزرق أعلى • الأخضر/الأصفر أسفل -->
+          <div id="prCornerDice" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="parchisi-info">
+        <div id="parchisiDiceRow" class="pr-dice-row"></div>
+        <button class="btn" id="parchisiRollBtn" onclick="ParchisiApp.rollDice()"><i class="fa-solid fa-dice" aria-hidden="true"></i> رمي النرد</button>
+      </div>
+    </div>
+    <!-- نافذة الفوز/الخسارة + تصويت الجولة الجديدة -->
+    <div class="mwrap" id="prOverModal" role="dialog" aria-modal="true" aria-labelledby="prOverTitle">
+      <div class="modal modal-sm pr-over-modal">
+        <div class="pr-over-icon" id="prOverIcon">🏆</div>
+        <div class="pr-over-title" id="prOverTitle"></div>
+        <div class="pr-over-sub" id="prOverSub"></div>
+        <div id="prOverVote" class="pr-vote"></div>
+        <div class="pr-over-actions" id="prOverActions"></div>
+      </div>
+    </div>
+  </template>
+  <!-- ═══════════ Rules Modal ═══════════ -->
+  <div class="mwrap" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal">
+      <div class="mhead">
+        <h3 id="rulesTitle"><i class="fa-solid fa-book-open" aria-hidden="true"></i> القواعد</h3>
+        <button class="mclose" onclick="closeRulesModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody" id="rulesBody"></div>
+    </div>
+  </div>
+  <!-- ═══════════ Room Modal (اللعب مع صديق) ═══════════ -->
+  <div class="mwrap" id="roomModal" role="dialog" aria-modal="true" aria-labelledby="roomTitle"
+       onclick="if(event.target.id==='roomModal') Rooms.closeModal()">
+    <div class="modal modal-sm modal-room">
+      <div class="mhead">
+        <h3 id="roomTitle"><i class="fa-solid fa-users" aria-hidden="true"></i> اللعب مع صديق</h3>
+        <button class="mclose" onclick="Rooms.closeModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody" id="roomBody"></div>
+    </div>
+  </div>
+  <!-- ═══════════ Auth Modal ═══════════ -->
+  <div class="mwrap" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle"
+       onclick="if(event.target.id==='authModal') closeAuthModal()">
+    <div class="modal modal-sm">
+      <div class="mhead">
+        <h3 id="authTitle"><i class="fa-solid fa-key" aria-hidden="true"></i> دخول</h3>
+        <button class="mclose" onclick="closeAuthModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="atabs" role="tablist" aria-label="تسجيل الدخول أو إنشاء حساب">
+          <button class="atab active" role="tab" aria-selected="true" data-auth-tab="login" onclick="authTab('login')"><i class="fa-solid fa-key" aria-hidden="true"></i> دخول</button>
+          <button class="atab" role="tab" aria-selected="false" data-auth-tab="register" onclick="authTab('register')"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> تسجيل</button>
+        </div>
+        <form id="authForm" data-mode="login" onsubmit="event.preventDefault()">
+          <label class="aflabel" for="authUsername"><i class="fa-solid fa-user" aria-hidden="true"></i> اسم المستخدم</label>
+          <input class="afinput" id="authUsername" autocomplete="username"
+                 placeholder="3-20 حرفاً (حروف/أرقام/_ )" maxlength="20">
+          <label class="aflabel" for="authPassword"><i class="fa-solid fa-lock" aria-hidden="true"></i> كلمة المرور</label>
+          <input class="afinput" id="authPassword" type="password" autocomplete="current-password"
+                 placeholder="6 أحرف على الأقل">
+          <div id="authMsg" class="authmsg" role="alert" aria-live="polite"></div>
+          <button class="btn full" id="authSubmit" onclick="window.authSubmit()">تسجيل الدخول</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════ Change Password Modal ═══════════ -->
+  <div class="mwrap" id="pwModal" role="dialog" aria-modal="true" aria-labelledby="pwTitle"
+       onclick="if(event.target.id==='pwModal') closePwModal()">
+    <div class="modal modal-sm">
+      <div class="mhead">
+        <h3 id="pwTitle"><i class="fa-solid fa-key" aria-hidden="true"></i> <span data-i18n="auth.changePassword">تغيير كلمة المرور</span></h3>
+        <button class="mclose" onclick="closePwModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody">
+        <label class="aflabel" for="pwOld"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-i18n="auth.pwCurrent">كلمة المرور الحالية</span></label>
+        <input class="afinput" id="pwOld" type="password" autocomplete="current-password">
+        <label class="aflabel" for="pwNew"><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-i18n="auth.pwNewLabel">كلمة المرور الجديدة</span></label>
+        <input class="afinput" id="pwNew" type="password" autocomplete="new-password" placeholder="6 أحرف على الأقل">
+        <div id="pwMsg" class="authmsg" role="alert" aria-live="polite"></div>
+        <button class="btn full" id="pwSubmitBtn" onclick="pwSubmit()"><i class="fa-solid fa-check" aria-hidden="true"></i> <span data-i18n="auth.pwSave">حفظ</span></button>
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════ Transfer Modal (إرسال كوينز) ═══════════ -->
+  <div class="mwrap" id="trModal" role="dialog" aria-modal="true" aria-labelledby="trTitle"
+       onclick="if(event.target.id==='trModal') closeTrModal()">
+    <div class="modal modal-sm">
+      <div class="mhead">
+        <h3 id="trTitle"><i class="fa-solid fa-coins" aria-hidden="true"></i> إرسال كوينز</h3>
+        <button class="mclose" onclick="closeTrModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody">
+        <label class="aflabel" for="trTo"><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-i18n="tr.recipient">اسم المستلم</span></label>
+        <input class="afinput" id="trTo" maxlength="20" placeholder="...">
+        <label class="aflabel" for="trAmt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="tr.amount">المبلغ</span></label>
+        <input class="afinput" id="trAmt" type="number" min="1" value="100">
+        <div id="trMsg" class="authmsg" role="alert" aria-live="polite"></div>
+        <button class="btn full" onclick="sendCoins()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> <span data-i18n="tr.send">إرسال</span></button>
+        <div class="ctitle" style="margin-top:14px" id="trHistTitle"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="tr.history">سجل تحويلاتي</span></div>
+        <div id="trList" class="ctext" style="max-height:180px;overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════ Tournament Create Modal ═══════════ -->
+  <div class="mwrap" id="tcModal" role="dialog" aria-modal="true" aria-labelledby="tcTitle"
+       onclick="if(event.target.id==='tcModal') closeTcModal()">
+    <div class="modal modal-sm">
+      <div class="mhead">
+        <h3 id="tcTitle"><i class="fa-solid fa-trophy" aria-hidden="true"></i> <span data-i18n="tourney.create">إنشاء بطولة</span></h3>
+        <button class="mclose" onclick="closeTcModal()" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="mbody">
+        <label class="aflabel" for="tcName"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span data-i18n="tourney.name">اسم البطولة</span></label>
+        <input class="afinput" id="tcName" maxlength="60" placeholder="...">
+        <label class="aflabel" for="tcGame"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-i18n="tourney.game">اللعبة</span></label>
+        <select class="afinput" id="tcGame" style="max-width:100%"></select>
+        <label class="aflabel" for="tcMax"><i class="fa-solid fa-users" aria-hidden="true"></i> <span data-i18n="tourney.maxPlayers">أقصى عدد لاعبين (2-16)</span></label>
+        <input class="afinput" id="tcMax" type="number" min="2" max="16" value="8">
+        <label class="aflabel" for="tcFee"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="tourney.entryFee">رسوم الدخول (0 = مجاني)</span></label>
+        <input class="afinput" id="tcFee" type="number" min="0" value="0">
+        <div id="tcMsg" class="authmsg" role="alert" aria-live="polite"></div>
+        <div class="ctext" style="font-size:.72rem;margin-bottom:8px"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> <span data-i18n="tourney.pendingNote">تنشأ البطولة بانتظار موافقة الأدمن</span></div>
+        <button class="btn full" onclick="createTourney()"><i class="fa-solid fa-trophy" aria-hidden="true"></i> <span data-i18n="tourney.createBtn">إنشاء</span></button>
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════ تلميح تدوير الهاتف (للألعاب العرضية) ═══════════ -->
+  <div id="rotateHint" class="rotate-hint" role="alert" aria-live="assertive" hidden>
+    <div class="rotate-phone" aria-hidden="true"><i class="fa-solid fa-mobile-screen-button"></i></div>
+    <b data-i18n="ui.rotateTitle">قم بتدوير هاتفك</b>
+    <span data-i18n="ui.rotateSub">هذه اللعبة تعمل بشكل أفضل بالوضع العرضي</span>
+  </div>
+  <!-- ═══════════ Toasts ═══════════ -->
+  <div id="toasts" role="alert" aria-live="assertive"></div>
+
+  <!-- ═══════════ زر الخروج الذهبي العائم (وضع الشاشة الممتلئة) ═══════════ -->
+  <button class="game-fs-exit" id="gameFsExit" onclick="exitAppFullscreen()" aria-label="الخروج من الشاشة الممتلئة" title="الخروج من الشاشة الممتلئة">
+    <i class="fa-solid fa-compress" aria-hidden="true"></i>
+  </button>
+  <!-- ═══════════ Scripts ═══════════ -->
+  <script src="js/core/session.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/fx.js"></script>
+  <script src="js/i18n/translations.js"></script>
+  <script src="js/rules/game-rules.js"></script>
+  <script src="js/games/catalog.js"></script>
+  <script src="js/games/blackjack.js"></script>
+  <script src="js/games/ronda.js"></script>
+  <script src="js/games/parchisi.js"></script>
+  <script src="js/games/rami.js"></script>
+  <script src="js/games/dama.js"></script>
+  <script src="js/games/chess.js"></script>
+  <script src="js/games/billiards-physics.js?v=260831gv4"></script>
+  <script src="js/games/billiards-rules.js?v=260831gv4"></script>
+  <script src="js/games/billiards.js?v=260831gv4"></script>
+  <script src="js/games/engines.js"></script>
+  <script type="module" src="js/games/crash.js"></script>
+  <script src="js/core/rooms.js"></script>
+  <script src="js/main.js?v=260831gv4"></script>
+  <script src="js/core/live.js"></script>
+  <script src="js/core/fair.js"></script>
+  <script src="js/games/group.js"></script>
+
+  <!-- ═══════════ Mobile Bottom Navigation Bar ═══════════ -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="التنقل السفلي">
+    <button class="bnav-item active" data-bnav="home" onclick="nav('home', this)">
+      <i class="fa-solid fa-house" aria-hidden="true"></i>
+      <span data-i18n="ui.home">الرئيسية</span>
+    </button>
+    <button class="bnav-item" data-bnav="games" onclick="nav('games', this)">
+      <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
+      <span data-i18n="ui.games">الألعاب</span>
+    </button>
+    <button class="bnav-item" data-bnav="rooms" onclick="nav('rooms', this)">
+      <i class="fa-solid fa-users" aria-hidden="true"></i>
+      <span data-i18n="ui.rooms">الغرف</span>
+    </button>
+    <button class="bnav-item" data-bnav="tourney" onclick="nav('tourney', this)">
+      <i class="fa-solid fa-award" aria-hidden="true"></i>
+      <span data-i18n="ui.tourney">البطولات</span>
+    </button>
+    <button class="bnav-item" data-bnav="account" onclick="openAccountOrAuth(this)">
+      <i class="fa-solid fa-user" aria-hidden="true"></i>
+      <span data-i18n="ui.account">الحساب</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════ Modal: Daily Lucky Wheel ═══════════ -->
+  <div class="mwrap" id="wheelModal" role="dialog" aria-modal="true" aria-labelledby="wheelTitle">
+    <div class="modal modal-sm" style="text-align:center;position:relative">
+      <button class="mclose" onclick="closeWheelModal()" aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <div class="mhead">
+        <h3 id="wheelTitle" data-i18n="wheel.title"><i class="fa-solid fa-dharmachakra g"></i> عجلة الحظ اليومية</h3>
+      </div>
+      <div class="mbody" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+        <p class="ctext" data-i18n="wheel.desc">لِف العجلة اليومية للحصول على مكافأتك المجانية!</p>
+        <div class="lucky-wheel-container">
+          <canvas id="luckyWheelCanvas" width="280" height="280"></canvas>
+          <div class="lucky-wheel-pointer">▼</div>
+        </div>
+        <button class="big" id="spinWheelBtn" onclick="spinLuckyWheel()" style="width:100%;max-width:240px">
+          <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-i18n="wheel.spinBtn">تدوير العجلة</span>
+        </button>
+        <div id="wheelResult" class="authmsg ok" style="min-height:22px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Floating Reaction & Quick Chat FAB (In-Game Only) ═══════════ -->
+  <div class="floating-reactions-fab" id="floatingReactionsFab">
+    <div class="fab-reactions-menu" id="fabReactionsMenu">
+      <div class="fab-rx-emojis">
+        <button class="fab-rx-item" onclick="sendReaction('🇲🇦');toggleReactionsFab()" title="المغرب">🇲🇦</button>
+        <button class="fab-rx-item" onclick="sendReaction('🍵');toggleReactionsFab()" title="كاس أتاي">🍵</button>
+        <button class="fab-rx-item" onclick="sendReaction('👏');toggleReactionsFab()" title="تصفيق">👏</button>
+        <button class="fab-rx-item" onclick="sendReaction('🔥');toggleReactionsFab()" title="حماس">🔥</button>
+        <button class="fab-rx-item" onclick="sendReaction('🤣');toggleReactionsFab()" title="ضحك">🤣</button>
+        <button class="fab-rx-item" onclick="sendReaction('🚀');toggleReactionsFab()" title="صاروخ">🚀</button>
+      </div>
+      <div class="fab-msg-row">
+        <input type="text" id="fabQuickMsgInput" placeholder="اكتب رسالة سريعة..." maxlength="60" onkeydown="if(event.key==='Enter')sendFabQuickMsg()">
+        <button class="fab-send-btn" onclick="sendFabQuickMsg()" title="إرسال"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <button class="fab-main-btn" onclick="toggleReactionsFab()" aria-label="تفاعلات تشجيعية" title="تفاعلات تشجيعية">
+      <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
+    </button>
+  </div>
+</body>
+</html>
