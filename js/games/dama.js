@@ -28,13 +28,13 @@ function damaIsDark(r, c) { return ((r + c) & 1) === 0; }
 /* ── Pure rule engine operating on a small state object ── */
 function DamaEngine(rules) {
   this.rules = rules || {
-    mandatoryCapture: true,    /* [B9] الأكل إلزامي كحركة — لا تُعرض حركة هادئة مع وجود أكل */
-    souffler: false,           /* [B9] النفخ بلا مفعول مع الإلزام الهيكلي (محفوظ للتوافق) */
+    mandatoryCapture: true,    /* [Souffler] الالتزام بالأكل موجود لكن اللاعب حر في الرفض */
+    souffler: true,            /* [Souffler] القطعة التي رفضت الأكل تُنفخ */
     manBackwardCapture: false,
     multiCapture: true,
     flyingKing: true,
     promoteImmediately: true,
-    maxChain: true             /* [B9] السلسلة الأكبر أكثر إلزامية — لا تُعرض الأصغر */
+    maxChain: true
   };
 }
 DamaEngine.prototype.opponent = function (p) { return p === WHITE ? BLACK : WHITE; };
@@ -204,54 +204,35 @@ DamaEngine.prototype.continuationMoves = function (s, relaxed) {
 DamaEngine.prototype.legalMoves = function (s, player, relaxed) {
   if (s.over) return [];
   if (s.cont) return this.continuationMoves(s, relaxed);
-  var caps = this.allCaptures(s.grid, player);
-  if (this.rules.mandatoryCapture && caps.length) {
-    /* [B9] الأكل إلزامي — والسلسلة الأكبر أكثر إلزامية: تُعرض القفزات
-       المؤدية للسلسلة الأطول فقط (relaxed لعمق بحث الذكاء) */
-    if (relaxed || !this.rules.maxChain) return caps;
-    var mx = this.maxChainOfTurn(s.grid, player);
-    var out = [];
-    for (var i = 0; i < caps.length; i++) {
-      if (this.hopPotential(s.grid, caps[i]) === mx) { caps[i].potential = mx; out.push(caps[i]); }
-    }
-    return out.length ? out : caps;
-  }
-  var out = caps.slice();
+  /* [Souffler Rule] اللاعب حر في تحريك أي قطعة — تُعرض كل الحركات المتاحة
+     (أكل + هادئة). الذكاء الاصطناعي يُفضّل الأكل عبر دالة التقييم. */
+  var out = this.allCaptures(s.grid, player);
   for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
     var p = s.grid[r][c];
     if (p && p.owner === player) {
       var m = this.movesAt(s.grid, r, c);
-      for (var i = 0; i < m.length; i++) out.push(m[i]);
+      for (var i = 0; i < m.length; i++) {
+        m[i].pieceId = p.id;
+        out.push(m[i]);
+      }
     }
   }
   return out;
 };
 
-/* Legal destinations for a specific piece (for tap highlighting). */
+/* Legal destinations for a specific piece (for tap highlighting).
+   [Souffler Rule] اللاعب حر في تحريك أي قطعة — حتى مع وجود أكل إلزامي.
+   عند وجود أكل ممكن، تُعرض الحركات الهادئة أيضاً (مما يسمح باللاعب
+   بتجاهل الأكل). القطعة التي توفر لها أكل ولم تأكل تُنفخ في applyMove. */
 DamaEngine.prototype.legalMovesForPiece = function (s, r, c) {
   if (s.over) return [];
   var piece = s.grid[r][c];
   if (!piece || piece.owner !== s.turn) return [];
   if (s.cont) {
     if (s.cont[0] !== r || s.cont[1] !== c) return [];
-    return this.continuationMoves(s);          /* [B9] قفزات متمِّمة للسلسلة المثلى فقط */
+    return this.continuationMoves(s);
   }
-  if (this.rules.mandatoryCapture) {
-    var caps = this.allCaptures(s.grid, piece.owner);
-    if (caps.length) {
-      /* [B9] لا تحديد إلا لقطعة تملك قفزة من السلسلة الأكبر — وقفزاتها المثلى فقط */
-      var mx = this.maxChainOfTurn(s.grid, piece.owner);
-      var mine = [];
-      for (var i = 0; i < caps.length; i++) {
-        if (caps[i].from[0] === r && caps[i].from[1] === c
-            && this.hopPotential(s.grid, caps[i]) === mx) {
-          caps[i].potential = mx; mine.push(caps[i]);
-        }
-      }
-      return mine;
-    }
-    return this.movesAt(s.grid, r, c);
-  }
+  /* اعرض كل الحركات المتاحة: أكل + هادئة — اللاعب يختار */
   var mine = this.capturesAt(s.grid, r, c);
   var nm = this.movesAt(s.grid, r, c);
   for (var i = 0; i < nm.length; i++) mine.push(nm[i]);
@@ -287,7 +268,9 @@ DamaEngine.prototype.applyMove = function (s, mv) {
   var piece = s.grid[fr][fc];
   var info = { promoted: false, continued: false, captured: [], souffled: null, pendingPromotion: false };
   /* [B9] بداية سلسلة أكل: سجّل طول السلسلة المثلى المطلوبة (من القفزة المختارة) */
-  if (mv.cap && !s.cont && s.chainNeed == null) s.chainNeed = mv.potential != null ? mv.potential : 1;
+  if (mv.cap && !s.cont && s.chainNeed == null) {
+    s.chainNeed = mv.potential != null ? mv.potential : (this.hopPotential(s.grid, mv) || 1);
+  }
   /* [Souffler] عند بداية الدور نُسجّل الحجر المُلزَم بالأكل (الأكبر أولوية) بهويّته */
   if (!s.cont) {
     var ob = (this.rules.souffler) ? this.obligationPiece(s) : null;
@@ -1049,25 +1032,10 @@ function damaClick(r, c) {
   if (piece && piece.owner === DAMA.human) {
     if (s.cont && (s.cont[0] !== r || s.cont[1] !== c)) return; /* must continue with the jumping piece */
     var lm = DAMA.eng.legalMovesForPiece(s, r, c);
-    /* [Mandatory] الأكل إلزامي — إن كانت القطعة بلا أكل لكن يوجد أكل إلزامي
-       لقطعة أخرى، ارفض الحركة الهادئة وأَعلم اللاعب */
-    if (lm.length > 0 && DAMA.eng.rules.mandatoryCapture && !s.cont
-        && DAMA.eng.allCaptures(s.grid, s.turn).length > 0
-        && !lm.some(function (m) { return m.cap; })) {
-      damaSetStatus(T('dama.mustCaptureOther'));
-      if (typeof SND !== 'undefined' && SND.tick) SND.tick();
-      damaRender();
-      return;
-    }
+    /* [Souffler Rule] اللاعب حر في تحريك أي قطعة — حتى مع وجود أكل ممكن.
+       إذا تحركت القطعة بلا أكل وكانت قطعة أخرى تستطيع الأكل، تُنفخ القطعة
+       التي رفضت الأكل (قاعدة النفخ القانونية). */
     if (!lm.length) {
-      /* [B10] إن كان الأكل إلزامياً بقطعة أخرى فوضّح ذلك بدل الرسالة العامة */
-      if (DAMA.eng.rules.mandatoryCapture && !s.cont
-          && DAMA.eng.allCaptures(s.grid, s.turn).length > 0) {
-        damaSetStatus(T('dama.mustCaptureOther'));
-        if (typeof SND !== 'undefined' && SND.tick) SND.tick();
-        damaRender();
-        return;
-      }
       if (DAMA.sel) { DAMA.sel = null; DAMA.legal = []; damaRender(); }
       damaSetStatus(T('dama.cantPlay'));
       return;

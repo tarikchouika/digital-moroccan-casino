@@ -1,7 +1,7 @@
 /* Loads the ACTUAL dama.js engine and verifies the port against the Moroccan rules
    ([B9] الأكل إلزامي + السلسلة الأكبر أكثر إلزامية + توقف الصف الأخير والترقية المؤجلة). */
 const fs = require('fs');
-const path = '/home/user/casino/js/games/dama.js';
+const path = 'js/games/dama.js';
 const body = fs.readFileSync(path, 'utf8') + '\nreturn { DamaEngine, damaNewState, WHITE, BLACK, damaIsDark, damaInB };';
 const factory = new Function('window', 'document', body);
 const { DamaEngine, damaNewState, WHITE, BLACK, damaIsDark } = factory({}, {});
@@ -53,19 +53,19 @@ console.log('\n[1] Initial position');
 })();
 
 /* ── 2. [B9] Mandatory capture — no quiet moves while a capture exists ── */
-console.log('\n[2] Mandatory capture (الأكل إلزامي كحركة)');
+console.log('\n[2] Souffler rule (اللاعب حر في الحركة + النفخ عند رفض الأكل)');
 (function () {
   var s = stateOf([
     dot, dot, dot, dot, '...b....', '..w.....', '.....w..', dot
   ], WHITE);
   var lm = eng.legalMoves(s, WHITE);
+  /* [Souffler] اللاعب حر — تُعرض كل الحركات (أكل + هادئة) */
   ok('capture (5,2)->(3,4) available', lm.some(m => m.cap && m.from[0] === 5 && m.from[1] === 2 && m.to[0] === 3 && m.to[1] === 4));
-  ok('NO quiet moves offered while capture exists', lm.every(m => m.cap));
-  ok('only the capturing piece may move', lm.every(m => m.from[0] === 5 && m.from[1] === 2));
-  /* clicking another piece gives zero moves (UI enforcement) */
-  ok('legalMovesForPiece: quiet piece has NO moves', eng.legalMovesForPiece(s, 6, 5).length === 0);
-  ok('legalMovesForPiece: capturing piece has its capture', eng.legalMovesForPiece(s, 5, 2).length === 1);
-  /* no capture anywhere → quiet moves return */
+  ok('quiet moves ALSO offered (player is free to choose)', lm.some(m => !m.cap));
+  /* القطعة الهادئة تملك حركاتها العادية (وليس فقط الأكل) */
+  ok('legalMovesForPiece: quiet piece (6,5) has its quiet moves', eng.legalMovesForPiece(s, 6, 5).length > 0 && eng.legalMovesForPiece(s, 6, 5).every(m => !m.cap));
+  ok('legalMovesForPiece: capturing piece (5,2) has its capture', eng.legalMovesForPiece(s, 5, 2).length >= 1 && eng.legalMovesForPiece(s, 5, 2).some(m => m.cap));
+  /* [Souffler] إن تحركت القطعة الهادئة مع وجود أكل ممكن، تُنفخ القطعة المُلزَمة */
   var s2 = stateOf([dot, dot, dot, dot, dot, dot, '..w.....', dot], WHITE);
   ok('quiet moves return when no capture exists', eng.legalMoves(s2, WHITE).every(m => !m.cap) && eng.legalMoves(s2, WHITE).length > 0);
 })();
@@ -79,15 +79,17 @@ console.log('\n[2b] Max-chain priority (السلسلة الأكبر أكثر إ�
     dot, dot, '...b....', dot, '.b...b..', 'w...w...', dot, dot
   ], WHITE);
   var lm = eng.legalMoves(s, WHITE);
-  ok('only the 2-chain piece is offered', lm.length === 1 && lm[0].from[0] === 5 && lm[0].from[1] === 0);
-  ok('its first hop (5,0)->(3,2) with potential=2', lm[0].to[0] === 3 && lm[0].to[1] === 2 && lm[0].potential === 2);
-  ok('the 1-chain capture is NOT offered', !lm.some(m => m.from[0] === 5 && m.from[1] === 4));
+  /* [Souffler] اللاعب حر — تُعرض كل الحركات (أكل + هادئة) */
+  ok('capture (5,0)->(3,2) available', lm.some(m => m.cap && m.from[0] === 5 && m.from[1] === 0));
+  ok('quiet moves ALSO offered (player is free to choose)', lm.some(m => !m.cap));
+  ok('the 1-chain capture IS also offered (both available)', lm.some(m => m.cap && m.from[0] === 5 && m.from[1] === 4));
   ok('chainDepth reports 2 for (5,0)', eng.chainDepth(s.grid, 5, 0) === 2);
   ok('chainDepth reports 1 for (5,4)', eng.chainDepth(s.grid, 5, 4) === 1);
   ok('maxChainOfTurn = 2', eng.maxChainOfTurn(s.grid, WHITE) === 2);
   /* play the chain to the end */
-  var info = eng.applyMove(s, lm[0]);
-  ok('chainNeed initialised to 2', s.chainNeed === 2 - 1);   /* applyMove decremented after first hop */
+  var capMove = lm.find(m => m.cap && m.from[0] === 5 && m.from[1] === 0 && m.to[0] === 3 && m.to[1] === 2);
+  var info = eng.applyMove(s, capMove);
+  ok('chainNeed initialised to 2 (then decremented)', s.chainNeed === 2 - 1);
   ok('continuation flagged', info.continued === true);
   var next = eng.legalMoves(s, WHITE);
   ok('continuation offers only the completing hop (3,2)->(1,4)', next.length === 1 && next[0].to[0] === 1 && next[0].to[1] === 4);
@@ -124,7 +126,7 @@ console.log('\n[2d] King-row stop & deferred promotion');
     dot, '....b.b.', '...w....', dot, dot, dot, 'b.......', dot
   ], WHITE);
   var lm = eng.legalMoves(s, WHITE);
-  ok('capture into last row (2,3)->(0,5) is the max chain offered', lm.length === 1 && lm[0].to[0] === 0 && lm[0].to[1] === 5);
+  ok('capture into last row (2,3)->(0,5) is available (with quiet moves also)', lm.some(m => m.cap && m.to[0] === 0 && m.to[1] === 5));
   var info = eng.applyMove(s, lm[0]);
   ok('promotion is DEFERRED (pendingPromotion)', info.pendingPromotion === true);
   ok('chain abandoned — no continuation', info.continued === false);
