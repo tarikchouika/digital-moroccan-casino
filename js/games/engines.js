@@ -1852,7 +1852,9 @@ function eRoulette(g) {
   return gFrame(
     '<div class="rl-stage">' +
       '<div class="rl-wheel" id="rlWrap">' +
-        '<canvas id="rlCv"></canvas>' +
+        /* [Real] عجلة المنصة الحقيقية (icon-roulette أصل مرقّم 0-36) تدور حول مركزها */
+        '<div class="rl-real-wheel" id="rlRealWheel" style="background-image:url(assets/games/roulette/wheel.png)"></div>' +
+        '<div class="rl-ball" id="rlBall" aria-hidden="true"></div>' +
         '<div class="rl-pointer" aria-hidden="true"></div>' +
       '</div>' +
       '<div class="rl-last" id="rlLast">' + T('rl.wait') + '</div>' +
@@ -1886,127 +1888,16 @@ function rlBet(c) {
   SND.click();
 }
 function initRoulette() {
-  const cv = document.getElementById('rlCv');
-  if (!cv) return;
-  /* تهيئة متجاوبة: نضبط أبعاد الرسم الفعلية (CSS×devicePixelRatio) لجيوب واضحة
-     على كل الشاشات — الحجم يُشتق من حاوية .rl-wheel (مربع) مع حدود 260-420px */
-  rlResizeCanvas(cv);
-  rlDraw(cv, 0);
-  /* إعادة التهيئة والرسم عند تغيّر حجم النافذة/الدوران — بتنقيط 200ms */
-  if (!window._rlResizeBound) {
-    window._rlResizeBound = true;
-    let rlT = 0;
-    window.addEventListener('resize', function () {
-      clearTimeout(rlT);
-      rlT = setTimeout(function () {
-        const c = document.getElementById('rlCv');
-        if (!c) return;
-        rlResizeCanvas(c);
-        rlDraw(c, rlLastRot);
-      }, 200);
-    });
-  }
+  /* [Real] العجلة صورة أصل حقيقية تدور بـ CSS transform — لا canvas */
+  const wheel = document.getElementById('rlRealWheel');
+  if (wheel) wheel.style.transform = 'rotate(0rad)';
   /* الحالة الافتراضية: رهان أحمر — ظهّره في الواجهة */
   const redBtn = document.getElementById('rlBtnRed');
   if (redBtn) redBtn.classList.add('active');
 }
-/* ضبط أبعاد canvas المتجاوب: حجم CSS من الحاوية (مربع) + backing store بدقة dpr */
-function rlResizeCanvas(cv) {
-  const wrap = cv.parentElement;
-  let cssSize = wrap ? wrap.clientWidth : 0;
-  if (!cssSize || cssSize < 40) cssSize = Math.min(cv.clientWidth || 320, 340);
-  cssSize = Math.max(260, Math.min(cssSize, 420));
-  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
-  const px = Math.round(cssSize * dpr);
-  /* لا تهيئة مرة أخرى بنفس الأبعاد — يحفظ رسومات winIdx عند مدوران resize فقط */
-  if (cv.width !== px || cv.height !== px || cv._rlCss !== cssSize) {
-    cv.width = px;
-    cv.height = px;
-    cv._rlCss = cssSize;
-    cv.style.width = cssSize + 'px';
-    cv.style.height = cssSize + 'px';
-  }
-}
-/* راوتر رسم موحّد يستخدم ctx جاهز ويضمن ctx.scale(dpr,dpr) بعد أي تهيئة */
-function rlDraw(cv, rot, ball, winIdx) {
-  const ctx = cv.getContext('2d');
-  if (!ctx) return;
-  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
-  /* إعادة ضبط مصفوفة التحويل ثم تطبيق مقياس dpr — يضمن قياساً صحيحاً
-     حتى لو تغيرت أبعاد canvas بعد التهيئة */
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawRoulette(ctx, rot, ball, winIdx, cv._rlCss || Math.round(cv.width / dpr));
-}
-function drawRoulette(ctx, rot, ball, winIdx, cssSize) {
-  if (!ctx) return;
-  /* كل الأبعاد نسبية: S = الحجم المنطقي (CSS) — scale يعيد قيم 320px المرجعية */
-  const S = cssSize || 320;
-  const sc = S / 320;
-  const cx = S / 2, cy = S / 2, r = 146 * sc;
-  ctx.clearRect(0, 0, S, S);
-  /* حلقة خارجية ذهبية مزدوجة */
-  ctx.beginPath(); ctx.arc(cx, cy, r + 9 * sc, 0, Math.PI * 2); ctx.fillStyle = '#0e0a26'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, r + 5 * sc, 0, Math.PI * 2); ctx.fillStyle = '#f5c518'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#8a6d1a'; ctx.fill();
-  const angle = (Math.PI * 2) / rlNumbers.length;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(rot);
-  rlNumbers.forEach(function (n, i) {
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, r, i * angle, (i + 1) * angle);
-    ctx.closePath();
-    ctx.fillStyle = n === 0 ? '#0a7a55' : (i % 2 === 0 ? '#d0263f' : '#151515');
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(245,197,24,0.5)';
-    ctx.lineWidth = Math.max(1, sc);
-    ctx.stroke();
-    ctx.save();
-    ctx.rotate(i * angle + angle / 2);
-    ctx.fillStyle = '#fff';
-    /* خط متناسب مع نصف القطر — 37 جيباً (زاوية 9.7°) بأرقام غير متزاحمة */
-    ctx.font = 'bold ' + Math.max(8.5, Math.round(11.5 * sc)) + 'px Cairo';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(n.toString(), 0, -r * 0.68);
-    ctx.restore();
-  });
-  /* توهج الجيب الفائز بعد التوقف */
-  if (winIdx >= 0 && winIdx < rlNumbers.length) {
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, r, winIdx * angle, (winIdx + 1) * angle);
-    ctx.closePath();
-    ctx.fillStyle = rlNumbers[winIdx] === 0 ? '#0a7a55' : (winIdx % 2 === 0 ? '#d0263f' : '#151515');
-    ctx.shadowColor = 'rgba(245,197,24,0.95)';
-    ctx.shadowBlur = 24 * sc;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-  ctx.restore();
-  /* المحور المركزي */
-  ctx.beginPath(); ctx.arc(cx, cy, 26 * sc, 0, Math.PI * 2); ctx.fillStyle = '#141033'; ctx.fill();
-  ctx.strokeStyle = '#f5c518'; ctx.lineWidth = Math.max(1.5, 2.5 * sc); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, 9 * sc, 0, Math.PI * 2); ctx.fillStyle = '#ffd700'; ctx.fill();
-  /* الكرة — تُرسم فوق كل شيء في إحداثيات الشاشة */
-  if (ball) {
-    const bx = cx + Math.cos(ball.ang) * ball.radius * sc;
-    const by = cy + Math.sin(ball.ang) * ball.radius * sc;
-    const br = Math.max(5, 9 * sc);
-    const gr = ctx.createRadialGradient(bx - 2 * sc, by - 3 * sc, 1, bx, by, br);
-    gr.addColorStop(0, '#ffffff');
-    gr.addColorStop(0.35, '#ffe9a3');
-    gr.addColorStop(1, '#d4a017');
-    ctx.beginPath();
-    ctx.arc(bx, by, Math.max(4, 7 * sc), 0, Math.PI * 2);
-    ctx.shadowColor = 'rgba(255,255,255,0.9)';
-    ctx.shadowBlur = 10 * sc;
-    ctx.fillStyle = gr;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-}
+/* [Real] فيزياء دوران واقعية: العجلة تتباطأ أُسّياً من سرعة عالية،
+   والكرة تدور عكس العجلة أسرع ثم تهبط تدريجياً نحو الجيب الفائز
+   مع ارتدادات صغيرة عند اصطدامها بحواجز الجيوب (كما في العجلة الفعلية). */
 function rlSpin() {
   if (rlSpinning) return;
   if (!take()) return;
@@ -2015,58 +1906,81 @@ function rlSpin() {
   gres('', 0);
   const spinBtn = document.getElementById('rlSpinBtn');
   if (spinBtn) spinBtn.disabled = true;
-  const cv = document.getElementById('rlCv');
-  if (!cv) { finishRoulette(Math.floor(Math.random() * rlNumbers.length)); return; }
-  /* أبعاد محدثة قبل السبين (تغيّر الحاوية/الدوران منذ التهيئة) ثم نفس ctx للأنيميشن */
-  rlResizeCanvas(cv);
+  const wheelEl = document.getElementById('rlRealWheel');
+  const ballEl = document.getElementById('rlBall');
+  const wrapEl = document.getElementById('rlWrap');
+  if (wrapEl) wrapEl.classList.add('spinning');   /* تُظهر الكرة (opacity) */
+  if (!wheelEl) { finishRoulette(Math.floor(Math.random() * rlNumbers.length)); return; }
   const seg = (Math.PI * 2) / rlNumbers.length;
-  const spins = 5 + Math.random() * 3;
   const stopAt = Math.floor(Math.random() * rlNumbers.length);
-  /* المحور: المؤشر أعلى العجلة (−π/2) — مركز الجيب الفائز يصطف تحته تماماً */
-  const targetRot = spins * Math.PI * 2 - Math.PI / 2 - (stopAt + 0.5) * seg;
-  const ball = { start: Math.random() * Math.PI * 2, spins: 3 + Math.random() * 2, stopAt, lastIdx: -1 };
-  const start = performance.now();
-  const DUR = 5400;
-  let lastTick = 0;
-  function animate(now) {
-    const progress = Math.min((now - start) / DUR, 1);
-    const eased = 1 - Math.pow(1 - progress, 3.4);
-    const rot = eased * targetRot;
-    const bs = rlBallState(rot, progress, ball, seg);
-    rlDraw(cv, rot, bs);
-    /* نقر الكرة أثناء عبورها حدود الجيوب */
-    const idx = Math.floor((((bs.ang - rot) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / seg);
-    const nowMs = performance.now();
-    if (idx !== ball.lastIdx && nowMs - lastTick > 28) {
-      SND.tickSoft();
-      ball.lastIdx = idx;
-      lastTick = nowMs;
+  /* المؤشر أعلى العجلة (-π/2): مركز الجيب الفائز يصطف تحته تماماً عند التوقف */
+  const wheelTarget = (4 + Math.random() * 2) * Math.PI * 2 - Math.PI / 2 - (stopAt + 0.5) * seg;
+  /* الكرة: تدور عكس اتجاه العجلة بسرعة أولية أعلى ثم تتباطأ أسرع وتسقط للجيب */
+  const ballDir = -1; /* عكس عقارب الساعة بينما العجلة مع العقارب */
+  const ballTotal = ballDir * (6 + Math.random() * 2) * Math.PI * 2 + (-Math.PI / 2 - (stopAt + 0.5) * seg - wheelTarget);
+  const DUR = 6200;
+  const t0 = performance.now();
+  let lastTick = 0, lastBallAng = null;
+  function frame(now) {
+    const t = Math.min((now - t0) / DUR, 1);
+    /* العجلة: تباطؤ أُسّي واقعي (سريعة ثم بطيئة جداً في النهاية) */
+    const wEase = 1 - Math.pow(1 - t, 2.6);
+    const rot = wEase * wheelTarget;
+    wheelEl.style.transform = 'rotate(' + rot + 'rad)';
+    /* الكرة: طور حر سريع عكسي (72%) ثم هبوط للجيب مع ارتداد صغير عند الحواجز */
+    const dropAt = 0.72;
+    let ballAng, ballR;
+    if (t < dropAt) {
+      const p = t / dropAt;
+      const bEase = 1 - Math.pow(1 - p, 1.9);
+      ballAng = ballTotal * bEase + rot * 0.35;   /* الكرة تنجرف مع دوران العجلة جزئياً */
+      ballR = 44;                                  /* مسار الحافة الخارجية (%) */
+    } else {
+      const s = (t - dropAt) / (1 - dropAt);
+      const smooth = s * s * (3 - 2 * s);          /* smoothstep هبوط ناعم */
+      /* الجيب النهائي: زاوية مطلقة ثابتة تحت المؤشر (العجلة شبه متوقفة هنا) */
+      const finalAbs = -Math.PI / 2 - (stopAt + 0.5) * seg;
+      const freeAng = ballTotal * (1 - Math.pow(1 - 1, 1.9)) + rot * 0.35;
+      const bounce = Math.sin(s * Math.PI * 7) * (1 - s) * seg * 1.6;
+      ballAng = freeAng + (finalAbs + bounce - freeAng) * smooth;
+      ballR = 44 - 26 * smooth;                    /* تهبط من الحافة نحو الجيب الداخلي */
     }
-    if (progress < 1) requestAnimationFrame(animate);
+    /* تحديد موقع الكرة: مدار دائري حول مركز العجلة */
+    if (ballEl) {
+      const ang = ballAng - Math.PI / 2;
+      const xPct = 50 + Math.cos(ang) * ballR;
+      const yPct = 50 + Math.sin(ang) * ballR;
+      ballEl.style.left = xPct + '%';
+      ballEl.style.top = yPct + '%';
+    }
+    /* نقر عند عبور الكرة حدود جيب (فرق زاوي عن العجلة يقطع قطاعات) */
+    if (lastBallAng !== null) {
+      let d = ballAng - lastBallAng;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      const crossed = Math.floor(Math.abs(d) / seg);
+      if (crossed > 0 && now - lastTick > 24) {
+        SND.tickSoft();
+        lastTick = now;
+      }
+    }
+    lastBallAng = ballAng;
+    if (t < 1) requestAnimationFrame(frame);
     else {
-      rlLastRot = rot;
+      rlLastRot = wheelTarget;
       finishRoulette(stopAt);
     }
   }
-  animate(performance.now());
+  requestAnimationFrame(frame);
 }
-/* حالة الكرة: طور حر (تدور أسرع من العجلة) ثم طور انزلاق نحو الجيب الفائز مع ارتداد خفيف */
-function rlBallState(rot, progress, ball, seg) {
-  const dropStart = 0.82;
-  const pFree = Math.min(progress / dropStart, 1);
-  const free = ball.start + ball.spins * Math.PI * 2 * (1 - Math.pow(1 - pFree, 2.2));
-  if (progress < dropStart) return { ang: free, radius: 132 };
-  const s = Math.min((progress - dropStart) / (1 - dropStart), 1);
-  const blend = s * s * (3 - 2 * s);
-  /* الهدف: مركز الجيب الفائز تحت المؤشر — rot النهائية تضبطه تلقائياً */
-  const target = rot + (ball.stopAt + 0.5) * seg;
-  const bounce = Math.sin(s * Math.PI * 8) * (1 - s) * seg * 2;
-  return { ang: free + (target + bounce - free) * blend, radius: 132 - 46 * blend };
-}
+/* ضبط أبعاد canvas المتجاوب: حجم CSS من الحاوية (مربع) + backing store بدقة dpr */
 function finishRoulette(idx) {
   rlSpinning = false;
   const spinBtn = document.getElementById('rlSpinBtn');
   if (spinBtn) spinBtn.disabled = false;
+  /* [Real] إخفاء الكرة بعد التوقف على الجيب */
+  const wrapEl0 = document.getElementById('rlWrap');
+  if (wrapEl0) wrapEl0.classList.remove('spinning');
   const num = rlNumbers[idx];
   const color = rlColorOf(num);
   const lastEl = document.getElementById('rlLast');
@@ -2087,9 +2001,9 @@ function finishRoulette(idx) {
   gres(win ? '×' + mult + ' +' + fmt(w) + ' 🪙' : T('ts.lose'), win ? w : 0);
   winFX(w);
   fairTick();
-  /* توهج الجيب الفائز + اهتزاز العجلة عند الفوز الكبير */
-  const cv = document.getElementById('rlCv');
-  if (cv) rlDraw(cv, rlLastRot, null, idx);
+  /* [Real] تثبيت العجلة الحقيقية على الرقم الفائز + اهتزاز عند الفوز الكبير */
+  const wheel = document.getElementById('rlRealWheel');
+  if (wheel) wheel.style.transform = 'rotate(' + rlLastRot + 'rad)';
   if (win && w >= GB * 5) {
     const wrap = document.getElementById('rlWrap');
     if (wrap) shake(wrap, 5, 380);

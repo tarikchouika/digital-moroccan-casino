@@ -635,6 +635,14 @@
   font-family: 'Cairo', sans-serif;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+/* [Assets] أوراق المنصة الحقيقية: الوجه والظهر صور كاملة (cover) — لا نصوص فوقها */
+.rcard-vector.rcard-img,
+.rcard-vector.rcard-back {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 0;
+}
 .rcard-vector.red { color: #DC2626; }
 .rcard-vector.black { color: #0F172A; }
 .rcard-corner { display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.28em; font-weight: 800; }

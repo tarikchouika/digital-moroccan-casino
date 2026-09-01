@@ -69,39 +69,22 @@ function _ramiToast(msg, type) {
 }
 
 /* ═══════════ Crisp Vector Card HTML Generator (100% Zero Broken Images) ═══════════ */
+/* ── [Assets] أوراق المنصة الحقيقية: كل وجه صورة أصل كاملة من assets/cards
+   (الرقم والرمز مرسومان داخل الأصل) — rcard-vector يحمل الخلفية inline ── */
+const RAMI_ASSET_SUIT = { heart: 'hearts', diamond: 'diamonds', sword: 'spades', grape: 'clubs' };
+function ramiCardAsset(card) {
+  if (!card || card.isJoker) return 'assets/cards/joker1.webp';
+  const rankStr = RAMI_RANK_NAMES[card.rank - 1] || String(card.rank);
+  const suitKey = RAMI_ASSET_SUIT[card.suit] || 'spades';
+  return 'assets/cards/' + rankStr + '-' + suitKey + '.webp';
+}
 function getRamiCardHTML(card, isBack, extraClass) {
   if (isBack || !card) {
-    return '<div class="rcard-vector rcard-back ' + (extraClass || '') + '" aria-hidden="true">' +
-      '<div class="rcard-back-pattern"></div>' +
-    '</div>';
+    return '<div class="rcard-vector rcard-back ' + (extraClass || '') + '" style="background-image:url(assets/cards/back.webp)" aria-hidden="true"></div>';
   }
-
-  if (card.isJoker) {
-    return '<div class="rcard-vector rcard-joker ' + (extraClass || '') + '" data-id="' + card.id + '">' +
-      '<div class="rcard-corner top-left"><span class="rcard-glyph">🃏</span></div>' +
-      '<div class="rcard-center-emblem"><span class="joker-star">★</span><span class="joker-lbl">JOKER</span></div>' +
-      '<div class="rcard-corner bottom-right"><span class="rcard-glyph">🃏</span></div>' +
-    '</div>';
-  }
-
-  const rankStr = (card.rank === 6) ? '6.' : ((card.rank === 9) ? '9.' : (RAMI_RANK_NAMES[card.rank - 1] || String(card.rank)));
-  const glyph = RAMI_SUIT_GLYPH[card.suit] || '♣';
-  const isRed = (card.suit === 'heart' || card.suit === 'diamond');
-  const colorCls = isRed ? 'red' : 'black';
-
-  return '<div class="rcard-vector rcard-front ' + colorCls + ' ' + (extraClass || '') + '" data-id="' + card.id + '">' +
-    '<div class="rcard-corner top-left">' +
-      '<span class="rcard-rank">' + rankStr + '</span>' +
-      '<span class="rcard-glyph">' + glyph + '</span>' +
-    '</div>' +
-    '<div class="rcard-center-emblem">' +
-      '<span class="rcard-big-glyph">' + glyph + '</span>' +
-    '</div>' +
-    '<div class="rcard-corner bottom-right">' +
-      '<span class="rcard-rank">' + rankStr + '</span>' +
-      '<span class="rcard-glyph">' + glyph + '</span>' +
-    '</div>' +
-  '</div>';
+  const asset = ramiCardAsset(card);
+  return '<div class="rcard-vector rcard-img ' + (extraClass || '') + '" data-id="' + card.id + '" ' +
+    'style="background-image:url(\'' + asset + '\')"></div>';
 }
 
 function getPlayerInitials(name, index) {
