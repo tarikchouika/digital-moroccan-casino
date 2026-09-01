@@ -4366,3 +4366,55 @@ body.rami-game-open { overflow: hidden; }
 @media (orientation: portrait) {
   #pg-game.app-fs .stage .crash-3d-container { height: min(48vh, 380px); }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   [Fit-3] صفوف الرموز الأحادية (lottery/rose/poker/olympus/gates/fishing):
+   في ملء الشاشة يتمدد الصف عمودياً وتكبر الرموز بتناسب — دون أي
+   تغيير في منطق اللعب (شبكة 6 أعمدة كما هي، فقط الأحجام والمسافات).
+   ════════════════════════════════════════════════════════════════ */
+@media (min-width: 300px) {
+  #pg-game.app-fs .stage .lt-row,
+  #pg-game.app-fs .stage .ro-row,
+  #pg-game.app-fs .stage .pk-row,
+  #pg-game.app-fs .stage .ol-row,
+  #pg-game.app-fs .stage .gt-row {
+    max-width: min(560px, 94vw);
+    gap: clamp(9px, 1.8vw, 16px);
+    margin: clamp(12px, 3vh, 26px) auto clamp(10px, 2.5vh, 22px);
+  }
+  /* رموز البطاقات داخل الصفوف: أكبر ومتناسبة مع الشاشة */
+  #pg-game.app-fs .stage .lt-tick,
+  #pg-game.app-fs .stage .ro-rose {
+    font-size: clamp(1.7rem, 7.2vh, 3.4rem);
+  }
+  #pg-game.app-fs .stage .lt-tick .lt-num,
+  #pg-game.app-fs .stage .ro-rose .ro-mult {
+    font-size: clamp(0.8rem, 2.6vh, 1.25rem);
+  }
+  #pg-game.app-fs .stage .pk-card,
+  #pg-game.app-fs .stage .ol-card,
+  #pg-game.app-fs .stage .gt-card {
+    font-size: clamp(1.7rem, 7.2vh, 3.4rem);
+    min-height: clamp(90px, 17vh, 170px);
+  }
+  /* الصف الرئيسي يتمدد ليأخذ حصة أكبر من المسرح */
+  #pg-game.app-fs .stage:has(.lt-row),
+  #pg-game.app-fs .stage:has(.ro-row),
+  #pg-game.app-fs .stage:has(.pk-row),
+  #pg-game.app-fs .stage:has(.ol-row),
+  #pg-game.app-fs .stage:has(.gt-row),
+  #pg-game.app-fs .stage:has(.fh-sea) {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
+  #pg-game.app-fs .stage .lt-row,
+  #pg-game.app-fs .stage .ro-row,
+  #pg-game.app-fs .stage .pk-row,
+  #pg-game.app-fs .stage .ol-row,
+  #pg-game.app-fs .stage .gt-row {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-content: center;
+  }
+}

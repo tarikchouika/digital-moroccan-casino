@@ -16,6 +16,13 @@ const RN_SUITS = {
 };
 const RN_NUMS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
 
+/* ── أصول أوراق المنصة الحقيقية (assets/cards) ──
+   1→'A', 11→'J', 12→'Q'؛ الرموز: A=◆ diamonds، B=♥ hearts، C=♠ spades، D=♣ clubs */
+const RN_ASSET_SUIT = { A: 'diamonds', B: 'hearts', C: 'spades', D: 'clubs' };
+function rnCardAsset(n, s) {
+  const r = (n === 1 ? 'A' : n === 11 ? 'J' : n === 12 ? 'Q' : String(n));
+  return 'assets/cards/' + r + '-' + (RN_ASSET_SUIT[s] || 'diamonds') + '.webp';
+}
 /* ── الواجهة ── */
 function eRonda(g) {
   return '<div class="stage" id="rnContainer"></div>';
@@ -502,12 +509,10 @@ class RondaRenderer {
   _alive() {
     return RN_ADAPTER && RN_ADAPTER.renderer === this && !RN_ADAPTER.core.dead;
   }
+  /* وجه الورقة = الأصل الكامل (الرقم والرمز مرسومان داخل الصورة) — بلا نصوص فوقها */
   _cardFaceHTML(c, extra) {
-    const s = RN_SUITS[c.symbol] || RN_SUITS.A;
-    return '<div class="fd-card face rn-suit-' + c.symbol + (extra ? ' ' + extra : '') + '">' +
-      '<div class="fd-card-c tl"><b>' + c.number + '</b><span>' + s.glyph + '</span></div>' +
-      '<div class="fd-card-center"><span>' + s.glyph + '</span></div>' +
-      '<div class="fd-card-c br"><b>' + c.number + '</b><span>' + s.glyph + '</span></div>' +
+    return '<div class="fd-card face rn-suit-' + c.symbol + (extra ? ' ' + extra : '') + '"' +
+      ' style="background-image:url(\'' + rnCardAsset(c.number, c.symbol) + '\')">' +
       '</div>';
   }
   _addLog(text, cls) {

@@ -441,10 +441,11 @@ const RamiExpertAI = {
 
   /* النقاط الحرة لمجموعات التقسيم (بدون جوكر — كما في عتبة الافتتاح) */
   _freeScore(melds, rules) {
+    /* [Ace] بالقيمة السياقية: A,2,3…=1 و…Q,K,A=10 (نفس منطق عتبة الافتتاح) */
     let f = 0;
     if (melds) for (const m of melds) {
       if (m.cards.some(c => rules.isWildCard(c))) continue;
-      for (const c of m.cards) f += c.baseValue;
+      f += rules.meldScore ? rules.meldScore(m) : m.cards.reduce((s, c) => s + c.baseValue, 0);
     }
     return f;
   },
@@ -866,6 +867,37 @@ class RamiRules {
     return false;
   }
 
+  /* [Ace] قيمة الآس السياقية داخل المجموعة (أصول الرامي المغربي):
+     - متتالية تبدأ بـ A,2,… (A23/A234/A2345) → الآس = 1
+     - متتالية ينتهي فيها الآس عالياً (QKA/10JQKA/JQKA) → الآس = 10
+     - متماثلة (SET) أو غير ذلك → الآس = 10
+     الجوكر = 0 (لا يساهم في المجموع الحر أصلاً — يُستثنى قبل الاستدعاء). */
+  aceValueInMeld(meld) {
+    if (!meld || !meld.cards) return 10;
+    const isSeq = (meld.type === MELD_TYPE.SEQUENCE);
+    if (!isSeq) return 10;
+    const naturals = meld.cards.filter(c => !this.isWildCard(c) && !c.isJoker);
+    const hasAce = naturals.some(c => c.rank === 1);
+    if (!hasAce) return 10;
+    const otherRanks = naturals.filter(c => c.rank !== 1).map(c => c.rank);
+    /* مع رتبة 2 حاضرة والآس يلعب منخفضاً (لا رتب عالية 10+ معه) → A = 1 */
+    const lowStart = otherRanks.some(r => r === 2) && !otherRanks.some(r => r >= 10);
+    return lowStart ? 1 : 10;
+  }
+
+  /* [Ace] مجموع أوراق المجموعة بقاعدة الآس السياقية (الجوكر = 0) */
+  meldScore(meld) {
+    if (!meld || !meld.cards) return 0;
+    const aceVal = this.aceValueInMeld(meld);
+    let s = 0;
+    for (const c of meld.cards) {
+      if (this.isWildCard(c)) continue;
+      if (c.isJoker) continue;
+      s += (c.rank === 1) ? aceVal : (c.rank >= 10 ? 10 : c.rank);
+    }
+    return s;
+  }
+
   get deckSize() { return this.mode === 'talaj' ? 108 : 104; }
   get initialHandSize() { return this.mode === 'talaj' ? 14 : 13; }
   get dealerHandSize() { return this.mode === 'talaj' ? 15 : 13; }
@@ -925,16 +957,15 @@ class RamiRules {
 
     // 3. [V19] حساب المجموع الحر: أوراق المجموعات الخالية تماماً من الجوكر فقط.
     //    المجموعات التي تحوي جوكراً لا تساهم في عتبة الافتتاح، بل تزيد المجموع الإجمالي
-    //    لتجاوز أعلى افتتاح سابق فقط. (الآس A = 10، الصور = 10، الجوكر = 0)
+    //    لتجاوز أعلى افتتاح سابق فقط. [Ace] قيمة الآس سياقية داخل المتتالية:
+    //    A,2,3… = 1 و…Q,K,A = 10 والصور = 10 والجوكر = 0
     let freeScore = 0;
     let extraScore = 0;
     for (const meld of melds) {
       const hasWild = meld.cards.some(c => this.isWildCard(c));
-      for (const card of meld.cards) {
-        if (this.isWildCard(card)) continue;
-        if (hasWild) extraScore += card.baseValue;
-        else freeScore += card.baseValue;
-      }
+      const score = this.meldScore(meld);
+      if (hasWild) extraScore += score;
+      else freeScore += score;
     }
     const totalScore = freeScore + extraScore;
 
