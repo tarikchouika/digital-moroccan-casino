@@ -195,9 +195,8 @@ function partitionSelectedCards(cards, rules, mode) {
 
   const meldFreeScore = (m) => {
     if (m.cards.some(c => rules.isWildCard(c))) return 0;
-    let f = 0;
-    for (const c of m.cards) f += c.baseValue;
-    return f;
+    /* [v18] الآس سياقي: 10 في المتماثلة/نهاية المتتالية، 1 في بدايتها */
+    return rules.meldPoints(m);
   };
 
   function search(idx, currentUsed, currentMelds) {
@@ -439,12 +438,13 @@ const RamiExpertAI = {
     return { type: 'open', playerId: player.id, cardIds: chosen.flatMap(m => m.cards.map(c => c.id)) };
   },
 
-  /* النقاط الحرة لمجموعات التقسيم (بدون جوكر — كما في عتبة الافتتاح) */
+  /* النقاط الحرة لمجموعات التقسيم (بدون جوكر — كما في عتبة الافتتاح)
+     [v18] الآس سياقي عبر rules.meldPoints */
   _freeScore(melds, rules) {
     let f = 0;
     if (melds) for (const m of melds) {
       if (m.cards.some(c => rules.isWildCard(c))) continue;
-      for (const c of m.cards) f += c.baseValue;
+      f += rules.meldPoints(m);
     }
     return f;
   },
@@ -761,8 +761,19 @@ class MeldValidator {
     return (members + jokers >= 3) && (members + jokers <= 4);
   }
 
+  /* [v18] هل تصحّ هذه المتتالية باعتبار الآس مرتفعاً (...Q-K-A)؟
+     تُستعمل لتحديد قيمة الآس السياقية: 10 في نهاية المتتالية، و1 في بدايتها (A-2-3) */
+  isAceHighSequence(cards, jokerAllowed) {
+    return this._checkSequence(cards, jokerAllowed, 'high');
+  }
+
   /* التحقق الصارم من الـ Sequence: رموز متطابقة، قيم متسلسلة، 3 بطاقات أو أكثر، وجوكر واحد على الأكثر */
   isValidSequence(cards, jokerAllowed) {
+    return this._checkSequence(cards, jokerAllowed, 'any');
+  }
+
+  /* الفحص الداخلي للمتتالية — aceMode: 'any' (منخفض أو مرتفع) | 'high' (مرتفع فقط) */
+  _checkSequence(cards, jokerAllowed, aceMode) {
     if (!cards || cards.length < 3) return false;
 
     const naturals = cards.filter(c => !this._isWild(c));
@@ -817,8 +828,8 @@ class MeldValidator {
       if (jokers === 1 && !jokerAllowed) continue;
       if (usedRanks.size === 0) continue;
 
-      // 1. فحص الآس كرتبة منخفضة (A, 2, 3)
-      if (testSequence(Array.from(usedRanks), jokers)) return true;
+      // 1. فحص الآس كرتبة منخفضة (A, 2, 3) — يُتجاوز في وضع 'high'
+      if (aceMode !== 'high' && testSequence(Array.from(usedRanks), jokers)) return true;
 
       // 2. فحص الآس كرتبة مرتفعة (10, J, Q, K, A)
       if (usedRanks.has(1)) {
@@ -888,6 +899,26 @@ class RamiRules {
     return this.validator.isValidMeld(cards, jokerAllowed);
   }
 
+  /* [v18] قيمة الورقة داخل مجموعة — الآس سياقي:
+     A = 10 في المتماثلة وفي نهاية المتتالية (...Q-K-A / ...J-Q-K-A)
+     A = 1  في بداية المتتالية (A-2-3 / A-2-3-4 ...) */
+  cardPointsInMeld(card, meld) {
+    if (this.isWildCard(card)) return 0;
+    if (card.rank !== 1) return card.baseValue;
+    if (meld && meld.type === MELD_TYPE.SEQUENCE &&
+        !this.validator.isAceHighSequence(meld.cards, true)) {
+      return 1; // متتالية تصح فقط بالآس المنخفض (A-2-3...)
+    }
+    return 10; // متماثلة، أو متتالية بالآس المرتفع (Q-K-A)
+  }
+
+  /* [v18] مجموع نقاط مجموعة (الجوكرات = 0، الآس سياقي) */
+  meldPoints(meld) {
+    let s = 0;
+    for (const c of meld.cards) s += this.cardPointsInMeld(c, meld);
+    return s;
+  }
+
   /* التحقق من الافتتاح: SET + Sequence، المجموع > threshold، لا Joker */
     /* التحقق الصارم من شروط الافتتاح: متتالية نقية + متماثلة نقية + مجموع ≥ 71 بدون جوكر + تجاوز أعلى افتتاح سابق */
   validateOpening(melds, drawnDiscardCard, jokerIndicator, highestPrevScore, isLaTour) {
@@ -925,15 +956,18 @@ class RamiRules {
 
     // 3. [V19] حساب المجموع الحر: أوراق المجموعات الخالية تماماً من الجوكر فقط.
     //    المجموعات التي تحوي جوكراً لا تساهم في عتبة الافتتاح، بل تزيد المجموع الإجمالي
-    //    لتجاوز أعلى افتتاح سابق فقط. (الآس A = 10، الصور = 10، الجوكر = 0)
+    //    لتجاوز أعلى افتتاح سابق فقط.
+    //    [v18] الآس سياقي: A = 10 في المتماثلة وفي نهاية المتتالية (Q-K-A)،
+    //    و A = 1 في بداية المتتالية (A-2-3). الصور = 10، الجوكر = 0.
     let freeScore = 0;
     let extraScore = 0;
     for (const meld of melds) {
       const hasWild = meld.cards.some(c => this.isWildCard(c));
       for (const card of meld.cards) {
         if (this.isWildCard(card)) continue;
-        if (hasWild) extraScore += card.baseValue;
-        else freeScore += card.baseValue;
+        const pts = this.cardPointsInMeld(card, meld);
+        if (hasWild) extraScore += pts;
+        else freeScore += pts;
       }
     }
     const totalScore = freeScore + extraScore;

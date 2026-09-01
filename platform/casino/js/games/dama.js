@@ -1342,6 +1342,8 @@ function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
   DAMA.ai = myColor === WHITE ? BLACK : WHITE;
   DAMA.mode = 'room';
   DAMA.oppBot = !!oppBot;
+  /* [v18] بوت الغرفة يلعب دائماً بمستوى الخبير (عمق 9) — 0% خطأ */
+  if (DAMA.oppBot) DAMA.level = DAMA_LEVELS.length - 1;
   DAMA.isSpectator = !!spec;
   DAMA.sel = null; DAMA.legal = []; DAMA.busy = false;
   DAMA.flipped = (myColor === BLACK);
