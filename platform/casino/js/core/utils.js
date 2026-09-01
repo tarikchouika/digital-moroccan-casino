@@ -22,7 +22,7 @@ function T(key) {
 function fmt(n) {
   try {
     const lang = typeof ST !== 'undefined' ? ST.lang : 'ar';
-    const locale = lang === 'ar' ? 'ar-MA' :
+    const locale = (lang === 'ar' || lang === 'da') ? 'ar-MA' :
                    lang === 'fr' ? 'fr-FR' : 'en-US';
     return n.toLocaleString(locale);
   } catch (e) {
@@ -243,11 +243,12 @@ function updateCopyright() {
     el.textContent = year;
   });
 }
-/* ── تطبيق اتجاه الصفحة ── */
+/* ── تطبيق اتجاه الصفحة ──
+   الدارجة المغربية عربية وتُكتب من اليمين إلى اليسار مثل الفصحى */
 function applyI18n() {
-  const dir = ST.lang === 'ar' ? 'rtl' : 'ltr';
+  const dir = (ST.lang === 'ar' || ST.lang === 'da') ? 'rtl' : 'ltr';
   document.documentElement.setAttribute('dir', dir);
-  document.documentElement.setAttribute('lang', ST.lang);
+  document.documentElement.setAttribute('lang', ST.lang === 'da' ? 'ar-MA' : ST.lang);
 }
 /* ── أدوات الورق ── */
 const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];

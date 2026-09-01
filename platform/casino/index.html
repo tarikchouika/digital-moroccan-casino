@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="css/10-dama.css">
   <link rel="stylesheet" href="css/12-chess.css">
   <link rel="stylesheet" href="css/11-game-theme.css">
-  <link rel="stylesheet" href="css/13-billiards.css?v=260831gva">
+  <link rel="stylesheet" href="css/13-billiards.css?v=260901gvb">
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -320,15 +320,9 @@
 <b data-k="a.referTitle2">كافأة الإحالة:</b>
 <span data-k="a.referP">يمكن للاعب إحالة صديق، ويُكافأ بشكل مباشر وأوتوماتيكي بـ 10٪ من قيمة أول عملية شحن للاعب المحال الجديد.</span>
 </div>
-<h2><i aria-hidden="true" class="fa-solid fa-hand-holding-dollar"></i> <span data-k="a.commTitle">عمولات الأدمنز</span></h2>
-<p data-k="a.commP">يستفيد الأدمنز بشكل مباشر من عمولة على عمليات الشحن التي يتجاوز سقفها:</p>
-<div class="comm-grid">
-<div class="comm-card"><div class="rate">25%</div><div class="desc" data-k="a.comm1">من الشحن فوق 1000 درهم = 12500 كوينز</div></div>
-<div class="comm-card"><div class="rate">30%</div><div class="desc" data-k="a.comm2">من الشحن فوق 10000 درهم = 130000 كوينز</div></div>
-<div class="comm-card"><div class="rate">35%</div><div class="desc" data-k="a.comm3">من الشحن فوق 100000 درهم = 1350000 كوينز</div></div>
-<div class="comm-card"><div class="rate">40%</div><div class="desc" data-k="a.comm4">من الشحن فوق 1000000 درهم = 14000000 كوينز</div></div>
-</div>
-<div class="legal-note" style="margin-top:14px"><p data-k="a.adminWithdraw">يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.</p></div>
+<h2><i aria-hidden="true" class="fa-solid fa-user-shield"></i> <span data-k="a.adminsTitle">الأدمنز</span></h2>
+<div class="legal-note"><p data-k="a.adminsIso">جُمعت كل المعلومات الخاصة بنسب وعمولات الأدمنز وتعامل المنصة معهم — الصلاحيات، الشحن، الاستبدال، السحب، الإحالة والانضباط — في صفحة خاصة بالشروط والقوانين المؤطرة للأدمنز.</p>
+<p><a class="btn ghost small" href="admins.html" target="_blank"><i aria-hidden="true" class="fa-solid fa-user-shield"></i> <span data-k="a.adminsBtn">صفحة شروط وقوانين الأدمنز</span></a></p></div>
 <h2><i aria-hidden="true" class="fa-solid fa-users"></i> <span data-k="a.roomsTitle">الغرف الجماعية</span></h2>
 <p data-k="a.roomsP">يمكن للاعبين الرهان وجهاً لوجه في غرف الألعاب الجماعية، وهناك نوعان:</p>
 <ul>
@@ -368,7 +362,7 @@
 <li data-k="t.coin2">يمكن شحن الحساب بمال حقيقي عبر أدمنز المنصة، وسحب الأرباح مقابل مال حقيقي.</li>
 <li data-k="t.coin3">مبادلة الكوينز بين اللاعبين حرة عبر المنصة وبدون رسوم على المبادلة.</li>
 </ul>
-<p data-k="t.adminWithdraw" style="margin-top:8px">يتم سحب الأموال بالنسبة للأدمنز باحتساب سعر الكوينز حسب السعر والشريحة التي تم بها الإيداع.</p>
+<p style="margin-top:8px"><span data-k="a.adminsIso">جُمعت كل المعلومات الخاصة بنسب وعمولات الأدمنز وتعامل المنصة معهم في صفحة خاصة بالشروط والقوانين المؤطرة للأدمنز.</span> <a href="admins.html" target="_blank" data-k="a.adminsBtn">صفحة شروط وقوانين الأدمنز</a></p>
 <h2><i aria-hidden="true" class="fa-solid fa-credit-card"></i> <span data-k="t.topupTitle">الشحن</span></h2>
 <p data-k="t.topupP">يتم الشحن بمال حقيقي عبر أحد أدمنز المنصة، ويُحوَّل المبلغ فوراً إلى كوينز وفق المعادلة: 10 كوينز = 1 درهم مغربي.</p>
 <h2><i aria-hidden="true" class="fa-solid fa-money-bill-transfer"></i> <span data-k="t.withdrawTitle">السحب</span></h2>
@@ -880,13 +874,13 @@
   <script src="js/games/rami.js"></script>
   <script src="js/games/dama.js"></script>
   <script src="js/games/chess.js"></script>
-  <script src="js/games/billiards-physics.js?v=260831gva"></script>
-  <script src="js/games/billiards-rules.js?v=260831gva"></script>
-  <script src="js/games/billiards.js?v=260831gva"></script>
+  <script src="js/games/billiards-physics.js?v=260901gvb"></script>
+  <script src="js/games/billiards-rules.js?v=260901gvb"></script>
+  <script src="js/games/billiards.js?v=260901gvb"></script>
   <script src="js/games/engines.js"></script>
   <script type="module" src="js/games/crash.js"></script>
   <script src="js/core/rooms.js"></script>
-  <script src="js/main.js?v=260831gva"></script>
+  <script src="js/main.js?v=260901gvb"></script>
   <script src="js/core/live.js"></script>
   <script src="js/core/fair.js"></script>
   <script src="js/games/group.js"></script>

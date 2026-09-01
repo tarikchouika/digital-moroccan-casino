@@ -32,6 +32,25 @@ const BET_FEE_RATE = 0.05;      /* 5% رسوم المنصة على الرهان 
 /* بذور: مستخدمون افتراضيون */
 users[1] = { id: 1, username: 'player1', password: '123', role: 'user', gold: 5000, lang: 'ar' };
 users[2] = { id: 2, username: 'admin', password: 'admin', role: 'admin', gold: 100000, lang: 'ar' };
+users[3] = { id: 3, username: 'superadmin', password: 'super', role: 'super', gold: 1000000, lang: 'ar' };
+
+/* ═══════ رمز الإحالة المميز: لكل مسجّل في المنصة ═══════
+   يسلمه المحال الجديد للأدمن الذي سيسجله، فيستفيد صاحب الإحالة
+   من هدية الإحالة (10% من أول عملية شحن) حسب قواعد المنصة */
+function genRefCode(id) {
+  for (let guard = 0; guard < 50; guard++) {
+    const code = 'GV' + id.toString(36).toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    if (!Object.values(users).some(function (u) { return u.ref_code === code; })) return code;
+  }
+  return 'GV' + id + '-' + Date.now().toString(36).toUpperCase();
+}
+Object.values(users).forEach(function (u) { if (!u.ref_code) u.ref_code = genRefCode(u.id); });
+
+/* ═══════ صلاحيات الأدوار ═══════ */
+function isAdmin(u) { return !!u && (u.role === 'admin' || u.role === 'super'); }
+function isSuper(u) { return !!u && u.role === 'super'; }
+/* الألعاب المعطّلة (سوبر أدمن فقط): id → enabled */
+const gameFlags = {};
 
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
@@ -67,8 +86,15 @@ function getUser(req) {
 }
 function publicUser(u) {
   if (!u) return null;
-  return { id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang };
+  return {
+    id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang,
+    ref_code: u.ref_code || null, admin_id: u.admin_id || null,
+    referred_by: u.referred_by || null,
+    muted_until: (u.muted_until && u.muted_until > Date.now()) ? u.muted_until : null
+  };
 }
+/* هل اللاعب موقوف عن التعليق الصوتي والمراسلة؟ */
+function isMuted(u) { return !!(u && u.muted_until && u.muted_until > Date.now()); }
 
 /* ═══════ الغرف: تسلسل + بثّ ═══════ */
 function serializeRoom(room) {
@@ -277,7 +303,8 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/login') {
         const existing = Object.values(users).find(function (u) { return u.username === (data.username || ''); });
         const u = existing || { id: nextUserId++, username: data.username || 'player', password: data.password || '', role: 'user', gold: 2500, lang: 'ar' };
-        if (!existing) users[u.id] = u;
+        if (!existing) { u.ref_code = genRefCode(u.id); users[u.id] = u; }
+        if (!u.ref_code) u.ref_code = genRefCode(u.id);
         startSession(res, u);
         json({ ok: true, user: publicUser(u) });
         return;
@@ -289,6 +316,12 @@ const server = http.createServer((req, res) => {
           return;
         }
         u = { id: nextUserId++, username: data.username || 'new_player', password: data.password || '', role: 'user', gold: 1000, lang: 'ar' };
+        u.ref_code = genRefCode(u.id);
+        /* رمز إحالة اختياري عند التسجيل الذاتي */
+        if (data.referral_code) {
+          const ref = Object.values(users).find(function (x) { return x.ref_code === String(data.referral_code).trim().toUpperCase(); });
+          if (ref && ref.id !== u.id) u.referred_by = ref.id;
+        }
         users[u.id] = u;
         startSession(res, u);
         json({ ok: true, user: publicUser(u) });
@@ -325,6 +358,7 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/transfers') { json({ ok: true, transfers: transfersList }); return; }
       if (pathname === '/api/claim') { if (me) me.gold = (me.gold || 0) + 100; json({ ok: true, amount: 100, gold: me ? me.gold : 100 }); return; }
       if (pathname === '/api/chat') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن المراسلة حتى ' + new Date(me.muted_until).toLocaleString('ar-MA'), muted_until: me.muted_until }, 403); return; }
         const msg = { username: me ? me.username : 'زائر', message: data.message || '', created_at: Date.now() };
         chatMessages.push(msg); if (chatMessages.length > 50) chatMessages.shift();
         sseClients.forEach(c => sendSSE(c.res, 'chat', msg));
@@ -335,8 +369,181 @@ const server = http.createServer((req, res) => {
         json({ ok: true, tournaments: [] });
         return;
       }
-      if (pathname === '/api/games' || pathname === '/api/admin/games') { json({ ok: true, games: [] }); return; }
+      if (pathname === '/api/games' || (pathname === '/api/admin/games' && req.method === 'GET')) { json({ ok: true, games: gameFlags }); return; }
       if (pathname === '/api/rounds') { json({ ok: true }); return; }
+
+      /* ═══════ API الإدارة — الأدوار والصلاحيات ═══════
+         سوبر أدمن: كل الصلاحيات (تسجيل، مسح حساب، شحن/سحب مباشر،
+                    الاطلاع على الأرصدة، تغيير كلمات المرور والبيانات،
+                    تشغيل/توقيف الألعاب، الأدوار، الحظر، الإسكات).
+         أدمن: صلاحيات محدودة —
+           • تسجيل عميل جديد (مع رمز إحالة اختياري يقدمه العميل)
+           • شحن حساب أي عميل مسجل بالمنصة (يتطلب رصيداً كافياً عند الأدمن)
+           • استبدال كوينز العميل بمال حقيقي: لا سحب مباشر من حساب العميل —
+             العميل يرسل الكوينز للأدمن عبر «إرسال الكوينز» بنفسه
+           • إسكات لاعب عن التعليق الصوتي والمراسلة 24 ساعة أو أكثر */
+
+      if (pathname === '/api/admin/stats') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        const all = Object.values(users);
+        json({
+          ok: true,
+          users_total: all.length,
+          active_today: all.filter(function (u) { return u.last_seen && (Date.now() / 1000 - u.last_seen) < 86400; }).length,
+          plays_total: 0,
+          gold_total: isSuper(me) ? all.reduce(function (s, u) { return s + (u.gold || 0); }, 0) : 0,
+          coins_won_total: 0
+        });
+        return;
+      }
+
+      if (pathname === '/api/admin/users') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        /* السوبر يرى الجميع؛ الأدمن يرى لاعبيه (من سجلهم) فقط */
+        const list = Object.values(users)
+          .filter(function (u) { return isSuper(me) ? true : (u.admin_id === me.id && u.role === 'user'); })
+          .map(function (u) {
+            return {
+              id: u.id, username: u.username, gold: u.gold, role: u.role,
+              ref_code: u.ref_code || null, referred_by: u.referred_by || null,
+              admin_id: u.admin_id || null, banned: !!u.banned,
+              muted_until: (u.muted_until && u.muted_until > Date.now()) ? u.muted_until : null,
+              last_seen: u.last_seen || null, first_topup_done: !!u.first_topup_done
+            };
+          });
+        json({ ok: true, users: list, my_gold: me.gold });
+        return;
+      }
+
+      if (pathname === '/api/admin/register') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        const uname = String(data.username || '').trim();
+        if (!uname || String(data.password || '').length < 6) { json({ ok: false, message: 'بيانات ناقصة' }, 400); return; }
+        if (Object.values(users).some(function (x) { return x.username === uname; })) { json({ ok: false, message: 'اسم المستخدم محجوز' }, 400); return; }
+        const nu = { id: nextUserId++, username: uname, password: data.password, role: 'user', gold: 0, lang: 'ar', admin_id: me.id };
+        nu.ref_code = genRefCode(nu.id);
+        /* رمز الإحالة المميز: يسلمه المحال الجديد للأدمن عند تسجيله —
+           صاحب الرمز يستفيد من هدية الإحالة عند أول شحن للمحال */
+        if (data.referral_code) {
+          const rc = String(data.referral_code).trim().toUpperCase();
+          const ref = Object.values(users).find(function (x) { return x.ref_code === rc; });
+          if (!ref) { json({ ok: false, message: 'رمز الإحالة غير صالح' }, 400); return; }
+          nu.referred_by = ref.id;
+        }
+        users[nu.id] = nu;
+        json({ ok: true, user: { id: nu.id, username: nu.username, ref_code: nu.ref_code, referred_by: nu.referred_by || null } });
+        return;
+      }
+
+      /* شحن/خصم/ضبط رصيد: /api/admin/user/:id/balance */
+      let mm = pathname.match(/^\/api\/admin\/user\/(\d+)\/(balance|password|ban|role|delete|mute)$/);
+      if (mm) {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        const target = users[parseInt(mm[1], 10)];
+        if (!target) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+        const op = mm[2];
+
+        if (op === 'balance') {
+          /* ضبط مباشر للرصيد: سوبر أدمن فقط */
+          if (data.gold !== undefined) {
+            if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+            target.gold = Math.max(0, parseInt(data.gold, 10) || 0);
+            json({ ok: true, gold: target.gold });
+            return;
+          }
+          const amt = parseInt(data.amount, 10);
+          if (isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
+          if (data.action === 'charge') {
+            /* الأدمن يشحن أي عميل مسجل بالمنصة (من طرفه أو من طرف أدمن آخر)
+               بشرط رصيد كافٍ عنده؛ السوبر يشحن بلا قيد */
+            if (!isSuper(me)) {
+              if (target.role !== 'user') { json({ ok: false, message: 'يشحن حسابات العملاء فقط' }, 403); return; }
+              if ((me.gold || 0) < amt) { json({ ok: false, message: 'رصيد الأدمن غير كافٍ' }, 400); return; }
+              me.gold -= amt;
+            }
+            target.gold = (target.gold || 0) + amt;
+            /* هدية الإحالة: 10% من أول عملية شحن تُمنح لصاحب رمز الإحالة */
+            let refBonus = 0;
+            if (!target.first_topup_done && target.referred_by && users[target.referred_by]) {
+              refBonus = Math.floor(amt * 0.10);
+              if (refBonus > 0) users[target.referred_by].gold = (users[target.referred_by].gold || 0) + refBonus;
+            }
+            target.first_topup_done = true;
+            json({ ok: true, gold: target.gold, admin_gold: me.gold, referral_bonus: refBonus });
+            return;
+          }
+          if (data.action === 'deduct') {
+            /* السحب المباشر من حساب العميل: سوبر أدمن فقط —
+               الأدمن لا يسحب مباشرة؛ العميل يرسل له الكوينز عبر «إرسال الكوينز»
+               لاستبدالها بمال حقيقي (والأدمن ملزم بالاحتفاظ بوصل الإرسال) */
+            if (!isSuper(me)) { json({ ok: false, message: 'لا يمكن للأدمن السحب المباشر — استعمل استقبال تحويل من العميل' }, 403); return; }
+            if ((target.gold || 0) < amt) { json({ ok: false, message: 'رصيد العميل غير كافٍ' }, 400); return; }
+            target.gold -= amt;
+            json({ ok: true, gold: target.gold });
+            return;
+          }
+          json({ ok: false, message: 'عملية غير معروفة' }, 400);
+          return;
+        }
+
+        if (op === 'password') {
+          /* تغيير كلمة مرور العملاء: السوبر لأي حساب؛ الأدمن للاعبيه فقط */
+          if (!isSuper(me) && !(target.role === 'user' && target.admin_id === me.id)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+          if (String(data.password || '').length < 6) { json({ ok: false, message: 'كلمة مرور قصيرة' }, 400); return; }
+          target.password = data.password;
+          json({ ok: true });
+          return;
+        }
+
+        if (op === 'ban') {
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          target.banned = !!data.banned;
+          json({ ok: true, banned: target.banned });
+          return;
+        }
+
+        if (op === 'role') {
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          if (target.id === me.id) { json({ ok: false, message: 'لا يمكنك تغيير دورك' }, 400); return; }
+          if (['user', 'admin', 'super'].indexOf(data.role) === -1) { json({ ok: false, message: 'دور غير صالح' }, 400); return; }
+          target.role = data.role;
+          json({ ok: true, role: target.role });
+          return;
+        }
+
+        if (op === 'delete') {
+          /* مسح حساب: سوبر أدمن فقط */
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          if (target.id === me.id) { json({ ok: false, message: 'لا يمكنك مسح حسابك' }, 400); return; }
+          delete users[target.id];
+          Object.keys(sessions).forEach(function (sid) { if (sessions[sid] === target.id) delete sessions[sid]; });
+          json({ ok: true });
+          return;
+        }
+
+        if (op === 'mute') {
+          /* توقيف عن التعليق الصوتي والمراسلة 24 ساعة أو أكثر (الأدمن والسوبر) */
+          if (data.unmute) {
+            if (!isSuper(me)) { json({ ok: false, message: 'رفع الإسكات: سوبر أدمن فقط' }, 403); return; }
+            target.muted_until = 0;
+            json({ ok: true, muted_until: null });
+            return;
+          }
+          const hours = Math.max(24, parseInt(data.hours, 10) || 24);   /* الحد الأدنى 24 ساعة حسب قواعد المنصة */
+          target.muted_until = Date.now() + hours * 3600 * 1000;
+          json({ ok: true, muted_until: target.muted_until, hours: hours });
+          return;
+        }
+      }
+
+      /* تشغيل/توقيف الألعاب: سوبر أدمن فقط */
+      mm = pathname.match(/^\/api\/admin\/games\/([\w-]+)\/toggle$/);
+      if (mm) {
+        if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+        gameFlags[mm[1]] = !!data.enabled;
+        json({ ok: true, enabled: gameFlags[mm[1]] });
+        return;
+      }
 
       /* ── الغرف ── */
       if (pathname === '/api/rooms' && req.method === 'GET') {
@@ -593,6 +800,7 @@ const server = http.createServer((req, res) => {
 
       /* [Req8] بثّ رسالة صوتية (≤10ث) لكل أعضاء الغرفة */
       if (pathname === '/api/rooms/voice') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن التعليق الصوتي', muted_until: me.muted_until }, 403); return; }
         const room = rooms[data.room_id];
         if (room && me) {
           let audio = String(data.audio || '');
@@ -637,6 +845,7 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/rooms/chat') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن المراسلة', muted_until: me.muted_until }, 403); return; }
         const room = rooms[data.room_id];
         if (room) {
           const msg = {
