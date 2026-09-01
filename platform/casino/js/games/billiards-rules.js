@@ -21,6 +21,123 @@
   if (!BP) throw new Error('BilliardsRules: يتطلب billiards-physics.js');
 
   /* ══════════════════════════════════════════════════════════
+     [V19] نواة الخبير المشتركة — محاكاة headless للضربات المرشحة
+     البوت لا «يخمّن» هندسياً بعد الآن: كل ضربة مرشحة تُحاكى فعلياً
+     بنفس محرك الفيزياء الحتمي، وتُقيَّم نتيجتها (rec) مقابل قواعد
+     النمط قبل الاختيار — فلا أخطاء NO_RAIL/ILLEGAL_FIRST_CONTACT
+     ولا سكراتش إلا حين لا يوجد بديل قانوني إطلاقاً.
+     حتمية 100%: لا عشوائية — نفس الوضعية تعطي نفس الضربة (أونلاين آمن).
+     ══════════════════════════════════════════════════════════ */
+  var AI_SIM_STEPS = BP.HZ * 18;              /* سقف محاكاة 18 ثانية لكل مرشح */
+  var AI_POWERS = [38, 58, 80];               /* مستويات القوة المرشحة */
+
+  function aiCloneBalls(balls) {
+    var out = [];
+    for (var i = 0; i < balls.length; i++) {
+      var b = balls[i];
+      out.push({ id: b.id, type: b.type, value: b.value, group: b.group,
+        x: b.x, y: b.y, vx: 0, vy: 0, status: b.status,
+        phase: 0, dx: 0, dy: 1, pocket: b.pocket || null });
+    }
+    return out;
+  }
+
+  function aiSimulate(table, balls, angle, power) {
+    var sim = aiCloneBalls(balls);
+    var rec = BP.newRec(-1, -1, null);
+    if (!BP.applyShot(sim, angle, BP.powerToSpeed(power), rec)) return null;
+    BP.runUntilStopped(table, sim, rec, AI_SIM_STEPS);
+    return { balls: sim, rec: rec };
+  }
+
+  /* نقطة الشبح لتصويب كرة نحو جيب */
+  function aiGhost(c, tb, pk, R) {
+    var tp = Math.atan2(pk.y - tb.y, pk.x - tb.x);
+    var gx = tb.x - Math.cos(tp) * 2 * R, gy = tb.y - Math.sin(tp) * 2 * R;
+    var aim = Math.atan2(gy - c.y, gx - c.x);
+    var cut = Math.abs(aim - tp); while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
+    return { aim: aim, cut: cut, gx: gx, gy: gy,
+      dist: Math.hypot(gx - c.x, gy - c.y),
+      potDist: Math.hypot(pk.x - tb.x, pk.y - tb.y) };
+  }
+
+  /* مسار البيضاء إلى نقطة الشبح: أول جسم يلتقيه الشعاع يجب أن يكون الهدف */
+  function aiCuePathClear(table, balls, c, g, targetId) {
+    var hit = BP.castAim(table, balls, c.x, c.y, g.aim, g.dist + 60);
+    return hit.kind === 'ball' && hit.id === targetId;
+  }
+
+  /* مسار الهدف إلى الجيب: لا كرة أخرى تسدّه */
+  function aiPotPathClear(table, balls, tb, pk, R) {
+    var others = [];
+    for (var i = 0; i < balls.length; i++) if (balls[i].id !== tb.id) others.push(balls[i]);
+    var ang = Math.atan2(pk.y - tb.y, pk.x - tb.x);
+    var d = Math.hypot(pk.x - tb.x, pk.y - tb.y);
+    var hit = BP.castAim(table, others, tb.x, tb.y, ang, Math.max(10, d - R));
+    return hit.kind !== 'ball';
+  }
+
+  /* البحث عن أفضل ضربة: مرشحو تسديد (هدف×جيب) + مرشحو أمان، كلٌّ يُحاكى ويُقيَّم.
+     scoreFn(sim.rec, sim.balls, ctx) يعيد درجة — الأعلى يفوز. */
+  function aiBestShot(table, balls, cueBall, targets, scoreFn) {
+    var best = null;
+    var i, t, p, g, pw, sim, sc;
+    /* 1) مرشحو التسديد نحو الجيوب */
+    for (t = 0; t < targets.length; t++) {
+      var tb = targets[t];
+      for (p = 0; p < table.pockets.length; p++) {
+        var pk = table.pockets[p];
+        g = aiGhost(cueBall, tb, pk, table.R);
+        if (g.cut > 1.45) continue;
+        if (!aiCuePathClear(table, balls, cueBall, g, tb.id)) continue;
+        if (!aiPotPathClear(table, balls, tb, pk, table.R)) continue;
+        for (i = 0; i < AI_POWERS.length; i++) {
+          pw = Math.min(100, AI_POWERS[i] + Math.round(g.dist * 0.03) + Math.round(g.potDist * 0.02));
+          sim = aiSimulate(table, balls, g.aim, pw);
+          if (!sim) continue;
+          sc = scoreFn(sim.rec, sim.balls, { pot: true, cut: g.cut, power: pw });
+          if (!best || sc > best.sc) best = { sc: sc, angle: g.aim, power: pw };
+        }
+      }
+    }
+    /* 2) مرشحو الأمان: ضرب الهدف القانوني مباشرة (بزوايا طفيفة) بقوى مختلفة —
+       المحاكاة تتكفل برفض ما يسبب NO_RAIL أو سكراتش */
+    var offs = [0, 0.05, -0.05, 0.12, -0.12];
+    for (t = 0; t < targets.length && t < 4; t++) {
+      var tb2 = targets[t];
+      var base = Math.atan2(tb2.y - cueBall.y, tb2.x - cueBall.x);
+      for (i = 0; i < offs.length; i++) {
+        var a2 = base + offs[i];
+        var pws = [30, 52];
+        for (p = 0; p < pws.length; p++) {
+          sim = aiSimulate(table, balls, a2, pws[p]);
+          if (!sim) continue;
+          sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: pws[p] });
+          if (!best || sc > best.sc) best = { sc: sc, angle: a2, power: pws[p] };
+        }
+      }
+    }
+    /* 3) هروب من السنوكر: إن كانت كل المرشحات مخالفة، مسح كامل للدائرة
+       (48 اتجاهاً × قوتين) بحثاً عن أي ضربة قانونية (ارتدادات الوسائد تصل
+       للهدف المحجوب) — الخبير الحقيقي لا يرتكب خطأً إلا حين يستحيل البديل */
+    if (!best || best.sc < 0) {
+      var sweepDone = false;
+      for (i = 0; i < 96 && !sweepDone; i++) {
+        var a3 = (i / 96) * Math.PI * 2;
+        var pws3 = [30, 50, 75];
+        for (p = 0; p < pws3.length; p++) {
+          sim = aiSimulate(table, balls, a3, pws3[p]);
+          if (!sim) continue;
+          sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: pws3[p] });
+          if (!best || sc > best.sc) best = { sc: sc, angle: a3, power: pws3[p] };
+          if (best.sc > 0) { sweepDone = true; break; }
+        }
+      }
+    }
+    return best;
+  }
+
+  /* ══════════════════════════════════════════════════════════
      WPA 8-BALL
      ══════════════════════════════════════════════════════════ */
   var EIGHTBALL_META = {
@@ -353,40 +470,61 @@
         var a0 = Math.atan2(apex.y - c.y, apex.x - c.x);
         return fire(a0, 95, null);
       }
-      var myG = S.groups[1];
+      var myG = S.groups[S.active];
+      var onEight = (!S.open && myG && (myG === 'EIGHT' || groupCleared(myG)));
       var targets = [];
       for (var j = 0; j < S.balls.length; j++) {
         var b = S.balls[j];
         if (b.type === 'CUE' || b.status !== 'ON_TABLE') continue;
         if (myG && !S.open) {
-          if (groupCleared(myG)) { if (b.type === 'EIGHT') targets.push(b); }
+          if (onEight) { if (b.type === 'EIGHT') targets.push(b); }
           else if (b.type === myG) targets.push(b);
         } else if (b.type !== 'EIGHT') targets.push(b);
       }
       if (!targets.length) for (var k = 0; k < S.balls.length; k++)
         if (S.balls[k].type !== 'CUE' && S.balls[k].status === 'ON_TABLE') targets.push(S.balls[k]);
-      var best = null;
-      for (var t = 0; t < targets.length; t++) {
-        var tb = targets[t];
-        for (var p = 0; p < table.pockets.length; p++) {
-          var pk = table.pockets[p];
-          var tp = Math.atan2(pk.y - tb.y, pk.x - tb.x);
-          var gx = tb.x - Math.cos(tp) * 2 * table.R, gy = tb.y - Math.sin(tp) * 2 * table.R;
-          var aim = Math.atan2(gy - c.y, gx - c.x);
-          var cut = Math.abs(aim - tp);
-          while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
-          if (cut > 1.9) continue;
-          var dist = Math.sqrt((gx - c.x) * (gx - c.x) + (gy - c.y) * (gy - c.y));
-          var sc = cut + dist / 600;
-          if (!best || sc < best.sc) best = { sc: sc, ang: aim, dist: dist };
+
+      /* [V19] خبير: محاكاة كاملة لكل مرشح + تقييم مطابق لقواعد resolve */
+      var live = S.balls.filter(function (x) { return x.status === 'ON_TABLE'; });
+      var score = function (rec, simBalls, ctx) {
+        var s = 0, i2, pb;
+        var scratch = !!(rec.cuePocketed || rec.cueOff);
+        var pocketedObjs = rec.pocketed.filter(function (x) { return x.type !== 'CUE'; });
+        /* حكم الكرة 8 أولاً */
+        var eightP = null;
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) if (pocketedObjs[i2].type === 'EIGHT') eightP = pocketedObjs[i2];
+        if (eightP) {
+          if (!onEight || scratch) return -1e6;                 /* خسارة الإطار */
+          return 1e6 - ctx.power;                                /* فوز */
         }
-      }
-      if (!best) {
-        var fb = targets[0] || S.balls[1];
-        best = { ang: Math.atan2(fb.y - c.y, fb.x - c.x), dist: 300 };
-      }
-      var pw = Math.min(100, Math.round(20 + best.dist * 0.22));
-      return fire(best.ang, pw, null);
+        /* الأخطاء القياسية */
+        var foul = false;
+        if (scratch) { foul = true; s -= 5000; }
+        if (!rec.first) { foul = true; s -= 4000; }
+        else {
+          var lf;
+          if (S.open || !myG) lf = (rec.first.type !== 'EIGHT');
+          else if (onEight) lf = (rec.first.type === 'EIGHT');
+          else lf = (rec.first.type === myG);
+          if (!lf) { foul = true; s -= 4500; }
+        }
+        if (rec.first && pocketedObjs.length === 0 && rec.railsAfter === 0) { foul = true; s -= 3500; }
+        if (rec.off.length) { foul = true; s -= 4000; }
+        /* الإدخالات */
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) {
+          pb = pocketedObjs[i2];
+          if (S.open || !myG) s += 900;
+          else if (pb.type === myG) s += 1000;
+          else s -= 700;                                        /* أهديت الخصم كرة */
+        }
+        if (!foul && pocketedObjs.length === 0) s += 50;         /* أمان نظيف */
+        if (!foul) s += 200;
+        return s - ctx.power * 0.5;
+      };
+      var best = aiBestShot(table, live, c, targets, score);
+      if (best) return fire(best.angle, best.power, null);
+      var fb = targets[0] || S.balls[1];
+      return fire(Math.atan2(fb.y - c.y, fb.x - c.x), 32, null);
     }
 
     /* ── وصف الضربة للبثّ أونلاين (المرحلة 6) — يُعاد تشغيله حتمياً عند الخصم ── */
@@ -857,6 +995,15 @@
     function aiShot() {
       var c = cue();
       if (!c) return null;
+      /* [V19] كرة بيد: وضع تلقائي في أول موضع صالح (مسح شبكي حتمي) */
+      if (S.phase === 'PLACE') {
+        var plX, plY, plDone = false;
+        for (plX = 40; plX < table.W - 40 && !plDone; plX += 20)
+          for (plY = 30; plY < table.H - 30 && !plDone; plY += 20)
+            if (validPlace(plX, plY)) plDone = place(plX, plY);
+        c = cue();
+        if (!c || S.phase !== 'AIM') return null;
+      }
       if (S.breakShot) {
         var apex = null;
         for (var i0 = 0; i0 < S.balls.length; i0++) {
@@ -866,35 +1013,54 @@
         }
         return fire(Math.atan2(apex.y - c.y, apex.x - c.x), 95, null);
       }
-      var myG = S.groups[1];
+      var myG = S.groups[S.active];
+      var onBlackAI = (myG === 'BLACK');
       var targets = [];
       for (var j0 = 0; j0 < S.balls.length; j0++) {
         var bb = S.balls[j0];
         if (bb.type === 'CUE' || bb.status !== 'ON_TABLE') continue;
         if (!S.open && myG) {
-          if (myG === 'BLACK') { if (bb.type === 'BLACK') targets.push(bb); }
+          if (onBlackAI) { if (bb.type === 'BLACK') targets.push(bb); }
           else if (bb.type === myG) targets.push(bb);
         } else if (bb.type !== 'BLACK') targets.push(bb);
       }
       if (!targets.length) for (var k0 = 0; k0 < S.balls.length; k0++)
         if (S.balls[k0].type !== 'CUE' && S.balls[k0].status === 'ON_TABLE') targets.push(S.balls[k0]);
-      var best = null;
-      for (var t0 = 0; t0 < targets.length; t0++) {
-        var tb2 = targets[t0];
-        for (var p0 = 0; p0 < table.pockets.length; p0++) {
-          var pk = table.pockets[p0];
-          var tp = Math.atan2(pk.y - tb2.y, pk.x - tb2.x);
-          var gx = tb2.x - Math.cos(tp) * 2 * table.R, gy = tb2.y - Math.sin(tp) * 2 * table.R;
-          var aim = Math.atan2(gy - c.y, gx - c.x);
-          var cut = Math.abs(aim - tp); while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
-          if (cut > 1.9) continue;
-          var dist = Math.sqrt((gx - c.x) * (gx - c.x) + (gy - c.y) * (gy - c.y));
-          var sc = cut + dist / 600;
-          if (!best || sc < best.sc) best = { sc: sc, ang: aim, dist: dist };
+
+      /* [V19] خبير: محاكاة headless لكل مرشح وتقييم وفق قواعد البلاكبول */
+      var live0 = S.balls.filter(function (x) { return x.status === 'ON_TABLE'; });
+      var scoreBB = function (rec, simBalls, ctx) {
+        var s = 0, i2, pb;
+        var scratch = !!(rec.cuePocketed || rec.cueOff);
+        var pocketedObjs = rec.pocketed.filter(function (x) { return x.type !== 'CUE'; });
+        var blackPot = null;
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) if (pocketedObjs[i2].type === 'BLACK') blackPot = pocketedObjs[i2];
+        if (blackPot) {
+          if (!onBlackAI || scratch) return -1e6;               /* خسارة الإطار */
+          return 1e6 - ctx.power;
         }
-      }
-      if (!best) { var fb = targets[0] || S.balls[1]; best = { ang: Math.atan2(fb.y - c.y, fb.x - c.x), dist: 300 }; }
-      return fire(best.ang, Math.min(100, Math.round(20 + best.dist * 0.22)), null);
+        var foul = false;
+        if (scratch) { foul = true; s -= 5000; }
+        if (!rec.first) { foul = true; s -= 4000; }
+        else if (!S.open && myG) {
+          var lf0 = onBlackAI ? (rec.first.type === 'BLACK') : (rec.first.type === myG);
+          if (!lf0) { foul = true; s -= 4500; }
+        }
+        if (rec.first && pocketedObjs.length === 0 && rec.railsAfter === 0) { foul = true; s -= 3000; }
+        if (rec.off.length) { foul = true; s -= 4000; }
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) {
+          pb = pocketedObjs[i2];
+          if (S.open || !myG) s += 900;
+          else if (pb.type === myG) s += 1000;
+          else s -= 700;
+        }
+        if (!foul) s += 200;
+        return s - ctx.power * 0.5;
+      };
+      var bestBB = aiBestShot(table, live0, c, targets, scoreBB);
+      if (bestBB) return fire(bestBB.angle, bestBB.power, null);
+      var fb = targets[0] || S.balls[1];
+      return fire(Math.atan2(fb.y - c.y, fb.x - c.x), 32, null);
     }
 
     function shotPayload(angle, power, spin, placePos) {
@@ -1330,8 +1496,17 @@
     }
     function aiShot() {
       var c = cue();
-      if (!c || c.status !== 'ON_TABLE') return null;
+      if (!c) return null;
       var i;
+      /* [V19] كرة بيد: وضع تلقائي حتمي في أول موضع صالح */
+      if (S.phase === 'PLACE') {
+        var plX, plY, plDone = false;
+        for (plX = 40; plX < table.W - 40 && !plDone; plX += 20)
+          for (plY = 30; plY < table.H - 30 && !plDone; plY += 20)
+            if (validPlace(plX, plY)) plDone = place(plX, plY);
+        c = cue();
+      }
+      if (!c || c.status !== 'ON_TABLE') return null;
       if (needChoice()) {
         /* اختيار اللون الأكثر بقاءً على الطاولة */
         var nR = 0, nY = 0;
@@ -1354,63 +1529,96 @@
       }
       var myG = S.groups[S.active];
       var onBlackAI = (myG === 'BLACK');
-      /* على السوداء في غير ديريكت: تسديد نحو الحفرة المطلوبة أو ضربة ليّنة */
-      if (onBlackAI) {
-        var bk = null;
-        for (i = 0; i < S.balls.length; i++) if (S.balls[i].type === 'BLACK' && S.balls[i].status === 'ON_TABLE') bk = S.balls[i];
-        if (!bk) return null;
-        var reqPk = null;
-        if (S.finish === 'DERNIER') reqPk = S.lastPocket[S.active];
-        else if (wantAnn) reqPk = S.annPocket[S.active];
-        if (S.finish === 'DIRECT' || reqPk) {
-          var tgt = null;
-          for (i = 0; i < table.pockets.length; i++) {
-            var pq = table.pockets[i];
-            if (reqPk && pq.id !== reqPk) continue;
-            if (!reqPk) {
-              var dq = Math.hypot(pq.x - bk.x, pq.y - bk.y);
-              if (!tgt || dq < tgt.d) tgt = { d: dq, p: pq };
-              continue;
+      var liveGV = S.balls.filter(function (x) { return x.status === 'ON_TABLE'; });
+      var pFreeAI = S.penaltyFree[S.active];
+
+      /* [V19] خبير غولڤازور: محاكاة headless — التقييم يطبق قواعد الانتحار الخمسة */
+      var reqPk = null;
+      if (S.finish === 'DERNIER') reqPk = S.lastPocket[S.active];
+      else if (wantAnn) reqPk = S.annPocket[S.active];
+
+      var scoreGV = function (rec, simBalls, ctx) {
+        var s = 0, i2, pb;
+        var scratch = !!(rec.cuePocketed || rec.cueOff);
+        var pocketedObjs = rec.pocketed.filter(function (x) { return x.type !== 'CUE'; });
+        var blackPot = null;
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) if (pocketedObjs[i2].type === 'BLACK') blackPot = pocketedObjs[i2];
+        var offBlack = rec.off.some(function (x) { return x.type === 'BLACK'; });
+        if (blackPot || offBlack) {
+          if (!onBlackAI || scratch || offBlack) return -1e6;                 /* انتحار مبكر/مع البيضاء */
+          if (rec.first && rec.first.type !== 'BLACK') return -1e6;           /* لمس الخصم قبلها */
+          var pkId = blackPot.pocket || null;
+          if (reqPk && pkId !== reqPk) return -1e6;                            /* حفرة خاطئة */
+          if (wantAnn) {
+            /* وسادة (بيضاء/سوداء) قبل السقوط وإلا NORAIL */
+            var railOk = false;
+            for (i2 = 0; i2 < rec.events.length; i2++) {
+              var eA = rec.events[i2];
+              if (eA.t === 'pocket' && blackPot && eA.ball === blackPot.id) break;
+              if (eA.t === 'rail') {
+                var rb2 = null;
+                for (var i3 = 0; i3 < simBalls.length; i3++) if (simBalls[i3].id === eA.ball) rb2 = simBalls[i3];
+                if (rb2 && (rb2.type === 'CUE' || rb2.type === 'BLACK')) { railOk = true; break; }
+              }
             }
-            tgt = { d: Math.hypot(pq.x - bk.x, pq.y - bk.y), p: pq };
+            if (!railOk) return -1e6;                                          /* GV_SUICIDE_NORAIL */
           }
-          /* أنونص: الإسقاط المباشر بلا وسادة انتحار — الآلي يلعب ضربة آمنة بدلاً منه */
-          if (tgt && !wantBound && !wantAnn) {
-            var tpB = Math.atan2(tgt.p.y - bk.y, tgt.p.x - bk.x);
-            var gxB = bk.x - Math.cos(tpB) * 2 * table.R, gyB = bk.y - Math.sin(tpB) * 2 * table.R;
-            var dB = Math.hypot(gxB - c.x, gyB - c.y);
-            return fire(Math.atan2(gyB - c.y, gxB - c.x), Math.min(100, Math.round(22 + dB * 0.2)), null);
+          if (wantBound) {
+            var bRails = 0;
+            for (i2 = 0; i2 < rec.events.length; i2++) {
+              var eB = rec.events[i2];
+              if (eB.t === 'rail') {
+                for (var i4 = 0; i4 < simBalls.length; i4++)
+                  if (simBalls[i4].id === eB.ball && simBalls[i4].type === 'BLACK') bRails++;
+              }
+            }
+            if (bRails < S.boundN) return -1e6;                                /* GV_SUICIDE_BOUND */
           }
+          return 1e6 - ctx.power;                                              /* فوز قانوني */
         }
-        /* بوند/أنونص أو بلا حفرة معروفة: ضربة آمنة ليّنة نحو السوداء */
-        return fire(Math.atan2(bk.y - c.y, bk.x - c.x), 30, null);
-      }
-      var targets = [];
-      for (i = 0; i < S.balls.length; i++) {
-        var bb = S.balls[i];
-        if (bb.type === 'CUE' || bb.type === 'BLACK' || bb.status !== 'ON_TABLE') continue;
-        if (!S.open && myG) { if (bb.type === myG) targets.push(bb); }
-        else targets.push(bb);
-      }
-      if (!targets.length) for (i = 0; i < S.balls.length; i++)
-        if (S.balls[i].type !== 'CUE' && S.balls[i].status === 'ON_TABLE') targets.push(S.balls[i]);
-      var best = null;
-      for (var t0 = 0; t0 < targets.length; t0++) {
-        var tb2 = targets[t0];
-        for (var p0 = 0; p0 < table.pockets.length; p0++) {
-          var pk2 = table.pockets[p0];
-          var tp = Math.atan2(pk2.y - tb2.y, pk2.x - tb2.x);
-          var gx = tb2.x - Math.cos(tp) * 2 * table.R, gy = tb2.y - Math.sin(tp) * 2 * table.R;
-          var aim = Math.atan2(gy - c.y, gx - c.x);
-          var cut = Math.abs(aim - tp); while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
-          if (cut > 1.9) continue;
-          var dist = Math.hypot(gx - c.x, gy - c.y);
-          var sc = cut + dist / 600;
-          if (!best || sc < best.sc) best = { sc: sc, ang: aim, dist: dist };
+        /* أخطاء قياسية (لا جزاء قبل التحديد لكن يبقى غير مرغوب) */
+        var foul = false;
+        var openW = S.open ? 0.25 : 1;                                        /* قبل التحديد: بلا جزاء — وزن أخف */
+        if (scratch) { foul = true; s -= 5000 * openW; }
+        if (!rec.first) { foul = true; s -= 4000 * openW; }
+        else {
+          var ft = rec.first.type;
+          if (onBlackAI) { if (ft !== 'BLACK' && !(pFreeAI && (ft === 'RED' || ft === 'YELLOW'))) { foul = true; s -= 4500; } }
+          else if (ft === 'BLACK') { foul = true; s -= 4500 * openW; }
+          else if (!S.open && myG && ft !== myG && !pFreeAI) { foul = true; s -= 4500; }
+        }
+        if (rec.off.length) { foul = true; s -= 4000; }
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) {
+          pb = pocketedObjs[i2];
+          if (pb.type === 'BLACK') continue;
+          if (S.open) s += 900;
+          else if (myG && pb.type === myG) s += 1000;
+          else if (pFreeAI) s += 400;                                          /* الحق الحر */
+          else { foul = true; s -= 900; }                                      /* OPP_POTTED */
+        }
+        if (!foul) s += 200;
+        return s - ctx.power * 0.5;
+      };
+
+      var targetsGV = [];
+      if (onBlackAI) {
+        for (i = 0; i < S.balls.length; i++)
+          if (S.balls[i].type === 'BLACK' && S.balls[i].status === 'ON_TABLE') targetsGV.push(S.balls[i]);
+      } else {
+        for (i = 0; i < S.balls.length; i++) {
+          var bb = S.balls[i];
+          if (bb.type === 'CUE' || bb.type === 'BLACK' || bb.status !== 'ON_TABLE') continue;
+          if (!S.open && myG) { if (bb.type === myG) targetsGV.push(bb); }
+          else targetsGV.push(bb);
         }
       }
-      if (!best) { var fb = targets[0] || S.balls[1]; best = { ang: Math.atan2(fb.y - c.y, fb.x - c.x), dist: 300 }; }
-      return fire(best.ang, Math.min(100, Math.round(20 + best.dist * 0.22)), null);
+      if (!targetsGV.length) for (i = 0; i < S.balls.length; i++)
+        if (S.balls[i].type !== 'CUE' && S.balls[i].status === 'ON_TABLE') targetsGV.push(S.balls[i]);
+
+      var bestGV = aiBestShot(table, liveGV, c, targetsGV, scoreGV);
+      if (bestGV) return fire(bestGV.angle, bestGV.power, null);
+      var fbGV = targetsGV[0] || S.balls[1];
+      return fire(Math.atan2(fbGV.y - c.y, fbGV.x - c.x), 30, null);
     }
 
     function shotPayload(angle, power, spin, placePos) {
@@ -1801,18 +2009,17 @@
         }
       }
       if (S.turnState === 'COLOUR' && !S.nominated) {
-        /* يرشّح أفضل لون قابل للإدخال وإلا الصفراء */
+        /* [V19] ترشيح اللون: محاكاة سريعة لأفضل لون قابل للإدخال فعلياً وإلا الأسهل هندسياً */
         var bestNm = null, bestSc = 1e9;
         SN_ORDER.forEach(function (nm) {
           S.balls.forEach(function (bb) {
             if (colourName(bb) !== nm || !onTable(bb)) return;
             table.pockets.forEach(function (pk) {
-              var tp = Math.atan2(pk.y - bb.y, pk.x - bb.x);
-              var gx = bb.x - Math.cos(tp) * 2 * table.R, gy = bb.y - Math.sin(tp) * 2 * table.R;
-              var aim = Math.atan2(gy - c.y, gx - c.x);
-              var cut = Math.abs(aim - tp); while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
-              var d = Math.hypot(gx - c.x, gy - c.y);
-              var sc = cut + d / 700 + val(nm) * 0.02;
+              var g0 = aiGhost(c, bb, pk, table.R);
+              if (g0.cut > 1.45) return;
+              var clear = aiCuePathClear(table, S.balls.filter(onTable), c, g0, bb.id) &&
+                          aiPotPathClear(table, S.balls.filter(onTable), bb, pk, table.R);
+              var sc = g0.cut + g0.dist / 700 - (clear ? 0.8 : 0) - val(nm) * 0.015;
               if (sc < bestSc) { bestSc = sc; bestNm = nm; }
             });
           });
@@ -1826,24 +2033,38 @@
         if (onT.indexOf(colourName(bb)) !== -1) targets.push(bb);
       });
       if (!targets.length) targets = S.balls.filter(function (bb) { return bb.type === 'RED' && onTable(bb); });
-      var best = null;
-      targets.forEach(function (tb) {
-        table.pockets.forEach(function (pk) {
-          var tp = Math.atan2(pk.y - tb.y, pk.x - tb.x);
-          var gx = tb.x - Math.cos(tp) * 2 * table.R, gy = tb.y - Math.sin(tp) * 2 * table.R;
-          var aim = Math.atan2(gy - c.y, gx - c.x);
-          var cut = Math.abs(aim - tp); while (cut > Math.PI) cut = Math.abs(cut - 2 * Math.PI);
-          if (cut > 1.9) return;
-          var d = Math.hypot(gx - c.x, gy - c.y);
-          var sc = cut + d / 700;
-          if (!best || sc < best.sc) best = { sc: sc, ang: aim, d: d };
-        });
-      });
-      if (!best) {
-        var fb = targets[0];
-        best = { ang: Math.atan2(fb.y - c.y, fb.x - c.x), d: 400 };
-      }
-      return fire(best.ang, Math.min(100, Math.round(25 + best.d * 0.2)), null);
+
+      /* [V19] خبير سنوكر: محاكاة headless — أول تماس وأول إدخال يجب أن يكونا ball-on */
+      var liveSN = S.balls.filter(onTable);
+      var onSet = {};
+      onT.forEach(function (nm) { onSet[nm] = true; });
+      var scoreSN = function (rec, simBalls, ctx) {
+        var s = 0, i2, pb;
+        var scratch = !!(rec.cuePocketed || rec.cueOff);
+        var pocketedObjs = rec.pocketed.filter(function (x) { return x.type !== 'CUE'; });
+        var foul = false;
+        if (scratch) { foul = true; s -= 5000; }
+        if (!rec.first) { foul = true; s -= 4500; }
+        else {
+          var fcNm = rec.first.type === 'RED' ? 'RED' : rec.first.group;
+          if (!onSet[fcNm]) { foul = true; s -= 5000; }
+        }
+        for (i2 = 0; i2 < pocketedObjs.length; i2++) {
+          pb = pocketedObjs[i2];
+          var nm2 = pb.type === 'RED' ? 'RED' : pb.group;
+          if (onSet[nm2]) s += 800 + val(nm2) * 60;
+          else { foul = true; s -= 4000; }                       /* إدخال كرة غير قانونية */
+        }
+        if (rec.off.length) { foul = true; s -= 4000; }
+        if (!foul) s += 200;
+        if (!foul && pocketedObjs.length === 0) s += 30;         /* أمان */
+        return s - ctx.power * 0.5;
+      };
+      var bestSN = aiBestShot(table, liveSN, c, targets, scoreSN);
+      if (bestSN) return fire(bestSN.angle, bestSN.power, null);
+      var fbSN = targets[0];
+      if (!fbSN) return null;
+      return fire(Math.atan2(fbSN.y - c.y, fbSN.x - c.x), 30, null);
     }
 
     function shotPayload(angle, power, spin, placePos, nom) {
@@ -2016,12 +2237,49 @@
       var c = cue();
       if (!c) return null;
       syncCue();
-      var red = byId('R'), other = byId(S.active === 0 ? 'P' : 0);
-      /* نحو الحمراء بزاوية تُرجّح ارتداداً نحو الكرة الثانية */
-      var tp = Math.atan2(red.y - c.y, red.x - c.x);
-      var off = ((S._shotNo % 5) - 2) * 0.12;
+      var cId = cueId(), objs = objectIds();
+
+      /* [V19] خبير كاروم: مسح كامل للزوايا (72 اتجاهاً × قوى) بمحاكاة headless —
+         الكاروم الصحيح = لمس الكرتين + عدد الوسائد المطلوب قبل الثانية */
+      var evalRec = function (rec) {
+        var firstObj = null, secondObj = null, cushions = 0, i, e;
+        for (i = 0; i < rec.events.length; i++) {
+          e = rec.events[i];
+          if (e.t === 'rail') {
+            if (e.ball === cId && secondObj === null) cushions++;
+          } else if (e.t === 'contact') {
+            if (e.a !== cId && e.b !== cId) continue;
+            var other = (e.a === cId) ? e.b : e.a;
+            if (objs.indexOf(other) === -1) continue;
+            if (firstObj === null) firstObj = other;
+            else if (other !== firstObj && secondObj === null) secondObj = other;
+          }
+        }
+        return { complete: !!(firstObj && secondObj), first: !!firstObj, cushions: cushions };
+      };
+
+      var best = null, k, p, a;
+      var powers = (S.need >= 3) ? [55, 75, 95] : [35, 55, 78];
+      for (k = 0; k < 72; k++) {
+        a = (k / 72) * Math.PI * 2;
+        for (p = 0; p < powers.length; p++) {
+          var sim = aiSimulate(table, S.balls, a, powers[p]);
+          if (!sim) continue;
+          var r = evalRec(sim.rec);
+          var sc;
+          if (r.complete && r.cushions >= S.need) sc = 1e6 - powers[p];       /* نقطة مؤكدة */
+          else if (r.complete) sc = 500 + r.cushions * 40 - powers[p] * 0.5;  /* لمس الكرتين بلا وسائد كافية */
+          else if (r.first) sc = 100 + r.cushions * 10 - powers[p] * 0.5;
+          else sc = -100 - powers[p];
+          if (!best || sc > best.sc) best = { sc: sc, a: a, p: powers[p] };
+          if (best.sc >= 1e6 - 100) break;                                    /* وجدنا كاروماً مؤكداً خفيفاً */
+        }
+        if (best && best.sc >= 1e6 - 100) break;
+      }
+      if (best) return fire(best.a, best.p, null);
+      var red = byId('R');
       var d = Math.hypot(red.x - c.x, red.y - c.y);
-      return fire(tp + off, Math.min(100, Math.round(35 + d * 0.12)), null);
+      return fire(Math.atan2(red.y - c.y, red.x - c.x), Math.min(100, Math.round(35 + d * 0.12)), null);
     }
 
     function shotPayload(angle, power, spin) {

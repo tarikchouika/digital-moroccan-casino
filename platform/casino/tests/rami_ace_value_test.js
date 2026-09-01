@@ -77,10 +77,14 @@ console.log('── الافتتاح في السامبل (عتبة 51) ──');
   ok(!r.valid, 'الحالة المنقلبة: A23(6) + 9-10-J-Q(38) = 44 → مرفوض (القديم كان يقبل 53)');
 }
 {
-  /* Q-K-A (30) + 8-9-10 (27) = 57 ≥ 51 → قبول، الآس هنا 10 صحيحة */
-  const melds = [seq([C(12), C(13), C(1)]), seq([C(8, 'sword'), C(9, 'sword'), C(10, 'sword')])];
+  /* [V19] سامبل: متتاليتان بلا متماثلة حرة → مرفوض هيكلياً حتى لو المجموع ≥ 51 */
+  const meldsNoSet = [seq([C(12), C(13), C(1)]), seq([C(8, 'sword'), C(9, 'sword'), C(10, 'sword')])];
+  const rNoSet = rules.validateOpening(meldsNoSet, null, null, 0, false);
+  ok(!rNoSet.valid, '[V19] QKA + 8-9-10 بلا متماثلة حرة → مرفوض هيكلياً');
+  /* Q-K-A (30) + متماثلة 9 (27) = 57 ≥ 51 → قبول، الآس هنا 10 صحيحة */
+  const melds = [seq([C(12), C(13), C(1)]), set([C(9, 'heart'), C(9, 'diamond'), C(9, 'sword')])];
   const r = rules.validateOpening(melds, null, null, 0, false);
-  ok(r.valid && r.freeScore === 57, 'QKA(30) + 8-9-10(27) = 57 → مقبول');
+  ok(r.valid && r.freeScore === 57, 'QKA(30) + 999(27) = 57 → مقبول');
 }
 {
   /* متماثلة آسات (30) + متتالية نقية A-2-3 (6) = 36 → رفض */

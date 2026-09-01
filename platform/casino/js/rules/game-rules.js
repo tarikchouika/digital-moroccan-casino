@@ -97,11 +97,14 @@ var FULL_RULES = {
           'نهاية الجولة: الهدف (501–1001)؛ يخسر من يتجاوز مجموعه التراكمي الهدف، والفائز من بقي دونه؛ لا تُعلن النهاية قبل التجاوز.'
         ]},
         { h: 'قانون السامبل (104 أوراق)', items: [
-          'بلا جوكر؛ تُقلب أول ورقة: إن حمراء فجوكرها السوداء بنفس الرقم، والعكس.',
-          '13 ورقة لكل لاعب (والموزع)؛ الإنهاء = 13 في مجموعات + الـ14 ظهراً.',
-          'الافتتاح: متماثلة + متتالية ومجموع ≥ 51 بلا جوكر؛ وما بعده يتجاوز آخر مُظهِر.',
-          'عند الإنهاء يكشف الجميع: من لا يملك متماثلة + متتالية (بدون ورقة الجوكر المعينة) = +51؛ ومن يملكهما تُحسب أوراقه المتبقية بقيمتها الوجهية (J/Q/K/A وورقة الجوكر = 10)؛ إن تجاوزت 51 = +51.',
-          'خطأ الإظهار/الأخذ = +51 مع جمع المجموعات واستمرار الشوط.'
+          'بلا جوكر مطبوع؛ بعد توزيع 13 ورقة لكل لاعب تُقلب أول ورقة من ورق التوزيع = «الفوجوك»، واللون المعاكس لها بنفس الرقم هو جوكر الجولة.',
+          'اللاعب الذي يلي الموزع صاحب أول دور.',
+          'الفوجوك: يحق لأي لاعب سحبها في دوره الأول فقط؛ إن لم تُسحب في الدورة الأولى سقط الحق فيها نهائياً، وتُخلط مع أوراق المرموق عند نفاد ورق التوزيع لتصبح ضمن السحب العادي.',
+          'المرموق: اللاعب حر في سحب ورقة المرموق والتخلص من ورقة أخرى بدون شروط الافتتاح أو الإنهاء وبلا أي جزاء؛ لكنها لا تُعتبر حرة في نفس الدور — بعد رمي ورقة التخلص تصبح من أوراقه الحرة في الأدوار الموالية.',
+          'الافتتاح: متتالية حرة + متماثلة حرة (خاليتان من الجوكر ومن ورقة مرموق نفس الدور) ومجموع الأوراق الحرة ≥ 51؛ مجموعات الجوكر/المرموق تُضاف للمجموع الإجمالي دون العتبة.',
+          'الإنهاء: متتالية حرة + متماثلة حرة + 13 ورقة مرتبة في مجموعات صالحة (مع أو بدون الورقة المعينة كجوكر) + ورقة الإنهاء الـ14 تُرمى ظهراً.',
+          'عند الإنهاء يكشف الجميع: من لم يفتتح = +51؛ ومن افتتح تُحسب أوراقه المتبقية بقيمتها الوجهية (J/Q/K/A وورقة الجوكر = 10)؛ إن تجاوزت 51 = +51.',
+          'خطأ الإظهار (افتتاح بلا شروط) = +51 واستمرار الشوط.'
         ]}
       ],
       en: [
@@ -147,11 +150,14 @@ var FULL_RULES = {
           'Match end: target (501–1001); a player loses upon exceeding the target cumulative score; the winner stays below it; the game does NOT end before the threshold breach.'
         ]},
         { h: 'Sample Rules (104 Cards)', items: [
-          'No Jokers; flip the first card: if red, its black counterpart of the same rank becomes the Joker, and vice versa.',
-          '13 cards per player (including the dealer); win condition = 13 cards in melds + the 14th placed face-down.',
-          'Opening: Set + Sequence totaling ≥ 51 excluding Jokers; subsequent openers must exceed the last opener\'s total.',
-          'At round end all hands are revealed: players lacking Set + Sequence (excluding the designated Joker card) = +51; those having both count remaining cards at face value (J/Q/K/A & the Joker = 10); if the total exceeds 51 = +51.',
-          'Invalid meld/take attempt = +51: melds are collected and the round continues.'
+          'No printed Jokers; after dealing 13 cards each, the first stock card is flipped = the "Fojok"; its opposite-colour counterpart of the same rank is the round\'s Joker.',
+          'The player after the dealer takes the first turn.',
+          'Fojok: any player may draw it only on their own first turn; if nobody takes it during the first cycle the right lapses forever, and it is shuffled into the discard pile when the stock runs out, becoming drawable again.',
+          'Discard pile: a player may freely draw the top discard and throw away another card — no opening/finishing conditions and no penalty; however that card is NOT free the same turn — after discarding, it becomes one of the player\'s free cards on following turns.',
+          'Opening: a free Sequence + a free Set (containing no Joker and no same-turn discard-pile card) with free cards totaling ≥ 51; Joker/discard melds add to the grand total but not the threshold.',
+          'Finishing: free Sequence + free Set + all 13 cards arranged in valid melds (with or without the designated Joker) + the 14th finishing card thrown face-down.',
+          'At round end all hands are revealed: unopened players = +51; opened players count remaining cards at face value (J/Q/K/A & the Joker = 10); if the total exceeds 51 = +51.',
+          'Invalid opening attempt = +51 and the round continues.'
         ]}
       ],
       fr: [
@@ -196,11 +202,14 @@ var FULL_RULES = {
           'Fin de partie : objectif (501–1001) ; on perd en dépassant le cumul ; le gagnant reste en dessous ; pas de fin avant dépassement.'
         ]},
         { h: 'Sample (104 cartes)', items: [
-          'Sans joker ; la première carte retournée désigne le joker (contrepartie de couleur inversée).',
-          '13 cartes par joueur ; fin = 13 en combinaisons + la 14e face cachée.',
-          'Ouverture : brelan + suite, total ≥ 51 sans joker ; ensuite dépasser le dernier ouvreur.',
-          'À la fin, révélation : sans brelan + suite (hors joker désigné) = +51 ; sinon cartes restantes à leur valeur faciale (V/D/R/As et joker = 10) ; si > 51 = +51.',
-          'Erreur de pose/prise = +51, combinaisons reprises, la manche continue.'
+          'Sans joker imprimé ; après la donne de 13 cartes, la première carte de la pioche est retournée = le « Fojok » ; sa contrepartie de couleur opposée et de même rang est le joker de la manche.',
+          'Le joueur suivant le donneur commence.',
+          'Fojok : chaque joueur peut le prendre uniquement à son premier tour ; non pris au premier cycle, le droit est perdu et il est mélangé à la défausse quand la pioche s\'épuise.',
+          'Défausse : le joueur peut librement prendre la carte du dessus et se défausser d\'une autre — sans conditions d\'ouverture/de fin et sans pénalité ; cette carte n\'est PAS libre le même tour, elle le devient aux tours suivants.',
+          'Ouverture : suite libre + brelan libre (sans joker ni carte de défausse du même tour), total des cartes libres ≥ 51 ; les combinaisons avec joker/défausse comptent dans le total global, pas dans le seuil.',
+          'Fin : suite libre + brelan libre + 13 cartes en combinaisons valides (avec ou sans le joker désigné) + la 14e carte de fin face cachée.',
+          'À la fin, révélation : non-ouvreur = +51 ; ouvreur : cartes restantes à leur valeur faciale (V/D/R/As et joker = 10) ; si > 51 = +51.',
+          'Ouverture invalide = +51, la manche continue.'
         ]}
       ],
       da: [
@@ -245,44 +254,47 @@ var FULL_RULES = {
           'نهاية الجولة: الهدف (501–1001)؛ لي فوت التراكمي ديالو الهدف خسر، والرابح لي بقى تحتو.'
         ]},
         { h: 'السامبل (104 ورقة)', items: [
-          'بلا جوكر؛ الورقة اللولة لي تنقلب كتعين الجوكر باللون المعكوس.',
-          '13 ورقة لكل لعاب؛ الإنهاء = 13 مجموعة + الورقة 14 على ضهرها.',
-          'الافتتاح: متشابهة + تسلسل والمجموع ≥ 51 بلا جوكر.',
-          'فالآخر كيكشفو الكل: بلا متشابهة + تسلسل = +51؛ اللي عندو بجوج كيتحسبو أوراقو بقيمتهم (J/Q/K/A والجوكر = 10)؛ إلا فاتو 51 = +51.',
-          'خطأ الإظهار/الأخذ = +51.'
+          'بلا جوكر مطبوع؛ من بعد ما يتوزعو 13 ورقة لكل واحد، كتنقلب اللولة من ورق التوزيع = «الفوجوك»، واللون المعكوس ديالها بنفس الرقم هو جوكر الدورة.',
+          'اللعاب لي مور الموزع هو اللول.',
+          'الفوجوك: أي لعاب يقدر ياخدها غير فالدور اللول ديالو؛ إلا ما تاخداتش فالدورة اللولة ضاع الحق فيها نهائياً، وكتخلط مع المرموق ملي يسالي ورق التوزيع وترجع تتسحب عادي.',
+          'المرموق: اللعاب حر ياخد ورقة المرموق ويرمي ورقة خرى — بلا شروط افتتاح ولا إنهاء وبلا جزاء؛ ولكن ماشي حرة فنفس الدور — من بعد ما يرمي، كتولي من الأوراق الحرة ديالو فالأدوار الجاية.',
+          'الافتتاح: تسلسل حر + متشابهة حرة (بلا جوكر وبلا ورقة مرموق ديال نفس الدور) والمجموع الحر ≥ 51؛ مجموعات الجوكر/المرموق كيزيدو فالمجموع الكامل ماشي فالعتبة.',
+          'الإنهاء: تسلسل حر + متشابهة حرة + 13 ورقة كاملين فمجموعات صحيحة (بالجوكر المعين ولا بلاه) + ورقة الإنهاء 14 على ضهرها.',
+          'فالآخر كيكشفو الكل: لي ما فتحش = +51؛ لي فتح كيتحسبو أوراقو بقيمتهم (J/Q/K/A والجوكر = 10)؛ إلا فاتو 51 = +51.',
+          'خطأ الإظهار = +51 والشوط كيكمل.'
         ]}
       ]
     },
     payouts: {
-      ar: '<tr><td>إنهاء الشوط (Finish)</td><td>0 نقطة جزاء (الفوز بالشوط)</td></tr><tr><td>إظهار/افتتاح خاطئ — طلاح</td><td>+71 نقطة جزاء</td></tr><tr><td>إظهار/افتتاح خاطئ — سامبل</td><td>+51 نقطة جزاء</td></tr><tr><td>أخذ ورقة دون شروط — طلاح</td><td>+71 (مع إرجاع الورقة)</td></tr><tr><td>أخذ ورقة دون شروط — سامبل</td><td>+51</td></tr><tr><td>مخالفة قاعدة الـ12 ورقة</td><td>+71</td></tr><tr><td>يد كاملة دون إنزال — طلاح</td><td>+100</td></tr><tr><td>يد كاملة دون إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — طلاح</td><td>10 نقاط ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr><tr><td>شوط مضاعف (إنهاء بجوكر حر معزول)</td><td>نقاط الأوراق المتبقية/اليد الكاملة ×2 (الجزاءات لا تُضاعف)</td></tr>',
-      da: '<tr><td>إنهاء الشوط</td><td>0 نقطة جزاء (ربحتي الشوط)</td></tr><tr><td>إظهار خاطئ — طالاج</td><td>+71</td></tr><tr><td>إظهار خاطئ — سامبل</td><td>+51</td></tr><tr><td>أخذ ورقة بلا شروط — طالاج</td><td>+71 (وترجع الورقة)</td></tr><tr><td>أخذ ورقة بلا شروط — سامبل</td><td>+51</td></tr><tr><td>قاعدة الـ12</td><td>+71</td></tr><tr><td>يد كاملة بلا إنزال — طالاج</td><td>+100</td></tr><tr><td>يد كاملة بلا إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية — طالاج</td><td>10 ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr>',
-      fr: '<tr><td>Finir la manche</td><td>0 point de pénalité (victoire)</td></tr><tr><td>Ouverture invalide — Talaj</td><td>+71 points</td></tr><tr><td>Ouverture invalide — Sample</td><td>+51 points</td></tr><tr><td>Prise de carte sans conditions — Talaj</td><td>+71 (carte rendue)</td></tr><tr><td>Prise de carte sans conditions — Sample</td><td>+51</td></tr><tr><td>Violation de la règle des 12 cartes</td><td>+71</td></tr><tr><td>Main pleine sans pose — Talaj</td><td>+100</td></tr><tr><td>Main pleine sans pose — Sample</td><td>+51</td></tr><tr><td>Cartes restantes après pose partielle — Talaj</td><td>10 fixes par carte</td></tr><tr><td>Cartes restantes après pose partielle — Sample</td><td>Valeur faciale (V/D/R/As et joker = 10)</td></tr>',
-      en: '<tr><td>Finish Round</td><td>0 penalty points (Round Win)</td></tr><tr><td>Invalid meld/opening — Talaj</td><td>+71 penalty points</td></tr><tr><td>Invalid meld/opening — Sample</td><td>+51 penalty points</td></tr><tr><td>Take card without conditions — Talaj</td><td>+71 (card returned)</td></tr><tr><td>Take card without conditions — Sample</td><td>+51</td></tr><tr><td>Violate 12-card rule</td><td>+71</td></tr><tr><td>Full hand without lay-down — Talaj</td><td>+100</td></tr><tr><td>Full hand without lay-down — Sample</td><td>+51</td></tr><tr><td>Remaining after partial lay-down — Talaj</td><td>Flat 10 per card</td></tr><tr><td>Remaining after partial lay-down — Sample</td><td>Face value (J/Q/K/A & Joker = 10)</td></tr><tr><td>Doubled round (free isolated Joker finish)</td><td>Remaining/full-hand points ×2 (penalties not doubled)</td></tr>'
+      ar: '<tr><td>إنهاء الشوط (Finish)</td><td>0 نقطة جزاء (الفوز بالشوط)</td></tr><tr><td>إظهار/افتتاح خاطئ — طلاح</td><td>+71 نقطة جزاء</td></tr><tr><td>إظهار/افتتاح خاطئ — سامبل</td><td>+51 نقطة جزاء</td></tr><tr><td>أخذ ورقة دون شروط — طلاح</td><td>+71 (مع إرجاع الورقة)</td></tr><tr><td>سحب المرموق — سامبل</td><td>حر بلا جزاء (غير حرة في نفس الدور)</td></tr><tr><td>مخالفة قاعدة الـ12 ورقة</td><td>+71</td></tr><tr><td>يد كاملة دون إنزال — طلاح</td><td>+100</td></tr><tr><td>يد كاملة دون إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — طلاح</td><td>10 نقاط ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr><tr><td>شوط مضاعف (إنهاء بجوكر حر معزول)</td><td>نقاط الأوراق المتبقية/اليد الكاملة ×2 (الجزاءات لا تُضاعف)</td></tr>',
+      da: '<tr><td>إنهاء الشوط</td><td>0 نقطة جزاء (ربحتي الشوط)</td></tr><tr><td>إظهار خاطئ — طالاج</td><td>+71</td></tr><tr><td>إظهار خاطئ — سامبل</td><td>+51</td></tr><tr><td>أخذ ورقة بلا شروط — طالاج</td><td>+71 (وترجع الورقة)</td></tr><tr><td>سحب المرموق — سامبل</td><td>حر بلا جزاء (ماشي حرة فنفس الدور)</td></tr><tr><td>قاعدة الـ12</td><td>+71</td></tr><tr><td>يد كاملة بلا إنزال — طالاج</td><td>+100</td></tr><tr><td>يد كاملة بلا إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية — طالاج</td><td>10 ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr>',
+      fr: '<tr><td>Finir la manche</td><td>0 point de pénalité (victoire)</td></tr><tr><td>Ouverture invalide — Talaj</td><td>+71 points</td></tr><tr><td>Ouverture invalide — Sample</td><td>+51 points</td></tr><tr><td>Prise de carte sans conditions — Talaj</td><td>+71 (carte rendue)</td></tr><tr><td>Prise de la défausse — Sample</td><td>Libre, sans pénalité (non libre le même tour)</td></tr><tr><td>Violation de la règle des 12 cartes</td><td>+71</td></tr><tr><td>Main pleine sans pose — Talaj</td><td>+100</td></tr><tr><td>Main pleine sans pose — Sample</td><td>+51</td></tr><tr><td>Cartes restantes après pose partielle — Talaj</td><td>10 fixes par carte</td></tr><tr><td>Cartes restantes après pose partielle — Sample</td><td>Valeur faciale (V/D/R/As et joker = 10)</td></tr>',
+      en: '<tr><td>Finish Round</td><td>0 penalty points (Round Win)</td></tr><tr><td>Invalid meld/opening — Talaj</td><td>+71 penalty points</td></tr><tr><td>Invalid meld/opening — Sample</td><td>+51 penalty points</td></tr><tr><td>Take card without conditions — Talaj</td><td>+71 (card returned)</td></tr><tr><td>Discard-pile draw — Sample</td><td>Free, no penalty (not free the same turn)</td></tr><tr><td>Violate 12-card rule</td><td>+71</td></tr><tr><td>Full hand without lay-down — Talaj</td><td>+100</td></tr><tr><td>Full hand without lay-down — Sample</td><td>+51</td></tr><tr><td>Remaining after partial lay-down — Talaj</td><td>Flat 10 per card</td></tr><tr><td>Remaining after partial lay-down — Sample</td><td>Face value (J/Q/K/A & Joker = 10)</td></tr><tr><td>Doubled round (free isolated Joker finish)</td><td>Remaining/full-hand points ×2 (penalties not doubled)</td></tr>'
     },
     tips: {
       ar: [
         'في الطلاح: لا تُحسب ورقة الجوكر ضمن نقاط الافتتاح (يجب تجاوز 71 بدونها).',
-        'في السامبل: راقب ورقة المؤشر — نظيرتها المعاكسة اللون تصبح الجوكر، وتُحسب 10 عند كشف الأوراق.',
+        'في السامبل: راقب ورقة الفوجوك — نظيرتها المعاكسة اللون تصبح الجوكر (تُحسب 10 عند الكشف)، ولا تنسَ حقك في سحبها خلال دورك الأول فقط.',
         'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) لا يتطلب أي شرط افتتاح.',
-        'قاعدة الـ12 ورقة: إن أنزلت 12 ورقة فخذ ورقة المرموق المطابقة لمجموعات الطاولة، وإلا فالجزاء +71.'
+        'قاعدة الـ12 ورقة (طلاح فقط): إن أنزلت 12 ورقة فخذ ورقة المرموق المطابقة لمجموعات الطاولة، وإلا فالجزاء +71. في السامبل سحب المرموق حر دائماً.'
       ],
       da: [
         'فالطالاج: الجوكر ما كيتحسبش فنقاط الافتتاح (خاصك تفوت 71 بلا بيه).',
-        'فالسامبل: رد البال لورقة المؤشر — النظير المعكوس ديالها كيولي جوكر وكيتحسب 10.',
+        'فالسامبل: رد البال للفوجوك — النظير المعكوس ديالها كيولي جوكر (كيتحسب 10)، وعندك الحق تسحبها غير فالدور اللول ديالك.',
         'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) ما كيحتاج حتى شرط افتتاح.',
-        'قاعدة الـ12: إلا نزلتي 12 ورقة خذ المرموق المطابق للمجموعات وإلا +71.'
+        'قاعدة الـ12 (طالاج غير): إلا نزلتي 12 ورقة خذ المرموق المطابق للمجموعات وإلا +71. فالسامبل السحب من المرموق حر ديما.'
       ],
       fr: [
         'En Talaj : le joker ne compte pas dans l\'ouverture (il faut dépasser 71 sans lui).',
-        'En Sample : surveillez la carte indicatrice — sa contrepartie de couleur inversée devient le joker et vaut 10 à la révélation.',
+        'En Sample : surveillez le Fojok — sa contrepartie de couleur inversée devient le joker (vaut 10 à la révélation) ; vous ne pouvez le prendre qu\'à votre premier tour.',
         'La fin de manche standard (14 cartes + défausse de la 15e) n\'exige aucune condition d\'ouverture.',
-        'Règle des 12 cartes : si vous en posez 12, prenez la défausse qui complète une combinaison, sinon +71.'
+        'Règle des 12 cartes (Talaj uniquement) : si vous en posez 12, prenez la défausse qui complète une combinaison, sinon +71. En Sample la prise de la défausse est toujours libre.'
       ],
       en: [
         'In Talaj: the Joker does not count toward the opening (you must exceed 71 without it).',
-        'In Sample: watch the indicator card — its colour-reversed counterpart becomes the Joker and counts 10 at reveal.',
+        'In Sample: watch the Fojok — its colour-reversed counterpart becomes the Joker (counts 10 at reveal); you may only draw it on your first turn.',
         'Standard round finish (14 cards + discarding the 15th) requires no opening condition.',
-        '12-card rule: if you have laid 12 cards, take the discard that fits a meld, otherwise +71.'
+        '12-card rule (Talaj only): if you have laid 12 cards, take the discard that fits a meld, otherwise +71. In Sample the discard draw is always free.'
       ]
     }
   },
