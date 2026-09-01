@@ -16,8 +16,8 @@ const ctx = {
   _ramiToast: () => {}, SND: {}
 };
 vm.createContext(ctx);
-vm.runInContext(code + '\n;globalThis.__X = { RamiGame, RamiRules, RamiCard: (typeof RamiCard!=="undefined"?RamiCard:null), MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting };', ctx);
-const { RamiGame, RamiRules, MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting } = ctx.__X;
+vm.runInContext(code + '\n;globalThis.__X = { RamiGame, RamiRules, RamiCard: (typeof RamiCard!=="undefined"?RamiCard:null), MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, cardFitsMeld: (typeof cardFitsMeld!=="undefined"?cardFitsMeld:null) };', ctx);
+const { RamiGame, RamiRules, MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, cardFitsMeld } = ctx.__X;
 
 let pass = 0, fail = 0;
 function ok(cond, name) {
@@ -182,6 +182,37 @@ console.log('── 5) الإنهاء: 13 بمجموعات + ورقة الإنه
   p.displayCards = p.hand.slice();
   g.executeMove({ type: 'draw_deck', playerId: p.id });
   ok(!g.canFinish(p), 'بلا متماثلة حرة → canFinish=false');
+}
+
+console.log('── 8) [v19.1] الحرة تبقى حرة: لا تلويث المجموعات الحرة بالجوكر ──');
+{
+  /* افتتاح بمجموعتي جوكر بلا متتالية حرة (سيناريو السكرين شوت) يجب رفضه */
+  const rules = new RamiRules('simple', 90);
+  rules.jokerIndicator = { id: 'IND', rank: 6, suit: 'sword', isJoker: false }; /* المؤشر 6 أسود → الجوكر 6 أحمر */
+  ok(rules.isWildCard(C(6, 'heart')), 'الـ 6 الأحمر ورقة برية (جوكر الجولة)');
+  const m1 = { type: MELD_TYPE.SEQUENCE, cards: [C(6, 'heart'), C(7, 'heart'), C(8, 'heart'), C(9, 'heart')] };
+  const m2 = { type: MELD_TYPE.SEQUENCE, cards: [C(6, 'diamond'), C(7, 'grape'), C(8, 'grape')] };
+  const m3 = { type: MELD_TYPE.SET, cards: [C(12, 'diamond'), C(12, 'grape'), C(12, 'sword')] };
+  const r = rules.validateOpening([m1, m2, m3], null, null, 0, false);
+  ok(!r.valid, 'افتتاح بمتتاليتين بجوكر + متماثلة حرة فقط → مرفوض (لا متتالية حرة)');
+}
+{
+  /* الإدراج: جوكر لا يدخل مجموعة حرة (لا عبر cardFitsMeld ولا canLayOff ولا doesCardFitAnyTableMeld) */
+  const g = new RamiGame('simple', 2, 1, 77, 90);
+  g.startMatch(2, 1);
+  const rm = g.roundManager;
+  rm.jokerIndicator = { id: 'IND2', rank: 6, suit: 'sword', isJoker: false };
+  g.rules.jokerIndicator = rm.jokerIndicator;
+  const joker = C(6, 'heart');            /* برية */
+  const freeMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'sword'), C(10, 'sword'), C(11, 'sword')] };
+  const wildMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'grape'), C(10, 'grape'), C(6, 'heart')] }; /* فيها برية */
+  rm.tableMelds = [freeMeld];
+  ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة → مرفوض');
+  ok(cardFitsMeld ? !cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في متتالية حرة → مرفوض');
+  ok(!g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: طاولة حرة فقط → false للجوكر');
+  rm.tableMelds = [freeMeld, wildMeld];
+  ok(RamiExpertAI.canLayOff(g.rules, wildMeld, C(8, 'grape')), 'canLayOff: ورقة عادية في مجموعة بجوكر → مقبول');
+  ok(RamiExpertAI.canLayOff(g.rules, freeMeld, C(12, 'sword')), 'canLayOff: ورقة عادية في متتالية حرة → مقبول');
 }
 
 console.log('\n═══ Rami Sample v19: ' + pass + '/' + (pass + fail) + ' passed ═══');

@@ -536,6 +536,19 @@ const RamiExpertAI = {
     return best ? best.id : hand[hand.length - 1].id;
   },
 
+  /* [V19b] هل يجوز للبوت إدراج هذه الورقة في هذه المجموعة المنزلة؟
+     القاعدة الصارمة: الجوكر/الورقة البرية لا تُدرج أبداً في مجموعة حرة
+     (خالية من الجوكر) — وإلا فقدت المجموعة صفة «الحرة» وبدا افتتاح
+     صاحبها مخالفاً لشرط المتتالية/المتماثلة الحرة */
+  canLayOff(rules, meld, card) {
+    if (!meld || !meld.cards || !card) return false;
+    if (rules.isWildCard(card) && !meld.cards.some(c => rules.isWildCard(c))) return false;
+    const temp = meld.cards.concat([card]);
+    if (meld.type === MELD_TYPE.SET) return rules.isValidSet(temp, true);
+    if (meld.type === MELD_TYPE.SEQUENCE) return rules.isValidSequence(temp, true);
+    return false;
+  },
+
   /* اختيار ورقة الرمي المثلى */
   chooseDiscard(game, player) {
     const hand = player.hand;
@@ -1349,6 +1362,8 @@ class RamiGame {
   doesCardFitAnyTableMeld(card) {
     if (!card || !this.roundManager.tableMelds) return false;
     for (const meld of this.roundManager.tableMelds) {
+      /* [V19b] الجوكر لا يُدرج في مجموعة حرة (خالية من الجوكر) — الحرة تبقى حرة */
+      if (this.rules.isWildCard(card) && !meld.cards.some(c => this.rules.isWildCard(c))) continue;
       const temp = meld.cards.concat([card]);
       if (meld.type === MELD_TYPE.SET && this.rules.isValidSet(temp, true)) return true;
       if (meld.type === MELD_TYPE.SEQUENCE && this.rules.isValidSequence(temp, true)) return true;
@@ -1958,6 +1973,9 @@ class RamiGame {
       const handCopy = player.hand.slice();
       for (const card of handCopy) {
         for (const meld of this.roundManager.tableMelds) {
+          /* [V19b] الدمج التلقائي لا يُدخل جوكراً في مجموعة حرة (خالية من الجوكر)
+             — حماية المتتاليات/المتماثلات الحرة من التلويث */
+          if (this.rules.isWildCard(card) && !meld.cards.some(c => this.rules.isWildCard(c))) continue;
           const temp = meld.cards.concat([card]);
           let canAdd = false;
           if (meld.type === MELD_TYPE.SET && this.rules.isValidSet(temp, true)) canAdd = true;
@@ -3011,12 +3029,12 @@ class RamiUIAdapter {
         /* توسيع المجموعات: في اللعب الفردي فقط (محلي بلا بثّ)؛ في الجماعي يُتخطّى
            لضمان تطابق تامّ بين الأطراف (ترتيب المجموعات قد يتباين عبر البثّ). */
         if (!this.multiplayer && bot.hasOpened && rm.tableMelds.length > 0) {
+          /* [V19b] البوت لا يُدرج جوكراً في مجموعة حرة (خالية من الجوكر) —
+             حماية المتتالية/المتماثلة الحرة من التلويث بعد الافتتاح */
           const fitsMeld = (card) => {
             for (let mIdx = 0; mIdx < rm.tableMelds.length; mIdx++) {
               const meld = rm.tableMelds[mIdx];
-              const temp = meld.cards.concat([card]);
-              if (meld.type === MELD_TYPE.SET && this.game.rules.isValidSet(temp, true)) return meld;
-              if (meld.type === MELD_TYPE.SEQUENCE && this.game.rules.isValidSequence(temp, true)) return meld;
+              if (RamiExpertAI.canLayOff(this.game.rules, meld, card)) return meld;
             }
             return null;
           };
@@ -3046,14 +3064,8 @@ class RamiUIAdapter {
             for (let ci = 0; ci < 2 && bot.hand.length === 2; ci++) {
               const card = bot.hand[ci];
               if (!card) break;
-              for (let mIdx = 0; mIdx < rm.tableMelds.length; mIdx++) {
-                const meld = rm.tableMelds[mIdx];
-                const temp = meld.cards.concat([card]);
-                let canAdd = false;
-                if (meld.type === MELD_TYPE.SET && this.game.rules.isValidSet(temp, true)) canAdd = true;
-                if (meld.type === MELD_TYPE.SEQUENCE && this.game.rules.isValidSequence(temp, true)) canAdd = true;
-                if (canAdd) { bot.removeCard(card.id); meld.cards.push(card); break; }
-              }
+              const meld2 = fitsMeld(card);
+              if (meld2) { bot.removeCard(card.id); meld2.cards.push(card); }
             }
           }
         }
@@ -3320,9 +3332,11 @@ class RamiUIAdapter {
         const rname = RAMI_RANK_NAMES[info.rank - 1] || info.rank;
         const indRed = (RAMI_SUIT_COLOR[info.suit] === 'red');
         const jColorName = indRed ? 'الأسود' : 'الأحمر';
-        centerHtml += '<div class="rami-indicator-box" title="جوكر الجولة: ' + rname + ' باللون ' + jColorName + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;border:1px dashed rgba(245,158,11,.6);border-radius:8px;padding:2px 6px">' +
-          '<span style="font-size:.72rem;color:#F59E0B">الجوكر</span>' +
-          '<span style="font-weight:700;color:' + (indRed ? '#E5E7EB' : '#F87171') + '">' + rname + ' ' + jColorName + '</span>' +
+        /* [V19b] وصف مضغوط بمقياس الطاولة (em لا rem) — بحجم ورقة تقريباً كي لا يزاحم
+           عنوان سامبل وهدف الجولة ومجموع الرهان خارج المركز */
+        centerHtml += '<div class="rami-indicator-box" title="جوكر الجولة: ' + rname + ' باللون ' + jColorName + '" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:1.2em;border:1px dashed rgba(245,158,11,.6);border-radius:0.12em;padding:0.04em 0.06em;box-sizing:border-box;cursor:default">' +
+          '<span style="font-size:0.22em;font-weight:700;color:#F59E0B;line-height:1.2;white-space:nowrap">الجوكر</span>' +
+          '<span style="font-size:0.3em;font-weight:800;line-height:1.25;white-space:nowrap;color:' + (indRed ? '#E5E7EB' : '#F87171') + '">' + rname + ' ' + jColorName + '</span>' +
         '</div>';
       }
 
@@ -3949,9 +3963,11 @@ function ramiStateInstruction(game) {
 function cardFitsMeld(card, meld, rules) {
   if (!card || !meld || !meld.cards || !meld.cards.length) return false;
   if (!rules || typeof rules.isValidSet !== 'function') return false;
-  /* بعد الافتتاح يُعفى اللاعب من شروطه ويصبح حراً في إدراج أي ورقة (جوكر/مرموق/توزيع/من يده)
+  /* بعد الافتتاح يُعفى اللاعب من شروطه ويصبح حراً في إدراج أي ورقة
      في أي مجموعة منزلة ظاهرة، متى أبقت المجموعة صالحة قانوناً.
-     الجوكر يأخذ محلّ الورقة المعنية (مثال Q في 9-10-J-JOKER) فيمكن إضافة K بعده. */
+     [V19b] استثناء صارم: الجوكر/الورقة البرية لا تُدرج في مجموعة حرة
+     (خالية من الجوكر) — الحرة تبقى حرة، وإلا بدا افتتاح صاحبها مخالفاً. */
+  if (rules.isWildCard(card) && !meld.cards.some(function (c) { return rules.isWildCard(c); })) return false;
   var temp = meld.cards.concat([card]);
   if (meld.type === MELD_TYPE.SET) return rules.isValidSet(temp, true);
   if (meld.type === MELD_TYPE.SEQUENCE) return rules.isValidSequence(temp, true);
@@ -4726,7 +4742,8 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
       } else if (naturals.length >= 4) {
         _ramiToast('❌ لا يمكن إضافة جوكر إلى مجموعة مكتملة من 4 أوراق طبيعية', 'err');
       } else {
-        _ramiToast('❌ لا يمكن إضافة هذا الجوكر إلى المجموعة المحددة', 'err');
+        /* [V19b] الحرة تبقى حرة: لا إدراج جوكر في مجموعة خالية من الجوكر */
+        _ramiToast('❌ المجموعة الحرة تبقى حرة — لا يمكن إدراج جوكر في متتالية أو متماثلة خالية من الجوكر', 'err');
       }
     } else {
       _ramiToast('❌ هذه الورقة لا تتطابق مع نمط المجموعة المحددة', 'err');
