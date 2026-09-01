@@ -138,6 +138,9 @@ function _syncHash(id) {
 }
 function navFromHash() {
   var hash = window.location.hash.replace('#', '') || 'home';
+  /* الصفحات القانونية صارت ملفات html مستقلة — الروابط القديمة #about وأخواتها تُحوَّل إليها */
+  var LEGAL_PAGES = { about: 1, terms: 1, privacy: 1, fairness: 1, 'provably-fair': 1, '2fa': 1, contact: 1, admins: 1 };
+  if (LEGAL_PAGES[hash]) { window.location.href = hash + '.html'; return; }
   var el = document.querySelector('[data-nav="' + hash + '"]');
   if (typeof nav === 'function') nav(hash, el);
 }
