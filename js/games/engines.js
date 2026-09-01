@@ -1852,7 +1852,7 @@ function eRoulette(g) {
   return gFrame(
     '<div class="rl-stage">' +
       '<div class="rl-wheel" id="rlWrap">' +
-        '<canvas id="rlCv" width="320" height="320"></canvas>' +
+        '<canvas id="rlCv"></canvas>' +
         '<div class="rl-pointer" aria-hidden="true"></div>' +
       '</div>' +
       '<div class="rl-last" id="rlLast">' + T('rl.wait') + '</div>' +
@@ -1888,18 +1888,65 @@ function rlBet(c) {
 function initRoulette() {
   const cv = document.getElementById('rlCv');
   if (!cv) return;
-  drawRoulette(cv.getContext('2d'), 0);
+  /* تهيئة متجاوبة: نضبط أبعاد الرسم الفعلية (CSS×devicePixelRatio) لجيوب واضحة
+     على كل الشاشات — الحجم يُشتق من حاوية .rl-wheel (مربع) مع حدود 260-420px */
+  rlResizeCanvas(cv);
+  rlDraw(cv, 0);
+  /* إعادة التهيئة والرسم عند تغيّر حجم النافذة/الدوران — بتنقيط 200ms */
+  if (!window._rlResizeBound) {
+    window._rlResizeBound = true;
+    let rlT = 0;
+    window.addEventListener('resize', function () {
+      clearTimeout(rlT);
+      rlT = setTimeout(function () {
+        const c = document.getElementById('rlCv');
+        if (!c) return;
+        rlResizeCanvas(c);
+        rlDraw(c, rlLastRot);
+      }, 200);
+    });
+  }
   /* الحالة الافتراضية: رهان أحمر — ظهّره في الواجهة */
   const redBtn = document.getElementById('rlBtnRed');
   if (redBtn) redBtn.classList.add('active');
 }
-function drawRoulette(ctx, rot, ball, winIdx) {
+/* ضبط أبعاد canvas المتجاوب: حجم CSS من الحاوية (مربع) + backing store بدقة dpr */
+function rlResizeCanvas(cv) {
+  const wrap = cv.parentElement;
+  let cssSize = wrap ? wrap.clientWidth : 0;
+  if (!cssSize || cssSize < 40) cssSize = Math.min(cv.clientWidth || 320, 340);
+  cssSize = Math.max(260, Math.min(cssSize, 420));
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+  const px = Math.round(cssSize * dpr);
+  /* لا تهيئة مرة أخرى بنفس الأبعاد — يحفظ رسومات winIdx عند مدوران resize فقط */
+  if (cv.width !== px || cv.height !== px || cv._rlCss !== cssSize) {
+    cv.width = px;
+    cv.height = px;
+    cv._rlCss = cssSize;
+    cv.style.width = cssSize + 'px';
+    cv.style.height = cssSize + 'px';
+  }
+}
+/* راوتر رسم موحّد يستخدم ctx جاهز ويضمن ctx.scale(dpr,dpr) بعد أي تهيئة */
+function rlDraw(cv, rot, ball, winIdx) {
+  const ctx = cv.getContext('2d');
   if (!ctx) return;
-  const S = 320, cx = S / 2, cy = S / 2, r = 146;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+  /* إعادة ضبط مصفوفة التحويل ثم تطبيق مقياس dpr — يضمن قياساً صحيحاً
+     حتى لو تغيرت أبعاد canvas بعد التهيئة */
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawRoulette(ctx, rot, ball, winIdx, cv._rlCss || Math.round(cv.width / dpr));
+}
+function drawRoulette(ctx, rot, ball, winIdx, cssSize) {
+  if (!ctx) return;
+  /* كل الأبعاد نسبية: S = الحجم المنطقي (CSS) — scale يعيد قيم 320px المرجعية */
+  const S = cssSize || 320;
+  const sc = S / 320;
+  const cx = S / 2, cy = S / 2, r = 146 * sc;
   ctx.clearRect(0, 0, S, S);
   /* حلقة خارجية ذهبية مزدوجة */
-  ctx.beginPath(); ctx.arc(cx, cy, r + 9, 0, Math.PI * 2); ctx.fillStyle = '#0e0a26'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, r + 5, 0, Math.PI * 2); ctx.fillStyle = '#f5c518'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r + 9 * sc, 0, Math.PI * 2); ctx.fillStyle = '#0e0a26'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r + 5 * sc, 0, Math.PI * 2); ctx.fillStyle = '#f5c518'; ctx.fill();
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#8a6d1a'; ctx.fill();
   const angle = (Math.PI * 2) / rlNumbers.length;
   ctx.save();
@@ -1913,13 +1960,15 @@ function drawRoulette(ctx, rot, ball, winIdx) {
     ctx.fillStyle = n === 0 ? '#0a7a55' : (i % 2 === 0 ? '#d0263f' : '#151515');
     ctx.fill();
     ctx.strokeStyle = 'rgba(245,197,24,0.5)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = Math.max(1, sc);
     ctx.stroke();
     ctx.save();
     ctx.rotate(i * angle + angle / 2);
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px Cairo';
+    /* خط متناسب مع نصف القطر — 37 جيباً (زاوية 9.7°) بأرقام غير متزاحمة */
+    ctx.font = 'bold ' + Math.max(8.5, Math.round(11.5 * sc)) + 'px Cairo';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillText(n.toString(), 0, -r * 0.68);
     ctx.restore();
   });
@@ -1931,27 +1980,28 @@ function drawRoulette(ctx, rot, ball, winIdx) {
     ctx.closePath();
     ctx.fillStyle = rlNumbers[winIdx] === 0 ? '#0a7a55' : (winIdx % 2 === 0 ? '#d0263f' : '#151515');
     ctx.shadowColor = 'rgba(245,197,24,0.95)';
-    ctx.shadowBlur = 24;
+    ctx.shadowBlur = 24 * sc;
     ctx.fill();
     ctx.shadowBlur = 0;
   }
   ctx.restore();
   /* المحور المركزي */
-  ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fillStyle = '#141033'; ctx.fill();
-  ctx.strokeStyle = '#f5c518'; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#ffd700'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 26 * sc, 0, Math.PI * 2); ctx.fillStyle = '#141033'; ctx.fill();
+  ctx.strokeStyle = '#f5c518'; ctx.lineWidth = Math.max(1.5, 2.5 * sc); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, 9 * sc, 0, Math.PI * 2); ctx.fillStyle = '#ffd700'; ctx.fill();
   /* الكرة — تُرسم فوق كل شيء في إحداثيات الشاشة */
   if (ball) {
-    const bx = cx + Math.cos(ball.ang) * ball.radius;
-    const by = cy + Math.sin(ball.ang) * ball.radius;
-    const gr = ctx.createRadialGradient(bx - 2, by - 3, 1, bx, by, 9);
+    const bx = cx + Math.cos(ball.ang) * ball.radius * sc;
+    const by = cy + Math.sin(ball.ang) * ball.radius * sc;
+    const br = Math.max(5, 9 * sc);
+    const gr = ctx.createRadialGradient(bx - 2 * sc, by - 3 * sc, 1, bx, by, br);
     gr.addColorStop(0, '#ffffff');
     gr.addColorStop(0.35, '#ffe9a3');
     gr.addColorStop(1, '#d4a017');
     ctx.beginPath();
-    ctx.arc(bx, by, 7, 0, Math.PI * 2);
+    ctx.arc(bx, by, Math.max(4, 7 * sc), 0, Math.PI * 2);
     ctx.shadowColor = 'rgba(255,255,255,0.9)';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 10 * sc;
     ctx.fillStyle = gr;
     ctx.fill();
     ctx.shadowBlur = 0;
@@ -1967,7 +2017,8 @@ function rlSpin() {
   if (spinBtn) spinBtn.disabled = true;
   const cv = document.getElementById('rlCv');
   if (!cv) { finishRoulette(Math.floor(Math.random() * rlNumbers.length)); return; }
-  const ctx = cv.getContext('2d');
+  /* أبعاد محدثة قبل السبين (تغيّر الحاوية/الدوران منذ التهيئة) ثم نفس ctx للأنيميشن */
+  rlResizeCanvas(cv);
   const seg = (Math.PI * 2) / rlNumbers.length;
   const spins = 5 + Math.random() * 3;
   const stopAt = Math.floor(Math.random() * rlNumbers.length);
@@ -1982,7 +2033,7 @@ function rlSpin() {
     const eased = 1 - Math.pow(1 - progress, 3.4);
     const rot = eased * targetRot;
     const bs = rlBallState(rot, progress, ball, seg);
-    drawRoulette(ctx, rot, bs);
+    rlDraw(cv, rot, bs);
     /* نقر الكرة أثناء عبورها حدود الجيوب */
     const idx = Math.floor((((bs.ang - rot) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / seg);
     const nowMs = performance.now();
@@ -2038,7 +2089,7 @@ function finishRoulette(idx) {
   fairTick();
   /* توهج الجيب الفائز + اهتزاز العجلة عند الفوز الكبير */
   const cv = document.getElementById('rlCv');
-  if (cv) drawRoulette(cv.getContext('2d'), rlLastRot, null, idx);
+  if (cv) rlDraw(cv, rlLastRot, null, idx);
   if (win && w >= GB * 5) {
     const wrap = document.getElementById('rlWrap');
     if (wrap) shake(wrap, 5, 380);

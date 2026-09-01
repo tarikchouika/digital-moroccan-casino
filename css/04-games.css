@@ -2628,10 +2628,17 @@ body.rami-game-open { overflow: hidden; }
 }
 .rl-wheel {
   position: relative;
-  width: 320px;
-  height: 320px;
+  /* عجلة متجاوبة: مربع بحد أقصى 340px يتناسب مع عرض الحاوية (78vw موبايل) */
+  width: min(78vw, 340px);
+  height: auto;
+  aspect-ratio: 1 / 1;
   filter: drop-shadow(0 12px 30px rgba(245, 197, 24, 0.25));
   animation: rlFloat 4s var(--ease) infinite;
+}
+.rl-wheel canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 @keyframes rlFloat {
   0%, 100% { transform: translateY(0); }
@@ -2669,14 +2676,18 @@ body.rami-game-open { overflow: hidden; }
 .rl-last b.black { color: #e8e6f5; text-shadow: 0 0 12px rgba(232, 230, 245, 0.5); }
 .rl-last b.green { color: #34d399; text-shadow: 0 0 12px rgba(52, 211, 153, 0.6); }
 .rl-bets {
-  gap: 10px;
-  margin: 8px 0 4px;
+  /* شبكة مضغوطة خاصة بالروليت — تلغي minmax(230px,1fr) العامة لـ .grid.g3
+     كي لا تمتد أزرار الرهان العشرة إلى صف واحد ضخم (352×55px) على الموبايل:
+     على 390px تظهر 3 أعمدة ≈113px للزر */
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 8px 8px;
+  margin: 8px auto 4px;
 }
 .rl-b {
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 12px 6px;
-  font-size: 0.95rem;
+  border-radius: 11px;
+  padding: 9px 4px;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #fff;
   background: linear-gradient(135deg, #241d4d, #151033);
@@ -2685,7 +2696,8 @@ body.rami-game-open { overflow: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  min-height: 44px;
 }
 .rl-b:hover:not(.active) {
   transform: translateY(-2px);
@@ -2694,7 +2706,7 @@ body.rami-game-open { overflow: hidden; }
 }
 .rl-b b {
   color: #ffd700;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
 }
 .rl-b.red { background: linear-gradient(135deg, #c41e3a, #7a0f22); }
 .rl-b.black { background: linear-gradient(135deg, #2c2c38, #131318); }
@@ -2705,7 +2717,7 @@ body.rami-game-open { overflow: hidden; }
   transform: translateY(-2px);
 }
 .rl-spin {
-  min-width: 230px;
+  min-width: 180px;
   font-size: 1rem !important;
   background: linear-gradient(135deg, #ffd700, #b8860b) !important;
   color: #1a1200 !important;
@@ -4082,4 +4094,275 @@ body.rami-game-open { overflow: hidden; }
     padding-top: 3px !important;
     padding-bottom: 3px !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   [Fill] ملء الحاويات في ملء الشاشة — بورتريه ولاندسكيب
+   تحسين بصري/تخطيطي فقط: يجعل حاوية اللعبة الرئيسية لكل لعبة
+   كلاسيكية تتمدد لتملأ ارتفاع .stage المتاح (flex-grow) ويكبّر
+   عناصرها الداخلية (بطاقات/خطوط) بنسب clamp — صفر تغيير في منطق
+   اللعب أو الرهان أو النتائج. القواعد مقيدة بـ app-fs كي لا تمس
+   التخطيط الأساسي خارج ملء الشاشة، ولا تلمس ألعاب المكتسبات.
+   ═══════════════════════════════════════════════════════════════ */
+@media (orientation: portrait) {
+  /* الحاوية الرئيسية لكل لعبة كلاسيكية تتمدد لتملأ الفراغ المتبقي.
+     shrink:0 ضروري — بدونه تنضغط الحاوية لصفر عندما يفيض الأشقاء */
+  #pg-game.app-fs #gamePageBody .stage:has(.hl-table) > .hl-table,
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > div:first-of-type,
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-arena,
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-arena,
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-ball {
+    flex: 1 1 auto;
+    flex-shrink: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.hl-table),
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d),
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena),
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena),
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) {
+    flex: 1 1 auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #pg-game.app-fs .stage .hl-table {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(18px, 6vw, 40px);
+    margin: 14px 0 10px;
+  }
+  #pg-game.app-fs .stage .hl-side {
+    gap: 10px;
+  }
+  #pg-game.app-fs .stage .hl-tag {
+    font-size: clamp(0.72rem, 1.6vh, 0.95rem);
+  }
+  #pg-game.app-fs .stage .hl-card {
+    width: clamp(96px, 30vw, 150px);
+    height: clamp(136px, 42vw, 212px);
+  }
+  #pg-game.app-fs .stage .hl-vs {
+    font-size: clamp(1.05rem, 2.2vh, 1.5rem);
+  }
+  /* ── Coin Flip: العملة تتمدد (مربع clamp) داخل حاجتها ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > div:first-of-type {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #pg-game.app-fs .stage .coin3d {
+    width: clamp(132px, 38vw, 220px);
+    height: clamp(132px, 38vw, 220px);
+  }
+  /* ── RPS: بطاقات أكبر مع الحفاظ على بنية الصف ── */
+  #pg-game.app-fs .stage .rps-arena {
+    gap: clamp(14px, 5vw, 30px);
+  }
+  #pg-game.app-fs .stage .rps-side {
+    gap: clamp(6px, 1.2vh, 12px);
+  }
+  #pg-game.app-fs .stage .rps-card {
+    width: clamp(96px, 30vw, 150px);
+    height: clamp(118px, 37vw, 185px);
+    border-radius: 18px;
+  }
+  #pg-game.app-fs .stage .rps-card-face {
+    font-size: clamp(3.1rem, 8vw, 4.6rem);
+  }
+  #pg-game.app-fs .stage .rps-side-tag {
+    font-size: clamp(0.8rem, 1.7vh, 1rem);
+    padding: 4px 14px;
+  }
+  #pg-game.app-fs .stage .rps-picks .rpsBtn {
+    min-width: clamp(86px, 26vw, 130px);
+    padding: clamp(12px, 2.6vh, 20px) 10px clamp(9px, 2vh, 16px);
+  }
+  #pg-game.app-fs .stage .rps-emoji {
+    font-size: clamp(2.5rem, 6.5vw, 3.8rem);
+  }
+  /* ── Penalty: المرمى أكبر مع الحفاظ على نسق الحارس/الكرة ── */
+  #pg-game.app-fs .stage .pn-arena {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #pg-game.app-fs .stage .pn-arena .goal {
+    width: clamp(260px, 82vw, 380px);
+    height: clamp(140px, 33vh, 210px);
+  }
+  #pg-game.app-fs .stage .goal .keeper {
+    font-size: clamp(2.6rem, 6.5vh, 4rem);
+  }
+  #pg-game.app-fs .stage .goal .pball2 {
+    font-size: clamp(1.6rem, 4vh, 2.4rem);
+  }
+  /* ── Wingo: كرة أكبر في المنتصف ── */
+  #pg-game.app-fs .stage .wg-ball {
+    width: clamp(118px, 36vw, 210px);
+    height: clamp(118px, 36vw, 210px);
+  }
+  #pg-game.app-fs .stage .wg-ball-face {
+    font-size: clamp(2.6rem, 7vw, 4.4rem);
+  }
+}
+/* ── لاندسكيب: نفس التمدد مع أحجام أفقية معتدلة ── */
+@media (orientation: landscape) {
+  #pg-game.app-fs #gamePageBody .stage:has(.hl-table) > .hl-table,
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-arena,
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-arena,
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-ball,
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > div:first-of-type {
+    flex: 1 1 auto;
+    flex-shrink: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.hl-table),
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena),
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena),
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball),
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) {
+    flex: 1 1 auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #pg-game.app-fs .stage .hl-table {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(18px, 5vw, 40px);
+    margin: 8px 0 6px;
+  }
+  #pg-game.app-fs .stage .hl-card {
+    width: clamp(86px, 15vw, 130px);
+    height: clamp(120px, 21vw, 184px);
+  }
+  #pg-game.app-fs .stage .coin3d {
+    width: clamp(100px, 16vw, 160px);
+    height: clamp(100px, 16vw, 160px);
+  }
+  #pg-game.app-fs .stage .rps-arena {
+    gap: clamp(12px, 4vw, 26px);
+  }
+  #pg-game.app-fs .stage .rps-card {
+    width: clamp(84px, 14vw, 130px);
+    height: clamp(104px, 17vw, 160px);
+  }
+  #pg-game.app-fs .stage .rps-card-face {
+    font-size: clamp(2.6rem, 6vw, 4rem);
+  }
+  #pg-game.app-fs .stage .pn-arena .goal {
+    width: clamp(220px, 36vw, 340px);
+    height: clamp(120px, 26vh, 190px);
+  }
+  #pg-game.app-fs .stage .goal .keeper {
+    font-size: clamp(2.2rem, 6vh, 3.4rem);
+  }
+  #pg-game.app-fs .stage .goal .pball2 {
+    font-size: clamp(1.4rem, 3.4vh, 2.1rem);
+  }
+  #pg-game.app-fs .stage .wg-ball {
+    width: clamp(100px, 15vw, 170px);
+    height: clamp(100px, 15vw, 170px);
+  }
+  #pg-game.app-fs .stage .wg-ball-face {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   [Fill-2] ملء الحاويات المتبقية في ملء الشاشة (بورتريه أولاً)
+   نفس نهج [Fill]: تمدد الحاوية الرئيسية (flex:1) وتكبير العناصر
+   المركزية بـ clamp — دون أي مساس بمنطق اللعب أو التفاعل.
+   ════════════════════════════════════════════════════════════════ */
+#pg-game.app-fs .stage:has(.l7-arena),
+#pg-game.app-fs .stage:has(.sb-wrap),
+#pg-game.app-fs .stage:has(.dc-wrap),
+#pg-game.app-fs .stage:has(.bc-table),
+#pg-game.app-fs .stage:has(.ab-joker-box),
+#pg-game.app-fs .stage:has(.cf-wrap),
+#pg-game.app-fs .stage:has(.sl-wrap) {
+  display: flex;
+  flex-direction: column;
+}
+#pg-game.app-fs .stage:has(.l7-arena) > .l7-arena,
+#pg-game.app-fs .stage:has(.sb-wrap) > .sb-wrap,
+#pg-game.app-fs .stage:has(.dc-wrap) > .dc-wrap,
+#pg-game.app-fs .stage:has(.bc-table) > .bc-table,
+#pg-game.app-fs .stage:has(.ab-joker-box) > .ab-joker-box,
+#pg-game.app-fs .stage:has(.cf-wrap) > .cf-wrap,
+#pg-game.app-fs .stage:has(.sl-wrap) > .sl-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+/* Lucky7: كرة أكبر تملأ المسرح */
+#pg-game.app-fs .stage .l7-ball { font-size: clamp(4.5rem, 17vh, 8.5rem); }
+#pg-game.app-fs .stage .l7-slot { max-width: min(420px, 92%); }
+#pg-game.app-fs .stage .l7-result { font-size: clamp(1rem, 3vh, 1.5rem); }
+
+/* SicBo: نرد أكبر */
+#pg-game.app-fs .stage .sb-die { width: clamp(96px, 17vh, 150px); height: clamp(96px, 17vh, 150px); }
+#pg-game.app-fs .stage .sb-die .pip,
+#pg-game.app-fs .stage .sb-face { font-size: clamp(2.4rem, 7vh, 4.2rem); }
+#pg-game.app-fs .stage .sb-total { font-size: clamp(1.2rem, 4vh, 2rem); }
+
+/* Dragon Tiger / Baccarat: بطاقات أكبر */
+#pg-game.app-fs .stage .dc-card,
+#pg-game.app-fs .stage .bc-card { font-size: clamp(2.6rem, 9vh, 5rem); }
+#pg-game.app-fs .stage .dc-cards,
+#pg-game.app-fs .stage .bc-cards { min-height: clamp(120px, 22vh, 210px); }
+
+/* Andar Bahar: صندوق الجوكر والمجموعات */
+#pg-game.app-fs .stage .ab-joker-box { font-size: clamp(2.6rem, 9vh, 5rem); min-height: clamp(110px, 20vh, 190px); }
+#pg-game.app-fs .stage .ab-pile { font-size: clamp(1.6rem, 5.5vh, 3rem); }
+
+/* Coin Flip: عملة أكبر */
+#pg-game.app-fs .stage .cf-coin,
+#pg-game.app-fs .stage .coin3d { font-size: clamp(4rem, 15vh, 7.5rem); }
+#pg-game.app-fs .stage .cf-hint { font-size: clamp(0.95rem, 2.8vh, 1.3rem); }
+
+/* Slots: شبكة الرموز أكبر */
+#pg-game.app-fs .stage .sl-grid { font-size: clamp(2rem, 8vh, 4.6rem); }
+#pg-game.app-fs .stage .sl-cell { font-size: clamp(2rem, 8vh, 4.6rem); }
+
+/* عائلة الـ Slots (نفس بنية x-grid/x-row): تكبير الرموز والبطاقات */
+#pg-game.app-fs .stage .cr-grid,
+#pg-game.app-fs .stage .lg-grid,
+#pg-game.app-fs .stage .mj-grid,
+#pg-game.app-fs .stage .mo-grid,
+#pg-game.app-fs .stage .sw-grid { font-size: clamp(1.5rem, 6.5vh, 4rem); gap: clamp(4px, 1.2vh, 10px); }
+#pg-game.app-fs .stage .gt-row,
+#pg-game.app-fs .stage .lt-row,
+#pg-game.app-fs .stage .ol-row,
+#pg-game.app-fs .stage .pk-row,
+#pg-game.app-fs .stage .ro-row { font-size: clamp(1.5rem, 6.5vh, 4rem); min-height: clamp(90px, 18vh, 170px); }
+#pg-game.app-fs .stage .fh-sea { min-height: clamp(120px, 24vh, 230px); font-size: clamp(2rem, 8vh, 4.5rem); }
+
+/* Crash: حاوية 3D تتمدد لتملأ المساحة الرأسية المتاحة (تتجاوز 320px الثابتة).
+   onCrashResize يعيد ضبط renderer/camera تلقائياً عند تغيّر الحاوية. */
+#pg-game.app-fs .stage:has(.crash-3d-container) {
+  display: flex;
+  flex-direction: column;
+}
+#pg-game.app-fs .stage .crash-3d-container {
+  flex: 1 1 auto;
+  min-height: 260px;
+  height: auto;
+  max-height: 62vh;
+}
+/* بورتريه الجوال: الحاوية تأخذ الحصة الكبرى من الشاشة مباشرة */
+@media (orientation: portrait) {
+  #pg-game.app-fs .stage .crash-3d-container { height: min(48vh, 380px); }
 }
