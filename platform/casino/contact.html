@@ -474,8 +474,6 @@
       applyLang(currentLang);
     });
     applyLang(currentLang);
-      if (_origSetLang) _origSetLang(l);
-    };
     /* إرسال نموذج التواصل إلى الخادم — يعمل بشكل منعزل عن تبديل اللغة */
     (function () {
       var form = document.getElementById('contactForm');
@@ -517,9 +515,6 @@
           });
       });
     })();
-    /* تهيئة الصفحة: حقن الهيدر/الفوتر + ترجمة المحتوى */
-    injectLegalUI('contact');
-    applyLang();
   </script>
 </body>
 </html>
