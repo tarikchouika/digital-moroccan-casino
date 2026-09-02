@@ -60,6 +60,40 @@ console.log('── Golvazor (DIRECT) ──');
   ok(r.rate <= 0.05, 'golvazor: نسبة الأخطاء ≤ 5% (' + (r.rate * 100).toFixed(1) + '%)');
 }
 
+console.log('── [V19.3] Golvazor — الأنواع الأربعة الأخرى (خبير بلا أخطاء) ──');
+for (const fin of ['DERNIER', 'BOUND', 'ANNONCE', 'ANNONCE_BOUND']) {
+  const r = playFrames(() => R.golvazor({ finish: fin, bound: 3 }), 3, 240);
+  console.log('   ' + fin + ': shots=' + r.shots + ' fouls=' + r.fouls + ' rate=' + (r.rate * 100).toFixed(1) + '% finished=' + r.finished + '/3');
+  ok(r.crashes === 0, 'golvazor ' + fin + ': بلا أعطال');
+  ok(r.finished === 3, 'golvazor ' + fin + ': كل الإطارات تنتهي (' + r.finished + '/3)');
+  ok(r.rate === 0, 'golvazor ' + fin + ': 0% أخطاء بوت ضد بوت (' + (r.rate * 100).toFixed(1) + '%)');
+}
+
+console.log('── [V19.3] أنونص: الإعلان يتجدد كل دور ──');
+{
+  const G = R.golvazor({ finish: 'ANNONCE' });
+  const S = G.S;
+  /* وضع اصطناعي: كلا اللاعبين على السوداء (الطور يبدأ PLACE للكسر — نتجاوزه) */
+  S.breakShot = false; S.open = false; S.phase = 'AIM';
+  S.groups[0] = 'BLACK'; S.groups[1] = 'BLACK';
+  for (const b of S.balls) if (b.type !== 'CUE' && b.type !== 'BLACK') { b.status = 'POCKETED'; }
+  ok(G.needAnnounce(), 'اللاعب 0 على السوداء بلا إعلان → needAnnounce');
+  ok(G.nominatePocket(S.table.pockets[0].id), 'الإعلان قُبل');
+  ok(!G.needAnnounce(), 'بعد الإعلان: لا حاجة لإعلان جديد في نفس الدور');
+  /* ضربة لا تُنهي الإطار (لمسة خفيفة بعيدة عن الحفر) */
+  const cue = S.balls.find(b => b.type === 'CUE');
+  const blk = S.balls.find(b => b.type === 'BLACK');
+  cue.x = 300; cue.y = 250; blk.x = 500; blk.y = 250;
+  const ev = G.shootAndResolve(0, 18, null);
+  ok(!!ev, 'الضربة نُفذت');
+  ok(S.annPocket[0] === null, 'إعلان الضارب مُسح بعد الضربة (يتجدد كل دور)');
+  if (!S.frameOver && S.active === 0) {
+    ok(G.needAnnounce(), 'عاد الدور له وهو على السوداء → إعلان جديد مطلوب');
+  } else if (!S.frameOver) {
+    ok(G.needAnnounce(), 'اللاعب 1 على السوداء بلا إعلان → needAnnounce له');
+  }
+}
+
 console.log('── Snooker (WPBSA) ──');
 {
   const r = playFrames(() => R.snooker({}), 2, 250);

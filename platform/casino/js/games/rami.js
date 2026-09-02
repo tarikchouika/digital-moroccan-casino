@@ -1026,11 +1026,18 @@ class RamiRules {
     //    و A = 1 في بداية المتتالية (A-2-3). الصور = 10، الجوكر = 0.
     let freeScore = 0;
     let extraScore = 0;
+    /* [V19.3] السامبل: ورقة المرموق المسحوبة هذا الدور يجوز إدخالها في مجموعة صالحة
+       وتُحتسب المجموعة ضمن عتبة الـ51 بشكل قانوني — بشرط ألا تكون الورقة جوكراً
+       وألا تكون في المتتالية/المتماثلة الحرتين الأساسيتين للافتتاح (مضمون أعلاه
+       بمرشحي pureSequences/pureSets). في الطالاج تبقى مجموعة المرموق خارج العتبة. */
+    const sampleDrawnOk = (this.mode !== 'talaj') &&
+      drawnDiscardCard && !this.isWildCard(drawnDiscardCard);
     for (const meld of melds) {
-      /* [V19] المجموعة «غير الحرة»: تحوي جوكراً أو ورقة المرموق المسحوبة هذا الدور —
-         لا تُحتسب في عتبة الافتتاح، بل في المجموع الإجمالي فقط */
-      const hasWild = meld.cards.some(c => this.isWildCard(c)) ||
-        (drawnDiscardCard && meld.cards.some(c => c.id === drawnDiscardCard.id));
+      /* المجموعة «غير الحرة» عن العتبة: تحوي جوكراً؛ أو تحوي ورقة المرموق المسحوبة
+         هذا الدور (في الطالاج، أو إذا كانت المسحوبة نفسها جوكراً) */
+      const hasJoker = meld.cards.some(c => this.isWildCard(c));
+      const hasDrawn = drawnDiscardCard && meld.cards.some(c => c.id === drawnDiscardCard.id);
+      const hasWild = hasJoker || (hasDrawn && !sampleDrawnOk);
       for (const card of meld.cards) {
         if (this.isWildCard(card)) continue;
         const pts = this.cardPointsInMeld(card, meld);

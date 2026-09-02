@@ -79,7 +79,7 @@
 
   /* البحث عن أفضل ضربة: مرشحو تسديد (هدف×جيب) + مرشحو أمان، كلٌّ يُحاكى ويُقيَّم.
      scoreFn(sim.rec, sim.balls, ctx) يعيد درجة — الأعلى يفوز. */
-  function aiBestShot(table, balls, cueBall, targets, scoreFn) {
+  function aiBestShot(table, balls, cueBall, targets, scoreFn, opts) {
     var best = null;
     var i, t, p, g, pw, sim, sc;
     /* 1) مرشحو التسديد نحو الجيوب */
@@ -117,14 +117,67 @@
         }
       }
     }
+    /* 2أ) [V19.3] لمسة الخبير الناعمة: حين لا توجد ضربة قانونية بعد — مروحة
+       زوايا دقيقة حول التصويب المباشر لكل هدف بقوى منخفضة (لمس بلا مخاطرة
+       إسقاط في حفرة خاطئة) — هذا ما يفعله المحترف على السوداء المقيدة */
+    if (!best || best.sc < 0) {
+      var softOffs = [0, 0.02, -0.02, 0.04, -0.04, 0.07, -0.07, 0.1, -0.1, 0.14, -0.14, 0.2, -0.2];
+      var softPws = [12, 18, 25, 35, 45];
+      for (t = 0; t < targets.length && t < 3; t++) {
+        var tbS = targets[t];
+        var baseS = Math.atan2(tbS.y - cueBall.y, tbS.x - cueBall.x);
+        var softDone = false;
+        for (i = 0; i < softOffs.length && !softDone; i++) {
+          for (p = 0; p < softPws.length; p++) {
+            sim = aiSimulate(table, balls, baseS + softOffs[i], softPws[p]);
+            if (!sim) continue;
+            sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: softPws[p] });
+            if (!best || sc > best.sc) best = { sc: sc, angle: baseS + softOffs[i], power: softPws[p] };
+            if (best.sc > 0) { softDone = true; break; }
+          }
+        }
+        if (best && best.sc > 0) break;
+      }
+    }
+    /* 2ب) [V19.3] هروب بالوسادة (المرايا): حين يكون المسار المباشر للهدف محجوباً،
+       الخبير يلعب على الوسادة أولاً — نعكس الهدف على محاور الوسائد الأربع
+       (وانعكاسات مزدوجة للزوايا الصعبة) ونصوّب نحو النقطة المرآتية */
+    if (!best || best.sc < 0) {
+      for (t = 0; t < targets.length && t < 3; t++) {
+        var tm = targets[t];
+        var mirrors = [
+          { x: -tm.x, y: tm.y }, { x: 2 * table.W - tm.x, y: tm.y },
+          { x: tm.x, y: -tm.y }, { x: tm.x, y: 2 * table.H - tm.y },
+          { x: -tm.x, y: -tm.y }, { x: 2 * table.W - tm.x, y: 2 * table.H - tm.y },
+          { x: -tm.x, y: 2 * table.H - tm.y }, { x: 2 * table.W - tm.x, y: -tm.y }
+        ];
+        var mOffs = [0, 0.02, -0.02, 0.045, -0.045];
+        for (i = 0; i < mirrors.length; i++) {
+          var am0 = Math.atan2(mirrors[i].y - cueBall.y, mirrors[i].x - cueBall.x);
+          for (var mo = 0; mo < mOffs.length; mo++) {
+            var am = am0 + mOffs[mo];
+            var pwsM = [18, 30, 45, 65, 88];   /* [V19.3] قوى منخفضة للمسات الارتدادية الناعمة */
+            for (p = 0; p < pwsM.length; p++) {
+              sim = aiSimulate(table, balls, am, pwsM[p]);
+              if (!sim) continue;
+              sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: pwsM[p] });
+              if (!best || sc > best.sc) best = { sc: sc, angle: am, power: pwsM[p] };
+            }
+            if (best && best.sc > 0) break;
+          }
+          if (best && best.sc > 0) break;
+        }
+        if (best && best.sc > 0) break;
+      }
+    }
     /* 3) هروب من السنوكر: إن كانت كل المرشحات مخالفة، مسح كامل للدائرة
-       (48 اتجاهاً × قوتين) بحثاً عن أي ضربة قانونية (ارتدادات الوسائد تصل
-       للهدف المحجوب) — الخبير الحقيقي لا يرتكب خطأً إلا حين يستحيل البديل */
+       بحثاً عن أي ضربة قانونية (ارتدادات الوسائد تصل للهدف المحجوب) —
+       الخبير الحقيقي لا يرتكب خطأً إلا حين يستحيل البديل */
     if (!best || best.sc < 0) {
       var sweepDone = false;
       for (i = 0; i < 96 && !sweepDone; i++) {
         var a3 = (i / 96) * Math.PI * 2;
-        var pws3 = [30, 50, 75];
+        var pws3 = [30, 50, 75, 100];   /* [V19.3] القوة القصوى تفتح مسارات ارتدادية بعيدة */
         for (p = 0; p < pws3.length; p++) {
           sim = aiSimulate(table, balls, a3, pws3[p]);
           if (!sim) continue;
@@ -133,6 +186,42 @@
           if (best.sc > 0) { sweepDone = true; break; }
         }
       }
+      /* 3ب) [V19.3] مسح ناعم عالي الدقة (288 زاوية × 6 قوى حتى 100) قبل الاستسلام
+         لضربة مخالفة — يلتقط المسارات الدقيقة بين الكرات الحاجبة والارتدادات
+         البعيدة؛ يتوقف فور أول ضربة قانونية */
+      if (!best || best.sc < 0) {
+        var fineDone = false;
+        var pws4 = [14, 22, 35, 50, 70, 85, 100];
+        for (i = 0; i < 288 && !fineDone; i++) {
+          /* ترتيب متداخل: ثلث الخطوة إزاحة يغطي فراغات المسح الخشن أولاً */
+          var a4 = ((i % 96) / 96 + (Math.floor(i / 96) + 1) / (3 * 96)) * Math.PI * 2;
+          for (p = 0; p < pws4.length; p++) {
+            sim = aiSimulate(table, balls, a4, pws4[p]);
+            if (!sim) continue;
+            sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: pws4[p] });
+            if (!best || sc > best.sc) best = { sc: sc, angle: a4, power: pws4[p] };
+            if (best.sc > 0) { fineDone = true; break; }
+          }
+        }
+      }
+    }
+    /* 4) [V19.3] بحث الفوز الإجباري (winSeek): حين تكون أفضل ضربة مجرد أمان
+       (أقل من عتبة الفوز) والسياق يسمح بفوز مشروط (بوند/حفرة معلنة/ديرنيي) —
+       مسح دائرة كاملة بقوى عالية بحثاً عن ضربة الفوز متعددة الوسائد؛
+       يتوقف فور إيجادها ولا يستبدل الأمان إلا بفوز حقيقي */
+    if (opts && opts.winSeek && best && best.sc > 0 && best.sc < opts.winSeek) {
+      var wBest = null, wDone = false;
+      for (i = 0; i < 96 && !wDone; i++) {
+        var aw = (i / 96) * Math.PI * 2;
+        var pwsW = [40, 65, 90, 100];
+        for (p = 0; p < pwsW.length; p++) {
+          sim = aiSimulate(table, balls, aw, pwsW[p]);
+          if (!sim) continue;
+          sc = scoreFn(sim.rec, sim.balls, { pot: false, cut: 0, power: pwsW[p] });
+          if (sc >= opts.winSeek) { wBest = { sc: sc, angle: aw, power: pwsW[p] }; wDone = true; break; }
+        }
+      }
+      if (wBest) best = wBest;
     }
     return best;
   }
@@ -1462,6 +1551,9 @@
         groups_after: [S.groups[0], S.groups[1]],
         next_player: S.active, next_phase: S.phase
       });
+      /* [V19.3] أنونص/أنونص+بوند: الإعلان صالح لضربة واحدة — يُمسح إعلان الضارب
+         بعد كل ضربة، فيعيد اللاعب اختيار الحفرة في كل مرة يأتيه الدور على السوداء */
+      if (wantAnn && !S.frameOver) S.annPocket[sh] = null;
       S.history.push(ev);
       S._shotNo++;
       emit(ev);
@@ -1615,7 +1707,11 @@
       if (!targetsGV.length) for (i = 0; i < S.balls.length; i++)
         if (S.balls[i].type !== 'CUE' && S.balls[i].status === 'ON_TABLE') targetsGV.push(S.balls[i]);
 
-      var bestGV = aiBestShot(table, liveGV, c, targetsGV, scoreGV);
+      /* [V19.3] على السوداء بإنهاء مشروط (بوند/أنونص+بوند/ديرنيي): لا نكتفي
+         بضربة أمان — نبحث عن ضربة الفوز متعددة الوسائد في كل دور */
+      var gvOpts = null;
+      if (onBlackAI && (wantBound || wantAnn || S.finish === 'DERNIER')) gvOpts = { winSeek: 900000 };
+      var bestGV = aiBestShot(table, liveGV, c, targetsGV, scoreGV, gvOpts);
       if (bestGV) return fire(bestGV.angle, bestGV.power, null);
       var fbGV = targetsGV[0] || S.balls[1];
       return fire(Math.atan2(fbGV.y - c.y, fbGV.x - c.x), 30, null);

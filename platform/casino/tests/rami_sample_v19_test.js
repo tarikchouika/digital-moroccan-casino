@@ -127,10 +127,10 @@ console.log('── 4) الافتتاح: متتالية حرة + متماثلة 
   /* أقل من 51 → مرفوض */
   r = rules.validateOpening([seq([C(2,'sword'), C(3,'sword'), C(4,'sword')]), set([C(5,'heart'), C(5,'diamond'), C(5,'sword')])], null, null, 0, false);
   ok(!r.valid, 'مجموع حر 24 < 51 → مرفوض');
-  /* مجموعة تحوي ورقة المرموق المسحوبة لا تدخل العتبة */
+  /* [v19.3] السامبل: مجموعة تحوي ورقة المرموق المسحوبة (غير جوكر) تدخل العتبة قانونياً */
   const marm = C(10, 'grape');
   r = rules.validateOpening([seq([C(10,'sword'), C(11,'sword'), C(12,'sword')]), set([C(9,'heart'), C(9,'diamond'), C(9,'sword')]), set([marm, C(10,'heart'), C(10,'diamond')])], marm, null, 0, false);
-  ok(r.valid && r.freeScore === 57 && r.score === 87, 'مجموعة المرموق تُضاف للمجموع الكلي لا للعتبة');
+  ok(r.valid && r.freeScore === 87 && r.score === 87, 'سامبل: مجموعة مرموق الدور تدخل العتبة (87)');
   /* المتماثلة الوحيدة تحوي المرموق المسحوب → غير حرة → مرفوض */
   const marm2 = C(9, 'heart');
   r = rules.validateOpening([seq([C(10,'sword'), C(11,'sword'), C(12,'sword')]), set([marm2, C(9,'diamond'), C(9,'sword')])], marm2, null, 0, false);
@@ -221,6 +221,38 @@ console.log('── 8) [v19.2] الحرة تبقى حرة في دور الافت
   ok(RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة في دور موالٍ → مقبول');
   ok(g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: دور موالٍ → true للجوكر');
   ok(cardFitsMeld ? cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في حرة دور موالٍ → مقبول');
+}
+
+console.log('── 8ب) [v19.3] مرموق الدور في مجموعة إضافية يُحتسب ضمن عتبة الـ51 ──');
+{
+  const rules = new RamiRules('simple', 90);
+  rules.jokerIndicator = null;
+  const seq = (cards) => ({ type: MELD_TYPE.SEQUENCE, cards });
+  const set = (cards) => ({ type: MELD_TYPE.SET, cards });
+  /* حرة: متتالية 2-3-4 (9) + متماثلة 5-5-5 (15) = 24 < 51؛
+     مجموعة المرموق 10-J-Q (30) ترفعها إلى 54 → قانوني في السامبل */
+  const drawn = C(10, 'heart');
+  const m1 = seq([C(2, 'sword'), C(3, 'sword'), C(4, 'sword')]);
+  const m2 = set([C(5, 'heart'), C(5, 'diamond'), C(5, 'sword')]);
+  const m3 = seq([drawn, C(11, 'heart'), C(12, 'heart')]);
+  const r = rules.validateOpening([m1, m2, m3], drawn, null, 0, false);
+  ok(r.valid && r.freeScore === 54, 'مجموعة مرموق الدور تدخل عتبة الـ51 في السامبل (54)');
+  /* لكن المرموق ممنوع في المتتالية/المتماثلة الأساسيتين */
+  const r2 = rules.validateOpening([m3, m2], drawn, null, 0, false);
+  ok(!r2.valid, 'المرموق في المتتالية الحرة الأساسية الوحيدة → مرفوض');
+  /* والجوكر المسحوب من المرموق لا يستفيد من القاعدة */
+  rules.jokerIndicator = { id: 'IND9', rank: 10, suit: 'sword', isJoker: false }; /* 10 أحمر جوكر */
+  const drawnJok = C(10, 'diamond'); /* برية */
+  const m5 = seq([C(2, 'grape'), C(3, 'grape'), C(4, 'grape')]);
+  const m6 = set([C(13, 'heart'), C(13, 'diamond'), C(13, 'sword')]); /* 30 */
+  const m7 = seq([drawnJok, C(11, 'diamond'), C(12, 'diamond')]);
+  const r3 = rules.validateOpening([m5, m6, m7], drawnJok, rules.jokerIndicator, 0, false);
+  ok(!r3.valid || r3.freeScore === 39, 'المسحوبة الجوكر لا تدخل مجموعتها في العتبة');
+  /* الطالاج: مجموعة المرموق تبقى خارج العتبة */
+  const rulesT = new RamiRules('talaj', 90);
+  rulesT.jokerIndicator = null;
+  const rT = rulesT.validateOpening([m1, m2, m3], drawn, null, 0, false);
+  ok(!rT.valid || rT.freeScore === 24, 'الطالاج: مجموعة مرموق الدور خارج العتبة (24)');
 }
 
 console.log('── 9) [v19.2] رمي المرموق/الفوجوك المسحوبة نفس الدور = جزاء 51 ──');
