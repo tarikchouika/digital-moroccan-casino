@@ -575,6 +575,8 @@ const TR = {
   'rami.minCards': [ 'الحد الأدنى 3 بطاقات', 'Minimum 3 cards', 'Minimum 3 cards', 'الحد الأدنى 3 بطاقات' ],
   'rami.mode': [ 'الوضع', 'Mode', 'Mode', 'الوضع' ],
   'rami.nextRound': [ 'الشوط التالي', 'Manche suivante', 'Next round', 'الشوط الجاي' ],
+  'rami.endFreezeTitle': [ 'انتهى الشوط — فاز {w}', 'Fin de la manche — {w} a gagné', 'Round over — {w} wins', 'سالا الشوط — ربح {w}' ],
+  'rami.endFreezeSub': [ 'شاهد أوراق الإنهاء — النتائج بعد {n} ث', 'Regardez les cartes finales — résultats dans {n} s', 'See the finishing cards — results in {n}s', 'شوف أوراق السالية — النتائج من بعد {n} ثانية' ],
   'rami.open': [ 'افتتاح', 'Ouverture', 'Open', 'افتتاح' ],
   'rami.playAgain': [ 'مباراة جديدة', 'Nouvelle partie', 'New Match', 'مقابلة جديدة' ],
   'rami.players': [ 'اللاعبون', 'Joueurs', 'Players', 'اللاعبون' ],

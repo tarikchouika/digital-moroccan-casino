@@ -2548,6 +2548,10 @@ class RamiUIAdapter {
     if (this.timerId) clearInterval(this.timerId);
     if (this.watchdogId) clearInterval(this.watchdogId);
     if (this._resizeT) clearTimeout(this._resizeT);
+    /* [V19.6] تنظيف تجميد لقطة الإنهاء عند مغادرة اللعبة */
+    if (this._endFreezeTimer) { clearTimeout(this._endFreezeTimer); this._endFreezeTimer = null; }
+    this._endFreezeDone = null;
+    try { var fb = document.getElementById('ramiEndFreezeBanner'); if (fb && fb.parentNode) fb.parentNode.removeChild(fb); } catch (e) {}
     if (this._onResize && typeof window !== 'undefined') {
       window.removeEventListener('resize', this._onResize);
       window.removeEventListener('orientationchange', this._onResize);
@@ -3668,6 +3672,52 @@ class RamiUIAdapter {
 
   _endRoundUI() {
     if (!this.game) return;
+    /* [V19.6] تجميد لقطة الإنهاء 6 ثوانٍ: يشاهد اللاعبون أوراق الإنهاء
+       (مجموعات الفائز المنزلة ويده الفارغة) قبل نافذة نهاية الشوط.
+       يُنفَّذ مرة واحدة لكل شوط مهما تكررت استدعاءات _endRoundUI. */
+    if (this._endFreezeTimer) return;                    /* تجميد جارٍ */
+    const freezeKey = (this.game.roundManager.roundNumber || 0) + ':' + this.game.gamePhase;
+    if (this._endFreezeDone === freezeKey) return this._endRoundUIShow();
+    this._endFreezeDone = freezeKey;
+
+    /* لقطة الإنهاء النهائية على الطاولة (آخر تحديث للمقاعد والمجموعات) */
+    try { this._updateUI(); } catch (e) {}
+
+    /* بانر التجميد مع عدّاد تنازلي */
+    let banner = null;
+    try {
+      banner = document.createElement('div');
+      banner.id = 'ramiEndFreezeBanner';
+      banner.setAttribute('dir', 'rtl');
+      banner.style.cssText = 'position:fixed;top:12%;left:50%;transform:translateX(-50%);z-index:9999;' +
+        'background:rgba(8,25,16,0.92);border:1px solid var(--gold,#FFD23F);border-radius:12px;' +
+        'padding:10px 18px;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.55);pointer-events:none;';
+      const wName = (this.game.roundManager.lastWinner && this.game.roundManager.lastWinner.name) || '';
+      banner.innerHTML = '<div style="font-size:0.95rem;font-weight:800;color:var(--gold,#FFD23F);">' +
+          '🏆 ' + _ramiF('rami.endFreezeTitle', 'انتهى الشوط — فاز {w}', { w: wName }) + '</div>' +
+        '<div style="font-size:0.72rem;color:rgba(255,255,255,0.85);margin-top:4px;">' +
+          _ramiF('rami.endFreezeSub', 'شاهد أوراق الإنهاء — النتائج بعد {n} ث', { n: '<b id="ramiEndFreezeN">6</b>' }) + '</div>';
+      document.body.appendChild(banner);
+    } catch (e) { banner = null; }
+
+    let remain = 6;
+    const cdEl = banner ? banner.querySelector('#ramiEndFreezeN') : null;
+    const iv = setInterval(() => {
+      remain--;
+      if (cdEl) cdEl.textContent = String(Math.max(0, remain));
+      if (remain <= 0) { try { clearInterval(iv); } catch (e) {} }
+    }, 1000);
+
+    this._endFreezeTimer = setTimeout(() => {
+      this._endFreezeTimer = null;
+      try { clearInterval(iv); } catch (e) {}
+      try { if (banner && banner.parentNode) banner.parentNode.removeChild(banner); } catch (e) {}
+      this._endRoundUIShow();
+    }, 6000);
+  }
+
+  _endRoundUIShow() {
+    if (!this.game) return;
 
     for (const p of this.game.players) {
       if (p.isDisqualified) {
@@ -4314,6 +4364,8 @@ function ramiNextRound() {
   var fromRound = (RAMI_STATE.roundManager) ? RAMI_STATE.roundManager.roundNumber : 0;
   RAMI_STATE._payoutDone = false;
   RAMI_STATE._roundRecorded = false;
+  /* [V19.6] تصفير حالة تجميد لقطة الإنهاء للشوط الجديد */
+  if (ad) { ad._endFreezeDone = null; if (ad._endFreezeTimer) { clearTimeout(ad._endFreezeTimer); ad._endFreezeTimer = null; } }
   RAMI_STATE.nextRound();
   if (mp) {
     ad._netEmit('nextRound', { fromRound: fromRound, dedup: 'nextround-' + fromRound });
