@@ -339,5 +339,37 @@ for (const mode of ['simple', 'talaj']) {
   ok(r2.success && p2.hasOpened && rm.highestOpeningScore === 87, mode + ': افتتاح أكبر (87>78) قُبل ورفع أعلى افتتاح');
 }
 
+console.log('── 9) [V19.5] إدراج المسحوبة في مجموعة أُنزلت نفس الدور (سيناريو السكرين شوت) ──');
+{
+  /* لاعب مفتوح من دور سابق سحب 9♦ من المرموق، أنزل 10-J-Q♦ الآن،
+     ثم أدرج 9♦ فيها — يجب أن يُقبل (9-10-J-Q متتالية صالحة) */
+  const g = new RamiGame('simple', 2, 0, 42, 90);
+  g.startMatch(2, 0);
+  const rm = g.roundManager;
+  rm.jokerIndicator = null; g.rules.jokerIndicator = null;
+  const p = g.players[0];
+  p.hasOpened = true;
+  const nine = C(9, 'diamond');
+  p.hand = [C(10, 'diamond'), C(11, 'diamond'), C(12, 'diamond'), nine, C(2, 'club'), C(5, 'heart')];
+  p.drawnDiscardCard = nine;
+  rm.currentPlayerIndex = 0; rm.turnPhase = 'WAITING_DISCARD';
+  const r = g.executeMove({ type: 'open', playerId: p.id, cardIds: [p.hand[0].id, p.hand[1].id, p.hand[2].id] });
+  ok(r.success, 'الإنزال الموالي 10-J-Q♦ قُبل');
+  ok(!p.melds[0]._justOpened, 'الإنزال الموالي (مفتوح أصلاً) لا يحمل وسم _justOpened');
+  ok(cardFitsMeld(nine, p.melds[0], g.rules, p.drawnDiscardCard, p.melds), 'إدراج 9♦ المسحوبة في المتتالية المنزلة نفس الدور → مقبول');
+}
+{
+  /* حماية دور الافتتاح باقية: المسحوبة لا تدخل مجموعة أساسية إلا ببقاء حرتين غيرها */
+  const rules = new RamiRules('simple', 90); rules.jokerIndicator = null;
+  const seq = { type: MELD_TYPE.SEQUENCE, cards: [C(10, 'heart'), C(11, 'heart'), C(12, 'heart')], _justOpened: true };
+  const set = { type: MELD_TYPE.SET, cards: [C(7, 'club'), C(7, 'heart'), C(7, 'diamond')], _justOpened: true };
+  const drawn = C(9, 'heart');
+  ok(!cardFitsMeld(drawn, seq, rules, drawn, [seq, set]), 'المسحوبة في الأساسية (حرتان فقط) → مرفوض');
+  const seq2 = { type: MELD_TYPE.SEQUENCE, cards: [C(2, 'spade'), C(3, 'spade'), C(4, 'spade')], _justOpened: true };
+  ok(cardFitsMeld(drawn, seq, rules, drawn, [seq, set, seq2]), 'المسحوبة مع بقاء الحرتين الأساسيتين غيرها → مقبول');
+  const rules2 = new RamiRules('simple', 90); rules2.jokerIndicator = C(9, 'spade');
+  ok(!cardFitsMeld(C(9, 'diamond'), seq, rules2, null, [seq, set, seq2]), 'الجوكر في حرة نفس الدور يبقى مرفوضاً');
+}
+
 console.log('\n═══ Rami Sample v19: ' + pass + '/' + (pass + fail) + ' passed ═══');
 process.exit(fail ? 1 : 0);

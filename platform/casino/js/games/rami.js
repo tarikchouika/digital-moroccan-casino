@@ -1769,9 +1769,9 @@ class RamiGame {
       player.hand = player.hand.filter(c => !allIds.has(c.id));
       /* الأوراق المنزلة تبقى في خاناتها (تُحاط بحلقة ذهبية) — لا تُحذف من العرض */
 
-      /* [V19.2] وسم دور الإنزال: المجموعة الحرة محمية من الجوكر/المرموق في دور إنزالها فقط،
-         وفي الأدوار الموالية يجوز إدراج الجوكر وورقة المرموق فيها */
-      meldObjects.forEach(m => { m._justOpened = true; });
+      /* [V19.5] «الحرة تبقى حرة في دور الافتتاح فقط» — الإنزال الموالي للاعب
+         المفتوح أصلاً لا يحمل وسم الحماية: يجوز فيه إدراج الجوكر وورقة المرموق
+         المسحوبة فوراً (بما أن إنزالها ضمن المجموعة دفعة واحدة قانوني أصلاً) */
       player.melds = player.melds.concat(meldObjects);
       this.roundManager.tableMelds.push(...meldObjects);
 
@@ -4022,7 +4022,7 @@ function ramiStateInstruction(game) {
    متتالية: نفس الرمز وامتداد تسلسلي (±1 مع دعم الآس 1/14).
    متماثلة: نفس القيمة برمز غير مكرر وقبل امتلاء المجموعة (< 4).
    لا جوكر ولا ورقة مرموق مسحوبة تُستخدم كتطابق وهمي. */
-function cardFitsMeld(card, meld, rules, drawnCard) {
+function cardFitsMeld(card, meld, rules, drawnCard, ownerMelds) {
   if (!card || !meld || !meld.cards || !meld.cards.length) return false;
   if (!rules || typeof rules.isValidSet !== 'function') return false;
   /* بعد الافتتاح يُعفى اللاعب من شروطه ويصبح حراً في إدراج أي ورقة
@@ -4032,7 +4032,23 @@ function cardFitsMeld(card, meld, rules, drawnCard) {
      وفي الأدوار الموالية يجوز إدراجهما في مجموعات الافتتاح الحرة. */
   if (meld._justOpened && !meld.cards.some(function (c) { return rules.isWildCard(c); })) {
     if (rules.isWildCard(card)) return false;
-    if (drawnCard && card.id === drawnCard.id) return false;
+    if (drawnCard && card.id === drawnCard.id) {
+      /* [V19.5] ورقة المرموق المسحوبة هذا الدور يجوز إدراجها في مجموعة «إضافية»
+         من مجموعات دور الافتتاح — بشرط بقاء متتالية حرة ومتماثلة حرة أساسيتين
+         في غيرها (روح V19.3)؛ بدون سياق مجموعات المالك نتحفظ بالرفض */
+      var okExtra = false;
+      if (ownerMelds && ownerMelds.length) {
+        var isPureOther = function (m) {
+          return m !== meld && m.cards && m.cards.length >= 3 &&
+            !m.cards.some(function (c) { return rules.isWildCard(c); }) &&
+            !m.cards.some(function (c) { return c.id === drawnCard.id; });
+        };
+        var hasFreeSeq = ownerMelds.some(function (m) { return m.type === MELD_TYPE.SEQUENCE && isPureOther(m); });
+        var hasFreeSet = ownerMelds.some(function (m) { return m.type === MELD_TYPE.SET && isPureOther(m); });
+        okExtra = hasFreeSeq && hasFreeSet;
+      }
+      if (!okExtra) return false;
+    }
   }
   var temp = meld.cards.concat([card]);
   if (meld.type === MELD_TYPE.SET) return rules.isValidSet(temp, true);
@@ -4692,7 +4708,7 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
     if (targetPlayer && targetPlayer.melds && targetPlayer.melds[meldIndex]) {
       const tm = targetPlayer.melds[meldIndex];
       const fitting = player.hand.find(c => {
-        if (cardFitsMeld(c, tm, game.rules, player.drawnDiscardCard || player.drawnLaTourCard)) return true;
+        if (cardFitsMeld(c, tm, game.rules, player.drawnDiscardCard || player.drawnLaTourCard, targetPlayer.melds)) return true;
         if (typeof tm.findJokerSwapIndex === 'function' && tm.findJokerSwapIndex(c, game.rules) !== -1) return true;
         return false;
       });
@@ -4743,7 +4759,7 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
   }
 
   // 2. فحص إضافة الورقة لتوسيع المجموعة (تطابق دقيق: نفس الرمز تسلسلي / نفس القيمة برمز مختلف / جوكر بري)
-  const isValid = (typeof cardFitsMeld === 'function') ? cardFitsMeld(card, targetMeld, game.rules, player.drawnDiscardCard || player.drawnLaTourCard) : false;
+  const isValid = (typeof cardFitsMeld === 'function') ? cardFitsMeld(card, targetMeld, game.rules, player.drawnDiscardCard || player.drawnLaTourCard, targetPlayer.melds) : false;
 
     if (isValid) {
     player.removeCard(cardId);
@@ -4814,7 +4830,12 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
         _ramiToast('❌ لا يمكن إضافة هذا الجوكر إلى المجموعة المحددة', 'err');
       }
     } else {
-      _ramiToast('❌ هذه الورقة لا تتطابق مع نمط المجموعة المحددة', 'err');
+      const drawn0 = player.drawnDiscardCard || player.drawnLaTourCard;
+      if (targetMeld._justOpened && drawn0 && card.id === drawn0.id) {
+        _ramiToast('❌ ورقة المرموق المسحوبة هذا الدور لا تُدرج في مجموعة أساسية من مجموعات الافتتاح في نفس الدور — يجوز في مجموعة إضافية أو ابتداءً من الدور الموالي', 'err');
+      } else {
+        _ramiToast('❌ هذه الورقة لا تتطابق مع نمط المجموعة المحددة', 'err');
+      }
     }
   }
 }
