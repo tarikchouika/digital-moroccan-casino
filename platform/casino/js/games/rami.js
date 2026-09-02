@@ -1441,14 +1441,16 @@ class RamiGame {
       if (!player.hasOpened && !dealerFirstBarred) {
         /* نمطا التقسيم: التغطية القصوى ثم تعظيم النقاط الحرة —
            نشر الجوكرات قد يخفي مجموعات نقية يستحقها اللاعب للافتتاح */
+        /* [V19.3] تمرير أعلى افتتاح سابق إلزامي هنا أيضاً — وإلا عُرض «افتتاح»
+           كحركة قانونية ثم رُفض عند التنفيذ بجزاء ظالم (شرط التجاوز الصارم >) */
         let openingMelds = partitionSelectedCards(player.hand, this.rules, 'opening');
         let check = (openingMelds && openingMelds.length >= 1)
-          ? this.rules.validateOpening(openingMelds, player.drawnDiscardCard, this.roundManager.jokerIndicator)
+          ? this.rules.validateOpening(openingMelds, player.drawnDiscardCard, this.roundManager.jokerIndicator, this.roundManager.highestOpeningScore || 0, false)
           : { valid: false };
         if (!check.valid) {
           openingMelds = partitionSelectedCards(player.hand, this.rules);
           check = (openingMelds && openingMelds.length >= 1)
-            ? this.rules.validateOpening(openingMelds, player.drawnDiscardCard, this.roundManager.jokerIndicator)
+            ? this.rules.validateOpening(openingMelds, player.drawnDiscardCard, this.roundManager.jokerIndicator, this.roundManager.highestOpeningScore || 0, false)
             : { valid: false };
         }
         if (check.valid && openingMelds && openingMelds.length >= 1) {

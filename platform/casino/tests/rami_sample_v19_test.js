@@ -311,5 +311,33 @@ console.log('── 9) [v19.2] رمي المرموق/الفوجوك المسحو
   ok(did !== marm.id, 'الخبير لا يختار رمي المرموق المسحوبة نفس الدور');
 }
 
+console.log('── 8) [V19.3] تجاوز أعلى افتتاح سابق (طالاج + سامبل) ──');
+for (const mode of ['simple', 'talaj']) {
+  const g = new RamiGame(mode, 3, 0, 42, 90);
+  g.startMatch(3, 0);
+  const rm = g.roundManager;
+  rm.jokerIndicator = null; g.rules.jokerIndicator = null;
+  rm.dealerFirstCycle = false;
+  const p0 = g.players[0], p1 = g.players[1], p2 = g.players[2];
+  /* p0: متتالية 8-9-10♦ (27) + متماثلة 10×3 (30) + متتالية 6-7-8♥ (21) = 78 */
+  p0.hand = [C(8, 'diamond'), C(9, 'diamond'), C(10, 'diamond'), C(10, 'spade'), C(10, 'heart'), C(10, 'club'), C(6, 'heart'), C(7, 'heart'), C(8, 'heart'), C(2, 'heart'), C(4, 'spade'), C(9, 'spade'), C(13, 'diamond'), C(5, 'club')];
+  /* p1: نفس المجموع 78 تماماً */
+  p1.hand = [C(8, 'club'), C(9, 'club'), C(10, 'club'), C(11, 'heart'), C(11, 'spade'), C(11, 'club'), C(6, 'spade'), C(7, 'spade'), C(8, 'spade'), C(3, 'heart'), C(4, 'diamond'), C(9, 'heart'), C(13, 'spade'), C(5, 'diamond')];
+  /* p2: متتالية Q-K-A♣ (30) + متماثلة K×3 (30) + متماثلة 9×3 (27) = 87 > 78 */
+  p2.hand = [C(12, 'club'), C(13, 'club'), C(1, 'club'), C(13, 'heart'), C(13, 'spade'), C(13, 'diamond'), C(9, 'club'), C(9, 'diamond'), C(9, 'heart'), C(2, 'spade'), C(3, 'diamond'), C(4, 'heart'), C(5, 'spade'), C(6, 'diamond')];
+  [p0, p1, p2].forEach(p => { p.hasOpened = false; p.drawnDiscardCard = null; });
+  rm.highestOpeningScore = 0;
+  rm.currentPlayerIndex = 0; rm.turnPhase = 'WAITING_DISCARD';
+  const r0 = g.executeMove({ type: 'open', playerId: p0.id, cardIds: p0.hand.slice(0, 9).map(c => c.id) });
+  ok(r0.success && rm.highestOpeningScore === 78, mode + ': المفتتح الأول (78) قُبل وسُجل أعلى افتتاح');
+  rm.currentPlayerIndex = 1; rm.turnPhase = 'WAITING_DISCARD';
+  ok(!g.getLegalMoves(p1.id).some(m => m.type === 'open'), mode + ': مجموع مساوٍ (78=78) لا يُعرض كافتتاح قانوني');
+  const r1 = g.executeMove({ type: 'open', playerId: p1.id, cardIds: p1.hand.slice(0, 9).map(c => c.id) });
+  ok(!r1.success && !p1.hasOpened, mode + ': افتتاح مساوٍ (78=78) مرفوض — يجب التجاوز الصارم');
+  rm.currentPlayerIndex = 2; rm.turnPhase = 'WAITING_DISCARD';
+  const r2 = g.executeMove({ type: 'open', playerId: p2.id, cardIds: p2.hand.slice(0, 9).map(c => c.id) });
+  ok(r2.success && p2.hasOpened && rm.highestOpeningScore === 87, mode + ': افتتاح أكبر (87>78) قُبل ورفع أعلى افتتاح');
+}
+
 console.log('\n═══ Rami Sample v19: ' + pass + '/' + (pass + fail) + ' passed ═══');
 process.exit(fail ? 1 : 0);
