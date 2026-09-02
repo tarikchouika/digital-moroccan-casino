@@ -2878,6 +2878,14 @@ class RamiUIAdapter {
 
     const isMyTurn = (curP.id === (this.myPlayerId || 0));
 
+    /* [V19.5] الوضع المحلي: انتهى وقت اللاعب البشري → حركة آلية فورية
+       (سحب من الكومة إن لزم + رمي ورقة) كي لا يتجمد اللعب أبداً */
+    if (!this.multiplayer) {
+      rm.turnSecondsRemaining = this.game.rules.turnSeconds;
+      this._doAutoPlay(curP, rm, false);
+      return;
+    }
+
     /* اللاعب الحالي المتصل: يلعب آلياً لنفسه فوراً (يحافظ على ترتيب يده المحلي ويمنع حركة متأخرة) */
     if (this.multiplayer && isMyTurn) {
       rm.turnSecondsRemaining = this.game.rules.turnSeconds;

@@ -526,3 +526,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   margin: 0 !important;
   transform: none !important;
 }
+
+/* [V19.5] عدّاد دور البلياردو — تحذير الوقت المنخفض */
+.bl-time-low { color: #ff5252 !important; animation: blTimeLow 1s steps(2) infinite; }
+@keyframes blTimeLow { 50% { opacity: .45; } }

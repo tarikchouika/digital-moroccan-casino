@@ -65,6 +65,9 @@ function eBilliards(g) {
           '<div class="dama-flab" id="blGvBoundLab" hidden>' + T('bl.gvBoundN') + '</div>' +
           '<div class="dama-pick" id="blGvBound" hidden></div>' +
         '</div>' +
+        '<div class="dama-field"><div class="dama-flab">⏱ ' + T('bl.turnTimer') + '</div>' +
+          '<div class="dama-pick" id="blTimerPick"></div>' +
+        '</div>' +
         '<div class="dama-field"><div class="dama-flab">' + T('chess.roomBet') + '</div>' +
           '<div class="dama-pick" id="blBet">' + betChips + '</div>' +
         '</div>' +
@@ -148,6 +151,7 @@ function initBilliards() {
     mode: 'local', variant: (gid === 'blbb') ? 'blackball' : (gid === 'blgv') ? 'golvazor' : (gid === 'blsn') ? 'snooker' : (gid === 'blca') ? 'carom' : 'eightball',
     caromDisc: 'THREE', caromTarget: 10, bet: 0,
     gvFinish: 'DIRECT', gvBound: 2,
+    turnTimer: 60, timerLeft: 0, timerLastSec: 0,
     cloth: 'green', rail: 'wood', aimGuide: true,
     G: null, aim: 0, power: 75, spin: { x: 0, y: 0 },
     raf: 0, lastT: 0, acc: 0, drawing: false,
@@ -158,8 +162,24 @@ function initBilliards() {
   blBuildVariants();
   blBuildCaromOpts();
   blBuildGvOpts();
+  blBuildTimerOpts();
   blUpdateHint();
   blRegisterRooms();
+}
+
+/* ── [V19.5] مؤقت الدور: 30..300 ثانية — عند انتهائه تُنفَّذ ضربة آلية كي لا يتجمد اللعب ── */
+function blBuildTimerOpts() {
+  var box = document.getElementById('blTimerPick');
+  if (!box || !BILLIARDS) return;
+  box.innerHTML = [30, 60, 90, 120, 180, 300].map(function (n) {
+    return '<button class="dama-chip' + (BILLIARDS.turnTimer === n ? ' on' : '') + '" onclick="billiardsSetTimer(' + n + ')">' + n + 's</button>';
+  }).join('');
+}
+function billiardsSetTimer(n) {
+  if (!BILLIARDS) return;
+  BILLIARDS.turnTimer = Math.max(30, Math.min(300, n | 0));
+  blBuildTimerOpts();
+  if (typeof SND !== 'undefined' && SND.click) { try { SND.click(); } catch (e) {} }
 }
 
 function blBuildVariants() {
@@ -588,6 +608,14 @@ function blUpdateHud() {
         ? ' · ' + T('bl.gvShotsLeft') + ' ' + S.extraShots[S.active] : '';
       tn.textContent = (S.active === 0 ? T('bl.player1') : T('bl.player2')) + ' — ' + (S.breakShot ? T('bl.turnBreak') : T('bl.turnAim')) + gvx;
     }
+    /* [V19.5] عدّاد الدور: يظهر فقط أثناء انتظار ضربة بشرية */
+    if (!S.frameOver && BILLIARDS.turnTimer && blHumanTurn() &&
+        (S.phase === 'AIM' || S.phase === 'PLACE' || S.phase === 'RERACK') &&
+        !BILLIARDS._aiAim && !BILLIARDS.aiPending) {
+      var tl = Math.ceil(BILLIARDS.timerLeft || BILLIARDS.turnTimer);
+      tn.textContent += ' · ⏱ ' + tl + 's';
+      tn.classList.toggle('bl-time-low', tl <= 10);
+    } else tn.classList.remove('bl-time-low');
   }
   blSyncNoms();
   blCellRender();
@@ -842,9 +870,66 @@ function blTick(now) {
     }
   }
   blMaybeAI();
+  blTimerTick(now);
   blDraw();
   blUpdateHud();
   B.raf = requestAnimationFrame(blTick);
+}
+
+/* ═══════════ [V19.5] مؤقت الدور — عند انتهائه تُنفَّذ حركة آلية عشوائية كي لا يتجمد اللعب ═══════════ */
+function blTimerTick(now) {
+  var B = BILLIARDS;
+  if (!B || !B.G || B.over || !B.turnTimer) return;
+  var S = B.G.S;
+  var waiting = (S.phase === 'AIM' || S.phase === 'PLACE' || S.phase === 'RERACK') && !S.frameOver;
+  var humanWait = waiting && blHumanTurn() && !B._aiAim && !B.aiPending;
+  var key = S.active + ':' + S.phase + ':' + (S.history ? S.history.length : 0);
+  if (key !== B._timerKey) { B._timerKey = key; B._timerT0 = now; }
+  if (!humanWait) { B._timerT0 = now; B.timerLeft = B.turnTimer; return; }
+  B.timerLeft = Math.max(0, B.turnTimer - (now - B._timerT0) / 1000);
+  if (B.timerLeft <= 0) blAutoShot();
+}
+
+/* الحركة الآلية عند نفاد الوقت: وضع البيضاء إن لزم، اختيارات إجبارية (مجموعة/حفرة/لون)، ثم ضربة عشوائية */
+function blAutoShot() {
+  var B = BILLIARDS, G = B.G, S = G.S;
+  B._timerKey = null;               /* إعادة تصفير المؤقت فور التنفيذ */
+  B._timerT0 = performance.now();
+  B.timerLeft = B.turnTimer;
+  if (S.phase === 'RERACK') {
+    if (B.mode === 'room') return;  /* الريراك الجماعي يُدار من صاحبه */
+    billiardsChooseBreak(true);
+    blSay('⏱ ' + T('bl.timeUpAuto'));
+    return;
+  }
+  if (S.phase === 'PLACE') {
+    var W = (S.table && S.table.w) || 1000, H = (S.table && S.table.h) || 500;
+    for (var x = 60; x < W - 60; x += 25)
+      for (var y = 40; y < H - 30; y += 25)
+        if (G.validPlace(x, y)) { billiardsPlace(x, y); blSay('⏱ ' + T('bl.timeUpAuto')); return; }
+    return;
+  }
+  if (S.phase !== 'AIM') return;
+  /* الاختيارات الإجبارية قبل الضربة (تُبثّ للغرفة عبر الدوال القائمة) */
+  if (B.variant === 'golvazor' && typeof G.needChoice === 'function' && G.needChoice())
+    billiardsGvChoose(Math.random() < 0.5 ? 'RED' : 'YELLOW');
+  if (B.variant === 'golvazor' && typeof G.needAnnounce === 'function' && G.needAnnounce() && S.table && S.table.pockets)
+    billiardsGvAnnounce(S.table.pockets[Math.floor(Math.random() * S.table.pockets.length)].id);
+  if (B.variant === 'snooker' && S.turnState === 'COLOUR' && !S.nominated) {
+    var avail = BL_SNORDER.filter(function (nm) {
+      return S.balls.some(function (b) { return b.type !== 'RED' && b.type !== 'CUE' && b.group === nm && b.status === 'ON_TABLE'; });
+    });
+    if (avail.length) billiardsNominate(avail[0]);
+  }
+  /* ضربة عشوائية: زاوية حرة وقوة متوسطة — تُنفَّذ وتُبثّ بنفس مسار الضربة اليدوية */
+  B.aim = Math.random() * Math.PI * 2;
+  var pw = document.getElementById('blPower');
+  var p = 25 + Math.round(Math.random() * 55);
+  if (pw) pw.value = p;
+  B.power = p;
+  B.spin = { x: 0, y: 0 };
+  billiardsShoot();
+  blSay('⏱ ' + T('bl.timeUpAuto'));
 }
 
 /* ═══════════ ذكاء الحاسوب ═══════════ */
@@ -1527,6 +1612,7 @@ function blRoomMove(d) {
     BILLIARDS.caromTarget = d.g || BILLIARDS.caromTarget;
     if (d.f) BILLIARDS.gvFinish = d.f;
     if (d.b) BILLIARDS.gvBound = d.b;
+    if (d.tm) BILLIARDS.turnTimer = Math.max(30, Math.min(300, d.tm | 0));   /* [V19.5] مزامنة المؤقت */
     if (BILLIARDS.mode === 'room' && (BILLIARDS.variant === 'carom' || BILLIARDS.variant === 'golvazor') &&
         BILLIARDS.G && BILLIARDS.G.S.history.length === 0) billiardsStart('room');
     return;
@@ -1580,10 +1666,12 @@ function blRoomStart(room) {
   if (!spec && bet > 0 && typeof takeBet === 'function' && !takeBet(bet)) BILLIARDS.bet = 0;  /* رصيد غير كافٍ → ودية */
   billiardsStart('room');
   if (!spec && mySeat === 0 && BILLIARDS.variant === 'carom') {
-    blSendRoom({ t: 'cfg', d: BILLIARDS.caromDisc, g: BILLIARDS.caromTarget });
-  }
-  if (!spec && mySeat === 0 && BILLIARDS.variant === 'golvazor') {
-    blSendRoom({ t: 'cfg', f: BILLIARDS.gvFinish, b: BILLIARDS.gvBound });
+    blSendRoom({ t: 'cfg', d: BILLIARDS.caromDisc, g: BILLIARDS.caromTarget, tm: BILLIARDS.turnTimer });
+  } else if (!spec && mySeat === 0 && BILLIARDS.variant === 'golvazor') {
+    blSendRoom({ t: 'cfg', f: BILLIARDS.gvFinish, b: BILLIARDS.gvBound, tm: BILLIARDS.turnTimer });
+  } else if (!spec && mySeat === 0) {
+    /* [V19.5] بث مؤقت الدور لبقية الأنواع أيضاً */
+    blSendRoom({ t: 'cfg', tm: BILLIARDS.turnTimer });
   }
 }
 
@@ -1603,6 +1691,7 @@ function blApplyReplay(d) {
       BILLIARDS.caromTarget = pl.g || BILLIARDS.caromTarget;
       if (pl.f) BILLIARDS.gvFinish = pl.f;
       if (pl.b) BILLIARDS.gvBound = pl.b;
+      if (pl.tm) BILLIARDS.turnTimer = Math.max(30, Math.min(300, pl.tm | 0));   /* [V19.5] */
       if (BILLIARDS.variant === 'carom' || BILLIARDS.variant === 'golvazor') billiardsStart('room');
       continue;
     }
@@ -1654,5 +1743,6 @@ window.billiardsSetDisc = billiardsSetDisc;
 window.billiardsSetTarget = billiardsSetTarget;
 window.billiardsSetGvFinish = billiardsSetGvFinish;
 window.billiardsSetGvBound = billiardsSetGvBound;
+window.billiardsSetTimer = billiardsSetTimer;
 window.billiardsGvAnnounce = billiardsGvAnnounce;
 window.billiardsGvChoose = billiardsGvChoose;
