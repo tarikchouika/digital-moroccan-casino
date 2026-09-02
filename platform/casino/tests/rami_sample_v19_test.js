@@ -105,8 +105,7 @@ console.log('── 3) المرموق: سحب حر بلا جزاء + «ورقة 
   const rr = g.executeMove({ type: 'draw_discard', playerId: p2.id });
   ok(rr.success, 'سحب المرموق نجح');
   const marmId = rr.card.id;
-  const rSame = g.executeMove({ type: 'discard', playerId: p2.id, cardId: marmId });
-  ok(!rSame.success, 'إرجاع نفس ورقة المرموق فوراً مرفوض — يجب التخلص من ورقة أخرى');
+  /* [V19.2] إرجاع نفس ورقة المرموق فوراً: مسموح لكن بجزاء +51 */
   const other = p2.hand.find(c => c.id !== marmId);
   const rOther = g.executeMove({ type: 'discard', playerId: p2.id, cardId: other.id });
   ok(rOther.success && !rOther.penaltyApplied && (p2.penaltyScore || 0) === 0, 'الاحتفاظ بالمرموق بلا افتتاح/إنهاء = بلا جزاء');
@@ -184,7 +183,7 @@ console.log('── 5) الإنهاء: 13 بمجموعات + ورقة الإنه
   ok(!g.canFinish(p), 'بلا متماثلة حرة → canFinish=false');
 }
 
-console.log('── 8) [v19.1] الحرة تبقى حرة: لا تلويث المجموعات الحرة بالجوكر ──');
+console.log('── 8) [v19.2] الحرة تبقى حرة في دور الافتتاح فقط ──');
 {
   /* افتتاح بمجموعتي جوكر بلا متتالية حرة (سيناريو السكرين شوت) يجب رفضه */
   const rules = new RamiRules('simple', 90);
@@ -197,22 +196,87 @@ console.log('── 8) [v19.1] الحرة تبقى حرة: لا تلويث ال�
   ok(!r.valid, 'افتتاح بمتتاليتين بجوكر + متماثلة حرة فقط → مرفوض (لا متتالية حرة)');
 }
 {
-  /* الإدراج: جوكر لا يدخل مجموعة حرة (لا عبر cardFitsMeld ولا canLayOff ولا doesCardFitAnyTableMeld) */
+  /* الإدراج: جوكر لا يدخل مجموعة حرة أُنزلت هذا الدور — ويدخلها في الأدوار الموالية */
   const g = new RamiGame('simple', 2, 1, 77, 90);
   g.startMatch(2, 1);
   const rm = g.roundManager;
   rm.jokerIndicator = { id: 'IND2', rank: 6, suit: 'sword', isJoker: false };
   g.rules.jokerIndicator = rm.jokerIndicator;
   const joker = C(6, 'heart');            /* برية */
-  const freeMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'sword'), C(10, 'sword'), C(11, 'sword')] };
-  const wildMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'grape'), C(10, 'grape'), C(6, 'heart')] }; /* فيها برية */
+  const freeMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'sword'), C(10, 'sword'), C(11, 'sword')], _justOpened: true };
+  const wildMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'grape'), C(10, 'grape'), C(6, 'heart')], _justOpened: true }; /* فيها برية */
   rm.tableMelds = [freeMeld];
-  ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة → مرفوض');
-  ok(cardFitsMeld ? !cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في متتالية حرة → مرفوض');
-  ok(!g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: طاولة حرة فقط → false للجوكر');
+  ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة أُنزلت هذا الدور → مرفوض');
+  ok(cardFitsMeld ? !cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في متتالية حرة أُنزلت هذا الدور → مرفوض');
+  ok(!g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: حرة نفس الدور → false للجوكر');
+  /* ورقة المرموق المسحوبة نفس الدور محظورة كذلك في الحرة نفس الدور */
+  const drawn = C(12, 'sword'); drawn.fromDiscard = true;
+  ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, drawn, drawn), 'canLayOff: مرموق نفس الدور في حرة نفس الدور → مرفوض');
   rm.tableMelds = [freeMeld, wildMeld];
   ok(RamiExpertAI.canLayOff(g.rules, wildMeld, C(8, 'grape')), 'canLayOff: ورقة عادية في مجموعة بجوكر → مقبول');
   ok(RamiExpertAI.canLayOff(g.rules, freeMeld, C(12, 'sword')), 'canLayOff: ورقة عادية في متتالية حرة → مقبول');
+  /* بانتهاء الدور تسقط الحماية: nextPlayer يمسح _justOpened ويصبح الجوكر مقبولاً */
+  rm.nextPlayer();
+  ok(!freeMeld._justOpened, 'nextPlayer يمسح وسم _justOpened');
+  ok(RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة في دور موالٍ → مقبول');
+  ok(g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: دور موالٍ → true للجوكر');
+  ok(cardFitsMeld ? cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في حرة دور موالٍ → مقبول');
+}
+
+console.log('── 9) [v19.2] رمي المرموق/الفوجوك المسحوبة نفس الدور = جزاء 51 ──');
+{
+  /* رمي المرموق المسحوبة نفس الدور: مسموح + جزاء 51 */
+  const g = new RamiGame('simple', 2, 1, 88, 90);
+  g.startMatch(2, 1);
+  const rm = g.roundManager;
+  rm.jokerIndicator = null; g.rules.jokerIndicator = null;
+  const p = rm.getCurrentPlayer();
+  const marm = C(9, 'diamond');
+  rm.discardPile.push(marm);
+  const rd = g.executeMove({ type: 'draw_discard', playerId: p.id });
+  ok(rd.success, 'سحب المرموق نجح');
+  const before = p.penaltyScore || 0;
+  const rdisc = g.executeMove({ type: 'discard', playerId: p.id, cardId: marm.id });
+  ok(rdisc.success, 'رمي نفس ورقة المرموق في نفس الدور مسموح (ليس مرفوضاً)');
+  ok((p.penaltyScore || 0) === before + 51, 'جزاء +51 قُيّد على الرامي (' + (p.penaltyScore || 0) + ')');
+  ok(rm.discardPile[rm.discardPile.length - 1].id === marm.id, 'الورقة عادت لكومة المرموق');
+}
+{
+  /* رمي الفوجوك المسحوبة نفس الدور: جزاء 51 + تتحول مرموقاً عادياً (لا فوجوك بعدها) */
+  const g = new RamiGame('simple', 2, 1, 99, 90);
+  g.startMatch(2, 1);
+  const rm = g.roundManager;
+  const p = rm.getCurrentPlayer();
+  ok(!!rm.jokerIndicator, 'الفوجوك مقلوبة في بداية الشوط');
+  const fojokId = rm.jokerIndicator.id;
+  const rf = g.executeMove({ type: 'draw_fojok', playerId: p.id });
+  ok(rf.success && rf.isFojok, 'سحب الفوجوك في الدور الأول نجح');
+  ok(p.drawnFojokCard && p.drawnFojokCard.id === fojokId, 'drawnFojokCard مسجلة');
+  const before = p.penaltyScore || 0;
+  const rdisc = g.executeMove({ type: 'discard', playerId: p.id, cardId: fojokId });
+  ok(rdisc.success, 'رمي الفوجوك في نفس الدور مسموح');
+  ok((p.penaltyScore || 0) === before + 51, 'جزاء +51 على رامي الفوجوك');
+  ok(rm.jokerIndicator === null, 'الفوجوك لم تعد معروضة كفوجوك (صارت مرموقاً عادياً)');
+  ok(rm.discardPile[rm.discardPile.length - 1].id === fojokId, 'الفوجوك المرمية فوق كومة المرموق — لصاحب الدور التالي كمرموق عادي');
+  /* اللاعب التالي يأخذها كمرموق عادي بلا جزاء */
+  const p2 = rm.getCurrentPlayer();
+  ok(p2.id !== p.id, 'الدور انتقل للاعب التالي');
+  const rd2 = g.executeMove({ type: 'draw_discard', playerId: p2.id });
+  ok(rd2.success && rd2.card.id === fojokId, 'اللاعب التالي سحبها كمرموق عادي');
+  ok(!(rd2.isFojok), 'السحب ليس سحب فوجوك');
+}
+{
+  /* الخبير لا يرمي المسحوبة نفس الدور أبداً */
+  const g = new RamiGame('simple', 2, 1, 111, 90);
+  g.startMatch(2, 1);
+  const rm = g.roundManager;
+  rm.jokerIndicator = null; g.rules.jokerIndicator = null;
+  const p = rm.getCurrentPlayer();
+  const marm = C(13, 'sword');
+  rm.discardPile.push(marm);
+  g.executeMove({ type: 'draw_discard', playerId: p.id });
+  const did = RamiExpertAI.chooseDiscard(g, p);
+  ok(did !== marm.id, 'الخبير لا يختار رمي المرموق المسحوبة نفس الدور');
 }
 
 console.log('\n═══ Rami Sample v19: ' + pass + '/' + (pass + fail) + ' passed ═══');

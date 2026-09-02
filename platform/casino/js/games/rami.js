@@ -533,16 +533,22 @@ const RamiExpertAI = {
       /* الأدنى قيمةً في الإبقاء هي المرشّحة للرمي */
       if (keep < bestScore) { bestScore = keep; best = c; }
     }
-    return best ? best.id : hand[hand.length - 1].id;
+    if (best) return best.id;
+    /* احتياط: آخر ورقة غير محظورة (تفادي جزاء رمي المسحوبة نفس الدور) */
+    for (let i = hand.length - 1; i >= 0; i--) if (!banned.has(hand[i].id)) return hand[i].id;
+    return hand[hand.length - 1].id;
   },
 
-  /* [V19b] هل يجوز للبوت إدراج هذه الورقة في هذه المجموعة المنزلة؟
-     القاعدة الصارمة: الجوكر/الورقة البرية لا تُدرج أبداً في مجموعة حرة
-     (خالية من الجوكر) — وإلا فقدت المجموعة صفة «الحرة» وبدا افتتاح
-     صاحبها مخالفاً لشرط المتتالية/المتماثلة الحرة */
-  canLayOff(rules, meld, card) {
+  /* [V19.2] هل يجوز إدراج هذه الورقة في هذه المجموعة المنزلة؟
+     «الحرة تبقى حرة في دور الافتتاح فقط»: الجوكر/الورقة البرية وورقة المرموق
+     المسحوبة نفس الدور لا تُدرج في مجموعة حرة أُنزلت هذا الدور —
+     وفي الأدوار الموالية يجوز إدراجهما في مجموعات الافتتاح الحرة */
+  canLayOff(rules, meld, card, drawnCard) {
     if (!meld || !meld.cards || !card) return false;
-    if (rules.isWildCard(card) && !meld.cards.some(c => rules.isWildCard(c))) return false;
+    if (meld._justOpened && !meld.cards.some(c => rules.isWildCard(c))) {
+      if (rules.isWildCard(card)) return false;
+      if (drawnCard && card.id === drawnCard.id) return false;
+    }
     const temp = meld.cards.concat([card]);
     if (meld.type === MELD_TYPE.SET) return rules.isValidSet(temp, true);
     if (meld.type === MELD_TYPE.SEQUENCE) return rules.isValidSequence(temp, true);
@@ -553,10 +559,11 @@ const RamiExpertAI = {
   chooseDiscard(game, player) {
     const hand = player.hand;
     if (!hand || hand.length === 0) return null;
-    /* ورقة المرموق/لا تور غير المنزلة تُسترجع آلياً — لا يجوز أن تكون هي المرمومة */
+    /* [V19.2] رمي المرموق/الفوجوك المسحوبة نفس الدور = جزاء 51 — الخبير لا يخطئها أبداً */
     const banned = new Set();
     if (player.drawnDiscardCard) banned.add(player.drawnDiscardCard.id);
     if (player.drawnLaTourCard) banned.add(player.drawnLaTourCard.id);
+    if (player.drawnFojokCard) banned.add(player.drawnFojokCard.id);
     if (!player.hasOpened) return this._chooseOpeningDiscard(game, player, banned);
     const melds = partitionSelectedCards(hand, game.rules);
     const inMeldIds = new Set();
@@ -567,7 +574,10 @@ const RamiExpertAI = {
       const sc = this.keepScore(game, player, c, inMeldIds);
       if (sc < bestScore) { bestScore = sc; best = c; }
     }
-    return best ? best.id : hand[hand.length - 1].id;
+    if (best) return best.id;
+    /* احتياط: آخر ورقة غير محظورة (تفادي جزاء رمي المسحوبة نفس الدور) */
+    for (let i = hand.length - 1; i >= 0; i--) if (!banned.has(hand[i].id)) return hand[i].id;
+    return hand[hand.length - 1].id;
   }
 };
 if (typeof window !== 'undefined') window.RamiExpertAI = RamiExpertAI;
@@ -700,6 +710,7 @@ class RamiPlayer {
     this.hasOpened = false;
     this.penaltyScore = 0;
     this.drawnDiscardCard = null;
+    this.drawnFojokCard = null; /* [V19.2] الفوجوك المسحوبة هذا الدور */
     this.displayCards = []; // ترتيب عرض ثابت: كل ورقة تحتفظ بموضعها وتنقلب في مكانها عند الإنزال
   }
 
@@ -1172,6 +1183,7 @@ class RoundManager {
       p.hasOpened = false;
       p.drawnDiscardCard = null;
       p.drawnLaTourCard = null;
+      p.drawnFojokCard = null;
       p.tookLaTour = false;
     }
 
@@ -1291,6 +1303,9 @@ class RoundManager {
     if (this.turnCount >= this.players.length) {
       this.isFirstTourCycle = false; // انتهاء الدور الأول لكل لاعب -> إغلاق إمكانية أخذ ورقة الموزع الأولى (لا تور)
     }
+    /* [V19.2] المجموعة الحرة محمية من الجوكر/المرموق في دور إنزالها فقط —
+       بانتهاء الدور تسقط الحماية ويجوز إدراج الجوكر وورقة المرموق فيها */
+    if (this.tableMelds) for (const m of this.tableMelds) m._justOpened = false;
     /* [V18] تخطي اللاعبين المُقصيين */
     this.currentPlayerIndex = this.firstActiveFrom(this.currentPlayerIndex + 1);
     this.turnPhase = 'WAITING_DRAW';
@@ -1362,8 +1377,9 @@ class RamiGame {
   doesCardFitAnyTableMeld(card) {
     if (!card || !this.roundManager.tableMelds) return false;
     for (const meld of this.roundManager.tableMelds) {
-      /* [V19b] الجوكر لا يُدرج في مجموعة حرة (خالية من الجوكر) — الحرة تبقى حرة */
-      if (this.rules.isWildCard(card) && !meld.cards.some(c => this.rules.isWildCard(c))) continue;
+      /* [V19.2] الحرة تبقى حرة في دور إنزالها فقط: الجوكر لا يُدرج في مجموعة حرة
+         أُنزلت هذا الدور؛ في الأدوار الموالية يجوز */
+      if (meld._justOpened && this.rules.isWildCard(card) && !meld.cards.some(c => this.rules.isWildCard(c))) continue;
       const temp = meld.cards.concat([card]);
       if (meld.type === MELD_TYPE.SET && this.rules.isValidSet(temp, true)) return true;
       if (meld.type === MELD_TYPE.SEQUENCE && this.rules.isValidSequence(temp, true)) return true;
@@ -1618,6 +1634,9 @@ class RamiGame {
     this.roundManager.jokerIndicator = null; // حرمان الباقين بعد سحبها
     player.hand.push(fojok);
     if (player.displayCards) player.displayCards.push(fojok);
+    /* [V19.2] تتبع الفوجوك المسحوبة: رميها في نفس الدور = جزاء 51
+       وتصبح ورقة مرموق عادية في الكومة */
+    player.drawnFojokCard = fojok;
     this.roundManager.turnPhase = 'WAITING_DISCARD';
     return { success: true, card: fojok, isFojok: true };
   }
@@ -1741,6 +1760,9 @@ class RamiGame {
       player.hand = player.hand.filter(c => !allIds.has(c.id));
       /* الأوراق المنزلة تبقى في خاناتها (تُحاط بحلقة ذهبية) — لا تُحذف من العرض */
 
+      /* [V19.2] وسم دور الإنزال: المجموعة الحرة محمية من الجوكر/المرموق في دور إنزالها فقط،
+         وفي الأدوار الموالية يجوز إدراج الجوكر وورقة المرموق فيها */
+      meldObjects.forEach(m => { m._justOpened = true; });
       player.melds = player.melds.concat(meldObjects);
       this.roundManager.tableMelds.push(...meldObjects);
 
@@ -1840,6 +1862,9 @@ class RamiGame {
     const allIds = new Set(meldObjects.flatMap(m => m.cards.map(c => c.id)));
     player.hand = player.hand.filter(c => !allIds.has(c.id));
 
+    /* [V19.2] المجموعة الحرة تبقى حرة في دور الافتتاح فقط — بعده يجوز إدراج
+       الجوكر/المرموق فيها (الوسم يسقط في nextPlayer) */
+    meldObjects.forEach(m => { m._justOpened = true; });
     player.melds = player.melds.concat(meldObjects);
     player.hasOpened = true;
     this.roundManager.tableMelds.push(...meldObjects);
@@ -1870,16 +1895,28 @@ class RamiGame {
     // [V19] السامبل: اللاعب حر في سحب المرموق والاحتفاظ به بلا جزاء —
     // الورقة تبقى «غير حرة» هذا الدور فقط (لا تدخل متتالية/متماثلة حرة في افتتاح أو إنهاء
     // نفس الدور)، وتصبح حرة تماماً في الأدوار الموالية.
-    if (this.rules.mode !== 'talaj' && (player.tookLaTour || player.drawnDiscardCard)) {
+    // [V19.2] رمي ورقة المرموق أو الفوجوك المسحوبة في نفس الدور = مسموح لكنه خطأ:
+    // جزاء +51 يضاف على مجموع نقاط الجولة في نهاية الشوط.
+    if (this.rules.mode !== 'talaj' && (player.tookLaTour || player.drawnDiscardCard || player.drawnFojokCard)) {
       const freedCard = player.drawnDiscardCard || player.drawnLaTourCard;
-      /* «التخلص من ورقة أخرى»: لا يجوز إرجاع نفس ورقة المرموق المسحوبة فوراً */
+      const fojokCard = player.drawnFojokCard || null;
       if (freedCard && cardId === freedCard.id) {
-        return { success: false, error: 'لا يجوز إرجاع ورقة المرموق التي سحبتها الآن — تخلّص من ورقة أخرى' };
+        /* رمى ورقة المرموق التي سحبها الآن → جزاء 51 والورقة تعود للكومة عادية */
+        this._applyPenalty(player, 'SAME_TURN_THROWBACK', freedCard.displayName || '');
+        freedCard.fromDiscard = false; freedCard.fromLaTour = false;
+        _ramiToast('⚠️ رميت ورقة المرموق التي سحبتها في نفس الدور — جزاء +' + this.rules.finishPenalty + ' نقطة يضاف لمجموعك في نهاية الشوط', 'warn');
+      } else if (fojokCard && cardId === fojokCard.id) {
+        /* [V19.2] رمى الفوجوك التي سحبها الآن → جزاء 51، وتتحول لورقة مرموق عادية:
+           لا يحق للاعبين الآخرين سحبها كفوجوك — إلا صاحب الدور التالي كمرموق عادي */
+        this._applyPenalty(player, 'SAME_TURN_THROWBACK', (fojokCard.displayName || '') + ' (فوجوك)');
+        fojokCard.fromDiscard = false; fojokCard.fromLaTour = false;
+        _ramiToast('⚠️ رميت الفوجوك التي سحبتها في نفس الدور — جزاء +' + this.rules.finishPenalty + ' نقطة، وأصبحت ورقة مرموق عادية للاعب التالي', 'warn');
       }
       if (freedCard) { freedCard.fromDiscard = false; freedCard.fromLaTour = false; } /* تتحرر بنهاية الدور */
       player.tookLaTour = false;
       player.drawnLaTourCard = null;
       player.drawnDiscardCard = null;
+      player.drawnFojokCard = null;
     }
     if (player.tookLaTour || player.drawnDiscardCard) {
       const adapter = (typeof window !== 'undefined' && (window.RamiAdapter || window.RAMI_ADAPTER)) ? (window.RamiAdapter || window.RAMI_ADAPTER) : null;
@@ -1937,6 +1974,7 @@ class RamiGame {
 
     player.drawnDiscardCard = null;
     player.drawnLaTourCard = null;
+    player.drawnFojokCard = null;
     player.tookLaTour = false;
 
     this.roundManager.discardPile.push(card);
@@ -1973,9 +2011,12 @@ class RamiGame {
       const handCopy = player.hand.slice();
       for (const card of handCopy) {
         for (const meld of this.roundManager.tableMelds) {
-          /* [V19b] الدمج التلقائي لا يُدخل جوكراً في مجموعة حرة (خالية من الجوكر)
-             — حماية المتتاليات/المتماثلات الحرة من التلويث */
-          if (this.rules.isWildCard(card) && !meld.cards.some(c => this.rules.isWildCard(c))) continue;
+          /* [V19.2] الدمج التلقائي لا يُدخل جوكراً/مرموق الدور في مجموعة حرة
+             أُنزلت هذا الدور — الحرة تبقى حرة في دور إنزالها فقط */
+          if (meld._justOpened && !meld.cards.some(c => this.rules.isWildCard(c))) {
+            if (this.rules.isWildCard(card)) continue;
+            if (player.drawnDiscardCard && card.id === player.drawnDiscardCard.id) continue;
+          }
           const temp = meld.cards.concat([card]);
           let canAdd = false;
           if (meld.type === MELD_TYPE.SET && this.rules.isValidSet(temp, true)) canAdd = true;
@@ -2141,6 +2182,7 @@ class RamiGame {
     switch (ruleKey) {
       case 'OPEN_ERROR':        // خطأ في شروط الافتتاح
       case 'DISCARD_DRAW':      // سحب المرموق دون إنزالها
+      case 'SAME_TURN_THROWBACK': // [V19.2] رمي المرموق/الفوجوك المسحوبة في نفس الدور
         return this.rules.finishPenalty;   // 71 طلاج / 51 سامبل
       case 'RULE_12_IGNORED':   // قانون الـ 12 ورقة: غفلت عن ورقة مطابقة
       case 'RULE_12_FED':       // قانون الـ 12 ورقة: رميت ورقة غذّت منزلاً 12 ورقة
@@ -2154,6 +2196,7 @@ class RamiGame {
     const labels = {
       OPEN_ERROR: 'خطأ في شروط الافتتاح',
       DISCARD_DRAW: 'سحب المرموق دون إنزالها',
+      SAME_TURN_THROWBACK: 'رمي ورقة المرموق/الفوجوك المسحوبة في نفس الدور',
       RULE_12_IGNORED: 'قانون الـ 12 ورقة: غفلت عن سحب ورقة المرموق المطابقة',
       RULE_12_FED: 'قانون الـ 12 ورقة: رميت ورقة غذّت لاعباً منزلاً 12 ورقة'
     };
@@ -3029,12 +3072,13 @@ class RamiUIAdapter {
         /* توسيع المجموعات: في اللعب الفردي فقط (محلي بلا بثّ)؛ في الجماعي يُتخطّى
            لضمان تطابق تامّ بين الأطراف (ترتيب المجموعات قد يتباين عبر البثّ). */
         if (!this.multiplayer && bot.hasOpened && rm.tableMelds.length > 0) {
-          /* [V19b] البوت لا يُدرج جوكراً في مجموعة حرة (خالية من الجوكر) —
-             حماية المتتالية/المتماثلة الحرة من التلويث بعد الافتتاح */
+          /* [V19.2] الحرة تبقى حرة في دور إنزالها فقط: البوت لا يُدرج جوكراً
+             أو مرموق الدور في مجموعة حرة أُنزلت هذا الدور؛ بعده يجوز */
+          const botDrawn = bot.drawnDiscardCard || bot.drawnLaTourCard || null;
           const fitsMeld = (card) => {
             for (let mIdx = 0; mIdx < rm.tableMelds.length; mIdx++) {
               const meld = rm.tableMelds[mIdx];
-              if (RamiExpertAI.canLayOff(this.game.rules, meld, card)) return meld;
+              if (RamiExpertAI.canLayOff(this.game.rules, meld, card, botDrawn)) return meld;
             }
             return null;
           };
@@ -3946,10 +3990,11 @@ function ramiStateInstruction(game) {
   if (rm.turnPhase === 'WAITING_DRAW') {
     return 'اسحب ورقة واحدة: من المجرف أو خذ ورقة المرموق (انقر مرتين)';
   }
-  if (p.drawnDiscardCard || p.tookLaTour) {
-    /* [V19] السامبل: سحب المرموق حر — تلميح مختلف بلا تهديد جزاء */
+  if (p.drawnDiscardCard || p.tookLaTour || p.drawnFojokCard) {
+    /* [V19] السامبل: سحب المرموق حر — تلميح مختلف */
     if (game.rules && game.rules.mode !== 'talaj') {
-      return 'سحبت ورقة المرموق — تخلّص من ورقة أخرى (غير التي سحبتها)؛ تصبح حرة في الأدوار الموالية';
+      /* [V19.2] رمي المسحوبة نفس الدور مسموح لكنه خطأ بجزاء 51 */
+      return 'سحبت ' + (p.drawnFojokCard ? 'الفوجوك' : 'ورقة المرموق') + ' — تخلّص من ورقة أخرى (رميها في نفس الدور = جزاء +51)؛ تصبح حرة في الأدوار الموالية';
     }
     return 'أنزِل ورقة المرموق المسحوبة في مجموعة أو افتتح بها، وإلا فتُسترجع مع جزاء';
   }
@@ -3960,14 +4005,18 @@ function ramiStateInstruction(game) {
    متتالية: نفس الرمز وامتداد تسلسلي (±1 مع دعم الآس 1/14).
    متماثلة: نفس القيمة برمز غير مكرر وقبل امتلاء المجموعة (< 4).
    لا جوكر ولا ورقة مرموق مسحوبة تُستخدم كتطابق وهمي. */
-function cardFitsMeld(card, meld, rules) {
+function cardFitsMeld(card, meld, rules, drawnCard) {
   if (!card || !meld || !meld.cards || !meld.cards.length) return false;
   if (!rules || typeof rules.isValidSet !== 'function') return false;
   /* بعد الافتتاح يُعفى اللاعب من شروطه ويصبح حراً في إدراج أي ورقة
      في أي مجموعة منزلة ظاهرة، متى أبقت المجموعة صالحة قانوناً.
-     [V19b] استثناء صارم: الجوكر/الورقة البرية لا تُدرج في مجموعة حرة
-     (خالية من الجوكر) — الحرة تبقى حرة، وإلا بدا افتتاح صاحبها مخالفاً. */
-  if (rules.isWildCard(card) && !meld.cards.some(function (c) { return rules.isWildCard(c); })) return false;
+     [V19.2] استثناء «الحرة تبقى حرة» في دور الإنزال فقط: الجوكر وورقة المرموق
+     المسحوبة نفس الدور لا يُدرجان في مجموعة حرة أُنزلت هذا الدور —
+     وفي الأدوار الموالية يجوز إدراجهما في مجموعات الافتتاح الحرة. */
+  if (meld._justOpened && !meld.cards.some(function (c) { return rules.isWildCard(c); })) {
+    if (rules.isWildCard(card)) return false;
+    if (drawnCard && card.id === drawnCard.id) return false;
+  }
   var temp = meld.cards.concat([card]);
   if (meld.type === MELD_TYPE.SET) return rules.isValidSet(temp, true);
   if (meld.type === MELD_TYPE.SEQUENCE) return rules.isValidSequence(temp, true);
@@ -4626,7 +4675,7 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
     if (targetPlayer && targetPlayer.melds && targetPlayer.melds[meldIndex]) {
       const tm = targetPlayer.melds[meldIndex];
       const fitting = player.hand.find(c => {
-        if (cardFitsMeld(c, tm, game.rules)) return true;
+        if (cardFitsMeld(c, tm, game.rules, player.drawnDiscardCard || player.drawnLaTourCard)) return true;
         if (typeof tm.findJokerSwapIndex === 'function' && tm.findJokerSwapIndex(c, game.rules) !== -1) return true;
         return false;
       });
@@ -4677,7 +4726,7 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
   }
 
   // 2. فحص إضافة الورقة لتوسيع المجموعة (تطابق دقيق: نفس الرمز تسلسلي / نفس القيمة برمز مختلف / جوكر بري)
-  const isValid = (typeof cardFitsMeld === 'function') ? cardFitsMeld(card, targetMeld, game.rules) : false;
+  const isValid = (typeof cardFitsMeld === 'function') ? cardFitsMeld(card, targetMeld, game.rules, player.drawnDiscardCard || player.drawnLaTourCard) : false;
 
     if (isValid) {
     player.removeCard(cardId);
@@ -4741,9 +4790,11 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
         _ramiToast('❌ لا يمكن إضافة جوكر ثانٍ إلى مجموعة تحتوي جوكراً أصلاً', 'err');
       } else if (naturals.length >= 4) {
         _ramiToast('❌ لا يمكن إضافة جوكر إلى مجموعة مكتملة من 4 أوراق طبيعية', 'err');
+      } else if (targetMeld._justOpened) {
+        /* [V19.2] الحرة تبقى حرة في دور الإنزال فقط */
+        _ramiToast('❌ المجموعة الحرة تبقى حرة في دور إنزالها — يمكن إدراج الجوكر فيها ابتداءً من الدور الموالي', 'err');
       } else {
-        /* [V19b] الحرة تبقى حرة: لا إدراج جوكر في مجموعة خالية من الجوكر */
-        _ramiToast('❌ المجموعة الحرة تبقى حرة — لا يمكن إدراج جوكر في متتالية أو متماثلة خالية من الجوكر', 'err');
+        _ramiToast('❌ لا يمكن إضافة هذا الجوكر إلى المجموعة المحددة', 'err');
       }
     } else {
       _ramiToast('❌ هذه الورقة لا تتطابق مع نمط المجموعة المحددة', 'err');
