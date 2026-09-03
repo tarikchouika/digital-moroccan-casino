@@ -473,6 +473,7 @@ function initFor(eng) {
     ronda: (typeof initRonda === 'function') ? initRonda : null,
     dama: (typeof initDama === 'function') ? initDama : null,
     chess: (typeof initChess === 'function') ? initChess : null,
+    billiards: (typeof initBilliards === 'function') ? initBilliards : null,
     rami: (typeof initRami === 'function') ? initRami : null,
     plinko: (typeof initPlinko === 'function') ? initPlinko : null,
     wheel: (typeof initWheel === 'function') ? initWheel : null,

@@ -3308,6 +3308,9 @@ const ENG = {
   ronda: eRonda,
   chess: eChess,
   dama: eDama,
+  /* [Billiards] المحرك يُعرَّف في billiards.js (يُحمَّل قبل engines.js) —
+     قراءة كسولة عبر window لتفادي ReferenceError لو تغيّر الترتيب */
+  get billiards() { return (typeof window.eBilliards === 'function') ? window.eBilliards : ((typeof eBilliards === 'function') ? eBilliards : null); },
   /* crash.js هو module (يُنفَّذ بعد كل السكربتات العادية) — لذلك نقرأ eCrash
      كسولاً عند الفتح عبر window.eCrash بدلاً من الإشارة المباشرة (ReferenceError) */
   get crash() { return (typeof window.eCrash !== 'undefined') ? window.eCrash : null; },
