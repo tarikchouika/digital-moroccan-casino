@@ -409,6 +409,9 @@
   z-index: 30;
 }
 .rami-piles-row { display: flex; align-items: center; justify-content: center; gap: calc(var(--card-w) * 1.15); }
+/* [V19b] سامبل: عنصر ثالث في المركز (فوجوك/وصف الجوكر) — فجوة مضغوطة كي لا يُدفَع
+   عنوان سامبل وهدف الجولة ومجموع الرهان خارج الطاولة */
+.rami-piles-row:has(.rami-indicator-box) { gap: calc(var(--card-w) * 0.45); }
 .rami-deck-box, .rami-discard-box, .rami-indicator-box {
   display: flex; flex-direction: column; align-items: center; gap: 0.05em;
   cursor: pointer; transition: transform 0.18s ease;

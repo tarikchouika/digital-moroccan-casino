@@ -461,6 +461,10 @@ function renderAccountLog() {
       '<tr><th>' + T('acct.joined') + '</th><td>' + joined + '</td></tr>' +
       '<tr><th>' + T('acct.lastSeen') + '</th><td>' + lastSeen + '</td></tr>' +
       (u.admin_id ? '<tr><th>' + T('acct.adminRef') + '</th><td>' + esc(String(u.admin_id)) + '</td></tr>' : '') +
+      (u.ref_code
+        ? '<tr><th>🎁 ' + T('admin.myRefCode') + '</th><td><b dir="ltr" style="font-family:monospace;color:var(--gold);letter-spacing:1px">' + esc(u.ref_code) + '</b>' +
+          '<div style="font-size:.75rem;color:var(--t3);margin-top:4px">' + T('admin.refCodeShare') + '</div></td></tr>'
+        : '') +
     '</tbody></table>';
 }
 /* خريطة محرك التهيئة — تُستدعى بعد رسم واجهة اللعبة */
@@ -1138,9 +1142,15 @@ function adminLoadUsers() {
         '<div class="reg-row">' +
           '<input class="ainp" id="regU" placeholder="' + T('auth.username') + '" maxlength="20" style="width:150px">' +
           '<input class="ainp" id="regP" type="password" placeholder="' + T('auth.password') + '" maxlength="40" style="width:150px">' +
+          '<input class="ainp" id="regRef" placeholder="' + T('admin.refCode') + '" maxlength="20" style="width:150px" dir="ltr" title="' + esc(T('admin.refCodeHint')) + '">' +
           '<button class="abtn" onclick="adminRegister()">' + T('admin.registerBtn') + '</button>' +
         '</div>' +
-      '</div>';
+        '<div class="note" style="margin-top:8px;font-size:.78rem">🎁 ' + T('admin.refCodeHint') + '</div>' +
+      '</div>' +
+      (!isSuper
+        ? '<div class="note" style="margin-bottom:14px">💱 ' + T('admin.exchangeNote') +
+          ' — <a href="admins.html" target="_blank" style="color:var(--gold)">' + T('admin.rulesLink') + '</a></div>'
+        : '');
     if (!users.length) {
       c.innerHTML = regForm + '<div class="note">' + T('admin.noUsers') + '</div>';
       return;
@@ -1148,10 +1158,11 @@ function adminLoadUsers() {
     c.innerHTML = regForm +
       '<div class="atable-wrap"><table class="atable">' +
       '<thead><tr>' +
-        '<th>ID</th><th>' + T('auth.username') + '</th><th>' + T('admin.balance') + '</th>' +
+        '<th>ID</th><th>' + T('auth.username') + '</th><th>' + T('admin.refCode') + '</th><th>' + T('admin.balance') + '</th>' +
         (isSuper ? '<th>' + T('admin.lastSeen') + '</th><th>' + T('admin.status') + '</th><th>' + T('admin.setBalance') + '</th>' : '') +
-        '<th>' + T('admin.charge') + '</th><th>' + T('admin.deduct') + '</th><th>' + T('admin.password') + '</th>' +
-        (isSuper ? '<th></th><th>' + T('admin.role') + '</th>' : '') +
+        '<th>' + T('admin.charge') + '</th>' + (isSuper ? '<th>' + T('admin.deduct') + '</th>' : '') + '<th>' + T('admin.password') + '</th>' +
+        '<th>' + T('admin.mute') + '</th>' +
+        (isSuper ? '<th></th><th>' + T('admin.role') + '</th><th></th>' : '') +
       '</tr></thead><tbody>' +
       users.map(function (u) {
         const balCell = isSuper
@@ -1170,6 +1181,15 @@ function adminLoadUsers() {
         const passCell =
           '<input class="ainp" id="pw-' + u.id + '" type="password" placeholder="' + T('admin.newPass') + '" aria-label="كلمة مرور ' + esc(u.username) + '" style="width:110px">' +
           '<button class="abtn" onclick="adminSetPassword(' + u.id + ')">' + T('admin.save') + '</button>';
+        /* إسكات عن الصوت والمراسلة: 24 ساعة فأكثر */
+        const muteCell = u.muted_until
+          ? '<span class="spill bad" title="' + new Date(u.muted_until).toLocaleString() + '">🔇 ' + T('admin.muted') + '</span>' +
+            (isSuper ? ' <button class="abtn ok" onclick="adminMute(' + u.id + ',0)">' + T('admin.unmute') + '</button>' : '')
+          : '<input class="ainp" id="mt-' + u.id + '" type="number" value="24" min="24" max="720" aria-label="' + esc(T('admin.muteHours')) + '" style="width:60px" title="' + esc(T('admin.muteHours')) + '">' +
+            '<button class="abtn bad" onclick="adminMute(' + u.id + ',1)">🔇 ' + T('admin.mute') + '</button>';
+        const delCell = isSuper
+          ? '<td><button class="abtn bad" onclick="adminDeleteUser(' + u.id + ',\'' + esc(u.username).replace(/'/g, '') + '\')">🗑 ' + T('admin.deleteUser') + '</button></td>'
+          : '';
         const banCell = isSuper
           ? '<td>' + (u.banned
               ? '<button class="abtn ok" onclick="adminToggleBan(' + u.id + ',0)">' + T('admin.unban') + '</button>'
@@ -1186,11 +1206,13 @@ function adminLoadUsers() {
         return '<tr>' +
           '<td>' + u.id + '</td>' +
           '<td><b>' + esc(u.username) + '</b> ' + bannedRow + '</td>' +
+          '<td dir="ltr" style="font-family:monospace;font-size:.78rem;color:var(--gold)">' + esc(u.ref_code || '—') + '</td>' +
           balCell +
           '<td class="abal">' + chargeCell + '</td>' +
-          '<td class="abal">' + deductCell + '</td>' +
+          (isSuper ? '<td class="abal">' + deductCell + '</td>' : '') +
           '<td class="abal">' + passCell + '</td>' +
-          banCell + roleCell +
+          '<td class="abal">' + muteCell + '</td>' +
+          banCell + roleCell + delCell +
         '</tr>';
       }).join('') +
       '</tbody></table></div>';
@@ -1203,21 +1225,54 @@ function adminLoadUsers() {
 function adminRegister() {
   const uEl = document.getElementById('regU');
   const pEl = document.getElementById('regP');
+  const rEl = document.getElementById('regRef');
   if (!uEl || !pEl) return;
   const username = uEl.value.trim();
   const password = pEl.value;
+  const refCode = rEl ? rEl.value.trim() : '';
   if (!username || password.length < 6) {
     toast(T('auth.fill'), 'warn');
     return;
   }
-  API.post('/api/admin/register', { username: username, password: password }).then(function (r) {
+  const payload = { username: username, password: password };
+  if (refCode) payload.referral_code = refCode;
+  API.post('/api/admin/register', payload).then(function (r) {
     if (r.ok) {
-      toast(T('auth.accountCreated') + ' ✔', 'ok');
+      let msg = T('auth.accountCreated') + ' ✔';
+      if (r.data && r.data.user && r.data.user.referred_by) msg += ' 🎁';
+      toast(msg, 'ok');
+      if (rEl) rEl.value = '';
       adminLoadUsers();
       adminLoadStats();
     } else {
       toast((r.data && r.data.message) || T('auth.error'), 'err');
     }
+  });
+}
+
+/* إسكات لاعب عن التعليق الصوتي والمراسلة (24 ساعة فأكثر) / رفع الإسكات */
+function adminMute(id, on) {
+  if (on) {
+    const inp = document.getElementById('mt-' + id);
+    const hours = Math.max(24, parseInt(inp ? inp.value : 24, 10) || 24);
+    API.post('/api/admin/user/' + id + '/mute', { hours: hours }).then(function (r) {
+      if (r.ok) { toast('🔇 ' + T('admin.muteDone') + ' (' + hours + 'h)', 'ok'); adminLoadUsers(); }
+      else toast((r.data && r.data.message) || T('auth.error'), 'err');
+    });
+  } else {
+    API.post('/api/admin/user/' + id + '/mute', { unmute: true }).then(function (r) {
+      if (r.ok) { toast(T('admin.unmute') + ' ✔', 'ok'); adminLoadUsers(); }
+      else toast((r.data && r.data.message) || T('auth.error'), 'err');
+    });
+  }
+}
+
+/* مسح حساب نهائياً (سوبر أدمن فقط) */
+function adminDeleteUser(id, uname) {
+  if (!confirm(T('admin.deleteConfirm') + '\n(' + uname + ')')) return;
+  API.post('/api/admin/user/' + id + '/delete', {}).then(function (r) {
+    if (r.ok) { toast(T('admin.deleteUser') + ' ✔', 'ok'); adminLoadUsers(); adminLoadStats(); }
+    else toast((r.data && r.data.message) || T('auth.error'), 'err');
   });
 }
 

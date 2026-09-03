@@ -46,6 +46,12 @@ CREATE TABLE IF NOT EXISTS users (
 /* [2FA] ترحيل آمن: إضافة أعمدة المصادقة الثنائية لقواعد البيانات القديمة (royalcoin.db) */
 try { db.exec('ALTER TABLE users ADD COLUMN totp_secret TEXT'); } catch (e) {}
 try { db.exec('ALTER TABLE users ADD COLUMN twofa_enabled INTEGER NOT NULL DEFAULT 0'); } catch (e) {}
+/* [Referral/Admins] أعمدة نظام الإحالة والأدمنز */
+try { db.exec('ALTER TABLE users ADD COLUMN ref_code TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN admin_id INTEGER'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN referred_by INTEGER'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN muted_until INTEGER NOT NULL DEFAULT 0'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN first_topup_done INTEGER NOT NULL DEFAULT 0'); } catch (e) {}
 
 /* [Friends] جداول الأصدقاء والرسائل الخاصة */
 db.exec(`
@@ -195,13 +201,16 @@ const HOUR_ROOM_MS = 3600000;   /* ساعة واحدة */
 
 /* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
 function loadUsersFromDB() {
-  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled FROM users').all();
+  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled, ref_code, admin_id, referred_by, muted_until, first_topup_done FROM users').all();
   rows.forEach(function (r) {
     users[r.id] = {
       id: r.id, username: r.username,
       passHash: r.pass_hash, passSalt: r.pass_salt,
       role: r.role, gold: r.gold, lang: r.lang, banned: !!r.banned,
-      totpSecret: r.totp_secret || null, twofaEnabled: !!r.twofa_enabled
+      totpSecret: r.totp_secret || null, twofaEnabled: !!r.twofa_enabled,
+      ref_code: r.ref_code || null, admin_id: r.admin_id || null,
+      referred_by: r.referred_by || null,
+      muted_until: r.muted_until || 0, first_topup_done: !!r.first_topup_done
     };
     if (r.id >= nextUserId) nextUserId = r.id + 1;
   });
@@ -444,6 +453,30 @@ function groupStartAll() {
   }
 }
 
+/* ═══════ [Referral] رمز الإحالة المميز: لكل مسجّل في المنصة ═══════
+   يسلمه المحال الجديد للأدمن الذي يسجله، فيستفيد صاحب الإحالة
+   من هدية الإحالة (10% من أول عملية شحن) حسب قواعد المنصة */
+function genRefCode(id) {
+  for (let guard = 0; guard < 50; guard++) {
+    const code = 'GV' + id.toString(36).toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    if (!Object.values(users).some(function (u) { return u.ref_code === code; })) return code;
+  }
+  return 'GV' + id + '-' + Date.now().toString(36).toUpperCase();
+}
+/* توليد رمز إحالة لأي حساب قديم بلا رمز — ويُحفظ في قاعدة البيانات */
+Object.values(users).forEach(function (u) {
+  if (!u.ref_code) {
+    u.ref_code = genRefCode(u.id);
+    try { db.prepare('UPDATE users SET ref_code = ? WHERE id = ?').run(u.ref_code, u.id); } catch (e) {}
+  }
+});
+
+/* ═══════ صلاحيات الأدوار ═══════ */
+function isAdmin(u) { return !!u && (u.role === 'admin' || u.role === 'super'); }
+function isSuper(u) { return !!u && u.role === 'super'; }
+/* الألعاب المعطّلة (سوبر أدمن فقط): id → enabled */
+const gameFlags = {};
+
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
   { username: 'tarik', message: 'السلام عليكم ورحمة الله!', created_at: Date.now() - 60000 },
@@ -478,8 +511,16 @@ function getUser(req) {
 }
 function publicUser(u) {
   if (!u) return null;
-  return { id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang, twofa_enabled: !!u.twofaEnabled };
+  return {
+    id: u.id, username: u.username, role: u.role, gold: u.gold, lang: u.lang,
+    twofa_enabled: !!u.twofaEnabled,
+    ref_code: u.ref_code || null, admin_id: u.admin_id || null,
+    referred_by: u.referred_by || null,
+    muted_until: (u.muted_until && u.muted_until > Date.now()) ? u.muted_until : null
+  };
 }
+/* هل اللاعب موقوف عن التعليق الصوتي والمراسلة؟ */
+function isMuted(u) { return !!(u && u.muted_until && u.muted_until > Date.now()); }
 
 /* ═══════ الغرف: تسلسل + بثّ ═══════ */
 function serializeRoom(room) {
@@ -763,8 +804,18 @@ const server = http.createServer((req, res) => {
           json({ ok: false, message: 'اسم المستخدم محجوز' }, 400); return;
         }
         const { salt, hash } = hashPassword(password, null);
-        const u = { username: username, passHash: hash, passSalt: salt, role: 'user', gold: 0, lang: 'ar', banned: false };
+        const u = { username: username, passHash: hash, passSalt: salt, role: 'user', gold: 0, lang: 'ar', banned: false, admin_id: me.id };
         persistUser(u);
+        /* [Referral] رمز إحالة مميز للمسجّل الجديد + ربط اختياري برمز المحيل
+           (الأدمن يسأل العميل الجديد عن رمز الإحالة ويدخله ليستفيد صاحبه من هديته) */
+        u.ref_code = genRefCode(u.id);
+        if (data.referral_code) {
+          const rc = String(data.referral_code).trim().toUpperCase();
+          const ref = Object.values(users).find(function (x) { return x.ref_code === rc; });
+          if (!ref) { json({ ok: false, message: 'رمز الإحالة غير صالح' }, 400); return; }
+          if (ref.id !== u.id) u.referred_by = ref.id;
+        }
+        try { db.prepare('UPDATE users SET ref_code = ?, referred_by = ?, admin_id = ? WHERE id = ?').run(u.ref_code, u.referred_by || null, me.id, u.id); } catch (e) {}
         json({ ok: true, user: publicUser(u) });
         return;
       }
@@ -786,6 +837,14 @@ const server = http.createServer((req, res) => {
         const { salt, hash } = hashPassword(password, null);
         const u = { username: username, passHash: hash, passSalt: salt, role: role, gold: (data.gold != null ? Number(data.gold) : 0), lang: 'ar', banned: false };
         persistUser(u);
+        /* [Referral] رمز إحالة مميز لكل مسجّل + ربط اختياري برمز محيل */
+        u.ref_code = genRefCode(u.id);
+        if (data.referral_code) {
+          const rc = String(data.referral_code).trim().toUpperCase();
+          const ref = Object.values(users).find(function (x) { return x.ref_code === rc; });
+          if (ref && ref.id !== u.id) u.referred_by = ref.id;
+        }
+        try { db.prepare('UPDATE users SET ref_code = ?, referred_by = ? WHERE id = ?').run(u.ref_code, u.referred_by || null, u.id); } catch (e) {}
         json({ ok: true, user: publicUser(u) });
         return;
       }
@@ -992,6 +1051,7 @@ const server = http.createServer((req, res) => {
       }
       if (pathname === '/api/claim') { if (me) me.gold = (me.gold || 0) + 100; json({ ok: true, amount: 100, gold: me ? me.gold : 100 }); return; }
       if (pathname === '/api/chat') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن المراسلة حتى ' + new Date(me.muted_until).toLocaleString('ar-MA'), muted_until: me.muted_until }, 403); return; }
         const msg = { username: me ? me.username : 'زائر', message: data.message || '', created_at: Date.now() };
         chatMessages.push(msg); if (chatMessages.length > 50) chatMessages.shift();
         sseClients.forEach(c => sendSSE(c.res, 'chat', msg));
@@ -1002,7 +1062,7 @@ const server = http.createServer((req, res) => {
         json({ ok: true, tournaments: [] });
         return;
       }
-      if (pathname === '/api/games' || pathname === '/api/admin/games') { json({ ok: true, games: [] }); return; }
+      if (pathname === '/api/games' || (pathname === '/api/admin/games' && req.method === 'GET')) { json({ ok: true, games: gameFlags }); return; }
       if (pathname === '/api/rounds') { json({ ok: true }); return; }
 
       /* ── [Group] الجولات الجماعية: كينو (ke) وكراش (av) — الجولة والرصيد من السيرفر حصراً ── */
@@ -1153,6 +1213,174 @@ const server = http.createServer((req, res) => {
           };
         });
         json({ ok: true, rounds: out });
+        return;
+      }
+
+      /* ═══════ API الإدارة — الأدوار والصلاحيات ═══════
+         سوبر أدمن: كل الصلاحيات (تسجيل، مسح حساب، شحن/سحب مباشر،
+                    الاطلاع على الأرصدة، تغيير كلمات المرور والبيانات،
+                    تشغيل/توقيف الألعاب، الأدوار، الحظر، الإسكات).
+         أدمن: صلاحيات محدودة —
+           • تسجيل عميل جديد (مع رمز إحالة اختياري يقدمه العميل)
+           • شحن حساب أي عميل مسجل بالمنصة (يتطلب رصيداً كافياً عند الأدمن)
+           • استبدال كوينز العميل بمال حقيقي: لا سحب مباشر من حساب العميل —
+             العميل يرسل الكوينز للأدمن عبر «إرسال الكوينز» بنفسه
+           • إسكات لاعب عن التعليق الصوتي والمراسلة 24 ساعة أو أكثر */
+
+      if (pathname === '/api/admin/stats') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        const all = Object.values(users);
+        json({
+          ok: true,
+          users_total: all.length,
+          active_today: all.filter(function (u) { return u.last_seen && (Date.now() / 1000 - u.last_seen) < 86400; }).length,
+          plays_total: 0,
+          gold_total: isSuper(me) ? all.reduce(function (s, u) { return s + (u.gold || 0); }, 0) : 0,
+          coins_won_total: 0
+        });
+        return;
+      }
+
+      if (pathname === '/api/admin/users') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        /* السوبر يرى الجميع؛ الأدمن يرى لاعبيه (من سجلهم) فقط */
+        const list = Object.values(users)
+          .filter(function (u) { return isSuper(me) ? true : (u.admin_id === me.id && u.role === 'user'); })
+          .map(function (u) {
+            return {
+              id: u.id, username: u.username, gold: u.gold, role: u.role,
+              ref_code: u.ref_code || null, referred_by: u.referred_by || null,
+              admin_id: u.admin_id || null, banned: !!u.banned,
+              muted_until: (u.muted_until && u.muted_until > Date.now()) ? u.muted_until : null,
+              last_seen: u.last_seen || null, first_topup_done: !!u.first_topup_done
+            };
+          });
+        json({ ok: true, users: list, my_gold: me.gold });
+        return;
+      }
+
+
+      /* شحن/خصم/ضبط رصيد: /api/admin/user/:id/balance */
+      let mm = pathname.match(/^\/api\/admin\/user\/(\d+)\/(balance|password|ban|role|delete|mute)$/);
+      if (mm) {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        const target = users[parseInt(mm[1], 10)];
+        if (!target) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+        const op = mm[2];
+
+        if (op === 'balance') {
+          /* ضبط مباشر للرصيد: سوبر أدمن فقط */
+          if (data.gold !== undefined) {
+            if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+            target.gold = Math.max(0, parseInt(data.gold, 10) || 0);
+            try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(target.gold, target.id); } catch (e) {}
+            json({ ok: true, gold: target.gold });
+            return;
+          }
+          const amt = parseInt(data.amount, 10);
+          if (isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
+          if (data.action === 'charge') {
+            /* الأدمن يشحن أي عميل مسجل بالمنصة (من طرفه أو من طرف أدمن آخر)
+               بشرط رصيد كافٍ عنده؛ السوبر يشحن بلا قيد */
+            if (!isSuper(me)) {
+              if (target.role !== 'user') { json({ ok: false, message: 'يشحن حسابات العملاء فقط' }, 403); return; }
+              if ((me.gold || 0) < amt) { json({ ok: false, message: 'رصيد الأدمن غير كافٍ' }, 400); return; }
+              me.gold -= amt;
+            }
+            target.gold = (target.gold || 0) + amt;
+            /* هدية الإحالة: 10% من أول عملية شحن تُمنح لصاحب رمز الإحالة */
+            let refBonus = 0;
+            if (!target.first_topup_done && target.referred_by && users[target.referred_by]) {
+              refBonus = Math.floor(amt * 0.10);
+              if (refBonus > 0) users[target.referred_by].gold = (users[target.referred_by].gold || 0) + refBonus;
+            }
+            target.first_topup_done = true;
+            try {
+              db.prepare('UPDATE users SET gold = ?, first_topup_done = 1 WHERE id = ?').run(target.gold, target.id);
+              if (!isSuper(me)) db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id);
+              if (refBonus > 0 && users[target.referred_by]) db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(users[target.referred_by].gold, target.referred_by);
+            } catch (e) {}
+            json({ ok: true, gold: target.gold, admin_gold: me.gold, referral_bonus: refBonus });
+            return;
+          }
+          if (data.action === 'deduct') {
+            /* السحب المباشر من حساب العميل: سوبر أدمن فقط —
+               الأدمن لا يسحب مباشرة؛ العميل يرسل له الكوينز عبر «إرسال الكوينز»
+               لاستبدالها بمال حقيقي (والأدمن ملزم بالاحتفاظ بوصل الإرسال) */
+            if (!isSuper(me)) { json({ ok: false, message: 'لا يمكن للأدمن السحب المباشر — استعمل استقبال تحويل من العميل' }, 403); return; }
+            if ((target.gold || 0) < amt) { json({ ok: false, message: 'رصيد العميل غير كافٍ' }, 400); return; }
+            target.gold -= amt;
+            try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(target.gold, target.id); } catch (e) {}
+            json({ ok: true, gold: target.gold });
+            return;
+          }
+          json({ ok: false, message: 'عملية غير معروفة' }, 400);
+          return;
+        }
+
+        if (op === 'password') {
+          /* تغيير كلمة مرور العملاء: السوبر لأي حساب؛ الأدمن للاعبيه فقط */
+          if (!isSuper(me) && !(target.role === 'user' && target.admin_id === me.id)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+          if (String(data.password || '').length < 6) { json({ ok: false, message: 'كلمة مرور قصيرة' }, 400); return; }
+          const ph = hashPassword(String(data.password), null);
+          target.passHash = ph.hash; target.passSalt = ph.salt;
+          try { db.prepare('UPDATE users SET pass_hash = ?, pass_salt = ? WHERE id = ?').run(ph.hash, ph.salt, target.id); } catch (e) {}
+          json({ ok: true });
+          return;
+        }
+
+        if (op === 'ban') {
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          target.banned = !!data.banned;
+          try { db.prepare('UPDATE users SET banned = ? WHERE id = ?').run(target.banned ? 1 : 0, target.id); } catch (e) {}
+          json({ ok: true, banned: target.banned });
+          return;
+        }
+
+        if (op === 'role') {
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          if (target.id === me.id) { json({ ok: false, message: 'لا يمكنك تغيير دورك' }, 400); return; }
+          if (['user', 'admin', 'super'].indexOf(data.role) === -1) { json({ ok: false, message: 'دور غير صالح' }, 400); return; }
+          target.role = data.role;
+          try { db.prepare('UPDATE users SET role = ? WHERE id = ?').run(target.role, target.id); } catch (e) {}
+          json({ ok: true, role: target.role });
+          return;
+        }
+
+        if (op === 'delete') {
+          /* مسح حساب: سوبر أدمن فقط */
+          if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+          if (target.id === me.id) { json({ ok: false, message: 'لا يمكنك مسح حسابك' }, 400); return; }
+          try { db.prepare('DELETE FROM users WHERE id = ?').run(target.id); } catch (e) {}
+          delete users[target.id];
+          Object.keys(sessions).forEach(function (sid) { if (sessions[sid] === target.id) delete sessions[sid]; });
+          json({ ok: true });
+          return;
+        }
+
+        if (op === 'mute') {
+          /* توقيف عن التعليق الصوتي والمراسلة 24 ساعة أو أكثر (الأدمن والسوبر) */
+          if (data.unmute) {
+            if (!isSuper(me)) { json({ ok: false, message: 'رفع الإسكات: سوبر أدمن فقط' }, 403); return; }
+            target.muted_until = 0;
+            try { db.prepare('UPDATE users SET muted_until = 0 WHERE id = ?').run(target.id); } catch (e) {}
+            json({ ok: true, muted_until: null });
+            return;
+          }
+          const hours = Math.max(24, parseInt(data.hours, 10) || 24);   /* الحد الأدنى 24 ساعة حسب قواعد المنصة */
+          target.muted_until = Date.now() + hours * 3600 * 1000;
+          try { db.prepare('UPDATE users SET muted_until = ? WHERE id = ?').run(target.muted_until, target.id); } catch (e) {}
+          json({ ok: true, muted_until: target.muted_until, hours: hours });
+          return;
+        }
+      }
+
+      /* تشغيل/توقيف الألعاب: سوبر أدمن فقط */
+      mm = pathname.match(/^\/api\/admin\/games\/([\w-]+)\/toggle$/);
+      if (mm) {
+        if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+        gameFlags[mm[1]] = !!data.enabled;
+        json({ ok: true, enabled: gameFlags[mm[1]] });
         return;
       }
 
@@ -1524,6 +1752,7 @@ const server = http.createServer((req, res) => {
 
       /* [Req8] بثّ رسالة صوتية (≤10ث) لكل أعضاء الغرفة */
       if (pathname === '/api/rooms/voice') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن التعليق الصوتي', muted_until: me.muted_until }, 403); return; }
         const room = rooms[data.room_id];
         if (room && me) {
           let audio = String(data.audio || '');
@@ -1568,6 +1797,7 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/rooms/chat') {
+        if (isMuted(me)) { json({ ok: false, message: 'موقوف عن المراسلة', muted_until: me.muted_until }, 403); return; }
         const room = rooms[data.room_id];
         if (room) {
           const msg = {

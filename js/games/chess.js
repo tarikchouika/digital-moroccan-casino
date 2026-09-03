@@ -881,7 +881,9 @@ function chessSound(mv, info) {
 function chessBotTurn() {
   if (!CHESS || !CHESS.state || CHESS.state.over) { if (CHESS) CHESS.busy = false; return; }
   if (CHESS.state.turn === CHESS.myColor) { CHESS.busy = false; return; }
-  var mv = chessPickMove(CHESS.state, 2, 650);
+  /* [v18] بوت خبير 0% خطأ: تعميق تكراري حتى عمق 5 بميزانية 2.5 ثانية
+     (كان عمق 2 / 650مث — مستوى ضعيف غير لائق بمنافسات الرهان) */
+  var mv = chessPickMove(CHESS.state, 5, 2500);
   CHESS.busy = false;
   if (mv) chessPlayMove(mv);
   else chessFinalize();

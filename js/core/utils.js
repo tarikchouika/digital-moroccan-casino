@@ -22,7 +22,7 @@ function T(key) {
 function fmt(n) {
   try {
     const lang = typeof ST !== 'undefined' ? ST.lang : 'ar';
-    const locale = lang === 'ar' ? 'ar-MA' :
+    const locale = (lang === 'ar' || lang === 'da') ? 'ar-MA' :
                    lang === 'fr' ? 'fr-FR' : 'en-US';
     return n.toLocaleString(locale);
   } catch (e) {
@@ -137,6 +137,9 @@ function _syncHash(id) {
 }
 function navFromHash() {
   var hash = window.location.hash.replace('#', '') || 'home';
+  /* الصفحات القانونية صارت ملفات html مستقلة — الروابط القديمة #about وأخواتها تُحوَّل إليها */
+  var LEGAL_PAGES = { about: 1, terms: 1, privacy: 1, fairness: 1, 'provably-fair': 1, '2fa': 1, contact: 1, admins: 1 };
+  if (LEGAL_PAGES[hash]) { window.location.href = hash + '.html'; return; }
   var el = document.querySelector('[data-nav="' + hash + '"]');
   if (typeof nav === 'function') nav(hash, el);
 }
@@ -242,11 +245,12 @@ function updateCopyright() {
     el.textContent = year;
   });
 }
-/* ── تطبيق اتجاه الصفحة ── */
+/* ── تطبيق اتجاه الصفحة ──
+   الدارجة المغربية عربية وتُكتب من اليمين إلى اليسار مثل الفصحى */
 function applyI18n() {
-  const dir = ST.lang === 'ar' ? 'rtl' : 'ltr';
+  const dir = (ST.lang === 'ar' || ST.lang === 'da') ? 'rtl' : 'ltr';
   document.documentElement.setAttribute('dir', dir);
-  document.documentElement.setAttribute('lang', ST.lang);
+  document.documentElement.setAttribute('lang', ST.lang === 'da' ? 'ar-MA' : ST.lang);
 }
 /* ── أدوات الورق ── */
 const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
