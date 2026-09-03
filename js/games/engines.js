@@ -75,6 +75,7 @@ function gFrame(inner, g) {
     ? '<div class="gstage-bg" style="background-image:url(assets/games/' + GAME_IMG[g.id] + '/background.webp)"></div>'
     : '';
   return '<div class="stage">' + gbg +
+    '<div class="glogo-wm" aria-hidden="true"></div>' +
     '<div class="gtop">' +
       '<span class="pf"> Provably Fair</span>' +
       '<span class="ctext">RTP <b style="color:var(--green2)">' + g.rtp + '%</b></span>' +
@@ -2335,7 +2336,7 @@ const KENO_PAYS = [
   [0, 0, 0, 0, 0, 10, 63, 313, 2170, 28930],
   [0, 0, 0, 0, 0, 5, 28, 154, 794, 4205, 56061]
 ];
-let kPicks = [], kNumbers = [], kDrawing = false;
+let kPicks = [], kNumbers = [], kDrawing = false, kPlacedBets = [];
 function eKeno(g) {
   let cells = '';
   for (let n = 1; n <= 80; n++) {
@@ -2360,6 +2361,10 @@ function eKeno(g) {
 }
 function kToggle(n) {
   if (kDrawing) return;
+  /* [MultiBet] رقم مرهون عليه في تذكرة سابقة لا يُختار ثانية — أرقام مختلفة لكل رهان */
+  for (let bi = 0; bi < kPlacedBets.length; bi++) {
+    if (kPlacedBets[bi].picks.indexOf(n) !== -1) { toast(T('ke.dupWarn'), 'warn'); return; }
+  }
   const idx = kPicks.indexOf(n);
   if (idx !== -1) {
     kPicks.splice(idx, 1);
@@ -2399,10 +2404,19 @@ function kStart() {
     }
     /* الرصيد يتحدث حصرياً من السيرفر */
     if (typeof Group !== 'undefined' && Group.setGold && typeof r.data.gold === 'number') Group.setGold(r.data.gold);
-    kDrawing = true;
-    if (btn) btn.disabled = true;
+    /* [MultiBet] الرهان قُبل: يُحفظ محلياً وتُفرَّغ الاختيارات — يمكن رهان آخر
+       بأرقام مختلفة في نفس الجولة حتى إقفال نافذة الرهان */
+    kPlacedBets.push({ picks: kPicks.slice(), bet: GB });
+    kPicks.forEach(function (n) {
+      const cell = document.querySelector('.kc[data-num="' + n + '"]');
+      if (cell) { cell.classList.remove('sel'); cell.classList.add('placed'); }
+    });
+    kPicks = [];
+    const cc = document.getElementById('kCounter');
+    if (cc) cc.innerHTML = '🔢 <b>0</b>/10 ' + T('ke.sel') + ' · 🎫 ' + kPlacedBets.length;
+    if (btn) btn.disabled = false;
     SND.spin();
-    gres(T('grp.placeBet'), 0);
+    gres(T('grp.placeBet') + ' 🎫 ' + kPlacedBets.length, 0);
   });
 }
 /* كشف أرقام الجولة المسحوبة (يستدعيها Group.keOnDraw عبر SSE/round API) */
@@ -2418,25 +2432,36 @@ function keReveal(numbers) {
     c.classList.remove('drawn', 'match', 'miss');
   });
   /* كشف الأرقام المسحوبة تباعاً */
+  /* [MultiBet] كل الأرقام المرهون عليها (من كل التذاكر) تُلوَّن كإصابة/إخفاق */
+  const allPicked = {};
+  kPlacedBets.forEach(function (b) { b.picks.forEach(function (n) { allPicked[n] = 1; }); });
+  kPicks.forEach(function (n) { allPicked[n] = 1; });
   numbers.forEach(function (n, di) {
     setTimeout(function () {
       const cell = document.querySelector('.kc[data-num="' + n + '"]');
       if (!cell) return;
       cell.classList.add('drawn');
-      if (kPicks.indexOf(n) !== -1) cell.classList.add('match');
+      if (allPicked[n]) cell.classList.add('match');
       else cell.classList.add('miss');
       if (di === numbers.length - 1) keFinish();
     }, di * 120);
   });
 }
 function keFinish() {
-  const hits = kPicks.filter(function (n) { return kNumbers.indexOf(n) !== -1; }).length;
-  const k = kPicks.length;
-  const mult = (KENO_PAYS[k] && KENO_PAYS[k][hits]) || 0;
-  const w = Math.floor(GB * mult);
+  /* [MultiBet] تجميع نتائج كل التذاكر المرهونة في الجولة */
+  const bets = kPlacedBets.length ? kPlacedBets : (kPicks.length ? [{ picks: kPicks, bet: GB }] : []);
+  let totalWin = 0;
+  const parts = [];
+  bets.forEach(function (b) {
+    const hits = b.picks.filter(function (n) { return kNumbers.indexOf(n) !== -1; }).length;
+    const mult = (KENO_PAYS[b.picks.length] && KENO_PAYS[b.picks.length][hits]) || 0;
+    const w = Math.floor(b.bet * mult);
+    totalWin += w;
+    parts.push(hits + '/' + b.picks.length + (mult ? '×' + mult : ''));
+  });
   /* العرض محلي — الرصيد الفعلي يتحدث من السيرفر بعد التسوية */
-  gres(T('ke.result') + ' ' + hits + '/20' + (mult ? ' ×' + mult : ''), w);
-  if (w > 0) winFX(w);
+  gres(T('ke.result') + ' ' + parts.join(' · '), totalWin);
+  if (totalWin > 0) winFX(totalWin);
   fairTick();
 }
 /* نتيجة الجولة الجماعية من السيرفر (winners/total_paid) */
@@ -2450,8 +2475,9 @@ function keNewRound() {
   kPicks = [];
   kNumbers = [];
   kDrawing = false;
+  kPlacedBets = [];
   document.querySelectorAll('.kc').forEach(function (c) {
-    c.classList.remove('drawn', 'match', 'miss', 'sel');
+    c.classList.remove('drawn', 'match', 'miss', 'sel', 'placed');
   });
   const c = document.getElementById('kCounter');
   if (c) c.innerHTML = '🔢 <b>0</b>/10 ' + T('ke.sel');

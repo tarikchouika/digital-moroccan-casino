@@ -146,7 +146,7 @@
   min-height: 0;
   background:
     /* [Logo] شعار المنصة بمنتصف الطاولة — واضح ومتناسق، خلف أكوام الأوراق */
-    url('../../assets/logo/card-emblem.png') center / min(34%, 300px) auto no-repeat,
+    url('../../assets/logo/logo-transparent.png') center / min(38%, 340px) auto no-repeat,
     radial-gradient(ellipse at center, #1b4d3e 0%, #0d2e24 65%, #061712 100%);
   border: calc(var(--card-w) * 0.22) solid #4a2e18;
   /* زوايا قائمة لاستغلال كامل مساحة المستطيل دون قصّ للأوراق عند المنحنيات */

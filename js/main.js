@@ -870,9 +870,11 @@ function recordRound(won, payout, txt) {
   const bet = (typeof GB === 'number') ? GB : 0;
   const row = {
     username: me,
+    game_id: gid,
     bet: bet,
     won: won ? 1 : 0,
     payout: (typeof payout === 'number' && payout > 0) ? payout : 0,
+    result_txt: (typeof txt === 'string' && txt) ? String(txt).slice(0, 90) : '',
     created_at: Math.floor(Date.now() / 1000),
     local: true
   };
@@ -918,29 +920,52 @@ function renderGameHistory() {
     el.innerHTML = '<div class="ght-empty">' + (T('ghist.empty') || 'لا توجد جولات بعد') + '</div>';
     return;
   }
-  /* سجل الجولات على شكل تذاكر صغيرة مكدّسة (لاعب/رهان/نتيجة/مكسب/وقت) */
+  /* [Tickets v2] تذاكر مفصلة: لعبة/لاعب/رهان/مكسب/صافي/مضاعف/نتيجة/تاريخ ووقت */
   el.innerHTML = rows.slice(0, 25).map(function (r) {
-    const t = r.created_at ? new Date(r.created_at * 1000).toLocaleTimeString() : '—';
+    const d = r.created_at ? new Date(r.created_at * 1000) : null;
+    const tTime = d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
+    const tDate = d ? d.toLocaleDateString() : '';
     const won = !!r.won;
+    const bet = r.bet || 0;
+    const pay = (won && r.payout > 0) ? r.payout : 0;
+    const net = pay - bet;
+    const gname = (function () {
+      try {
+        const gid = r.game_id || window._currentGameId;
+        if (gid && typeof GAMES !== 'undefined') {
+          const g = GAMES.find(function (x) { return x.id === gid; });
+          if (g && g.n) return (typeof langIndex === 'function' ? (g.n[langIndex()] || g.n[0]) : g.n[0]) + (g.em ? ' ' + g.em : '');
+        }
+        return gid || '';
+      } catch (e) { return ''; }
+    })();
+    const mult = (pay > 0 && bet > 0) ? (Math.round((pay / bet) * 100) / 100) : 0;
     const who = r.local
       ? '<b class="gold-text">' + esc(r.username) + '</b>'
       : '<span class="ght-name">' + esc(r.username) + '</span>';
     const badge = won
-      ? '<span class="ght-badge win">' + (T('g.win') || 'فوز') + '</span>'
+      ? '<span class="ght-badge win">' + (T('g.win') || 'فوز') + (mult ? ' ×' + mult : '') + '</span>'
       : '<span class="ght-badge lose">' + (T('g.loss') || 'خسارة') + '</span>';
-    const payout = (won && r.payout > 0)
-      ? '<span class="ght-payout">+<i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(r.payout) + '</span>'
+    const payout = pay > 0
+      ? '<span class="ght-payout">+<i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(pay) + '</span>'
       : '<span class="ght-payout muted">—</span>';
+    const netHtml = '<span class="ght-net ' + (net >= 0 ? 'pos' : 'neg') + '">' +
+      (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + '</span>';
+    const resLine = (r.result_txt && r.local)
+      ? '<div class="ght-res">' + esc(r.result_txt) + '</div>'
+      : '';
     return '<div class="ght-ticket ' + (won ? 'is-win' : 'is-lose') + '">' +
       '<div class="ght-top">' +
-        '<span class="ght-who">' + who + '</span>' +
+        '<span class="ght-who">' + who + (gname ? ' <span class="ght-game">· ' + esc(gname) + '</span>' : '') + '</span>' +
         badge +
       '</div>' +
       '<div class="ght-mid">' +
-        '<span class="ght-bet"><i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(r.bet) + '</span>' +
+        '<span class="ght-bet" title="الرهان"><i class="fa-solid fa-coins" aria-hidden="true"></i> ' + fmt(bet) + '</span>' +
         payout +
-        '<span class="ght-time">' + t + '</span>' +
+        netHtml +
+        '<span class="ght-time">' + tTime + (tDate ? ' · ' + tDate : '') + '</span>' +
       '</div>' +
+      resLine +
     '</div>';
   }).join('');
 }

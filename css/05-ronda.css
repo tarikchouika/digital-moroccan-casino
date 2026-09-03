@@ -125,6 +125,14 @@
   border: 1.5px dashed rgba(245, 197, 24, 0.18);
   pointer-events: none;
 }
+/* [Logo] اللوغو الرسمي بمنتصف طاولة الرندة — طبقة شفافة خلف الأوراق */
+.fd-felt::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('../assets/logo/logo-transparent.png') center / min(46%, 280px) auto no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+}
 
 /* dealer / selector rows */
 .fd-dealer, .fd-selector {

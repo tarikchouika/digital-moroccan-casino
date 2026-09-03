@@ -72,6 +72,15 @@
     0 0 0 6px #d9a94e,
     inset 0 0 0 1px rgba(255, 227, 150, 0.2);
 }
+/* [Logo] اللوغو الرسمي بمنتصف رقعة الشطرنج — علامة مائية فوق المربعات وخلف القطع */
+.ch-board::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('../assets/logo/logo-transparent.png') center / min(44%, 250px) auto no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 1;
+}
 .ch-sq { position: relative; display: flex; align-items: center; justify-content: center; cursor: default; user-select: none; }
 .ch-sq.light { background: linear-gradient(135deg, #efe0bb, #e2ce9d); }
 .ch-sq.dark { background: linear-gradient(135deg, #8a5a2c, #6b3f1c); }

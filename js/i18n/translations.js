@@ -375,6 +375,7 @@ const TR = {
   'ke.hint': [ 'اختر 1-10 أرقام من 1-80 — يُسحب 20 رقماً', 'Choisissez 1-10 numéros de 1-80 — 20 sont tirés', 'Pick 1-10 numbers from 1-80 — 20 are drawn', 'اختر 1-10 أرقام من 1-80 — يُسحب 20 رقماً' ],
   'ke.hitWarn': [ 'اختر 1-10 أرقام أولاً', 'Choisissez 1-10 numéros d\'abord', 'Pick 1-10 numbers first', 'اختر 1-10 أرقام أولاً' ],
   'ke.maxWarn': [ 'الحد الأقصى 10 أرقام', 'Maximum 10 numéros', 'Max 10 numbers', 'الحد الأقصى 10 أرقام' ],
+  'ke.dupWarn': [ 'هذا الرقم مرهون عليه في تذكرة سابقة — اختر رقماً آخر', 'Ce numéro est déjà misé sur un billet précédent', 'Number already bet on a previous ticket', 'هاد الرقم راه مرهون عليه فتذكرة سابقة — ختار رقم آخر' ],
   'ke.result': [ 'إصاباتك', 'Correspondances', 'Your matches', 'إصاباتك' ],
   'ke.sel': [ 'مختار', 'Sélection', 'Selected', 'مختار' ],
   'l7.ball': [ 'الكرة', 'Boule', 'Ball', 'الكرة' ],

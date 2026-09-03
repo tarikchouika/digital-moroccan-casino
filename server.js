@@ -261,8 +261,8 @@ setInterval(() => {
    العميل يرى نفس الجولة/النتيجة ويضبط رصيده من ردود السيرفر فقط. */
 const GROUP_KE = 'ke', GROUP_AV = 'av';
 const GROUP_ROUND_CFG = {
-  ke: { bet_ms: 20000, draw_ms: 5000 },
-  av: { bet_ms: 12000 }
+  ke: { bet_ms: 90000, draw_ms: 5000 },
+  av: { bet_ms: 90000 }
 };
 /* نسخة خادمية من جدول مضاعفات كينو — تطابق js/games/engines.js KENO_PAYS حرفياً */
 const KENO_PAYS = [
@@ -1121,6 +1121,18 @@ const server = http.createServer((req, res) => {
           json({ ok: false, message: 'مبلغ غير صالح' }, 400); return;
         }
         if ((me.gold || 0) < amount) { json({ ok: false, message: 'رصيد غير كافٍ' }, 400); return; }
+        /* [MultiBet] رهانات متعددة في نفس الجولة مسموحة — لكن بأرقام مختلفة:
+           أي رقم سبق للمستخدم الرهان عليه في هذه الجولة يُرفض */
+        {
+          const prevBets = db.prepare('SELECT picks FROM group_bets WHERE round_id = ? AND user_id = ?').all(r.id, me.id);
+          const used = {};
+          for (const pb of prevBets) {
+            try { JSON.parse(pb.picks || '[]').forEach(function (n) { used[n] = 1; }); } catch (e) {}
+          }
+          for (const n of picks) {
+            if (used[n]) { json({ ok: false, message: 'رقم ' + n + ' مرهون عليه في هذه الجولة — اختر أرقاماً مختلفة' }, 400); return; }
+          }
+        }
         /* [Group] الخصم من الذاكرة + DB معاً (نمط هذا المشروع) */
         me.gold = me.gold - amount;
         try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id); } catch (e) {}

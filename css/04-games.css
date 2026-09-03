@@ -20,6 +20,15 @@
   pointer-events: none;
 }
 html[data-theme="radiant"] .gstage-bg { opacity: 0.16; }
+/* [Logo] علامة مائية باللوغو الرسمي بمنتصف طاولة كل لعبة (فوق خلفية الفن، خلف الواجهة) */
+.glogo-wm {
+  position: absolute;
+  inset: 0;
+  background: url('../assets/logo/logo-transparent.png') center / min(46%, 300px) auto no-repeat;
+  opacity: 0.13;
+  pointer-events: none;
+}
+html[data-theme="radiant"] .glogo-wm { opacity: 0.1; }
 .gtop { display: none !important; }
 .pf {
   display: inline-flex;
@@ -1341,12 +1350,26 @@ canvas.game {
   border-radius: 50%;
   background: linear-gradient(145deg, var(--bg3), #131a33);
   border: 2px solid var(--bd);
-  color: var(--t2);
-  font-weight: 700;
-  font-size: 0.72rem;
+  color: #e8ecf5;
+  font-weight: 800;
+  /* [KenoFix] رقم واضح كامل: حجم متكيف + بلا حشو يقص الخانات ذات الرقمين */
+  font-size: clamp(0.72rem, 2.6vw, 1rem);
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: all 0.15s var(--ease);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+/* [MultiBet] رقم مرهون عليه في تذكرة مؤكدة: أخضر ثابت حتى نهاية الجولة */
+.kc.placed {
+  background: linear-gradient(145deg, #10b981, #047857);
+  color: #fff;
+  border-color: #6ee7b7;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
 }
 .kc:hover:not(.sel):not(.drawn) {
   border-color: var(--gold);
@@ -2454,6 +2477,20 @@ body.rami-game-open { overflow: hidden; }
 .ght-payout { font-weight: 700; color: var(--green2, #10b981); }
 .ght-payout i { margin-inline-end: 3px; }
 .ght-payout.muted { color: var(--t3); font-weight: 500; }
+/* [Tickets v2] تفاصيل إضافية: اسم اللعبة، الصافي، سطر النتيجة */
+.ght-game { color: var(--t3); font-size: 0.72rem; font-weight: 600; }
+.ght-net { font-weight: 800; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.ght-net.pos { color: var(--green2, #10b981); }
+.ght-net.neg { color: #ef4444; }
+.ght-res {
+  font-size: 0.7rem;
+  color: var(--t3);
+  border-top: 1px dashed var(--bd);
+  padding-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .ght-time { color: var(--t3); font-size: 0.72rem; margin-inline-start: auto; }
 /* ── ترقية البطاقات (هوية بصرية) ── */
 .tile {

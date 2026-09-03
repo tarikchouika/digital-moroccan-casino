@@ -1127,9 +1127,12 @@ function blFitCanvas() {
   /* v12c: التصاق علوي دائم — وضع الصفحة يحاكي الشاشة الممتلئة تماماً:
      الطاولة تلتصق بأعلى العلبة (تحت الصينية مباشرة) وفائض الأسفل يُطلى خشباً */
   var topAnchor = true;
-  if (!portrait) B.VT = { a: s, b: 0, c: 0, d: s, e: EDGE * s, f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: false, s: s };
-  else if (!B.flip) B.VT = { a: 0, b: -s, c: s, d: 0, e: EDGE * s, f: topAnchor ? s * (W + EDGE) : ch - s * EDGE, portrait: true, s: s };
-  else B.VT = { a: 0, b: s, c: -s, d: 0, e: s * (H + EDGE), f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: true, s: s };   /* مقلوب 180° */
+  /* [Orient] توسيط أفقي: فائض العرض يتوزع نصفين (خشب متناظر) بدل التصاق يسار
+     يترك شريطاً خشبياً عريضاً في جهة واحدة — المحور الرأسي يبقى بالتصاق علوي (v12c) */
+  var padX = Math.max(0, (cw - (portrait ? S2 : L) * s) / 2);
+  if (!portrait) B.VT = { a: s, b: 0, c: 0, d: s, e: padX + EDGE * s, f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: false, s: s };
+  else if (!B.flip) B.VT = { a: 0, b: -s, c: s, d: 0, e: padX + EDGE * s, f: topAnchor ? s * (W + EDGE) : ch - s * EDGE, portrait: true, s: s };
+  else B.VT = { a: 0, b: s, c: -s, d: 0, e: padX + s * (H + EDGE), f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: true, s: s };   /* مقلوب 180° */
 
   /* محاذاة الشريطين مع الضلعين الأعلى/الأيمن (صيغة مغلقة — بلا تكرار متباعد):
      ارتفاع الشريط العلوي = ارتفاع الحاوية − (مقياس العرض × طول الطاولة)، فيبتلع
@@ -1166,8 +1169,10 @@ function blFitCanvas() {
     {
       /* مماس الحلقة أسفل-يسارها: الزاوية العليا اليمنى للطاولة تمرّ بها تماماً */
       var rcx = fxr.left + fxr.width / 2, rcy = fxr.top + fxr.height / 2, rrr = fxr.width / 2;
-      rowW = Math.max(22, Math.min(Math.round(rcy + rrr * 0.7071 - F.top), 240));
-      colW = Math.max(30, Math.min(Math.round(F.right - rcx + rrr * 0.7071), 190));
+      /* [Orient] حدود دنيا تكفل بقاء الأزرار وشريط القوة بحجم صالح للمس في
+         اللاندسكيب والبورتريه معاً — الشريطان ثابتان مكاناً في كل اتجاه */
+      rowW = Math.max(44, Math.min(Math.round(rcy + rrr * 0.7071 - F.top), 240));
+      colW = Math.max(54, Math.min(Math.round(F.right - rcx + rrr * 0.7071), 190));
     }
     if (frame._blRows !== rowW || frame._blCols !== colW) {
       frame._blRows = rowW; frame._blCols = colW;
@@ -1231,6 +1236,24 @@ function blDraw() {
   /* 2. أرضية القماش تغطي حتى −3 */
   ctx.fillStyle = bed;
   ctx.fillRect(-3, -3, W + 6, H + 6);
+
+  /* [Logo] اللوغو الرسمي بمنتصف قماش الطاولة — علامة مائية خفيفة تحت الكرات */
+  if (!B._logoImg) {
+    B._logoImg = new Image();
+    B._logoImg.src = 'assets/logo/logo-transparent.png';
+    B._logoImg.onload = function () { try { blDraw(); } catch (e) {} };
+  }
+  if (B._logoImg.complete && B._logoImg.naturalWidth) {
+    var lw = W * 0.34, lh = lw * B._logoImg.naturalHeight / B._logoImg.naturalWidth;
+    if (lh > H * 0.62) { lh = H * 0.62; lw = lh * B._logoImg.naturalWidth / B._logoImg.naturalHeight; }
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    /* في البورتريه المنظور مُدار — اللوغو يُرسم بدوران معاكس ليظهر معتدلاً للاعب */
+    ctx.translate(W / 2, H / 2);
+    if (VT.portrait) ctx.rotate(B.flip ? -Math.PI / 2 : Math.PI / 2);
+    ctx.drawImage(B._logoImg, -lw / 2, -lh / 2, lw, lh);
+    ctx.restore();
+  }
 
   /* 3. الأعناق الستة بلون فراش الأرضية تماماً (بلا تدرج ولا خشب) */
   if (hasPk) blDrawNecks(ctx, W, H, bed, t.id === 'snooker' ? 0.75 : 1, blNeckScale(t.id));

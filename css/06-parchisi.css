@@ -245,6 +245,14 @@
   margin: 0 auto;
   container-type: inline-size;
 }
+/* [Logo] اللوغو الرسمي بمنتصف لوحة بارتشي — علامة مائية فوق الكانفاس (منطقة الوسط) */
+.pr-boardwrap::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('../assets/logo/logo-transparent.png') center / min(30%, 170px) auto no-repeat;
+  opacity: 0.14;
+  pointer-events: none;
+}
 #parchisiCanvas {
   width: 100%;
   height: auto;

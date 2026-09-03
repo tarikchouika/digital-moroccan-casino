@@ -283,6 +283,15 @@
     0 0 0 6px #d9a94e,
     inset 0 0 0 1px rgba(255, 227, 150, 0.2);
 }
+/* [Logo] اللوغو الرسمي بمنتصف لوحة الدامة — علامة مائية فوق المربعات وخلف القطع */
+.dama-board::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('../assets/logo/logo-transparent.png') center / min(44%, 250px) auto no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 1;
+}
 .dm-sq { position: relative; display: flex; align-items: center; justify-content: center; cursor: default; }
 .dm-sq.light { background: linear-gradient(135deg, #e9d6a8, #dcc189); }
 .dm-sq.dark { background: linear-gradient(135deg, #7a4a22, #5e3618); }
