@@ -4,7 +4,7 @@ const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT, 10) || 3000;   /* [Render] المنفذ من البيئة */
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
