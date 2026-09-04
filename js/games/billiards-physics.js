@@ -261,15 +261,32 @@
      4) الفيزياء — خطوة واحدة (تُنادى 240 مرة/ثانية)
      dt بوحدة «إطار 60Hz» → 0.25 لكل خطوة عند 240Hz
      ══════════════════════════════════════════════════════════ */
+  /* [PocketReal v2] نموذج عبور الحافة: سطح اللعب هو كامل المستطيل [0..W]×[0..H]
+     بما فيه أعناق الحفر (بين نهايتي الوسادتين) — الكرة تستقر فيها كأي جزء
+     من الطاولة. السقوط يحدث حصراً حين يعبر مركز الكرة حافة المستطيل عبر
+     فجوة فم حفرة (الوسائد تسدّ باقي الحواف). لا «شفط» في العنق، ولا ارتداد
+     بعد الدخول، ولا تجاوز للفوهة — أول عبور = سقوط نهائي فوري. */
   function pocketAt(table, x, y) {
-    var ps = table.pockets;
-    for (var i = 0; i < ps.length; i++) {
-      var p = ps[i], dx = x - p.x, dy = y - p.y;
-      /* [PocketReal] r × 0.95: السقوط فقط حين يتجاوز مركز الكرة شفة الحفرة
-         فعلياً — عنق الحفرة (بين نهايتي الوسادتين) جزء مستوٍ من الطاولة،
-         والكرة البطيئة التي تتوقف فيه تستقر هناك بدل السقوط الآلي القديم (×1.15) */
-      if (dx * dx + dy * dy < p.r * p.r * 0.9025) return p;
+    if (!table.pockets.length) return null;
+    var W = table.W, H = table.H;
+    if (x >= 0 && x <= W && y >= 0 && y <= H) return null;   /* المركز فوق السطح = لا سقوط أبداً */
+    var cg = table.cornerGap, sg = table.sideGap;
+    var tol = table.R * 0.6;                                  /* سماحية رأس الفك */
+    var outX = (x < 0 || x > W), outY = (y < 0 || y > H);
+    var id = null;
+    if (outY && !outX) {              /* عبور الحافة العليا/السفلى */
+      if (x <= cg + tol) id = (y < 0) ? 'TL' : 'BL';
+      else if (x >= W - cg - tol) id = (y < 0) ? 'TR' : 'BR';
+      else if (sg !== null && sg !== undefined && Math.abs(x - W / 2) <= sg + tol) id = (y < 0) ? 'TC' : 'BC';
+    } else if (outX && !outY) {       /* عبور الحافة اليسرى/اليمنى */
+      if (y <= cg + tol) id = (x < 0) ? 'TL' : 'TR';
+      else if (y >= H - cg - tol) id = (x < 0) ? 'BL' : 'BR';
+    } else {                          /* عبور قطري عند زاوية */
+      id = (x < 0) ? ((y < 0) ? 'TL' : 'BL') : ((y < 0) ? 'TR' : 'BR');
     }
+    if (!id) return null;             /* اختراق وسادة لحظي (سرعة قصوى) — سيُرجعه حل الوسائد */
+    for (var i = 0; i < table.pockets.length; i++)
+      if (table.pockets[i].id === id) return table.pockets[i];
     return null;
   }
 

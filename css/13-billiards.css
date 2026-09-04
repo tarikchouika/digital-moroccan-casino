@@ -568,3 +568,125 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 }
 /* إبطال أثر fitGameStage كلياً على مسرح البلياردو (transform + margin) */
 #gamePageBody #billiardsStage { margin-bottom: 0 !important; }
+
+/* ════════════════════════════════════════════════════════════════
+   [UI-v2] تصميم واجهة البلياردو حسب الصورة المركبة (2026-09-04)
+   بورتريه: شريط علوي (تدوير + صينية) + عمود أيمن (كما كان تماماً).
+   لاندسكيب: بلا شريط علوي — عمودان خشبيان جانبيان:
+     يسار: تدوير / أفاتار الخصم / لونه / صينية كراته / كرة الدوران؛
+     يمين: أفاتاري / لوني / صينية كراتي / شريط القوة / زر التنفيذ.
+   + زر إيموجي تعبيري على حافة الطاولة.
+   ════════════════════════════════════════════════════════════════ */
+.bl-lrail { display: none; }
+
+.bl-frame.bl-land { grid-template-rows: minmax(0, 1fr); }
+.bl-frame.bl-land .bl-topbar,
+.bl-frame.bl-land .bl-corner { display: none; }
+.bl-frame.bl-land .bl-lrail {
+  grid-column: 1; grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 4px 2px;
+  min-height: 0;
+  background:
+    repeating-linear-gradient(180deg, rgba(60,30,8,.10) 0 3px, rgba(0,0,0,0) 3px 9px),
+    linear-gradient(270deg, #a9753a, #c08a4a 45%, #d9a566);
+  border-right: 2px solid #8a5a24;
+  box-shadow: inset -4px 0 8px rgba(0,0,0,.28), inset 2px 0 3px rgba(255,235,190,.3);
+}
+.bl-frame.bl-land .bl-mid { grid-column: 2; grid-row: 1; }
+.bl-frame.bl-land .bl-rail {
+  grid-column: 3; grid-row: 1;
+  justify-content: flex-start;
+  align-items: center;
+  border-left: 2px solid #8a5a24;
+}
+
+/* الدوران بأسفل العمود الأيسر (كبيرة كما في الصورة) والتنفيذ بأسفل الأيمن */
+.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; width: min(84px, 130%); }
+.bl-frame.bl-land .bl-rail .bl-shoot { margin-top: 6px; }
+.bl-frame.bl-land .bl-rail #blPower { max-height: none; }
+
+/* صينية الكرات العمودية (كرات كل لاعب في عموده) */
+.bl-vtray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.bl-frame.bl-land .bl-vtray { flex: 1 1 auto; }
+.bl-vtray .bl-tcell { width: 24px; height: 24px; }
+.bl-vtray .bl-tb { width: 20px; height: 20px; }
+
+/* ── زر الإيموجي التعبيري على الحافة اليسرى للطاولة ── */
+.bl-emote {
+  position: absolute;
+  inset-inline-start: 2px;
+  bottom: 16%;
+  z-index: 6;
+  width: 44px; height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  transition: transform .12s;
+}
+.bl-emote:active { transform: scale(.9); }
+/* لاندسكيب (كما في الصورة): الإيموجي أعلى يسار الطاولة */
+.bl-frame.bl-land .bl-emote { bottom: auto; top: 8%; }
+.bl-frame.bl-land .bl-emote-pop { bottom: auto; top: 8%; }
+.bl-emote-pop {
+  position: absolute;
+  inset-inline-start: 50px;
+  bottom: 14%;
+  z-index: 7;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  background: rgba(10, 8, 5, .88);
+  border: 2px solid #E9B83C;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.6);
+}
+.bl-emote-pop[hidden] { display: none; }
+.bl-emote-opt {
+  width: 40px; height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.bl-emote-opt:hover { background: rgba(233,184,60,.25); }
+.bl-emote-burst {
+  position: absolute;
+  left: 50%; top: 50%;
+  z-index: 8;
+  transform: translate(-50%, -50%) scale(.4);
+  font-size: 64px;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,.6));
+}
+.bl-emote-burst[hidden] { display: none; }
+.bl-emote-burst.go { animation: blEmoteGo 1.4s ease forwards; }
+@keyframes blEmoteGo {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  30%  { transform: translate(-50%, -50%) scale(1); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(.9); }
+}

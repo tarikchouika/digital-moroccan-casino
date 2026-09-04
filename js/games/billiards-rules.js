@@ -1124,10 +1124,6 @@
         var pocketedObjs = rec.pocketed.filter(function (x) { return x.type !== 'CUE'; });
         var blackPot = null;
         for (i2 = 0; i2 < pocketedObjs.length; i2++) if (pocketedObjs[i2].type === 'BLACK') blackPot = pocketedObjs[i2];
-        if (blackPot) {
-          if (!onBlackAI || scratch) return -1e6;               /* خسارة الإطار */
-          return 1e6 - ctx.power;
-        }
         var foul = false;
         if (scratch) { foul = true; s -= 5000; }
         if (!rec.first) { foul = true; s -= 4000; }
@@ -1137,6 +1133,11 @@
         }
         if (rec.first && pocketedObjs.length === 0 && rec.railsAfter === 0) { foul = true; s -= 3000; }
         if (rec.off.length) { foul = true; s -= 4000; }
+        if (blackPot) {
+          /* السوداء بضربة فيها أي خطأ (سكراتش/تماس أول غير قانوني/كرة خارج) = خسارة الإطار */
+          if (!onBlackAI || foul) return -1e6;
+          return 1e6 - ctx.power;
+        }
         for (i2 = 0; i2 < pocketedObjs.length; i2++) {
           pb = pocketedObjs[i2];
           if (S.open || !myG) s += 900;

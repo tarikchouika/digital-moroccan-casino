@@ -88,14 +88,20 @@ function eBilliards(g) {
       /* ── شاشة اللعب: طاولة 85% + شريطان شفافان 15% (علوي/أيمن) بلا نصوص ── */
       '<div class="dama-play" id="blPlay" hidden>' +
       '<div class="bl-frame">' +
-        '<div class="bl-topbar">' +
+        '<div class="bl-topbar" id="blTopbar">' +
           '<button class="bl-rotbtn" id="blRotBtn" onclick="billiardsFlipView()" title="&#8635;">🔄</button>' +
           '<div class="bl-tray" id="blTray"></div>' +
           '<div class="bl-turn bl-sr" id="blTurn">…</div>' +
         '</div>' +
         '<div class="bl-corner" id="blCorner"><i class="bl-ring" id="blRing"></i></div>' +
-        '<div class="bl-mid">' +
+        /* [UI-v2] العمود الأيسر (لاندسكيب فقط — تصميم الصورة المركبة):
+           تُنقل إليه أدوات الخصم والتنفيذ والدوران ديناميكياً (blOrientLayout) */
+        '<div class="bl-lrail" id="blLRail"><div class="bl-vtray" id="blTrayL"></div></div>' +
+        '<div class="bl-mid" id="blMid">' +
           '<div class="bl-stage" id="blStageBox"><canvas id="blCv"></canvas></div>' +
+          '<button class="bl-emote" id="blEmoteBtn" onclick="billiardsEmote()" aria-label="emoji">😄</button>' +
+          '<div class="bl-emote-pop" id="blEmotePop" hidden></div>' +
+          '<div class="bl-emote-burst" id="blEmoteBurst" hidden></div>' +
           '<div class="bl-noms bl-sr" id="blNoms" hidden></div>' +
           '<div class="bl-msg bl-sr" id="blMsg"></div>' +
           '<div class="bl-stake" id="blStake" hidden></div>' +
@@ -111,12 +117,13 @@ function eBilliards(g) {
             '<button class="big ch-online" onclick="billiardsChooseBreak(false)">↩️ ' + T('bl.giveBreak') + '</button>' +
           '</div></div>' +
         '</div>' +
-        '<div class="bl-rail">' +
+        '<div class="bl-rail" id="blRail">' +
           '<span class="bl-av p2" id="blAv1">2</span>' +
           '<div class="bl-cell" id="blCell1"><i></i></div>' +
           '<button class="bl-shoot" id="blShoot" onclick="billiardsShoot()">&#8249;</button>' +
           '<div class="bl-spin" id="blSpin" title="' + T('bl.spinHint') + '"><i id="blSpinDot"></i></div>' +
           '<input id="blPower" type="range" min="1" max="100" value="75" oninput="billiardsPowerUi()">' +
+          '<div class="bl-vtray" id="blTrayR"></div>' +
           '<div class="bl-cell" id="blCell0"><i></i></div>' +
           '<span class="bl-av p1" id="blAv0">1</span>' +
           '<div class="bl-sr">' +
@@ -697,29 +704,40 @@ function billiardsNominate(nm) {
 
 function blTray() {
   var B = BILLIARDS, box = document.getElementById('blTray');
+  var lb = document.getElementById('blTrayL'), rb = document.getElementById('blTrayR');
   if (!B || !B.G || !box) return;
   box.innerHTML = '';
+  if (lb) lb.innerHTML = '';
+  if (rb) rb.innerHTML = '';
   if (!B.G.S.table.pockets.length || !B.G.S.pocketOrder.length) { box.style.display = 'none'; return; }  /* كاروم/قبل السقوط */
-  box.style.display = '';
+  box.style.display = B._blLand ? 'none' : '';
   var BBC = { RED: '#d32f2f', YELLOW: '#f5c400', BLACK: '#111111' };
+  var groups = B.G.S.groups || [];
   var all = B.G.S.pocketOrder.slice();               /* كل الكرات الساقطة */
   all.forEach(function (id, idx) {
     var cell = document.createElement('span');
     cell.className = 'bl-tcell' + (idx === all.length - 1 ? ' hot' : '');
     var isBB = (typeof id === 'string');
-    var c;
+    var c, grp = null;
     if (isBB) {
       var tb = null;
       try { tb = B.G.byId(id); } catch (e) {}
       c = (tb && (BBC[tb.type] || BL_SNCOLORS[tb.group])) || '#888';
-    } else c = BL_COLORS[id] || '#888';
+      grp = tb ? (BBC[tb.type] ? tb.type : tb.group) : null;
+    } else {
+      c = BL_COLORS[id] || '#888';
+      grp = (id === 8) ? 'EIGHT' : (id < 8 ? 'SOLID' : 'STRIPE');
+    }
     var d = document.createElement('span');
     d.className = 'bl-tb' + (!isBB && id > 8 ? ' stripe' : '');
     if (!isBB && id > 8) d.style.background = 'linear-gradient(180deg,#fff 18%,' + c + ' 18% 82%,#fff 82%)';
     else d.style.background = 'radial-gradient(circle at 35% 30%,' + blShade(c, .5) + ',' + c + ' 55%,' + blShade(c, -.45) + ')';
     if (!isBB) d.innerHTML = '<i>' + id + '</i>';
     cell.appendChild(d);
-    box.appendChild(cell);
+    /* [UI-v2] لاندسكيب: كرات فوج الخصم في العمود الأيسر وكرات فوجي في الأيمن */
+    var target = box;
+    if (B._blLand && lb && rb) target = (grp && groups[1] === grp) ? lb : rb;
+    target.appendChild(cell);
   });
 }
 
@@ -1105,10 +1123,45 @@ function blAimTo(p) {
   B.aim = Math.atan2(p.y - c.y, p.x - c.x);
 }
 
+/* ═══ [UI-v2] توزيع الاتجاه — تصميم الصورة المركبة ═══
+   بورتريه: شريط علوي (تدوير + صينية أفقية) + عمود أيمن (أفاتاران/تنفيذ/دوران/قوة).
+   لاندسكيب: عمودان — يسار: تدوير/أفاتار الخصم/لونه/صينيته/الدوران؛
+   يمين: أفاتاري/لوني/صينيتي/القوة/التنفيذ. نقل DOM يحفظ المستمعين. */
+function blOrientLayout() {
+  var B = BILLIARDS;
+  if (!B) return;
+  var frame = document.querySelector('#billiardsStage .bl-frame');
+  var lr = document.getElementById('blLRail'), rail = document.getElementById('blRail'),
+      top = document.getElementById('blTopbar');
+  if (!frame || !lr || !rail || !top) return;
+  var land = frame.clientWidth > frame.clientHeight;
+  if (B._blLand === land && frame._blOriented) return;
+  B._blLand = land; frame._blOriented = true;
+  frame.classList.toggle('bl-land', land);
+  var g = function (id) { return document.getElementById(id); };
+  var rot = g('blRotBtn'), av1 = g('blAv1'), cell1 = g('blCell1'), spin = g('blSpin'),
+      av0 = g('blAv0'), cell0 = g('blCell0'), shoot = g('blShoot'), pow = g('blPower'),
+      trayL = g('blTrayL'), trayR = g('blTrayR'), sr = rail.querySelector('.bl-sr');
+  if (land) {
+    /* العمود الأيسر أعلى→أسفل: تدوير، أفاتار الخصم، لونه، صينيته، كرة الدوران */
+    [rot, av1, cell1, trayL, spin].forEach(function (el) { if (el) lr.appendChild(el); });
+    /* العمود الأيمن أعلى→أسفل: أفاتاري، لوني، صينيتي، القوة، التنفيذ */
+    [av0, cell0, trayR, pow, shoot].forEach(function (el) { if (el) rail.appendChild(el); });
+    if (sr) rail.appendChild(sr);
+  } else {
+    if (rot) top.insertBefore(rot, top.firstChild);
+    lr.innerHTML = ''; lr.appendChild(trayL);
+    [av1, cell1, shoot, spin, pow, trayR, cell0, av0].forEach(function (el) { if (el) rail.appendChild(el); });
+    if (sr) rail.appendChild(sr);
+  }
+  blTray();
+}
+
 /* ═══════════ القياس والرسم ═══════════ */
 function blFitCanvas() {
   var B = BILLIARDS;
   if (!B || !B.G) return;
+  blOrientLayout();
   var cv = document.getElementById('blCv'), box = document.getElementById('blStageBox');
   if (!cv || !box) return;
   var r = box.getBoundingClientRect();
@@ -1174,10 +1227,21 @@ function blFitCanvas() {
       rowW = Math.max(44, Math.min(Math.round(rcy + rrr * 0.7071 - F.top), 240));
       colW = Math.max(54, Math.min(Math.round(F.right - rcx + rrr * 0.7071), 190));
     }
-    if (frame._blRows !== rowW || frame._blCols !== colW) {
-      frame._blRows = rowW; frame._blCols = colW;
-      frame.style.gridTemplateRows = rowW + 'px minmax(0,1fr)';
-      frame.style.gridTemplateColumns = 'minmax(0,1fr) ' + colW + 'px';
+    var wantRows, wantCols;
+    if (B._blLand) {
+      /* [UI-v2] لاندسكيب (الصورة المركبة): عمودان جانبيان متساويان والطاولة بينهما
+         بلا شريط علوي — كل الأدوات موزعة على العمودين */
+      var sideW = Math.max(64, Math.min(colW, Math.round(F.width * 0.12)));
+      wantRows = 'minmax(0,1fr)';
+      wantCols = sideW + 'px minmax(0,1fr) ' + sideW + 'px';
+    } else {
+      wantRows = rowW + 'px minmax(0,1fr)';
+      wantCols = 'minmax(0,1fr) ' + colW + 'px';
+    }
+    if (frame._blRowsT !== wantRows || frame._blColsT !== wantCols) {
+      frame._blRowsT = wantRows; frame._blColsT = wantCols;
+      frame.style.gridTemplateRows = wantRows;
+      frame.style.gridTemplateColumns = wantCols;
       /* إعادة قياس في الإطار التالي حتى يستقر التخطيط على أي متصفح */
       if (!frame._blRaf) { frame._blRaf = true; requestAnimationFrame(function () { frame._blRaf = false; blFitCanvas(); }); }
     }
@@ -1629,6 +1693,7 @@ function blRoomMove(d) {
   if (!BILLIARDS || !d) return;
   if (d.action === 'rmove' && d.data) d = d.data;
   if (d.by != null && String(d.by) === String(blMeId())) return;   /* صدى الذات */
+  if (d.t === 'emote' && d.e) { billiardsEmoteShow(d.e); return; }   /* [UI-v2] إيموجي الخصم */
   if (d.t === 'cfg') {
     /* صاحب الغرفة يبثّ إعدادات الكاروم/الغولڤازور قبل أول ضربة */
     BILLIARDS.caromDisc = d.d || BILLIARDS.caromDisc;
@@ -1746,6 +1811,38 @@ function blRegisterRooms() {
   } catch (e) {}
 }
 
+/* ═══ [UI-v2] إيموجي تعبيري: زر 😄 يفتح لوحة صغيرة، والاختيار ينفجر وسط الطاولة ═══ */
+var BL_EMOTES = ['😄', '😂', '😎', '😡', '😭', '👏', '🔥', '🍀'];
+function billiardsEmote() {
+  var pop = document.getElementById('blEmotePop');
+  if (!pop) return;
+  if (!pop.hidden) { pop.hidden = true; return; }
+  pop.innerHTML = BL_EMOTES.map(function (e) {
+    return '<button class="bl-emote-opt" onclick="billiardsEmoteSend(\'' + e + '\')">' + e + '</button>';
+  }).join('');
+  pop.hidden = false;
+}
+function billiardsEmoteSend(e) {
+  var pop = document.getElementById('blEmotePop');
+  if (pop) pop.hidden = true;
+  billiardsEmoteShow(e);
+  /* بث للغرفة الجماعية إن كنا أونلاين */
+  try {
+    if (BILLIARDS && BILLIARDS.mode === 'online' && typeof Rooms !== 'undefined' && Rooms && typeof Rooms.sendGame === 'function')
+      Rooms.sendGame({ t: 'emote', e: e });
+  } catch (err) {}
+}
+function billiardsEmoteShow(e) {
+  var b = document.getElementById('blEmoteBurst');
+  if (!b) return;
+  b.textContent = e;
+  b.hidden = false;
+  b.classList.remove('go');
+  void b.offsetWidth;                      /* إعادة تشغيل الأنيميشن */
+  b.classList.add('go');
+  setTimeout(function () { b.hidden = true; b.classList.remove('go'); }, 1400);
+}
+
 /* ═══════════ تنظيف عند مغادرة اللعبة ═══════════ */
 function cleanupBilliards() {
   if (!BILLIARDS) return;
@@ -1769,3 +1866,5 @@ window.billiardsSetGvBound = billiardsSetGvBound;
 window.billiardsSetTimer = billiardsSetTimer;
 window.billiardsGvAnnounce = billiardsGvAnnounce;
 window.billiardsGvChoose = billiardsGvChoose;
+window.billiardsEmote = billiardsEmote;
+window.billiardsEmoteSend = billiardsEmoteSend;
