@@ -689,9 +689,9 @@ function dRoll() {
 let cSide = 'heads', cBusy = false, cLast = null;
 function eCoin(g) {
   return gFrame(
-    '<div style="text-align:center;margin:20px 0">' +
+    '<div class="cf-wrap" style="text-align:center;margin:20px 0">' +
       '<div class="cf-hint">' + T('cf.hint') + '</div>' +
-      '<div class="coin3d" id="cCoin" style="width:132px;height:132px;margin:0 auto">' +
+      '<div class="coin3d" id="cCoin" style="margin:0 auto">' +
         '<div class="coinInner" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2s cubic-bezier(0.17,0.67,0.83,0.67)">' +
           '<div class="coinFace heads" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:50%"></div>' +
           '<div class="coinFace tails" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:50%;transform:rotateY(180deg)"></div>' +

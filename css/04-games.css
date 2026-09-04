@@ -3989,6 +3989,14 @@ body.rami-game-open { overflow: hidden; }
   #gamePageBody canvas {
     max-height: 55vh !important;
   }
+  /* [L2-fix] استثناء كانفس البلياردو: كانفسه absolute inset:0 داخل .bl-stage
+     (ملء الشاشة v12c) — قاعدة 55vh كانت تقصّه إلى 198px وسط علبة 318px
+     (قياس لاندسكيب 800×360) فيبقى 120px أسفل الطاولة ميتاً.
+     كانفس البلياردو يُدار حصراً من blFitCanvas — لا يحتاج هذا القيد. */
+  #gamePageBody #billiardsStage canvas,
+  #gamePageBody .bl-stage canvas {
+    max-height: none !important;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -4478,5 +4486,972 @@ body.rami-game-open { overflow: hidden; }
     flex: 1 1 auto;
     min-height: 0;
     align-content: center;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   [Landscape-2] توافق الوضع الأفقي — طبقة موحدة (2026-09-04)
+   المشكلة المقاسة: في اللاندسكيب (800×360) ألعاب المحركات البسيطة
+   تُعرض كعمود ضيق متمركز (max-width 340-560px) وسط شاشة عريضة —
+   الأعمدة الخارجية 100% فراغ أسود (قياس ffmpeg quad).
+   الحل: شبكة عمودين مثل LANDSCAPE FIX الموجود (3957) — لوحة اللعب
+   تتمدد يساراً والتحكم ينتظم يميناً — لكل الألعاب غير المشمولة بعد.
+   بورتريه لا يُمس. منطق اللعب لا يُمس (CSS فقط).
+   ════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) {
+  /* ── عام: منع الفيض العمودي في ملء الشاشة اللاندسكيب ── */
+  #pg-game.app-fs #gamePageBody .stage {
+    max-height: 100%;
+  }
+  /* [L2-core] stage يملأ الارتفاع المتاح كاملاً: app-fs عمود flex حقيقي
+     وstage تأخذ flex:1 — قبل الإصلاح كانت height الطبيعية للمحتوى فقط
+     (قياس lottery: stage h=133px وسط شاشة 360px). */
+  #pg-game.app-fs {
+    display: flex;
+    flex-direction: column;
+  }
+  #pg-game.app-fs #gamePageBody .stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+
+  /* ── Coin Flip (cf): العملة والتلميح في العمود الأيسر، الرهان يميناً ──
+     قبل الإصلاح: vOv=551px (شاشة 911 داخل نافذة 360) + نصف الشاشة ميت.
+     ملاحظة: eCoin كان يضع width/height inline ثابتة تُبطل clamp() — أُزيلت. */
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) {
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .cf-wrap {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    justify-self: stretch;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  #pg-game.app-fs .stage .coin3d {
+    width: clamp(96px, 24vh, 170px) !important;
+    height: clamp(96px, 24vh, 170px) !important;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets {
+    grid-column: 2;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets:nth-of-type(2) {
+    grid-row: 1;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets:first-of-type {
+    grid-row: 1;
+    align-self: center;
+    margin-top: 8px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .res {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   [Landscape-3] عائلة السلوتس في الوضع الأفقي — عمودان (2026-09-04)
+   المقاس قبل الإصلاح: crabbin/ab cols dead% = 11/4 24/32 100 100
+   (العمودان الخارجيان كلهما فراغ أسود — الشبكة 340px وسط شاشة 800px)
+   النمط الموحد: لوحة الرموز يسار (تتمدد) + hint/status/زر/رهان يمين.
+   يشمل: crabbin(.cr-grid) lightning(.lg-grid) mahjong(.mj-grid)
+   money(.mo-grid) sweet(.sw-grid) lottery(.lt-row) rose(.ro-row)
+   poker(.pk-row) olympus(.ol-row) gates(.gt-row) fishing(.fh-sea)
+   slots(.sl-wrap) andarbahar(.ab-sides)
+   بورتريه لا يُمس. صفر منطق لعب.
+   ════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) {
+
+  /* ── النمط الموحد: stage عمودان — الرموز يساراً، التحكم يميناً ──
+     RTL: العمود 1 (يمين بصرياً) = تحكم 210-300px، العمود 2 = لوحة الرموز */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) {
+    display: grid;
+    grid-template-columns: minmax(190px, 280px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+
+  /* لوحة الرموز: العمود الأيسر بكامل الارتفاع، متمركزة ذاتياً */
+  #pg-game.app-fs .stage .cr-grid,
+  #pg-game.app-fs .stage .lg-grid,
+  #pg-game.app-fs .stage .mj-grid,
+  #pg-game.app-fs .stage .mo-grid,
+  #pg-game.app-fs .stage .sw-grid,
+  #pg-game.app-fs .stage .lt-row,
+  #pg-game.app-fs .stage .ro-row,
+  #pg-game.app-fs .stage .pk-row,
+  #pg-game.app-fs .stage .ol-row,
+  #pg-game.app-fs .stage .gt-row {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  /* التحكم (hint/status/الأزرار/الرهان): العمود الأيمن — hint أول،
+     status ثانٍ في الصف السفلي، الأزرار والرهان تتكدس خلف hint */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .cr-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .lg-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .mj-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .mo-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .sw-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .lt-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .ro-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .pk-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .ol-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .gt-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    padding: 0;
+  }
+  /* .bets الثانية (betRow): صف تحكم ثالث منفصل — لا تراكب مع الأولى */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets ~ .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin-bottom: 0;
+  }
+  /* زر اللعب (الأول داخل .bets الأولى) يظهر فوق betRow بلا تراكب:
+     الأولى center والثانية end داخل نفس الخلية عمودياً — المسافة عبر
+     margin-top سالب مضبوطة حسب ارتفاع الزر (~42px) */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets ~ .bets .bbtn,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets ~ .bets .bbtn {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets ~ .bets .bamt,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets ~ .bets .bamt {
+    font-size: 0.8rem;
+  }
+  /* status النتائج: أسفل يمين (الصف الثاني) */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage > .res {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+
+  /* أحجام الرموز في اللاندسكيب: مرجع dvh مع حد أدنى px —
+     6.5vh على ارتفاع 360 = 23px صغيرة جداً؛ الحد الأدنى يضمن وضوحها */
+  #pg-game.app-fs .stage .cr-grid,
+  #pg-game.app-fs .stage .lg-grid,
+  #pg-game.app-fs .stage .mj-grid,
+  #pg-game.app-fs .stage .mo-grid,
+  #pg-game.app-fs .stage .sw-grid {
+    font-size: clamp(1.15rem, max(6.5vh, 34px), 3rem);
+    gap: 6px;
+  }
+  #pg-game.app-fs .stage .lt-row,
+  #pg-game.app-fs .stage .ro-row,
+  #pg-game.app-fs .stage .pk-row,
+  #pg-game.app-fs .stage .ol-row,
+  #pg-game.app-fs .stage .gt-row {
+    font-size: clamp(1.15rem, max(7.2vh, 34px), 3rem);
+    gap: clamp(9px, 1.8vw, 16px);
+    max-width: min(720px, 100%);
+    width: 100%;
+    justify-self: stretch;
+  }
+  #pg-game.app-fs .stage .cr-cell,
+  #pg-game.app-fs .stage .lg-cell,
+  #pg-game.app-fs .stage .mj-cell,
+  #pg-game.app-fs .stage .mo-cell,
+  #pg-game.app-fs .stage .sw-cell { aspect-ratio: 1; }
+  #pg-game.app-fs .stage .cr-grid { width: min(62vh, 100%); }
+  #pg-game.app-fs .stage .lg-grid,
+  #pg-game.app-fs .stage .sw-grid { width: min(72vh, 100%); }
+  #pg-game.app-fs .stage .mj-grid,
+  #pg-game.app-fs .stage .mo-grid { width: min(62vh, 100%); }
+
+  /* ── Slots (sl): البكرات يسار، جدول الدفع والتحكم يمين ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) {
+    display: grid;
+    grid-template-columns: minmax(190px, 280px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .sl-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 4px 6px;
+    justify-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .sl-wrap .reels {
+    gap: 10px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) .reel {
+    width: clamp(64px, 16vh, 110px);
+    height: clamp(84px, 30vh, 220px);
+    font-size: clamp(1.6rem, 9vh, 3.4rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) .sl-pay { max-width: 100%; }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) .sl-pay-item {
+    font-size: clamp(0.6rem, 1.6vh, 0.8rem);
+    padding: 2px 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .sl-status {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status):not(.res) {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status) .big {
+    padding: clamp(8px, 2vh, 14px) clamp(14px, 3vw, 22px);
+    font-size: clamp(0.8rem, 2.2vh, 1.05rem);
+  }
+
+  /* ── Fishing (fh): البحر يسار، المدفع/التحكم يمين ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) {
+    display: grid;
+    grid-template-columns: minmax(170px, 250px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .fh-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .fh-sea {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: stretch;
+    min-height: 0;
+    margin: 0;
+    font-size: clamp(1.6rem, max(8vh, 36px), 4rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .fh-cannon {
+    position: absolute;
+    bottom: 12px;
+    inset-inline-end: 12px;
+    font-size: clamp(1.6rem, 5vh, 2.6rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .cr-status {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+
+  /* ── Andar Bahar (ab): الجوكر والمجموعتان يسار، الأزرار يمين ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) {
+    display: grid;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-joker-box,
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-sides {
+    grid-column: 2;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-joker-box {
+    grid-row: 1;
+    align-self: start;
+    justify-self: center;
+    min-height: 0;
+    font-size: clamp(2rem, max(9vh, 44px), 4.4rem);
+    padding: 6px 18px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-sides {
+    grid-row: 1;
+    align-self: stretch;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) .ab-cards {
+    max-height: 38vh;
+    overflow-y: auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-status {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .bets ~ .bets {
+    grid-row: 1;
+    align-self: end;
+  }
+
+  /* ── Wingo (wg): القياس الحي — hint/ball/picks تستهلك 317px فتبقى
+     .bets الثانية (y=417) و res (y=485) مقصوصتين تحت شاشة 360.
+     حل: عمودان — ball+picks يسار، hint/bets/res يمين ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) {
+    display: grid;
+    grid-template-columns: minmax(190px, 280px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-ball {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    width: clamp(96px, 26vh, 180px);
+    height: clamp(96px, 26vh, 180px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-picks {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    justify-self: center;
+    margin: 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .bets ~ .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin-bottom: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(14px, 3vw, 22px);
+    font-size: clamp(0.8rem, 2.2vh, 1.05rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    padding: 4px 8px;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+  #pg-game.app-fs .stage .wg-picks .wgBtn {
+    min-width: clamp(72px, 22vw, 120px);
+    padding: clamp(8px, 1.8vh, 14px) 8px;
+    font-size: clamp(0.72rem, 2vh, 0.92rem);
+  }
+
+  /* ── Wheel of Fortune (wf): كانفس العجلة 320px مربع + hint فوقه
+     وزر تحت → مجموع يقصّ الزر في 360px. عمودان: العجلة يسار، تحكم يمين ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) {
+    display: grid;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .wf-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    min-height: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) .wf-holder {
+    position: relative;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) #wCv {
+    width: clamp(180px, 52vh, 330px);
+    height: clamp(180px, 52vh, 330px);
+    max-height: none !important;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) .wf-hint {
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .bets ~ .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin-bottom: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(14px, 3vw, 22px);
+    font-size: clamp(0.8rem, 2.2vh, 1.05rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    padding: 4px 8px;
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+
+  /* ── Blackjack (bj): طاولة بجانب عمود الأزرار.
+     القياس: زر تقسيم اليد bottom=569 داخل شاشة 360 (مقصوص داخل
+     overflow:hidden). betRow أول عنصر في stage (eBj خاص: betRow أولاً). ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) {
+    display: grid;
+    grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bjt {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: stretch;
+    justify-self: center;
+    max-width: 100%;
+    width: min(100%, 560px);
+    margin: 0;
+    padding: clamp(10px, 3vh, 24px) 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) .bjcs {
+    gap: clamp(2px, 1vh, 8px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.72rem, 2vh, 0.95rem);
+    min-width: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets:first-child {
+    grid-row: 2;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+
+  /* ── Roulette (rl): العجلة يسار، شبكة الرهانات (10 أزرار) يمين عمودياً.
+     القياس: زر bottom=661 (مقصوص). .rl-bets شبكة g3 → عمودان مضغوطان. ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) {
+    display: grid;
+    grid-template-columns: minmax(190px, 260px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .rl-stage {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    min-height: 0;
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) .rl-wheel {
+    width: clamp(160px, 48vh, 320px);
+    animation: none;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) .rl-last {
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .rl-bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: stretch;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    padding: 0;
+    align-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) .rl-b {
+    padding: clamp(6px, 1.6vh, 12px) 6px;
+    font-size: clamp(0.68rem, 1.9vh, 0.85rem);
+    min-height: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(12px, 2.5vw, 20px);
+    font-size: clamp(0.78rem, 2.2vh, 1rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+
+  /* ── Keno (ke): شبكة 80 رقماً يسار (تتمدد بكثافة أعمدة)، التحكم يمين.
+     القياس: زر bottom=639 داخل شاشة 360 (مقصوص داخل overflow:hidden). ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .ke-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: stretch;
+    margin: 0;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) .ke-top {
+    margin: 0;
+    padding: 2px 4px;
+    font-size: clamp(0.68rem, 1.9vh, 0.85rem);
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) .kgrid {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding: clamp(4px, 1.2vh, 10px);
+    max-width: none;
+    width: 100%;
+    gap: 3px;
+    align-content: stretch;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) .kc {
+    aspect-ratio: 1;
+    font-size: clamp(0.55rem, 1.5vh, 0.8rem);
+    border-radius: 50%;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) .ke-hint {
+    margin: 0;
+    font-size: clamp(0.62rem, 1.7vh, 0.8rem);
+    line-height: 1.3;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .bets ~ .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin-bottom: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(10px, 2vw, 18px);
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+
+  /* ── Video Poker (vp): جدول المدفوع يمين (عمود مضغوط)، اليد يسار.
+     القياس: زر bottom=488 (مقصوص 128px). جدول المدفوع 9 صفوف = الضلع الطويل. ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .vp-wrap {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: stretch;
+    margin: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
+    gap: 8px;
+    align-items: stretch;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt {
+    grid-column: 1;
+    margin: 0;
+    padding: clamp(6px, 1.6vh, 12px) clamp(8px, 1.5vw, 14px);
+    align-self: start;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-title {
+    font-size: clamp(0.7rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-grid {
+    gap: 2px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-row {
+    padding: clamp(2px, 0.8vh, 5px) 4px;
+    font-size: clamp(0.6rem, 1.7vh, 0.78rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-hand {
+    grid-column: 2;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    max-width: 100%;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-hint {
+    grid-column: 2;
+    align-self: end;
+    justify-self: center;
+    margin: 0;
+    font-size: clamp(0.65rem, 1.8vh, 0.85rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets .big {
+    padding: clamp(8px, 2vh, 14px) clamp(14px, 3vw, 22px);
+    font-size: clamp(0.75rem, 2.1vh, 0.98rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+
+  /* ── Penalty (pn): المرمى يسار، الاتجاهات/الرهان يمين.
+     القياس: زر bottom=459 داخل شاشة 360 (مقصوص). عمود hint+arena+role+picks
+     يفوق 360px — قواعد [Fill] القديمة تمدد فقط دون ترتيب عمودين. ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) {
+    display: grid;
+    grid-template-columns: minmax(170px, 240px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-arena {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    min-height: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .goal {
+    width: clamp(220px, 42vw, 360px);
+    height: clamp(110px, 34vh, 200px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .goal .keeper {
+    font-size: clamp(1.9rem, 6vh, 3.2rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .goal .pball2 {
+    font-size: clamp(1.2rem, 3.6vh, 2rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-role {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.7rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-picks {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    justify-self: center;
+    margin: 0;
+    width: min(100%, 460px);
+    gap: 5px;
+    padding: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .pnBtn {
+    min-width: clamp(64px, 18vw, 110px);
+    padding: clamp(8px, 2vh, 14px) 6px;
+    font-size: clamp(0.68rem, 1.9vh, 0.85rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-status {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+
+  /* ── RPS (rp): بطاقتا المواجهة يسار، اختيارات الرهان يمين.
+     القياس: زر bottom=484 داخل شاشة 360 (مقصوص 124px). ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) {
+    display: grid;
+    grid-template-columns: minmax(170px, 250px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-arena {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    min-height: 0;
+    gap: clamp(12px, 4vw, 26px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) .rps-card {
+    width: clamp(80px, 14vw, 130px);
+    height: clamp(100px, 17vw, 160px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) .rps-card-face {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    font-size: clamp(0.7rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-picks {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    justify-self: center;
+    margin: 0;
+    width: min(100%, 440px);
+    gap: 6px;
+    padding: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) .rpsBtn {
+    min-width: clamp(80px, 24vw, 120px);
+    padding: clamp(10px, 2.4vh, 18px) 8px;
+    font-size: clamp(0.75rem, 2vh, 0.95rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) .rps-emoji {
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-status {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .res {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding: 2px 8px;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
   }
 }
