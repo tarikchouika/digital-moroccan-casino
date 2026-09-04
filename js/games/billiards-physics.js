@@ -265,10 +265,15 @@
     var ps = table.pockets;
     for (var i = 0; i < ps.length; i++) {
       var p = ps[i], dx = x - p.x, dy = y - p.y;
-      if (dx * dx + dy * dy < p.r * p.r * 1.3225) return p;   /* r × 1.15 */
+      /* [PocketReal] r × 0.95: السقوط فقط حين يتجاوز مركز الكرة شفة الحفرة
+         فعلياً — عنق الحفرة (بين نهايتي الوسادتين) جزء مستوٍ من الطاولة،
+         والكرة البطيئة التي تتوقف فيه تستقر هناك بدل السقوط الآلي القديم (×1.15) */
+      if (dx * dx + dy * dy < p.r * p.r * 0.9025) return p;
     }
     return null;
   }
+
+
 
   function pocketBall(rec, b) {
     b.status = 'POCKETED'; b.vx = 0; b.vy = 0;

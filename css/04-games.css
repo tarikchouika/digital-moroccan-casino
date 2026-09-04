@@ -5455,3 +5455,482 @@ body.rami-game-open { overflow: hidden; }
     font-size: clamp(0.72rem, 2vh, 0.9rem);
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   [Fit-4] لاندسكيب — إلغاء تراصّ العناصر في خلية واحدة (2026-09-04)
+   العلة المشخّصة: كتل [Landscape-2/3] تضع hint/bets/betRow/status/res
+   كلها في (col1,row1) وتفرّقها بـ align-self فقط — عند أي ارتفاع ضيّق
+   تتراكب فوق بعضها (لقطات المستخدم: بوكر/فيديو بوكر/RPS/كينو).
+   الحل: صفوف شبكة صريحة لكل عنصر — لا خليتين لعنصرين أبداً.
+   لوحة اللعب تمتد على كل الصفوف في عمودها. CSS فقط — صفر منطق لعب.
+   ════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) {
+  /* ── 1) العائلة الموحدة (سلوتس/صفوف): 5 صفوف صريحة ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid),
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs .stage .cr-grid,
+  #pg-game.app-fs .stage .lg-grid,
+  #pg-game.app-fs .stage .mj-grid,
+  #pg-game.app-fs .stage .mo-grid,
+  #pg-game.app-fs .stage .sw-grid,
+  #pg-game.app-fs .stage .lt-row,
+  #pg-game.app-fs .stage .ro-row,
+  #pg-game.app-fs .stage .pk-row,
+  #pg-game.app-fs .stage .ol-row,
+  #pg-game.app-fs .stage .gt-row {
+    grid-row: 1 / -1;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .cr-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .lg-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .mj-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .mo-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .sw-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .lt-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .ro-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .pk-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .ol-hint,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .gt-hint {
+    grid-row: 1;
+    align-self: start;
+    margin-top: 2px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .res,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .res {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .cr-status,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .cr-status {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets {
+    grid-row: 4;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.cr-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lg-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mj-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.mo-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.sw-grid) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.lt-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ro-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.ol-row) > .bets ~ .bets,
+  #pg-game.app-fs #gamePageBody .stage:has(.gt-row) > .bets ~ .bets {
+    grid-row: 5;
+    align-self: center;
+    margin-bottom: 2px;
+  }
+
+  /* ── 2) فيديو بوكر (vp): كانت bets+betRow+res كلها (row2,end) متراكبة ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) {
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .vp-wrap { grid-row: 1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets {
+    grid-row: 2;
+    align-self: center;
+    justify-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets ~ .bets { grid-row: 3; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .res { grid-row: 4; align-self: center; }
+
+  /* ── 3) حجر ورقة مقص (rp): البطاقتان كانتا تنزلان فوق أزرار الاختيار ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-arena {
+    grid-row: 1 / 4;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-picks {
+    grid-row: 4;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-hint { grid-row: 1; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .rps-status {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .res {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rps-arena) > .bets {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: center;
+  }
+
+  /* ── 4) وينغو (wg): bets وbetRow كانتا معاً (row1,end) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-hint { grid-row: 1; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-ball { grid-row: 1 / 4; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .wg-picks { grid-row: 4; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .res {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .bets { grid-row: 3; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wg-ball) > .bets ~ .bets { grid-row: 4; align-self: center; }
+
+  /* ── 5) ضربة الجزاء (pn): hint وrole كانا معاً (row1,center) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-arena { grid-row: 1 / 5; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-picks { grid-row: 5; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-hint { grid-row: 1; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-role { grid-row: 2; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-status {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .bets {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .res {
+    grid-column: 1;
+    grid-row: 5;
+    align-self: end;
+  }
+
+  /* ── 6) كينو (ke): لوحة المجموعة تتصدر العمود، ثم الرهان فصف الرهان ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) {
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > #gpanel {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .ke-wrap { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .bets { grid-row: 2; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .bets ~ .bets { grid-row: 3; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ke-wrap) > .res { grid-column: 1; grid-row: 4; }
+
+  /* ── 7) أندر بحر (ab): الجوكر والمجموعتان كانا معاً (row1) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-joker-box {
+    grid-row: 1;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-sides { grid-row: 2; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-status { grid-row: 3; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .ab-hint { grid-row: 1; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .res {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .bets { grid-row: 3; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-joker-box) > .bets ~ .bets { grid-row: 4; align-self: center; }
+
+  /* ── 8) الصيد (fh): hint وbets كانا معاً — صف مستقل لكل عنصر ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .fh-hint { grid-row: 1; align-self: start; }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .fh-sea { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .res {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .cr-status {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .bets { grid-row: 4; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.fh-sea) > .bets ~ .bets { grid-row: 5; align-self: center; }
+
+  /* ── 8ب) عجلة الحظ (wf): bets وbetRow كانا معاً (row1,end) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) {
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .wf-wrap { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .bets { grid-row: 1; align-self: end; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .bets ~ .bets { grid-row: 2; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.wf-holder) > .res { grid-row: 3; }
+
+  /* ── 8ج) سلوتس (sl): لوحة التحكم وbets كانتا معاً (col1,row1) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) {
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .sl-wrap { grid-row: 1 / 3; }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .sl-status { grid-row: 3; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .bets {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > .res {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+
+  /* ── 9) روليت (rl): rl-bets وbets وbetRow كانت متراكبة في عمود واحد ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) {
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .rl-stage { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .rl-bets { grid-row: 1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .bets { grid-row: 2; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .bets ~ .bets { grid-row: 3; align-self: center; }
+  #pg-game.app-fs #gamePageBody .stage:has(.rl-stage) > .res { grid-column: 1; grid-row: 4; }
+
+  /* ── 10) العملة (cf): ثلاث .bets (اختيار/تنفيذ/رهان) كانت تتوزع خليتين
+     فقط — صف grid مستقل لكل واحدة (لا first/nth-of-type: cf-wrap div مثلها) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) {
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .cf-wrap { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets {
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets ~ .bets {
+    grid-row: 2;
+    align-self: center;
+    margin-top: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .bets ~ .bets ~ .bets {
+    grid-row: 3;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.coin3d) > .res { grid-row: 4; }
+
+  /* ── 11) باكارا + دراغون تايغر (فجوة مؤكدة: لا كتلة لاندسكيب لهما أصلاً؛
+     dt-table يحمل bc-table أيضاً فالمحدد يشملهما) — الطاولة يساراً بكامل
+     الارتفاع، وأزرار الاختيار/التوزيع/الرهان صفوف منفصلة يميناً ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) {
+    display: grid;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bc-table {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+    justify-self: stretch;
+    margin: 0;
+    min-height: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) .bc-cards {
+    min-height: clamp(90px, 30vh, 190px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) .bc-card {
+    font-size: clamp(2rem, 12vh, 4.2rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets .bc-b,
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets .dt-b {
+    width: 100%;
+    padding: clamp(6px, 1.8vh, 12px) 8px;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets ~ .bets {
+    grid-row: 2;
+    align-self: end;
+    flex-direction: row;
+    justify-content: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets ~ .bets ~ .bets {
+    grid-row: 3;
+    align-self: center;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .res {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: end;
+    margin: 0;
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+
+  /* ── 12) لاكي 7 (فجوة مؤكدة: بلا كتلة لاندسكيب — النصوص كانت مطموسة) ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) {
+    display: grid;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 8px;
+    padding: 8px;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .l7-arena {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    min-height: 0;
+    width: 100%;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7-ball {
+    font-size: clamp(3rem, 22vh, 6.5rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7-slot {
+    max-width: min(480px, 94%);
+    margin: 0 auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .l7-picks {
+    grid-column: 2;
+    grid-row: 4;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+    width: min(100%, 480px);
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7Btn {
+    padding: clamp(6px, 1.8vh, 12px) 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7-nums {
+    font-size: clamp(0.9rem, 2.6vh, 1.2rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7-name,
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) .l7-mult {
+    font-size: clamp(0.62rem, 1.8vh, 0.8rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .l7-hint {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    margin: 0;
+    font-size: clamp(0.7rem, 2vh, 0.9rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .l7-status {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .bets {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: center;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.l7-arena) > .res {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: end;
+    margin: 0;
+  }
+
+  /* ── 13) بلاكجاك (bjt): أزرار متكدسة + res كانت تتراكب مع betRow في
+     (col1,row2) — صف ثالث مستقل للنتيجة ── */
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) {
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bjt { grid-row: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets {
+    flex-wrap: wrap;
+    gap: 6px;
+    row-gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .res {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+}
+
+/* ── [Fit-4] بورتريه: باكارا/دراغون تايغر — بطاقات كانت تفيض فوق أزرار
+   الرهان على الهواتف (min-height 22vh × جهتين تتجاوز الحاوية) ── */
+@media (orientation: portrait) {
+  #pg-game.app-fs .stage .bc-cards { min-height: clamp(80px, 14vh, 160px); }
+  #pg-game.app-fs .stage .bc-card { font-size: clamp(2rem, 6.5vh, 3.8rem); }
+  #pg-game.app-fs .stage .bc-table { min-height: 0; }
+  #pg-game.app-fs .stage:has(.bc-table),
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) { overflow-y: auto; }
+
+  /* كينو بورتريه: لوحة الرهانات المتعددة (gpanel) + شبكة 80 رقماً + أزرار
+     كانت تتجاوز الارتفاع فتتراكب — تمرير عمودي وأحجام clamp بدل الضخامة */
+  #pg-game.app-fs .stage:has(.ke-wrap) { overflow-y: auto; }
+  #pg-game.app-fs .stage:has(.ke-wrap) .kgrid {
+    max-width: min(470px, 96vw);
+    gap: clamp(3px, 0.8vw, 5px);
+    padding: clamp(6px, 1.6vw, 14px);
+    margin: 8px auto;
+  }
+  #pg-game.app-fs .stage:has(.ke-wrap) .kc { font-size: clamp(0.6rem, 2.6vw, 0.85rem); }
+  #pg-game.app-fs .stage:has(.ke-wrap) > .bets .big {
+    padding: clamp(8px, 1.6vh, 14px) clamp(14px, 4vw, 26px);
+    font-size: clamp(0.8rem, 2vh, 1rem);
+  }
+
+  /* هاي-لو بورتريه: البطاقات كانت تُقص على الشاشات القصيرة */
+  #pg-game.app-fs .stage:has(.hl-table) { overflow-y: auto; }
+  #pg-game.app-fs .stage .hl-card {
+    width: clamp(70px, 24vw, 120px);
+    height: clamp(98px, 33vw, 168px);
+  }
+}
