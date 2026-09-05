@@ -764,9 +764,10 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
+  /* [إصلاح تداخل الإعدادات] قاعدة display:grid !important على #parchisiGame
+     كانت تتغلب على وضع الإعداد فترسم لوحة اللعبة فوق النافذة — في اللاندسكيب
+     أثناء الإعداد نخفي اللوحة كلياً (النافذة تحتاج كامل الارتفاع القصير) */
   #pg-game.app-fs #gamePageBody.parchisi-setup #parchisiGame {
-    flex: 0 0 auto;
-    max-height: 30%;
-    overflow: hidden;
+    display: none !important;
   }
 }

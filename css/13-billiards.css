@@ -572,75 +572,148 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 #gamePageBody #billiardsStage { margin-bottom: 0 !important; }
 
 /* ════════════════════════════════════════════════════════════════
-   [UI-v3] واجهة البلياردو — مواصفات الصورة المركبة (2026-09-05)
-   بورتريه: شريط علوي (تدوير أعلى يسار + صينية) + عمود أيمن يضم كل
-   الأدوات (خروج/أفاتاران/لونا الفوجين/تنفيذ/دوران/قوة) بترتيب الصورة؛
-   الإيموجي أسفل يسار منطقة اللعب (قابل للسحب).
-   لاندسكيب: عمودان خشبيان — يسار: [تدوير+أفاتار الخصم] فلونه فصينية
-   كراته عمودياً فكرة الدوران الكبيرة أسفلاً؛ يمين: [أفاتاري بجوار زر
-   الخروج الذهبي] فلوني فصينية كراتي فشريط القوة الأصفر الطويل فالتنفيذ.
+   [UI-v4] واجهة البلياردو — اللاندسكيب مرجعاً (2026-09-06)
+   لاندسكيب: عمود أيسر (تدوير+أفاتار الخصم بلون كراته، كراته الساقطة
+   بخط مستقيم تحته، السبين أسفلاً) + عمود أيمن (أفاتاري وكراتي أعلى،
+   شريط القوة والتنفيذ تحت زر التصغير بخط مستقيم ثابت الحجم).
+   بورتريه: الحاوية تنقلب 90° — العمود الأيسر يصبح الشريط الأعلى
+   والعمود الأيمن يصبح الشريط الأسفل، بنفس العناصر والترتيب.
    ════════════════════════════════════════════════════════════════ */
-.bl-lrail { display: none; }
-.bl-srow { display: flex; align-items: center; gap: 6px; }
+.bl-frame.bl-land { grid-template: minmax(0, 1fr) / auto minmax(0, 1fr) auto; }
+.bl-frame.bl-port { grid-template: auto minmax(0, 1fr) auto / minmax(0, 1fr); }
 
-.bl-frame.bl-land { grid-template-rows: minmax(0, 1fr); }
-.bl-frame.bl-land .bl-topbar,
-.bl-frame.bl-land .bl-corner { display: none; }
-.bl-frame.bl-land .bl-lrail {
-  grid-column: 1; grid-row: 1;
+/* الخشب المشترك لعمودي/شريطي الأدوات */
+.bl-lrail, .bl-rail {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   gap: 8px;
-  padding: calc(6px + var(--safe-top)) 2px 8px;
-  min-height: 0;
+  min-width: 0; min-height: 0;
   background:
     repeating-linear-gradient(180deg, rgba(60,30,8,.10) 0 3px, rgba(0,0,0,0) 3px 9px),
     linear-gradient(270deg, #a9753a, #c08a4a 45%, #d9a566);
+}
+
+/* ── لاندسكيب: عمودان رأسيان ── */
+.bl-frame.bl-land .bl-lrail {
+  grid-area: 1 / 1;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: calc(8px + var(--safe-top)) 4px 10px;
   border-right: 2px solid #8a5a24;
   box-shadow: inset -4px 0 8px rgba(0,0,0,.28), inset 2px 0 3px rgba(255,235,190,.3);
 }
-.bl-frame.bl-land .bl-mid { grid-column: 2; grid-row: 1; }
+.bl-frame.bl-land .bl-mid { grid-area: 1 / 2; }
 .bl-frame.bl-land .bl-rail {
-  grid-column: 3; grid-row: 1;
+  grid-area: 1 / 3;
+  flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
-  gap: 8px;
-  /* حجز فراغ زر الخروج الذهبي العائم (fixed أعلى يمين) كي لا يغطي الأفاتار */
-  padding-top: calc(6px + var(--safe-top));
+  /* أفاتاري على سطر زر التصغير نفسه (بجواره يساره) */
+  padding: calc(8px + var(--safe-top)) 4px 10px;
   border-left: 2px solid #8a5a24;
+  box-shadow: inset 4px 0 8px rgba(0,0,0,.28), inset -2px 0 3px rgba(255,235,190,.3);
+  align-items: flex-end;   /* كل الأدوات على الخط العمودي لزر التصغير */
 }
-/* أفاتاري بجانب (يسار) زر الخروج: بأقصى يسار العمود في مستوى الزر */
-.bl-frame.bl-land .bl-rail .bl-av.p1 { align-self: flex-start; margin-inline-start: 2px; }
+/* [خط مستقيم تحت زر التصغير] الزر fixed: right:10px قطر ~36-40px → مركزه
+   على ~28px من يمين الشاشة (~21px من حافة محتوى العمود بعد padding 4px).
+   هوامش فيزيائية (لا margin-inline: مقياس البار العمودي الداخلي عمودي):
+   مركز كل عنصر يقع على هذا الخط ولا يتغير حجمه. الأفاتار وحده يسار الزر. */
+.bl-frame.bl-land .bl-rail .bl-srow { margin-right: 46px; }   /* أفاتاري بجوار الزر يساره */
+.bl-frame.bl-land .bl-rail .bl-score { margin-right: 8px; }
+.bl-frame.bl-land .bl-rail .bl-vtray { margin-right: 9px; }
+.bl-frame.bl-land .bl-rail #blPower { margin-right: 10px; }
+.bl-frame.bl-land .bl-rail .bl-shoot { margin-right: 0; align-self: flex-end; }
+.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; }
+.bl-frame.bl-land .bl-rail .bl-shoot { margin-bottom: 4px; }
+/* شريط القوة عمودي يمتص الوسط */
+.bl-frame.bl-land .bl-rail #blPower {
+  writing-mode: vertical-rl;
+  direction: rtl;
+  flex: 1 1 auto;
+  width: 22px;
+  min-height: 70px;
+  max-height: none;
+}
 
-/* اليسار: الدوران الكبيرة بأسفل العمود (كما في الصورة) */
-.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; width: min(88px, 140%); }
-/* اليمين: شريط القوة الطويل يملأ الوسط والتنفيذ أسفله */
-.bl-frame.bl-land .bl-rail #blPower { flex: 1 1 auto; max-height: none; min-height: 80px; }
-.bl-frame.bl-land .bl-rail .bl-shoot { margin-bottom: 6px; }
+/* ── بورتريه: نفس العمودين مقلوبين 90° = شريطان أفقيان ── */
+.bl-frame.bl-port .bl-lrail {
+  grid-area: 1 / 1;
+  flex-direction: row;
+  justify-content: flex-start;
+  /* فراغ يمين لزر التصغير الذهبي العائم */
+  padding: calc(2px + var(--safe-top)) 48px 2px 8px;
+  border-bottom: 2px solid #8a5a24;
+  box-shadow: inset 0 -4px 8px rgba(0,0,0,.28), inset 0 2px 3px rgba(255,235,190,.3);
+}
+.bl-frame.bl-port .bl-mid { grid-area: 2 / 1; }
+.bl-frame.bl-port .bl-rail {
+  grid-area: 3 / 1;
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 2px 8px;
+  border-top: 2px solid #8a5a24;
+  box-shadow: inset 0 4px 8px rgba(0,0,0,.28), inset 0 -2px 3px rgba(255,235,190,.3);
+}
+.bl-frame.bl-port .bl-lrail .bl-spin { margin-top: 0; margin-inline-start: auto; }
+.bl-frame.bl-port .bl-rail .bl-shoot { margin-bottom: 0; }
+.bl-frame.bl-port .bl-rail #blPower {
+  writing-mode: horizontal-tb;
+  direction: ltr;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 70px;
+  height: 22px;
+  max-height: none;
+}
 
-/* صينية الكرات العمودية (كرات كل لاعب في عموده تحت أفاتاره) */
+/* صف علوي (تدوير + أفاتار) داخل العمود */
+.bl-srow { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+/* السبين داخل العمود: حجم ثابت متناسق */
+.bl-frame.bl-land .bl-lrail .bl-spin,
+.bl-frame.bl-port .bl-lrail .bl-spin {
+  width: clamp(44px, 7.5vmin, 64px);
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+}
+
+/* ── صينية الكرات الساقطة: خط مستقيم تحت أفاتار صاحبها ── */
 .bl-vtray {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 2px;
   flex: 0 1 auto;
-  min-height: 0;
   overflow: hidden;
   min-width: 24px;
+  min-height: 24px;
 }
-.bl-frame.bl-land .bl-lrail .bl-vtray { flex: 1 1 auto; }
-.bl-vtray .bl-tcell { width: 24px; height: 24px; }
+.bl-frame.bl-land .bl-vtray { flex-direction: column; }
+.bl-frame.bl-port .bl-vtray { flex-direction: row; }
+.bl-vtray .bl-tcell { width: 24px; height: 24px; flex: 0 0 auto; }
 .bl-vtray .bl-tb { width: 20px; height: 20px; }
-/* بورتريه: الصينية العمودية داخل العمود الأيمن مضغوطة */
-.bl-rail .bl-vtray { max-height: 22%; }
 
-/* ── زر الإيموجي التعبيري العائم (قابل للسحب) ── */
+/* شارة النقاط (سنوكر/كاروم) تحت الأفاتار */
+.bl-score {
+  color: #F2C230;
+  font-size: 14px;
+  font-weight: 900;
+  text-shadow: 0 1px 3px rgba(0,0,0,.8);
+  background: rgba(0,0,0,.4);
+  border-radius: 999px;
+  padding: 1px 8px;
+  flex: 0 0 auto;
+}
+
+/* زر التنفيذ: حجم ثابت لا يتغير مع الاتجاه */
+.bl-frame .bl-shoot {
+  width: 46px; height: 46px;
+  flex: 0 0 auto;
+  font-size: 24px;
+}
+
+/* ── زر الإيموجي العائم القابل للسحب ── */
 .bl-emote {
   position: absolute;
-  inset-inline-start: 4px;
+  inset-inline-start: 6px;
   bottom: 5%;
   z-index: 6;
   width: 46px; height: 46px;
@@ -658,11 +731,10 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   -webkit-user-select: none;
 }
 .bl-emote:active { transform: scale(.9); cursor: grabbing; }
-/* لاندسكيب (كما في الصورة): الإيموجي أعلى يسار الطاولة */
 .bl-frame.bl-land .bl-emote { bottom: auto; top: 6%; }
 .bl-emote-pop {
   position: absolute;
-  inset-inline-start: 54px;
+  inset-inline-start: 58px;
   bottom: 5%;
   z-index: 7;
   display: grid;
@@ -707,6 +779,29 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   100% { opacity: 0; transform: translate(-50%, -80%) scale(.9); }
 }
 
-/* [UI-v3] زر الخروج الذهبي فوق كل طبقات اللعبة والأيقونة العائمة (كان 5100
-   فتحجبه أيقونة التفاعلات z:14000 عند انزلاقها فوقه بعد تدوير الشاشة) */
+/* زر الخروج الذهبي فوق طبقات اللعبة وأيقونة التفاعلات العائمة */
 body.bl-game-open .game-fs-exit { z-index: 14500 !important; }
+
+/* [UI-v4] شارة الدور والمؤقت: عائمة أعلى وسط الطاولة */
+.bl-turnpill {
+  position: absolute;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: rgba(0,0,0,.62);
+  border: 1px solid rgba(233,184,60,.5);
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-size: clamp(10px, 1.6vh, 13px);
+  font-weight: 700;
+  color: #ffe9a8;
+  white-space: nowrap;
+  max-width: 86%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.bl-turnpill.bl-time-low { color: #ff7b6e; border-color: rgba(255,110,90,.6); }
+
+/* دفاع: زر التدوير فوق أي تراكب داخل عموده */
+.bl-rotbtn { position: relative; z-index: 7; }

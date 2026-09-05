@@ -1,4 +1,4 @@
-/* اختبار jsdom لتخطيط UI-v3 — يتطلب jsdom (npm i jsdom في /tmp/domtest) */
+/* اختبار jsdom لتخطيط UI-v4 — بنية ثابتة، البورتريه قلب 90° عبر CSS فقط */
 let JSDOM;
 try { JSDOM = require('/tmp/domtest/node_modules/jsdom').JSDOM; }
 catch (e) { try { JSDOM = require('jsdom').JSDOM; } catch (e2) { console.log('SKIP: jsdom غير مثبت'); process.exit(0); } }
@@ -22,24 +22,49 @@ ok(W.BILLIARDS.variant === 'eightball', 'bl8 → eightball');
 W._currentGameId = 'blsn'; W.initBilliards();
 ok(W.BILLIARDS.variant === 'snooker', 'blsn → snooker');
 
-W._currentGameId = 'bl8';
-document.getElementById('gamePageBody').innerHTML = W.eBilliards({ id:'bl8', rtp: 97 });
+W._currentGameId = 'blbb';
+document.getElementById('gamePageBody').innerHTML = W.eBilliards({ id:'blbb', rtp: 97 });
 W.initBilliards();
-W.BILLIARDS.G = W.BilliardsRules.eightball({});
+W.BILLIARDS.G = W.BilliardsRules.blackball({});
 const frame = document.getElementById('blFrame');
-const size = (w,h)=>{ Object.defineProperty(frame,'clientWidth',{value:w,configurable:true}); Object.defineProperty(frame,'clientHeight',{value:h,configurable:true}); frame._blOriented=false; };
-size(800,360); W.blOrientLayout();
 const lr=document.getElementById('blLRail'), rail=document.getElementById('blRail'), ltop=document.getElementById('blLTop');
-ok(rail && rail.classList.contains('bl-rail'), 'blRail هو عمود الأدوات (bl-rail) لا select الحواف');
-ok(frame.classList.contains('bl-land'), 'لاندسكيب: bl-land');
-ok(ltop.contains(document.getElementById('blRotBtn')) && ltop.contains(document.getElementById('blAv1')), 'لاندسكيب: تدوير+أفاتار الخصم أعلى يسار');
-ok(lr.contains(document.getElementById('blSpin')) && lr.contains(document.getElementById('blTrayL')), 'لاندسكيب: دوران+صينية الخصم يساراً');
-['blAv0','blCell0','blTrayR','blPower','blShoot'].forEach(id=>ok(rail.contains(document.getElementById(id)), 'لاندسكيب يمين: '+id));
-size(360,800); W.blOrientLayout();
-ok(!frame.classList.contains('bl-land'), 'بورتريه: bl-land أزيل');
-ok(document.getElementById('blTopbar').contains(document.getElementById('blRotBtn')), 'بورتريه: التدوير بالشريط العلوي');
-['blAv1','blCell1','blShoot','blSpin','blPower','blTrayR','blCell0','blAv0'].forEach(id=>ok(rail.contains(document.getElementById(id)), 'بورتريه يمين: '+id));
+ok(rail && rail.classList.contains('bl-rail'), 'blRail هو عمود الأدوات لا select الحواف');
+
+/* البنية ثابتة في الاتجاهين: يسار = تدوير+أفاتار الخصم+صينيته+سبين؛ يمين = أفاتاري+صينيتي+قوة+تنفيذ */
+ok(ltop.contains(document.getElementById('blRotBtn')), 'يسار: زر التدوير في الصف العلوي');
+ok(ltop.contains(document.getElementById('blAv1')), 'يسار: أفاتار الخصم بجانب التدوير');
+ok(lr.contains(document.getElementById('blTrayL')), 'يسار: صينية كرات الخصم');
+ok(lr.contains(document.getElementById('blSpin')), 'يسار: كرة الدوران');
+ok(rail.contains(document.getElementById('blAv0')), 'يمين: أفاتاري');
+ok(rail.contains(document.getElementById('blTrayR')), 'يمين: صينية كراتي');
+ok(rail.contains(document.getElementById('blPower')), 'يمين: شريط القوة');
+ok(rail.contains(document.getElementById('blShoot')), 'يمين: زر التنفيذ');
+ok(!document.getElementById('blCell0') && !document.getElementById('blCell1'), 'كرة اللون المستقلة أزيلت (اللون في الأفاتار)');
+
+/* الاتجاه: تبديل صنف فقط، بلا نقل DOM */
+const size=(w,h)=>{ Object.defineProperty(frame,'clientWidth',{value:w,configurable:true}); Object.defineProperty(frame,'clientHeight',{value:h,configurable:true}); frame._blOriented=false; };
 size(800,360); W.blOrientLayout();
-['blRotBtn','blAv1','blCell1','blTrayL','blSpin','blAv0','blCell0','blTrayR','blPower','blShoot'].forEach(id=>ok(!!document.getElementById(id), 'ذهاب-إياب: '+id));
-console.log('═══ UI-v3 layout: '+pass+'/'+(pass+fail)+' passed ═══');
+ok(frame.classList.contains('bl-land') && !frame.classList.contains('bl-port'), 'لاندسكيب: bl-land');
+const parentBefore = document.getElementById('blSpin').parentNode.id;
+size(360,800); W.blOrientLayout();
+ok(frame.classList.contains('bl-port') && !frame.classList.contains('bl-land'), 'بورتريه: bl-port');
+ok(document.getElementById('blSpin').parentNode.id === parentBefore, 'البورتريه لا ينقل العناصر — قلب CSS فقط');
+
+/* الأفاتار: لون الكرات + حرفان من الاسم */
+W.AUTH = { user: { id: 9, username: 'tarik' } };
+W.BILLIARDS.G.S.groups = ['RED', 'YELLOW'];
+W.blCellRender();
+const av0 = document.getElementById('blAv0'), av1 = document.getElementById('blAv1');
+ok(av0.textContent === 'ta', 'أفاتاري: أول حرفين من اسم المستخدم (' + av0.textContent + ')');
+ok(/d32f2f|211,\s*47,\s*47/.test(av0.style.background), 'أفاتاري بلون كراتي الحمراء');
+ok(/f5c400|245,\s*196,\s*0/.test(av1.style.background), 'أفاتار الخصم بلون كراته الصفراء');
+
+/* الصواني: كرات كل فوج تحت أفاتار صاحبه */
+W.BILLIARDS.G.S.pocketOrder = ['r1', 'y1'];
+W.blTray();
+ok(document.getElementById('blTrayR').children.length + document.getElementById('blTrayL').children.length === 2, 'الكرات الساقطة موزعة على الصينيتين');
+
+ok(!!document.getElementById('blEmoteBtn') && !!document.getElementById('blEmotePop'), 'الإيموجي العائم موجود');
+ok(!!document.getElementById('blTurn'), 'شارة الدور موجودة (مؤقت v19.5)');
+console.log('═══ UI-v4 layout: '+pass+'/'+(pass+fail)+' passed ═══');
 process.exit(fail?1:0);
