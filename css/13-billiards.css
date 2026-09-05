@@ -56,37 +56,7 @@
 .bl-logo-em { font-size: clamp(34px, 7vh, 54px); line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
 
 /* ── اختيار الصنف (شاشة الإعداد) ── */
-.bl-variants {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  width: 100%;
-}
-.bl-vchip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 6px;
-  border-radius: 12px;
-  border: 1px solid var(--bd);
-  background: var(--gc);
-  color: var(--t2);
-  cursor: pointer;
-  transition: all .2s;
-  font-family: inherit;
-}
-.bl-vchip .bl-vem { font-size: 20px; line-height: 1.1; }
-.bl-vchip .bl-vnm { font-size: 12px; font-weight: 700; color: var(--t1); }
-.bl-vchip .bl-vsub { font-size: 9.5px; color: var(--t3); text-align: center; }
-.bl-vchip.on {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold2), 0 0 18px rgba(255,210,63,.28);
-  background: linear-gradient(145deg, rgba(255,210,63,.14), rgba(15,22,38,.9));
-}
-.bl-vchip.on .bl-vnm { color: var(--gold); }
-.bl-vchip[disabled] { opacity: .45; cursor: not-allowed; }
-.bl-vchip:not([disabled]):hover { border-color: var(--bd2); transform: translateY(-1px); }
+/* [UI-v3] رقائق الأصناف أزيلت — كل صنف لعبة مستقلة */
 
 .bl-look { display: flex; gap: 6px; width: 100%; }
 .bl-look select {
@@ -423,21 +393,53 @@ body.app-fs-on .bl-spin {
   writing-mode: vertical-rl;
   direction: rtl;
   flex: 1 1 auto;
-  width: 16px;
+  width: 22px;
   min-height: 36px;
   max-height: 46vh;
   accent-color: #F2C230;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
 }
+/* [UI-v3] شريط القوة الأصفر الطويل بمقبض دائري (كما في الصورة المركبة) */
+#blPower::-webkit-slider-runnable-track {
+  width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8a5a10, #5c3a08);
+  border: 1.5px solid #3d2604;
+  box-shadow: inset 0 0 4px rgba(0,0,0,.6);
+}
+#blPower::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px; height: 22px;
+  margin-inline: -6.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a0, #F2C230 55%, #b8860b);
+  border: 2px solid #7a5606;
+  box-shadow: 0 2px 5px rgba(0,0,0,.55);
+  cursor: grab;
+}
+#blPower::-moz-range-track {
+  width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8a5a10, #5c3a08);
+  border: 1.5px solid #3d2604;
+}
+#blPower::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a0, #F2C230 55%, #b8860b);
+  border: 2px solid #7a5606;
+  box-shadow: 0 2px 5px rgba(0,0,0,.55);
+  cursor: grab;
+}
+#blPower::-moz-range-progress { background: #F2C230; border-radius: 999px; }
 
 /* ── محمول ── */
 @media (max-width: 560px) {
-  .bl-variants { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
-  .bl-vchip { padding: 6px 4px; }
-  .bl-vchip .bl-vem { font-size: 17px; }
-  .bl-vchip .bl-vnm { font-size: 11px; }
-  .bl-vchip .bl-vsub { display: none; }
-  .bl-frame { grid-template-columns: minmax(0, 1fr) clamp(56px, 15%, 76px); grid-template-rows: clamp(48px, 12%, 64px) minmax(0, 1fr); }
+    .bl-frame { grid-template-columns: minmax(0, 1fr) clamp(56px, 15%, 76px); grid-template-rows: clamp(48px, 12%, 64px) minmax(0, 1fr); }
   .bl-tcell { width: 20px; height: 20px; }
   .bl-tb { width: 16px; height: 16px; }
   .bl-tb i { width: 8px; height: 8px; font-size: 6px; }
@@ -570,14 +572,16 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 #gamePageBody #billiardsStage { margin-bottom: 0 !important; }
 
 /* ════════════════════════════════════════════════════════════════
-   [UI-v2] تصميم واجهة البلياردو حسب الصورة المركبة (2026-09-04)
-   بورتريه: شريط علوي (تدوير + صينية) + عمود أيمن (كما كان تماماً).
-   لاندسكيب: بلا شريط علوي — عمودان خشبيان جانبيان:
-     يسار: تدوير / أفاتار الخصم / لونه / صينية كراته / كرة الدوران؛
-     يمين: أفاتاري / لوني / صينية كراتي / شريط القوة / زر التنفيذ.
-   + زر إيموجي تعبيري على حافة الطاولة.
+   [UI-v3] واجهة البلياردو — مواصفات الصورة المركبة (2026-09-05)
+   بورتريه: شريط علوي (تدوير أعلى يسار + صينية) + عمود أيمن يضم كل
+   الأدوات (خروج/أفاتاران/لونا الفوجين/تنفيذ/دوران/قوة) بترتيب الصورة؛
+   الإيموجي أسفل يسار منطقة اللعب (قابل للسحب).
+   لاندسكيب: عمودان خشبيان — يسار: [تدوير+أفاتار الخصم] فلونه فصينية
+   كراته عمودياً فكرة الدوران الكبيرة أسفلاً؛ يمين: [أفاتاري بجوار زر
+   الخروج الذهبي] فلوني فصينية كراتي فشريط القوة الأصفر الطويل فالتنفيذ.
    ════════════════════════════════════════════════════════════════ */
 .bl-lrail { display: none; }
+.bl-srow { display: flex; align-items: center; gap: 6px; }
 
 .bl-frame.bl-land { grid-template-rows: minmax(0, 1fr); }
 .bl-frame.bl-land .bl-topbar,
@@ -588,8 +592,8 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
-  padding: 4px 2px;
+  gap: 8px;
+  padding: calc(6px + var(--safe-top)) 2px 8px;
   min-height: 0;
   background:
     repeating-linear-gradient(180deg, rgba(60,30,8,.10) 0 3px, rgba(0,0,0,0) 3px 9px),
@@ -602,15 +606,21 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   grid-column: 3; grid-row: 1;
   justify-content: flex-start;
   align-items: center;
+  gap: 8px;
+  /* حجز فراغ زر الخروج الذهبي العائم (fixed أعلى يمين) كي لا يغطي الأفاتار */
+  padding-top: calc(6px + var(--safe-top));
   border-left: 2px solid #8a5a24;
 }
+/* أفاتاري بجانب (يسار) زر الخروج: بأقصى يسار العمود في مستوى الزر */
+.bl-frame.bl-land .bl-rail .bl-av.p1 { align-self: flex-start; margin-inline-start: 2px; }
 
-/* الدوران بأسفل العمود الأيسر (كبيرة كما في الصورة) والتنفيذ بأسفل الأيمن */
-.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; width: min(84px, 130%); }
-.bl-frame.bl-land .bl-rail .bl-shoot { margin-top: 6px; }
-.bl-frame.bl-land .bl-rail #blPower { max-height: none; }
+/* اليسار: الدوران الكبيرة بأسفل العمود (كما في الصورة) */
+.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; width: min(88px, 140%); }
+/* اليمين: شريط القوة الطويل يملأ الوسط والتنفيذ أسفله */
+.bl-frame.bl-land .bl-rail #blPower { flex: 1 1 auto; max-height: none; min-height: 80px; }
+.bl-frame.bl-land .bl-rail .bl-shoot { margin-bottom: 6px; }
 
-/* صينية الكرات العمودية (كرات كل لاعب في عموده) */
+/* صينية الكرات العمودية (كرات كل لاعب في عموده تحت أفاتاره) */
 .bl-vtray {
   display: flex;
   flex-direction: column;
@@ -620,35 +630,39 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   min-height: 0;
   overflow: hidden;
 }
-.bl-frame.bl-land .bl-vtray { flex: 1 1 auto; }
+.bl-frame.bl-land .bl-lrail .bl-vtray { flex: 1 1 auto; }
 .bl-vtray .bl-tcell { width: 24px; height: 24px; }
 .bl-vtray .bl-tb { width: 20px; height: 20px; }
+/* بورتريه: الصينية العمودية داخل العمود الأيمن مضغوطة */
+.bl-rail .bl-vtray { max-height: 22%; }
 
-/* ── زر الإيموجي التعبيري على الحافة اليسرى للطاولة ── */
+/* ── زر الإيموجي التعبيري العائم (قابل للسحب) ── */
 .bl-emote {
   position: absolute;
-  inset-inline-start: 2px;
-  bottom: 16%;
+  inset-inline-start: 4px;
+  bottom: 5%;
   z-index: 6;
-  width: 44px; height: 44px;
+  width: 46px; height: 46px;
   border: none;
   border-radius: 50%;
   background: transparent;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 1;
-  cursor: pointer;
+  cursor: grab;
   padding: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
   transition: transform .12s;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.bl-emote:active { transform: scale(.9); }
+.bl-emote:active { transform: scale(.9); cursor: grabbing; }
 /* لاندسكيب (كما في الصورة): الإيموجي أعلى يسار الطاولة */
-.bl-frame.bl-land .bl-emote { bottom: auto; top: 8%; }
-.bl-frame.bl-land .bl-emote-pop { bottom: auto; top: 8%; }
+.bl-frame.bl-land .bl-emote { bottom: auto; top: 6%; }
 .bl-emote-pop {
   position: absolute;
-  inset-inline-start: 50px;
-  bottom: 14%;
+  inset-inline-start: 54px;
+  bottom: 5%;
   z-index: 7;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -659,6 +673,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   padding: 6px;
   box-shadow: 0 6px 18px rgba(0,0,0,.6);
 }
+.bl-frame.bl-land .bl-emote-pop { bottom: auto; top: 6%; }
 .bl-emote-pop[hidden] { display: none; }
 .bl-emote-opt {
   width: 40px; height: 40px;
@@ -690,3 +705,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   75%  { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -80%) scale(.9); }
 }
+
+/* [UI-v3] زر الخروج الذهبي فوق كل طبقات اللعبة والأيقونة العائمة (كان 5100
+   فتحجبه أيقونة التفاعلات z:14000 عند انزلاقها فوقه بعد تدوير الشاشة) */
+body.bl-game-open .game-fs-exit { z-index: 14500 !important; }

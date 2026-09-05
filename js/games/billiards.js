@@ -25,6 +25,11 @@ var BL_SNORDER = ['YELLOW', 'GREEN', 'BROWN', 'BLUE', 'PINK', 'BLACK'];
 var BL_CLOTHS = { green: ['#14713d', '#1e9a52'], blue: ['#175a8c', '#2e86c1'], maroon: ['#571a24', '#7a2230'] };
 var BL_RAILS = { wood: ['#d19a5b', '#b57a3e'], ornate: ['#d19a5b', '#c19055'], black: ['#2a2c33', '#17181d'] };
 
+/* [UI-v3] كل صنف بلياردو لعبة مستقلة — هوية شاشة الإعداد حسب معرف اللعبة */
+var BL_VAR_EM    = { bl8: '🎱', blbb: '🔴', blgv: '🟡', blsn: '🟥', blca: '⚪' };
+var BL_VAR_TITLE = { bl8: 'bl.v8ball', blbb: 'bl.vBlackball', blgv: 'bl.vGolvazor', blsn: 'bl.vSnooker', blca: 'bl.vCarom' };
+var BL_VAR_SUB   = { bl8: 'bl.v8ballSub', blbb: 'bl.vBlackballSub', blgv: 'bl.vGolvazorSub', blsn: 'bl.vSnookerSub', blca: 'bl.vCaromSub' };
+
 function blShade(hex, f) {
   var n = parseInt(hex.slice(1), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
   if (f < 0) { r *= 1 + f; g *= 1 + f; b *= 1 + f; }
@@ -45,14 +50,11 @@ function eBilliards(g) {
 
   return gFrame(
     '<div class="bl-wrap" id="blWrap">' +
-      /* ── شاشة الإعداد ── */
+      /* ── شاشة الإعداد — [UI-v3] كل صنف لعبة مستقلة: لا اختيار صنف هنا ── */
       '<div class="dama-setup" id="blSetup">' +
-        '<div class="dama-logo"><span class="bl-logo-em">🎱</span></div>' +
-        '<div class="dama-title">' + T('bl.title') + '</div>' +
-        '<div class="dama-sub">' + T('bl.sub') + '</div>' +
-        '<div class="dama-field"><div class="dama-flab">' + T('bl.variant') + '</div>' +
-          '<div class="bl-variants" id="blVariants"></div>' +
-        '</div>' +
+        '<div class="dama-logo"><span class="bl-logo-em">' + (BL_VAR_EM[g.id] || '🎱') + '</span></div>' +
+        '<div class="dama-title">' + T(BL_VAR_TITLE[g.id] || 'bl.title') + '</div>' +
+        '<div class="dama-sub">' + T(BL_VAR_SUB[g.id] || 'bl.sub') + '</div>' +
         '<div class="dama-field" id="blCaromField" hidden>' +
           '<div class="dama-flab">' + T('bl.caDisc') + '</div>' +
           '<div class="dama-pick" id="blCaDisc"></div>' +
@@ -85,18 +87,22 @@ function eBilliards(g) {
         '<div class="dama-pay bl-hint" id="blVariantHint"></div>' +
       '</div>' +
 
-      /* ── شاشة اللعب: طاولة 85% + شريطان شفافان 15% (علوي/أيمن) بلا نصوص ── */
+      /* ── شاشة اللعب [UI-v3] — تصميم الصورة المركبة:
+         بورتريه: شريط علوي (تدوير + صينية) + عمود أيمن يضم كل الأدوات؛
+         لاندسكيب: عمودان خشبيان — يسار (تدوير+أفاتار الخصم/لونه/صينيته/التنفيذ/الدوران)
+         ويمين (أفاتاري+خروج/لوني/صينيتي/شريط القوة الطويل) ── */
       '<div class="dama-play" id="blPlay" hidden>' +
-      '<div class="bl-frame">' +
+      '<div class="bl-frame" id="blFrame">' +
         '<div class="bl-topbar" id="blTopbar">' +
           '<button class="bl-rotbtn" id="blRotBtn" onclick="billiardsFlipView()" title="&#8635;">🔄</button>' +
           '<div class="bl-tray" id="blTray"></div>' +
           '<div class="bl-turn bl-sr" id="blTurn">…</div>' +
         '</div>' +
         '<div class="bl-corner" id="blCorner"><i class="bl-ring" id="blRing"></i></div>' +
-        /* [UI-v2] العمود الأيسر (لاندسكيب فقط — تصميم الصورة المركبة):
-           تُنقل إليه أدوات الخصم والتنفيذ والدوران ديناميكياً (blOrientLayout) */
-        '<div class="bl-lrail" id="blLRail"><div class="bl-vtray" id="blTrayL"></div></div>' +
+        '<div class="bl-lrail" id="blLRail">' +
+          '<div class="bl-srow" id="blLTop"></div>' +
+          '<div class="bl-vtray" id="blTrayL"></div>' +
+        '</div>' +
         '<div class="bl-mid" id="blMid">' +
           '<div class="bl-stage" id="blStageBox"><canvas id="blCv"></canvas></div>' +
           '<button class="bl-emote" id="blEmoteBtn" onclick="billiardsEmote()" aria-label="emoji">😄</button>' +
@@ -166,7 +172,6 @@ function initBilliards() {
     isSpectator: false, oppBot: false, mySeat: 0,
     cv: null, ctx: null, dpr: 1, VT: null, ro: null, flip: false
   };
-  blBuildVariants();
   blBuildCaromOpts();
   blBuildGvOpts();
   blBuildTimerOpts();
@@ -189,26 +194,7 @@ function billiardsSetTimer(n) {
   if (typeof SND !== 'undefined' && SND.click) { try { SND.click(); } catch (e) {} }
 }
 
-function blBuildVariants() {
-  var box = document.getElementById('blVariants');
-  if (!box) return;
-  var list = [
-    ['eightball', '🎱', T('bl.v8ball'), T('bl.v8ballSub'), true],
-    ['blackball', '🔴', T('bl.vBlackball'), T('bl.vBlackballSub'), true],
-    ['golvazor', '🟡', T('bl.vGolvazor'), T('bl.vGolvazorSub'), true],
-    ['snooker', '🟥', T('bl.vSnooker'), T('bl.vSnookerSub'), true],
-    ['carom', '⚪', T('bl.vCarom'), T('bl.vCaromSub'), true]
-  ];
-  box.innerHTML = list.map(function (v) {
-    var dis = v[4] ? '' : ' disabled';
-    var on = (BILLIARDS.variant === v[0]) ? ' on' : '';
-    return '<button class="bl-vchip' + on + '" data-v="' + v[0] + '"' + dis +
-      ' onclick="billiardsSetVariant(\'' + v[0] + '\')">' +
-      '<span class="bl-vem">' + v[1] + '</span>' +
-      '<span class="bl-vnm">' + v[2] + '</span>' +
-      '<span class="bl-vsub">' + v[3] + (v[4] ? '' : ' · ' + T('bl.soon')) + '</span></button>';
-  }).join('');
-}
+/* [UI-v3] blBuildVariants أُزيلت — كل صنف لعبة مستقلة من الكتالوج */
 
 /* ── كاروم: اختصاص صريح (§4) وهدف المباراة ── */
 function blBuildCaromOpts() {
@@ -277,20 +263,6 @@ function blUpdateHint() {
     : (BILLIARDS && BILLIARDS.variant === 'golvazor') ? T('bl.hintGolvazor')
     : (BILLIARDS && BILLIARDS.variant === 'snooker') ? T('bl.hintSnooker')
     : (BILLIARDS && BILLIARDS.variant === 'carom') ? T('bl.hintCarom') : T('bl.hint8ball');
-}
-
-function billiardsSetVariant(v) {
-  if (!BILLIARDS || !BilliardsRules.supported(v)) {
-    if (typeof toast === 'function') toast(T('bl.soon'), 'warn');
-    return;
-  }
-  BILLIARDS.variant = v;
-  blBuildCaromOpts();
-  blBuildGvOpts();
-  var chips = document.querySelectorAll('#blVariants .bl-vchip');
-  for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('on', chips[i].getAttribute('data-v') === v);
-  blUpdateHint();
-  if (typeof SND !== 'undefined' && SND.click) SND.click();
 }
 
 function billiardsSetBet(b) {
@@ -380,7 +352,6 @@ function billiardsToSetup() {
   if (pl) pl.hidden = true;
   if (ov) ov.hidden = true;
   if (su) su.hidden = false;
-  blBuildVariants();
 }
 
 function billiardsNewFrame() {
@@ -1001,6 +972,7 @@ function blMaybeAI() {
 function blBindInput() {
   var B = BILLIARDS;
   if (!B) return;
+  blBindEmoteDrag();                               /* [UI-v3] الإيموجي العائم */
   var cv = document.getElementById('blCv');
   if (!cv || B._bound) return;
   B._bound = true;
@@ -1123,17 +1095,21 @@ function blAimTo(p) {
   B.aim = Math.atan2(p.y - c.y, p.x - c.x);
 }
 
-/* ═══ [UI-v2] توزيع الاتجاه — تصميم الصورة المركبة ═══
-   بورتريه: شريط علوي (تدوير + صينية أفقية) + عمود أيمن (أفاتاران/تنفيذ/دوران/قوة).
-   لاندسكيب: عمودان — يسار: تدوير/أفاتار الخصم/لونه/صينيته/الدوران؛
-   يمين: أفاتاري/لوني/صينيتي/القوة/التنفيذ. نقل DOM يحفظ المستمعين. */
+/* ═══ [UI-v3] توزيع الاتجاه — مواصفات الصورة المركبة حرفياً ═══
+   لاندسكيب:
+     يسار ↓: [تدوير + أفاتار الخصم] ثم صينية كراته عمودياً ثم الدوران (كبيرة) أسفله؛
+              الإيموجي العائم فوق الطاولة (bl-emote يبقى في bl-mid).
+     يمين ↓: [أفاتاري بجوار زر الخروج الذهبي (يحجز مكانه)] ثم صينية كراتي
+              ثم شريط القوة الأصفر الطويل. (التنفيذ أسفل يمين مع لون فوجي.)
+   بورتريه: تدوير أعلى يسار (شريط علوي) + كل الأدوات في العمود الأيمن
+   بنفس الترتيب النسبي؛ الإيموجي أسفل يسار منطقة اللعب. */
 function blOrientLayout() {
   var B = BILLIARDS;
   if (!B) return;
-  var frame = document.querySelector('#billiardsStage .bl-frame');
+  var frame = document.getElementById('blFrame');
   var lr = document.getElementById('blLRail'), rail = document.getElementById('blRail'),
-      top = document.getElementById('blTopbar');
-  if (!frame || !lr || !rail || !top) return;
+      top = document.getElementById('blTopbar'), ltop = document.getElementById('blLTop');
+  if (!frame || !lr || !rail || !top || !ltop) return;
   var land = frame.clientWidth > frame.clientHeight;
   if (B._blLand === land && frame._blOriented) return;
   B._blLand = land; frame._blOriented = true;
@@ -1143,14 +1119,19 @@ function blOrientLayout() {
       av0 = g('blAv0'), cell0 = g('blCell0'), shoot = g('blShoot'), pow = g('blPower'),
       trayL = g('blTrayL'), trayR = g('blTrayR'), sr = rail.querySelector('.bl-sr');
   if (land) {
-    /* العمود الأيسر أعلى→أسفل: تدوير، أفاتار الخصم، لونه، صينيته، كرة الدوران */
-    [rot, av1, cell1, trayL, spin].forEach(function (el) { if (el) lr.appendChild(el); });
-    /* العمود الأيمن أعلى→أسفل: أفاتاري، لوني، صينيتي، القوة، التنفيذ */
+    /* يسار: صف علوي [تدوير | أفاتار الخصم] ثم لونه ثم صينيته ثم الدوران أسفله */
+    if (rot) ltop.appendChild(rot);
+    if (av1) ltop.appendChild(av1);
+    if (cell1) lr.insertBefore(cell1, trayL);
+    if (spin) lr.appendChild(spin);
+    /* يمين: (زر الخروج الذهبي fixed أعلى يمين — نحجز له فراغاً بـCSS)
+       أفاتاري ثم لوني ثم صينيتي ثم شريط القوة الطويل ثم التنفيذ */
     [av0, cell0, trayR, pow, shoot].forEach(function (el) { if (el) rail.appendChild(el); });
     if (sr) rail.appendChild(sr);
   } else {
+    /* بورتريه: التدوير للشريط العلوي، والعمود الأيمن بترتيب الصورة العمودية:
+       أفاتار الخصم، لونه، التنفيذ، الدوران، شريط القوة، صينيتي، لوني، أفاتاري */
     if (rot) top.insertBefore(rot, top.firstChild);
-    lr.innerHTML = ''; lr.appendChild(trayL);
     [av1, cell1, shoot, spin, pow, trayR, cell0, av0].forEach(function (el) { if (el) rail.appendChild(el); });
     if (sr) rail.appendChild(sr);
   }
@@ -1228,15 +1209,23 @@ function blFitCanvas() {
       colW = Math.max(54, Math.min(Math.round(F.right - rcx + rrr * 0.7071), 190));
     }
     var wantRows, wantCols;
+    var AR = (W + 120) / (H + 120);          /* نسبة عرض الطاولة بإطارها الخشبي */
     if (B._blLand) {
-      /* [UI-v2] لاندسكيب (الصورة المركبة): عمودان جانبيان متساويان والطاولة بينهما
-         بلا شريط علوي — كل الأدوات موزعة على العمودين */
-      var sideW = Math.max(64, Math.min(colW, Math.round(F.width * 0.12)));
+      /* [UI-v3] لاندسكيب: عمودان جانبيان والطاولة بينهما — عرضاهما يمتصان
+         فائض العرض بالكامل كي تملأ الطاولة المنطقة الوسطى بلا letterbox:
+         عرض الوسط الأمثل = ارتفاع الإطار × نسبة الطاولة */
+      var midW = Math.min(F.width - 128, Math.round(F.height * AR));
+      var sideW = Math.max(64, Math.round((F.width - midW) / 2));
       wantRows = 'minmax(0,1fr)';
       wantCols = sideW + 'px minmax(0,1fr) ' + sideW + 'px';
     } else {
-      wantRows = rowW + 'px minmax(0,1fr)';
-      wantCols = 'minmax(0,1fr) ' + colW + 'px';
+      /* [UI-v3] بورتريه: العمود الأيمن يمتص فائض العرض (عرض الوسط الأمثل =
+         الارتفاع المتاح ÷ نسبة الطاولة) والشريط العلوي يمتص فائض الارتفاع */
+      var rowH = Math.max(44, Math.min(rowW, 240));
+      var midWp = Math.min(F.width - 54, Math.round((F.height - rowH) / AR));
+      var colWp = Math.max(54, Math.min(Math.round(F.width - midWp), 190));
+      wantRows = rowH + 'px minmax(0,1fr)';
+      wantCols = 'minmax(0,1fr) ' + colWp + 'px';
     }
     if (frame._blRowsT !== wantRows || frame._blColsT !== wantCols) {
       frame._blRowsT = wantRows; frame._blColsT = wantCols;
@@ -1811,16 +1800,64 @@ function blRegisterRooms() {
   } catch (e) {}
 }
 
-/* ═══ [UI-v2] إيموجي تعبيري: زر 😄 يفتح لوحة صغيرة، والاختيار ينفجر وسط الطاولة ═══ */
+/* ═══ [UI-v3] إيموجي تعبيري عائم قابل للسحب: نقرة = لوحة، سحب = تحريك ═══ */
 var BL_EMOTES = ['😄', '😂', '😎', '😡', '😭', '👏', '🔥', '🍀'];
 function billiardsEmote() {
+  var btn = document.getElementById('blEmoteBtn');
+  if (btn && btn._dragged) { btn._dragged = false; return; }   /* سحب — ليست نقرة */
   var pop = document.getElementById('blEmotePop');
   if (!pop) return;
   if (!pop.hidden) { pop.hidden = true; return; }
   pop.innerHTML = BL_EMOTES.map(function (e) {
     return '<button class="bl-emote-opt" onclick="billiardsEmoteSend(\'' + e + '\')">' + e + '</button>';
   }).join('');
+  /* اللوحة بجوار الزر أينما كان */
+  var btn2 = document.getElementById('blEmoteBtn'), mid = document.getElementById('blMid');
+  if (btn2 && mid) {
+    var br = btn2.getBoundingClientRect(), mr = mid.getBoundingClientRect();
+    pop.style.insetInlineStart = 'auto';
+    pop.style.left = Math.min(mr.width - 190, Math.max(4, br.left - mr.left + br.width + 6)) + 'px';
+    pop.style.top = Math.min(mr.height - 110, Math.max(4, br.top - mr.top)) + 'px';
+    pop.style.bottom = 'auto';
+  }
   pop.hidden = false;
+}
+function blBindEmoteDrag() {
+  var btn = document.getElementById('blEmoteBtn'), mid = document.getElementById('blMid');
+  if (!btn || !mid || btn._dragBound) return;
+  btn._dragBound = true;
+  var D = window._blEmoteDrag || (window._blEmoteDrag = { on: false });
+  D.btn = btn; D.mid = mid;
+  function pt(e) { return (e.touches && e.touches[0]) ? e.touches[0] : e; }
+  btn.addEventListener('mousedown', blEmoteDown);
+  btn.addEventListener('touchstart', blEmoteDown, { passive: true });
+  function blEmoteDown(e) {
+    var p = pt(e);
+    D.on = true; D.moved = false; D.sx = p.clientX; D.sy = p.clientY;
+    var r = btn.getBoundingClientRect(), mr = mid.getBoundingClientRect();
+    D.bx = r.left - mr.left; D.by = r.top - mr.top;
+  }
+  if (!window._blEmoteWin) {
+    window._blEmoteWin = true;
+    var move = function (e) {
+      if (!D.on || !D.btn || !D.mid || !document.contains(D.btn)) return;
+      var p = pt(e);
+      var dx = p.clientX - D.sx, dy = p.clientY - D.sy;
+      if (!D.moved && Math.hypot(dx, dy) < 7) return;
+      D.moved = true;
+      var mr = D.mid.getBoundingClientRect();
+      var nx = Math.max(0, Math.min(mr.width - D.btn.offsetWidth, D.bx + dx));
+      var ny = Math.max(0, Math.min(mr.height - D.btn.offsetHeight, D.by + dy));
+      D.btn.style.insetInlineStart = 'auto';
+      D.btn.style.left = nx + 'px'; D.btn.style.top = ny + 'px'; D.btn.style.bottom = 'auto';
+      if (e.cancelable) e.preventDefault();
+    };
+    var up = function () { if (D.on && D.moved && D.btn) D.btn._dragged = true; D.on = false; };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('mouseup', up);
+    window.addEventListener('touchend', up);
+  }
 }
 function billiardsEmoteSend(e) {
   var pop = document.getElementById('blEmotePop');
