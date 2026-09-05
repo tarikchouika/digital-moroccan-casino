@@ -629,6 +629,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
+  min-width: 24px;
 }
 .bl-frame.bl-land .bl-lrail .bl-vtray { flex: 1 1 auto; }
 .bl-vtray .bl-tcell { width: 24px; height: 24px; }

@@ -76,7 +76,7 @@ function eBilliards(g) {
         '<div class="dama-field"><div class="dama-flab">' + T('bl.appearance') + '</div>' +
           '<div class="bl-look">' +
             '<select id="blCloth" onchange="billiardsLook()">' + clothOpts + '</select>' +
-            '<select id="blRail" onchange="billiardsLook()">' + railOpts + '</select>' +
+            '<select id="blRailSel" onchange="billiardsLook()">' + railOpts + '</select>' +
           '</div>' +
         '</div>' +
         '<div class="bl-modes">' +
@@ -275,7 +275,7 @@ function billiardsSetBet(b) {
 
 function billiardsLook() {
   if (!BILLIARDS) return;
-  var c = document.getElementById('blCloth'), r = document.getElementById('blRail');
+  var c = document.getElementById('blCloth'), r = document.getElementById('blRailSel');
   if (c) BILLIARDS.cloth = c.value;
   if (r) BILLIARDS.rail = r.value;
   if (BILLIARDS.G) blDraw();
@@ -1219,12 +1219,10 @@ function blFitCanvas() {
       wantRows = 'minmax(0,1fr)';
       wantCols = sideW + 'px minmax(0,1fr) ' + sideW + 'px';
     } else {
-      /* [UI-v3] بورتريه: العمود الأيمن يمتص فائض العرض (عرض الوسط الأمثل =
-         الارتفاع المتاح ÷ نسبة الطاولة) والشريط العلوي يمتص فائض الارتفاع */
-      var rowH = Math.max(44, Math.min(rowW, 240));
-      var midWp = Math.min(F.width - 54, Math.round((F.height - rowH) / AR));
-      var colWp = Math.max(54, Math.min(Math.round(F.width - midWp), 190));
-      wantRows = rowH + 'px minmax(0,1fr)';
+      /* [UI-v3c] بورتريه: شريط علوي صغير + عمود أيمن معتدل؛ الطاولة ملتصقة
+         أعلى (v12c) وفائض الارتفاع يُطلى خشباً داخل الكانفاس أسفلها */
+      var colWp = Math.max(54, Math.min(190, Math.max(colW, Math.round(F.width * 0.11))));
+      wantRows = Math.max(44, Math.min(rowW, 120)) + 'px minmax(0,1fr)';
       wantCols = 'minmax(0,1fr) ' + colWp + 'px';
     }
     if (frame._blRowsT !== wantRows || frame._blColsT !== wantCols) {
