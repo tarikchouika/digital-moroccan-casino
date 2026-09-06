@@ -111,6 +111,10 @@
   .g4 {
     grid-template-columns: repeat(3, 1fr);
   }
+  /* [Home] «ألعاب مميزة» 4 بطاقات: 2×2 بلا خانة فارغة */
+  #rowFeatured {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .hero h1 {
     font-size: 1.7rem;
   }

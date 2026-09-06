@@ -224,7 +224,7 @@
           </div>
           <div class="card" style="margin-top:14px">
             <div class="crow">
-              <label for="friendMsgInput" class="sr-only">اكتب رسالتك</label>
+              <label for="friendMsgInput" class="sr-only" data-i18n="fr.msgPlaceholder">اكتب رسالتك</label>
               <input class="cin" id="friendMsgInput" data-i18n-placeholder="fr.msgPlaceholder" placeholder="رسالتك..." onkeypress="if(event.key==='Enter') sendFriendMsg()">
               <button class="btn" id="friendSendBtn" onclick="sendFriendMsg()" data-i18n="ui.send">إرسال</button>
               <button class="btn ghost" id="friendInviteBtn" onclick="inviteFriendToRoom()"><i class="fa-solid fa-door-open" aria-hidden="true"></i> <span data-i18n="ui.invite">دعوة لغرفة</span></button>
@@ -668,6 +668,7 @@
   <!-- ═══════════ Scripts ═══════════ -->
   <script src="js/core/session.js?v=unified13"></script>
   <script src="js/core/state.js?v=unified13"></script>
+  <script src="js/core/live-ws-bridge.js?v=auto"></script>
   <script src="js/core/api.js?v=unified13"></script>
   <script src="js/core/auth.js?v=unified13"></script>
   <script src="js/core/audio.js?v=unified13"></script>

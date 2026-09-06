@@ -504,8 +504,9 @@ if (typeof document !== 'undefined') {
   window.addEventListener('beforeunload', function () {
     if (AUTH.user) {
       try {
-        fetch('/api/sync', {
+        fetch((window.API_BASE_URL || 'https://casino-api.tarikc.workers.dev') + '/api/sync', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gold: ST.gold, lang: ST.lang }),
           keepalive: true
