@@ -861,7 +861,7 @@ let _histGame = null;
 let _localRounds = [];
 let _serverRounds = [];
 /* تسجيل جولة محلية (وإرسالها للخادم إن كان المستخدم مسجلاً) */
-function recordRound(won, payout, txt) {
+function recordRound(won, payout, txt, betOverride) {
   const gid = window._currentGameId;
   if (!gid) return;
   /* إنهاء حالة «الجولة قيد التقدم» — تُسجَّل الجولة في كل الألعاب */
@@ -869,7 +869,8 @@ function recordRound(won, payout, txt) {
     try { window.SessionResume.onResolve(); } catch (e) {}
   }
   const me = (AUTH && AUTH.user) ? AUTH.user.username : 'أنت';
-  const bet = (typeof GB === 'number') ? GB : 0;
+  /* [Tickets] betOverride: رهان التذكرة نفسها (كينو متعدد الرهانات) بدل GB العام */
+  const bet = (typeof betOverride === 'number') ? betOverride : ((typeof GB === 'number') ? GB : 0);
   const row = {
     username: me,
     game_id: gid,
@@ -904,7 +905,66 @@ function stopGameHistory() {
     _histTimer = null;
   }
   _histGame = null;
+  /* [Tickets] إغلاق لوحة التذاكر عند مغادرة اللعبة */
+  toggleTicketsPanel(false);
 }
+/* ═══════════ [Tickets] لوحة سجل تيكيتس الرهانات — فتح/إغلاق + سحب ═══════════ */
+function toggleTicketsPanel(force) {
+  const ov = document.getElementById('ticketsOverlay');
+  const btn = document.getElementById('ticketsBtn');
+  if (!ov) return;
+  const open = (typeof force === 'boolean') ? force : !ov.classList.contains('open');
+  ov.classList.toggle('open', open);
+  ov.setAttribute('aria-hidden', open ? 'false' : 'true');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) renderGameHistory();
+}
+/* سحب اللوحة من المقبض للإغلاق السلس (لمس + فأرة) */
+(function initTicketsDrag() {
+  let startY = 0, curY = 0, active = false;
+  function onStart(e) {
+    const ov = document.getElementById('ticketsOverlay');
+    if (!ov || !ov.classList.contains('open')) return;
+    active = true;
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    curY = startY;
+    ov.classList.add('dragging');
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!active) return;
+    curY = (e.touches ? e.touches[0].clientY : e.clientY);
+    const dy = Math.max(0, curY - startY);
+    const sheet = document.getElementById('ticketsSheet');
+    if (sheet) sheet.style.transform = 'translateY(' + dy + 'px)';
+  }
+  function onEnd() {
+    if (!active) return;
+    active = false;
+    const ov = document.getElementById('ticketsOverlay');
+    const sheet = document.getElementById('ticketsSheet');
+    if (ov) ov.classList.remove('dragging');
+    if (sheet) sheet.style.transform = '';
+    const dy = curY - startY;
+    /* إغلاق إذا سُحبت لأسفل أكثر من ربع الشاشة */
+    if (dy > Math.min(180, window.innerHeight / 4)) toggleTicketsPanel(false);
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    const grip = document.getElementById('ticketsGrip');
+    const ov = document.getElementById('ticketsOverlay');
+    if (!grip || !ov) return;
+    grip.addEventListener('touchstart', onStart, { passive: false });
+    grip.addEventListener('mousedown', onStart);
+    document.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mouseup', onEnd);
+    /* نقر خارج اللوحة (الخلفية المعتمة العلوية) يغلقها */
+    ov.addEventListener('click', function (e) { if (e.target === ov) toggleTicketsPanel(false); });
+    /* Escape يغلق */
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') toggleTicketsPanel(false); });
+  });
+})();
 function fetchHistory() {
   if (!_histGame || typeof API === 'undefined') return;
   API.get('/api/games/' + _histGame + '/history').then(function (r) {

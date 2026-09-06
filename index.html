@@ -366,16 +366,23 @@
               <button class="btn icon-btn" onclick="showFullRules()" aria-label="القواعد الكاملة" title="القواعد الكاملة"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>
               <button class="btn icon-btn" id="gameFsBtn" onclick="toggleGameFullscreen()" aria-label="ملء الشاشة" aria-pressed="false" title="ملء الشاشة"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
               <button class="btn icon-btn" id="roomBtn" onclick="Rooms.toggleFromGame()" aria-label="العب مع صديق" title="العب مع صديق"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></button>
-              <button class="btn icon-btn" id="aiBtn" onclick="Rooms.practiceVsAi(window._currentGameId)" style="display:none" aria-label="العب ضد الآلي" title="العب ضد الآلي"><i class="fa-solid fa-robot" aria-hidden="true"></i></button>
+              <button class="btn icon-btn" id="ticketsBtn" onclick="toggleTicketsPanel()" aria-label="سجل تيكيتس الرهانات" aria-expanded="false" title="سجل تيكيتس الرهانات"><i class="fa-solid fa-receipt" aria-hidden="true"></i></button>
             </div>
           </div>
           <div id="gamePageBody"></div>
-          <div class="ghist">
-            <div class="ghist-head">
-              <div class="ghist-title"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> <span data-i18n="ui.ghistTitle">سجل الجولات</span></div>
-              <span class="live-badge"><span class="dot" aria-hidden="true"></span> <span data-i18n="ui.liveBadge">حي</span></span>
+          <!-- [Tickets] لوحة سجل تيكيتس الرهانات — منسدلة فوق حاوية اللعبة، ملء الشاشة، قابلة للسحب والإغلاق -->
+          <div class="tickets-overlay" id="ticketsOverlay" aria-hidden="true">
+            <div class="tickets-sheet" id="ticketsSheet" role="dialog" aria-modal="true" aria-labelledby="ticketsTitle">
+              <div class="tickets-grip" id="ticketsGrip" aria-hidden="true"><span></span></div>
+              <div class="ghist-head">
+                <div class="ghist-title" id="ticketsTitle"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="ui.ghistTitle">سجل تيكيتس الرهانات</span></div>
+                <div class="tickets-head-actions">
+                  <span class="live-badge"><span class="dot" aria-hidden="true"></span> <span data-i18n="ui.liveBadge">حي</span></span>
+                  <button type="button" class="btn icon-btn tickets-close" onclick="toggleTicketsPanel(false)" aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+              </div>
+              <div class="ghist-wrap" id="gameHistory"></div>
             </div>
-            <div class="ghist-wrap" id="gameHistory"></div>
           </div>
         </section>
       </main>
@@ -689,10 +696,11 @@
   <script src="js/games/engines.js?v=unified13"></script>
   <script type="module" src="js/games/crash.js?v=unified13"></script>
   <script src="js/core/rooms.js?v=unified13"></script>
-  <script src="js/main.js?v=unified13"></script>
+  <script src="js/main.js?v=unified14"></script>
   <script src="js/core/live.js?v=unified13"></script>
   <script src="js/core/fair.js?v=unified13"></script>
   <script src="js/games/group.js?v=unified13"></script>
+  <script src="js/friends.js?v=unified14"></script>
 
   <!-- ═══════════ Mobile Bottom Navigation Bar ═══════════ -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="التنقل السفلي">

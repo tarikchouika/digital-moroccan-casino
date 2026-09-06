@@ -939,40 +939,87 @@ var C = {
     }
     if (p === "/api/friends" && method === "GET") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
-      const list = await dbAll(env, `
-        SELECT f.status, u.id, u.username, u.gold
-        FROM friends f JOIN users u ON u.id = f.friend_id
-        WHERE f.user_id = ?`, [me.id]);
+      /* [Friends] عقد العميل: قائمة واحدة بحالات accepted/incoming/outgoing */
+      const acc = await dbAll(env, "SELECT u.id, u.username FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? AND f.status = 'accepted'", [me.id]);
+      const inc = await dbAll(env, "SELECT u.id, u.username FROM friends f JOIN users u ON u.id = f.user_id WHERE f.friend_id = ? AND f.status = 'pending'", [me.id]);
+      const out = await dbAll(env, "SELECT u.id, u.username FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? AND f.status = 'pending'", [me.id]);
+      const now5 = Date.now() - 3e5;
+      const list = [];
+      for (const r of acc) list.push({ id: r.id, username: r.username, status: "accepted" });
+      for (const r of inc) list.push({ id: r.id, username: r.username, status: "incoming" });
+      for (const r of out) list.push({ id: r.id, username: r.username, status: "outgoing" });
+      for (const f of list) {
+        const ls = await dbOne(env, "SELECT last_seen FROM users WHERE id = ?", [f.id]);
+        f.online = !!(ls && ls.last_seen && ls.last_seen > now5);
+      }
       return _json({ ok: true, friends: list });
     }
     if (p === "/api/friends/add" && method === "POST") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
       const data = await req.json();
-      const target = await dbOne(env, "SELECT id FROM users WHERE username = ?", [String(data.username || "").trim()]);
-      if (!target || target.id === me.id) return _json({ ok: false, message: "\u0645\u0633\u062A\u062E\u062F\u0645 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F" }, 404);
-      await dbRun(env, "INSERT INTO friends (user_id, friend_id, status) VALUES (?,?,'pending')", [me.id, target.id]);
+      const uname = String(data.username || "").trim();
+      if (!uname || uname.length > 30) return _json({ ok: false, message: "\u0627\u0633\u0645 \u063A\u064A\u0631 \u0635\u0627\u0644\u062D" }, 400);
+      const target = await dbOne(env, "SELECT id FROM users WHERE username = ?", [uname]);
+      if (!target) return _json({ ok: false, message: "\u0627\u0644\u0645\u0633\u062A\u062E\u062F\u0645 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F" }, 404);
+      if (target.id === me.id) return _json({ ok: false, message: "\u0644\u0627 \u064A\u0645\u0643\u0646\u0643 \u0625\u0636\u0627\u0641\u0629 \u0646\u0641\u0633\u0643" }, 400);
+      /* علاقة قائمة (بأي اتجاه)؟ لا تكرار */
+      const exist = await dbOne(env, "SELECT id, status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", [me.id, target.id, target.id, me.id]);
+      if (exist && exist.status === "accepted") return _json({ ok: false, message: "\u0623\u0646\u062A\u0645\u0627 \u0623\u0635\u062F\u0642\u0627\u0621 \u0628\u0627\u0644\u0641\u0639\u0644" }, 400);
+      if (exist) return _json({ ok: true });
+      await dbRun(env, "INSERT INTO friends (user_id, friend_id, status, created_at) VALUES (?,?,'pending',?)", [me.id, target.id, Date.now()]);
       return _json({ ok: true });
     }
     if (p === "/api/friends/accept" && method === "POST") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
       const data = await req.json();
-      await dbRun(env, "UPDATE friends SET status = 'accepted' WHERE user_id = ? AND friend_id = ?", [me.id, Number(data.id)]);
-      await dbRun(env, "INSERT OR IGNORE INTO friends (user_id, friend_id, status) VALUES (?,?,'accepted')", [Number(data.id), me.id]);
+      const fid = Number(data.friendUserId !== undefined ? data.friendUserId : data.id);
+      if (!Number.isInteger(fid) || fid <= 0) return _json({ ok: false, message: "\u0645\u0639\u0631\u0651\u0641 \u063A\u064A\u0631 \u0635\u0627\u0644\u062D" }, 400);
+      /* الطلب الوارد مخزن بالاتجاه (هو ← أنا) */
+      await dbRun(env, "UPDATE friends SET status = 'accepted' WHERE user_id = ? AND friend_id = ? AND status = 'pending'", [fid, me.id]);
+      const back = await dbOne(env, "SELECT id FROM friends WHERE user_id = ? AND friend_id = ?", [me.id, fid]);
+      if (back) await dbRun(env, "UPDATE friends SET status = 'accepted' WHERE id = ?", [back.id]);
+      else await dbRun(env, "INSERT INTO friends (user_id, friend_id, status, created_at) VALUES (?,?,'accepted',?)", [me.id, fid, Date.now()]);
       return _json({ ok: true });
+    }
+    if (p === "/api/friends/remove" && method === "POST") {
+      if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
+      const data = await req.json();
+      const fid = Number(data.friendUserId !== undefined ? data.friendUserId : data.id);
+      if (!Number.isInteger(fid) || fid <= 0) return _json({ ok: false, message: "\u0645\u0639\u0631\u0651\u0641 \u063A\u064A\u0631 \u0635\u0627\u0644\u062D" }, 400);
+      await dbRun(env, "DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", [me.id, fid, fid, me.id]);
+      return _json({ ok: true });
+    }
+    if (p === "/api/messages/inbox" && method === "GET") {
+      if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
+      const c = await dbOne(env, "SELECT COUNT(*) n FROM messages WHERE receiver_id = ? AND created_at > ?", [me.id, Date.now() - 864e5]);
+      return _json({ ok: true, count: c ? c.n : 0 });
     }
     if (p === "/api/messages" && method === "GET") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
-      const rows = await dbAll(env, "SELECT id, from_user, content, created_at FROM messages WHERE to_user = ? ORDER BY id DESC LIMIT 50", [me.id]);
-      return _json({ ok: true, messages: rows });
+      /* [DM] محادثة ثنائية بعقد العميل: sender_id/receiver_id/text */
+      const other = Number(url.searchParams.get("with"));
+      if (!Number.isInteger(other) || other <= 0) return _json({ ok: false, message: "\u0645\u0637\u0644\u0648\u0628 \u0645\u0639\u0631\u0651\u0641 \u0627\u0644\u0645\u0633\u062A\u062E\u062F\u0645" }, 400);
+      const since = Date.now() - 864e5;
+      const rows = await dbAll(env, "SELECT id, sender_id, receiver_id, text, room_code, created_at FROM messages WHERE created_at >= ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) ORDER BY created_at ASC LIMIT 200", [since, me.id, other, other, me.id]);
+      const msgs = rows.map((m) => ({ id: m.id, sender_id: m.sender_id, receiver_id: m.receiver_id, text: m.text, room_code: m.room_code || null, created_at: m.created_at }));
+      return _json({ ok: true, messages: msgs });
     }
     if (p === "/api/messages" && method === "POST") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
       if (me.muted_until && me.muted_until > Date.now()) return _json({ ok: false, message: "\u0623\u0646\u062A \u0645\u0643\u062A\u0648\u0645" }, 403);
       const data = await req.json();
-      const to = await dbOne(env, "SELECT id FROM users WHERE username = ?", [String(data.to || "").trim()]);
-      if (!to) return _json({ ok: false, message: "\u0645\u0633\u062A\u062E\u062F\u0645 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F" }, 404);
-      await dbRun(env, "INSERT INTO messages (from_user, to_user, content, created_at) VALUES (?,?,?,?)", [me.id, to.id, String(data.content || "").slice(0, 500), Date.now()]);
-      return _json({ ok: true });
+      /* to: اسم مستخدم أو معرّف رقمي */
+      let target = null;
+      const toRaw = String(data.to || "").trim();
+      if (/^\d+$/.test(toRaw)) target = await dbOne(env, "SELECT id FROM users WHERE id = ?", [Number(toRaw)]);
+      if (!target) target = await dbOne(env, "SELECT id FROM users WHERE username = ?", [toRaw]);
+      if (!target) return _json({ ok: false, message: "\u0627\u0644\u0645\u0633\u062A\u062E\u062F\u0645 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F" }, 404);
+      const text = String(data.text !== undefined ? data.text : data.content || "").slice(0, 2000);
+      if (!text) return _json({ ok: false, message: "\u0627\u0644\u0631\u0633\u0627\u0644\u0629 \u0641\u0627\u0631\u063A\u0629" }, 400);
+      const now = Date.now();
+      const ins = await dbRun(env, "INSERT INTO messages (sender_id, receiver_id, text, room_code, created_at) VALUES (?,?,?,?,?)", [me.id, target.id, text, data.room_code ? String(data.room_code).slice(0, 20) : null, now]);
+      const msg = { id: ins.meta ? ins.meta.last_row_id : null, sender_id: me.id, receiver_id: target.id, text, room_code: data.room_code || null, created_at: now };
+      return _json({ ok: true, message: msg });
     }
     /* ═══ [Group] الجولات الجماعية: كينو (ke) وكراش (av) — نقل حرفي لعقد server.js ═══ */
     const grStub = /* @__PURE__ */ __name(() => env.ROOMS.get(env.ROOMS.idFromName("global")), "grStub");

@@ -899,7 +899,7 @@ const TR = {
   'ui.fullscreen': [ 'ملء الشاشة', 'Plein écran', 'Fullscreen', 'الشاشة كاملة' ],
   'ui.games': [ 'الألعاب', 'Jeux', 'Games', 'الألعاب' ],
   'ui.gamesSub': [ 'كل لعبة بمحرك مستقل — جرافيكس Canvas ثلاثي الأبعاد وصوتيات واقعية!', 'Chaque jeu dispose d\'un moteur indépendant — graphismes 3D Canvas et sons réalistes !', 'Every game features an independent engine — 3D Canvas graphics and realistic sound effects!', 'كل لعبة بمحرك مستقل — جرافيكس 3D Canvas ومؤثرات صوتية حية!' ],
-  'ui.ghistTitle': [ 'سجل الجولات', 'Historique des tours', 'Round History', 'سجل الجولات' ],
+  'ui.ghistTitle': [ 'سجل تيكيتس الرهانات', 'Tickets de paris', 'Bet Tickets', 'سجل تيكيتات الرهانات' ],
   'ui.goal': [ '🎯 الهدف', '🎯 Objectif', '🎯 Goal', '🎯 الهدف' ],
   'ui.heroSub': [ 'منصة كازينو مغربية رقمية بمؤثرات صوتية وبصرية، شرح قواعد مفصل، وجرافيك احترافي — العب واستمتع الآن.', 'Plateforme marocaine de casino digital avec effets sonores et visuels, règles détaillées et graphismes soignés — jouez dès maintenant.', 'Digital Moroccan casino platform with rich audio-visual effects, detailed rules, and pro graphics — play and enjoy now.', 'منصة كازينو مغربية رقمية بمؤثرات صوتية وبصرية، شرح القواعد، وجرافيك واعر — قصر ونشط دابا.' ],
   'ui.heroTitle': [ 'ألعاب فريدة <b>بجرافيك وصوتيات</b>', 'Des jeux uniques <b>avec graphismes et sons</b>', 'Unique Games <b>with Graphics & Audio</b>', 'ألعاب متميزة <b>بجرافيك ومؤثرات واعرة</b>' ],

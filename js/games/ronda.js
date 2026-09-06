@@ -16,12 +16,12 @@ const RN_SUITS = {
 };
 const RN_NUMS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
 
-/* ── أصول أوراق المنصة الحقيقية (assets/cards) ──
-   1→'A', 11→'J', 12→'Q'؛ الرموز: A=◆ diamonds، B=♥ hearts، C=♠ spades، D=♣ clubs */
-const RN_ASSET_SUIT = { A: 'diamonds', B: 'hearts', C: 'spades', D: 'clubs' };
+/* ── أوراق فلات دوغ الحقيقية: الورق الإسباني التقليدي 40 ورقة (assets/cards/es) ──
+   A=الدنانير oros، B=الكؤوس copas، C=السيوف espadas، D=الصولجان bastos
+   الأرقام كما هي: 1..7 و10(الشاب)/11(الفارس)/12(الملك) */
+const RN_ASSET_SUIT = { A: 'oros', B: 'copas', C: 'espadas', D: 'bastos' };
 function rnCardAsset(n, s) {
-  const r = (n === 1 ? 'A' : n === 11 ? 'J' : n === 12 ? 'Q' : String(n));
-  return 'assets/cards/' + r + '-' + (RN_ASSET_SUIT[s] || 'diamonds') + '.webp';
+  return 'assets/cards/es/' + n + '-' + (RN_ASSET_SUIT[s] || 'oros') + '.webp';
 }
 /* ── الواجهة ── */
 function eRonda(g) {

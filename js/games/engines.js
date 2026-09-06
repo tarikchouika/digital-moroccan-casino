@@ -2454,15 +2454,20 @@ function keFinish() {
   const bets = kPlacedBets.length ? kPlacedBets : (kPicks.length ? [{ picks: kPicks, bet: GB }] : []);
   let totalWin = 0;
   const parts = [];
-  bets.forEach(function (b) {
+  bets.forEach(function (b, i) {
     const hits = b.picks.filter(function (n) { return kNumbers.indexOf(n) !== -1; }).length;
     const mult = (KENO_PAYS[b.picks.length] && KENO_PAYS[b.picks.length][hits]) || 0;
     const w = Math.floor(b.bet * mult);
     totalWin += w;
     parts.push(hits + '/' + b.picks.length + (mult ? '×' + mult : ''));
+    /* [Tickets] تذكرة مستقلة لكل رهان بأرقامه الخاصة ورهانه الخاص */
+    if (typeof recordRound === 'function') {
+      const nums = b.picks.slice().sort(function (x, y) { return x - y; }).join('·');
+      recordRound(w > 0, w, '🎫 ' + (i + 1) + '/' + bets.length + ' [' + nums + '] ← ' + hits + '/' + b.picks.length + (mult ? ' ×' + mult : ''), b.bet);
+    }
   });
-  /* العرض محلي — الرصيد الفعلي يتحدث من السيرفر بعد التسوية */
-  gres(T('ke.result') + ' ' + parts.join(' · '), totalWin);
+  /* العرض محلي فقط (التذاكر سُجلت أعلاه واحدة واحدة) — الرصيد يتحدث من السيرفر */
+  gres(T('ke.result') + ' ' + parts.join(' · '), totalWin, true);
   if (totalWin > 0) winFX(totalWin);
   fairTick();
 }

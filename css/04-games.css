@@ -2251,9 +2251,7 @@ canvas.game {
 #gamePageBody .stage {
   margin-bottom: 18px;
 }
-/* سجل الجولات لا يظهر في ملء الشاشة — يبقى في صفحة اللعبة فقط */
-#pg-game:fullscreen .ghist,
-#pg-game:-webkit-full-screen .ghist,
+/* [Tickets] اللوحة عائمة — تُعرض حتى في ملء الشاشة؛ يُخفى فقط ذيل الصفحة */
 #pg-game:fullscreen .game-foot,
 #pg-game:-webkit-full-screen .game-foot {
   display: none !important;
@@ -2309,10 +2307,7 @@ body.rami-game-open { overflow: hidden; }
   min-height: 300px;
   overflow: hidden;
 }
-/* سجل الجولات مستقل: ارتفاع محتواه الخاص، أسفل حاوية اللعبة (لا يلتهمها) */
-#pg-game.active .ghist {
-  flex: 0 0 auto;
-}
+
 #gamePageBody .stage,
 #gamePageBody .bjt,
 #gamePageBody canvas {
@@ -5972,4 +5967,77 @@ body.rami-game-open { overflow: hidden; }
     width: clamp(70px, 24vw, 120px);
     height: clamp(98px, 33vw, 168px);
   }
+}
+
+/* ═══════════ [Tickets] لوحة سجل تيكيتس الرهانات — منسدلة ملء الشاشة ═══════════ */
+.tickets-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 620;                 /* فوق هيدر اللعبة وملء الشاشة */
+  background: rgba(5, 8, 15, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+.tickets-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tickets-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;                       /* يغطي الشاشة 100% بورتريه ولاندسكيب */
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-top: 1px solid var(--bd);
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0.24, 1);
+  will-change: transform;
+  padding-top: env(safe-area-inset-top, 0px);
+  box-sizing: border-box;
+}
+.tickets-overlay.open .tickets-sheet {
+  transform: translateY(0);
+}
+.tickets-overlay.dragging .tickets-sheet {
+  transition: none;
+}
+.tickets-grip {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+  touch-action: none;
+}
+.tickets-grip span {
+  width: 46px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--bd);
+}
+.tickets-sheet .ghist-head {
+  flex: 0 0 auto;
+}
+.tickets-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.tickets-close {
+  width: 38px;
+  height: 38px;
+}
+.tickets-sheet .ghist-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;             /* تمرير سلس داخل اللوحة */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 }
