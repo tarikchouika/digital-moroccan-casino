@@ -110,9 +110,6 @@ function eBilliards(g) {
         '<div class="bl-mid" id="blMid">' +
           '<div class="bl-stage" id="blStageBox"><canvas id="blCv"></canvas></div>' +
           '<div class="bl-turnpill" id="blTurn">…</div>' +
-          '<button class="bl-emote" id="blEmoteBtn" onclick="billiardsEmote()" aria-label="emoji">😄</button>' +
-          '<div class="bl-emote-pop" id="blEmotePop" hidden></div>' +
-          '<div class="bl-emote-burst" id="blEmoteBurst" hidden></div>' +
           '<div class="bl-noms bl-sr" id="blNoms" hidden></div>' +
           '<div class="bl-msg bl-sr" id="blMsg"></div>' +
           '<div class="bl-stake" id="blStake" hidden></div>' +
@@ -331,6 +328,7 @@ function billiardsStart(mode) {
   blBindInput();
   blUpdateHud();
   blTray();
+  BILLIARDS._trayOwner = {};   /* [UI-v5] تصفير ملكية الكرات الساقطة */
   blSay(BILLIARDS.variant === 'snooker' ? T('bl.msgSnookerStart') : T('bl.msgBreak'));
 
   if (BILLIARDS.raf) cancelAnimationFrame(BILLIARDS.raf);
@@ -686,6 +684,7 @@ function blTray() {
   if (rb) rb.innerHTML = '';
   if (!B.G.S.table.pockets.length || !B.G.S.pocketOrder.length) { box.style.display = 'none'; return; }  /* كاروم/قبل السقوط */
   box.style.display = 'none';   /* [UI-v4] الصينية الأفقية أُلغيت — الكرات في العمودين */
+  var S = B.G.S;
   var BBC = { RED: '#d32f2f', YELLOW: '#f5c400', BLACK: '#111111' };
   var groups = B.G.S.groups || [];
   var all = B.G.S.pocketOrder.slice();               /* كل الكرات الساقطة */
@@ -709,8 +708,15 @@ function blTray() {
     else d.style.background = 'radial-gradient(circle at 35% 30%,' + blShade(c, .5) + ',' + c + ' 55%,' + blShade(c, -.45) + ')';
     if (!isBB) d.innerHTML = '<i>' + id + '</i>';
     cell.appendChild(d);
-    /* [UI-v4] كرات فوج الخصم تحت أفاتاره (يسار/أعلى) وكرات فوجي تحت أفاتاري */
-    var target = (grp && groups[1] === grp) ? (lb || box) : (rb || box);
+    /* [UI-v5] ملكية الكرة تثبت عند أول سقوط ولا تتغير عند بلوغ السوداء
+       (تحول group اللاعب إلى BLACK كان ينقل كراته القديمة للصينية الأخرى) */
+    var own = B._trayOwner || (B._trayOwner = {});
+    if (own[id] === undefined) {
+      if (grp && groups[1] === grp) own[id] = 1;
+      else if (grp && groups[0] === grp) own[id] = 0;
+      else own[id] = (S.pocketedBy && S.pocketedBy[id] !== undefined) ? S.pocketedBy[id] : 0;
+    }
+    var target = (own[id] === 1) ? (lb || box) : (rb || box);
     target.appendChild(cell);
   });
 }
@@ -994,7 +1000,6 @@ function blMaybeAI() {
 function blBindInput() {
   var B = BILLIARDS;
   if (!B) return;
-  blBindEmoteDrag();                               /* [UI-v3] الإيموجي العائم */
   var cv = document.getElementById('blCv');
   if (!cv || B._bound) return;
   B._bound = true;
@@ -1130,6 +1135,11 @@ function blOrientLayout() {
   B._blLand = land; frame._blOriented = true;
   frame.classList.toggle('bl-land', land);
   frame.classList.toggle('bl-port', !land);
+  /* [UI-v5 fix] مسح قوالب grid المضمّنة للاتجاه السابق — بقاؤها كان يغلب
+     قواعد CSS الجديدة فتختفي الطاولة حتى يعاد الحساب */
+  frame.style.gridTemplateColumns = '';
+  frame.style.gridTemplateRows = '';
+  frame._blColsT = frame._blRowsT = null;
   blTray();
 }
 
@@ -1159,7 +1169,9 @@ function blFitCanvas() {
   /* [Orient] توسيط أفقي: فائض العرض يتوزع نصفين (خشب متناظر) بدل التصاق يسار
      يترك شريطاً خشبياً عريضاً في جهة واحدة — المحور الرأسي يبقى بالتصاق علوي (v12c) */
   var padX = Math.max(0, (cw - (portrait ? S2 : L) * s) / 2);
-  if (!portrait) B.VT = { a: s, b: 0, c: 0, d: s, e: padX + EDGE * s, f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: false, s: s };
+  /* [UI-v5 fix] زر التدوير في اللاندسكيب كان بلا أثر — flip يقلب المنظور 180° */
+  if (!portrait && !B.flip) B.VT = { a: s, b: 0, c: 0, d: s, e: padX + EDGE * s, f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: false, s: s };
+  else if (!portrait) B.VT = { a: -s, b: 0, c: 0, d: -s, e: padX + s * (W + EDGE), f: s * (H + EDGE), portrait: false, flip180: true, s: s };
   else if (!B.flip) B.VT = { a: 0, b: -s, c: s, d: 0, e: padX + EDGE * s, f: topAnchor ? s * (W + EDGE) : ch - s * EDGE, portrait: true, s: s };
   else B.VT = { a: 0, b: s, c: -s, d: 0, e: padX + s * (H + EDGE), f: topAnchor ? EDGE * s : ch - s * (H + EDGE), portrait: true, s: s };   /* مقلوب 180° */
 
@@ -1269,6 +1281,7 @@ function blDraw() {
     /* في البورتريه المنظور مُدار — اللوغو يُرسم بدوران معاكس ليظهر معتدلاً للاعب */
     ctx.translate(W / 2, H / 2);
     if (VT.portrait) ctx.rotate(B.flip ? -Math.PI / 2 : Math.PI / 2);
+    else if (VT.flip180) ctx.rotate(Math.PI);
     ctx.drawImage(B._logoImg, -lw / 2, -lh / 2, lw, lh);
     ctx.restore();
   }
@@ -1647,7 +1660,6 @@ function blRoomMove(d) {
   if (!BILLIARDS || !d) return;
   if (d.action === 'rmove' && d.data) d = d.data;
   if (d.by != null && String(d.by) === String(blMeId())) return;   /* صدى الذات */
-  if (d.t === 'emote' && d.e) { billiardsEmoteShow(d.e); return; }   /* [UI-v2] إيموجي الخصم */
   if (d.t === 'cfg') {
     /* صاحب الغرفة يبثّ إعدادات الكاروم/الغولڤازور قبل أول ضربة */
     BILLIARDS.caromDisc = d.d || BILLIARDS.caromDisc;
@@ -1765,85 +1777,7 @@ function blRegisterRooms() {
   } catch (e) {}
 }
 
-/* ═══ [UI-v3] إيموجي تعبيري عائم قابل للسحب: نقرة = لوحة، سحب = تحريك ═══ */
-var BL_EMOTES = ['😄', '😂', '😎', '😡', '😭', '👏', '🔥', '🍀'];
-function billiardsEmote() {
-  var btn = document.getElementById('blEmoteBtn');
-  if (btn && btn._dragged) { btn._dragged = false; return; }   /* سحب — ليست نقرة */
-  var pop = document.getElementById('blEmotePop');
-  if (!pop) return;
-  if (!pop.hidden) { pop.hidden = true; return; }
-  pop.innerHTML = BL_EMOTES.map(function (e) {
-    return '<button class="bl-emote-opt" onclick="billiardsEmoteSend(\'' + e + '\')">' + e + '</button>';
-  }).join('');
-  /* اللوحة بجوار الزر أينما كان */
-  var btn2 = document.getElementById('blEmoteBtn'), mid = document.getElementById('blMid');
-  if (btn2 && mid) {
-    var br = btn2.getBoundingClientRect(), mr = mid.getBoundingClientRect();
-    pop.style.insetInlineStart = 'auto';
-    pop.style.left = Math.min(mr.width - 190, Math.max(4, br.left - mr.left + br.width + 6)) + 'px';
-    pop.style.top = Math.min(mr.height - 110, Math.max(4, br.top - mr.top)) + 'px';
-    pop.style.bottom = 'auto';
-  }
-  pop.hidden = false;
-}
-function blBindEmoteDrag() {
-  var btn = document.getElementById('blEmoteBtn'), mid = document.getElementById('blMid');
-  if (!btn || !mid || btn._dragBound) return;
-  btn._dragBound = true;
-  var D = window._blEmoteDrag || (window._blEmoteDrag = { on: false });
-  D.btn = btn; D.mid = mid;
-  function pt(e) { return (e.touches && e.touches[0]) ? e.touches[0] : e; }
-  btn.addEventListener('mousedown', blEmoteDown);
-  btn.addEventListener('touchstart', blEmoteDown, { passive: true });
-  function blEmoteDown(e) {
-    var p = pt(e);
-    D.on = true; D.moved = false; D.sx = p.clientX; D.sy = p.clientY;
-    var r = btn.getBoundingClientRect(), mr = mid.getBoundingClientRect();
-    D.bx = r.left - mr.left; D.by = r.top - mr.top;
-  }
-  if (!window._blEmoteWin) {
-    window._blEmoteWin = true;
-    var move = function (e) {
-      if (!D.on || !D.btn || !D.mid || !document.contains(D.btn)) return;
-      var p = pt(e);
-      var dx = p.clientX - D.sx, dy = p.clientY - D.sy;
-      if (!D.moved && Math.hypot(dx, dy) < 7) return;
-      D.moved = true;
-      var mr = D.mid.getBoundingClientRect();
-      var nx = Math.max(0, Math.min(mr.width - D.btn.offsetWidth, D.bx + dx));
-      var ny = Math.max(0, Math.min(mr.height - D.btn.offsetHeight, D.by + dy));
-      D.btn.style.insetInlineStart = 'auto';
-      D.btn.style.left = nx + 'px'; D.btn.style.top = ny + 'px'; D.btn.style.bottom = 'auto';
-      if (e.cancelable) e.preventDefault();
-    };
-    var up = function () { if (D.on && D.moved && D.btn) D.btn._dragged = true; D.on = false; };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('touchmove', move, { passive: false });
-    window.addEventListener('mouseup', up);
-    window.addEventListener('touchend', up);
-  }
-}
-function billiardsEmoteSend(e) {
-  var pop = document.getElementById('blEmotePop');
-  if (pop) pop.hidden = true;
-  billiardsEmoteShow(e);
-  /* بث للغرفة الجماعية إن كنا أونلاين */
-  try {
-    if (BILLIARDS && BILLIARDS.mode === 'online' && typeof Rooms !== 'undefined' && Rooms && typeof Rooms.sendGame === 'function')
-      Rooms.sendGame({ t: 'emote', e: e });
-  } catch (err) {}
-}
-function billiardsEmoteShow(e) {
-  var b = document.getElementById('blEmoteBurst');
-  if (!b) return;
-  b.textContent = e;
-  b.hidden = false;
-  b.classList.remove('go');
-  void b.offsetWidth;                      /* إعادة تشغيل الأنيميشن */
-  b.classList.add('go');
-  setTimeout(function () { b.hidden = true; b.classList.remove('go'); }, 1400);
-}
+/* [UI-v5] أزيل نظام الإيموجي الخاص — أيقونة التفاعلات العائمة للمنصة (roomReactBtn) هي الوحيدة في الغرف */
 
 /* ═══════════ تنظيف عند مغادرة اللعبة ═══════════ */
 function cleanupBilliards() {
@@ -1868,5 +1802,3 @@ window.billiardsSetGvBound = billiardsSetGvBound;
 window.billiardsSetTimer = billiardsSetTimer;
 window.billiardsGvAnnounce = billiardsGvAnnounce;
 window.billiardsGvChoose = billiardsGvChoose;
-window.billiardsEmote = billiardsEmote;
-window.billiardsEmoteSend = billiardsEmoteSend;

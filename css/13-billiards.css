@@ -123,21 +123,22 @@
 }
 
 /* زر التدوير: صغير بأقصى الزاوية 90° ورمز 🔄 */
+/* [UI-v5] زر تدوير ذهبي دائري بحجم زر الخروج نفسه — تناسق الشريط العلوي */
 .bl-rotbtn {
   align-self: flex-start;
   flex: 0 0 auto;
-  width: 34px; height: 34px;
-  border-radius: 0;
-  border: none;
-  background: transparent;
-  font-size: 21px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid #96651f;
+  background: radial-gradient(circle at 34% 28%, #F7DC6F, #E0A82E 72%, #b9851f);
+  color: #4a2c10;
+  font-size: 19px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: none;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.65));
+  box-shadow: 0 2px 7px rgba(0,0,0,.5), inset 0 1px 2px rgba(255,255,255,.5);
   transition: transform .12s;
   padding: 0;
 }
@@ -372,11 +373,7 @@
   touch-action: none;
 }
 /* في ملء الشاشة: ضعف الحجم ومُزاح نحو الطاولة يغطي جزءاً من الضلع الخشبي ويظهر كاملاً */
-body.app-fs-on .bl-spin {
-  width: min(112px, 172%);
-  align-self: flex-end;
-  margin-right: 2px;
-}
+/* [UI-v5] حجم السبين تحكمه قواعد bl-land/bl-port أدناه (لاندسكيب +65%، بورتريه +50%) */
 .bl-spin i {
   position: absolute;
   left: 50%; top: 50%;
@@ -404,11 +401,12 @@ body.app-fs-on .bl-spin {
 }
 /* [UI-v3] شريط القوة الأصفر الطويل بمقبض دائري (كما في الصورة المركبة) */
 #blPower::-webkit-slider-runnable-track {
-  width: 12px;
+  width: 14px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #8a5a10, #5c3a08);
+  /* [UI-v5] تدرج القوة 0→100: أخضر ثم أصفر ثم برتقالي ثم أحمر */
+  background: linear-gradient(to top, #2ecc71 0%, #a8d94a 30%, #f5c400 55%, #f2812e 78%, #e2372b 100%);
   border: 1.5px solid #3d2604;
-  box-shadow: inset 0 0 4px rgba(0,0,0,.6);
+  box-shadow: inset 0 0 4px rgba(0,0,0,.45);
 }
 #blPower::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -422,9 +420,9 @@ body.app-fs-on .bl-spin {
   cursor: grab;
 }
 #blPower::-moz-range-track {
-  width: 12px;
+  width: 14px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #8a5a10, #5c3a08);
+  background: linear-gradient(to top, #2ecc71 0%, #a8d94a 30%, #f5c400 55%, #f2812e 78%, #e2372b 100%);
   border: 1.5px solid #3d2604;
 }
 #blPower::-moz-range-thumb {
@@ -435,7 +433,7 @@ body.app-fs-on .bl-spin {
   box-shadow: 0 2px 5px rgba(0,0,0,.55);
   cursor: grab;
 }
-#blPower::-moz-range-progress { background: #F2C230; border-radius: 999px; }
+#blPower::-moz-range-progress { background: transparent; }
 
 /* ── محمول ── */
 @media (max-width: 560px) {
@@ -443,14 +441,10 @@ body.app-fs-on .bl-spin {
   .bl-tcell { width: 20px; height: 20px; }
   .bl-tb { width: 16px; height: 16px; }
   .bl-tb i { width: 8px; height: 8px; font-size: 6px; }
-  .bl-rotbtn { width: 28px; height: 28px; font-size: 12px; }
   .bl-av { width: 30px; height: 30px; font-size: 13px; border-width: 2px; }
   .bl-cell { width: 30px; height: 30px; }
   .bl-cell i { width: 20px; height: 20px; }
   .bl-shoot { width: 36px; height: 36px; font-size: 22px; }
-  .bl-spin { width: min(44px, 86%); }
-  body.app-fs-on .bl-spin { width: min(88px, 172%); }
-  .bl-rotbtn { width: 24px; height: 24px; font-size: 14px; }
 }
 
 /* ── Blackball (EPA) ── */
@@ -622,7 +616,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 .bl-frame.bl-land .bl-rail .bl-vtray { margin-right: 9px; }
 .bl-frame.bl-land .bl-rail #blPower { margin-right: 10px; }
 .bl-frame.bl-land .bl-rail .bl-shoot { margin-right: 0; align-self: flex-end; }
-.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; }
+.bl-frame.bl-land .bl-lrail .bl-spin { margin-top: auto; align-self: center; }
 .bl-frame.bl-land .bl-rail .bl-shoot { margin-bottom: 4px; }
 /* شريط القوة عمودي يمتص الوسط */
 .bl-frame.bl-land .bl-rail #blPower {
@@ -638,9 +632,10 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 .bl-frame.bl-port .bl-lrail {
   grid-area: 1 / 1;
   flex-direction: row;
+  align-items: flex-start;        /* [UI-v5] كل الأيقونات على خط أفقي واحد بأقصى الأعلى */
   justify-content: flex-start;
-  /* فراغ يمين لزر التصغير الذهبي العائم */
-  padding: calc(2px + var(--safe-top)) 48px 2px 8px;
+  /* فراغ يمين لزر التصغير الذهبي العائم (على نفس الخط) */
+  padding: calc(4px + var(--safe-top)) 52px 4px 6px;
   border-bottom: 2px solid #8a5a24;
   box-shadow: inset 0 -4px 8px rgba(0,0,0,.28), inset 0 2px 3px rgba(255,235,190,.3);
 }
@@ -654,6 +649,9 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   box-shadow: inset 0 4px 8px rgba(0,0,0,.28), inset 0 -2px 3px rgba(255,235,190,.3);
 }
 .bl-frame.bl-port .bl-lrail .bl-spin { margin-top: 0; margin-inline-start: auto; }
+/* [UI-v5] بورتريه: صف علوي مستقيم — التدوير بأقصى اليسار بمحاذاة زر الخروج */
+.bl-frame.bl-port .bl-lrail > * { align-self: flex-start; }
+.bl-frame.bl-port .bl-lrail .bl-srow { gap: 8px; }
 .bl-frame.bl-port .bl-rail .bl-shoot { margin-bottom: 0; }
 .bl-frame.bl-port .bl-rail #blPower {
   writing-mode: horizontal-tb;
@@ -668,10 +666,14 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 /* صف علوي (تدوير + أفاتار) داخل العمود */
 .bl-srow { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 
-/* السبين داخل العمود: حجم ثابت متناسق */
-.bl-frame.bl-land .bl-lrail .bl-spin,
+/* [UI-v5] السبين مكبّر: لاندسكيب +65% وبورتريه +50% من القاعدة السابقة */
+.bl-frame.bl-land .bl-lrail .bl-spin {
+  width: clamp(73px, 12.4vmin, 106px);
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+}
 .bl-frame.bl-port .bl-lrail .bl-spin {
-  width: clamp(44px, 7.5vmin, 64px);
+  width: clamp(66px, 11.3vmin, 96px);
   aspect-ratio: 1;
   flex: 0 0 auto;
 }
@@ -710,74 +712,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
   font-size: 24px;
 }
 
-/* ── زر الإيموجي العائم القابل للسحب ── */
-.bl-emote {
-  position: absolute;
-  inset-inline-start: 6px;
-  bottom: 5%;
-  z-index: 6;
-  width: 46px; height: 46px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  font-size: 36px;
-  line-height: 1;
-  cursor: grab;
-  padding: 0;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
-  transition: transform .12s;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.bl-emote:active { transform: scale(.9); cursor: grabbing; }
-.bl-frame.bl-land .bl-emote { bottom: auto; top: 6%; }
-.bl-emote-pop {
-  position: absolute;
-  inset-inline-start: 58px;
-  bottom: 5%;
-  z-index: 7;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  background: rgba(10, 8, 5, .88);
-  border: 2px solid #E9B83C;
-  border-radius: 12px;
-  padding: 6px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.6);
-}
-.bl-frame.bl-land .bl-emote-pop { bottom: auto; top: 6%; }
-.bl-emote-pop[hidden] { display: none; }
-.bl-emote-opt {
-  width: 40px; height: 40px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  font-size: 26px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-}
-.bl-emote-opt:hover { background: rgba(233,184,60,.25); }
-.bl-emote-burst {
-  position: absolute;
-  left: 50%; top: 50%;
-  z-index: 8;
-  transform: translate(-50%, -50%) scale(.4);
-  font-size: 64px;
-  opacity: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,.6));
-}
-.bl-emote-burst[hidden] { display: none; }
-.bl-emote-burst.go { animation: blEmoteGo 1.4s ease forwards; }
-@keyframes blEmoteGo {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
-  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
-  30%  { transform: translate(-50%, -50%) scale(1); }
-  75%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -80%) scale(.9); }
-}
+/* [UI-v5] كتلة الإيموجي الخاصة أزيلت — أيقونة التفاعلات العامة (roomReactBtn) فقط */
 
 /* زر الخروج الذهبي فوق طبقات اللعبة وأيقونة التفاعلات العائمة */
 body.bl-game-open .game-fs-exit { z-index: 14500 !important; }
@@ -802,6 +737,18 @@ body.bl-game-open .game-fs-exit { z-index: 14500 !important; }
   pointer-events: none;
 }
 .bl-turnpill.bl-time-low { color: #ff7b6e; border-color: rgba(255,110,90,.6); }
+
+/* [UI-v5] بورتريه: الشريط أفقي — التدرج بمحاذاة محور الزيادة */
+.bl-frame.bl-port #blPower::-webkit-slider-runnable-track {
+  width: auto;
+  height: 14px;
+  background: linear-gradient(to right, #2ecc71 0%, #a8d94a 30%, #f5c400 55%, #f2812e 78%, #e2372b 100%);
+}
+.bl-frame.bl-port #blPower::-moz-range-track {
+  width: auto;
+  height: 14px;
+  background: linear-gradient(to right, #2ecc71 0%, #a8d94a 30%, #f5c400 55%, #f2812e 78%, #e2372b 100%);
+}
 
 /* دفاع: زر التدوير فوق أي تراكب داخل عموده */
 .bl-rotbtn { position: relative; z-index: 7; }

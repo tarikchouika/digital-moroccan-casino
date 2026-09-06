@@ -59,12 +59,16 @@ ok(av0.textContent === 'ta', 'أفاتاري: أول حرفين من اسم ال
 ok(/d32f2f|211,\s*47,\s*47/.test(av0.style.background), 'أفاتاري بلون كراتي الحمراء');
 ok(/f5c400|245,\s*196,\s*0/.test(av1.style.background), 'أفاتار الخصم بلون كراته الصفراء');
 
-/* الصواني: كرات كل فوج تحت أفاتار صاحبه */
+/* الصواني: كرات كل فوج تحت أفاتار صاحبه + الملكية تثبت عند بلوغ السوداء */
 W.BILLIARDS.G.S.pocketOrder = ['r1', 'y1'];
 W.blTray();
 ok(document.getElementById('blTrayR').children.length + document.getElementById('blTrayL').children.length === 2, 'الكرات الساقطة موزعة على الصينيتين');
+const rCount = document.getElementById('blTrayR').children.length;
+W.BILLIARDS.G.S.groups = ['BLACK', 'BLACK'];   /* كلاهما وصل السوداء */
+W.blTray();
+ok(document.getElementById('blTrayR').children.length === rCount, 'الكرات لا تنتقل للصينية الأخرى عند بلوغ السوداء');
 
-ok(!!document.getElementById('blEmoteBtn') && !!document.getElementById('blEmotePop'), 'الإيموجي العائم موجود');
+ok(!document.getElementById('blEmoteBtn'), 'إيموجي البلياردو الخاص أزيل (roomReactBtn فقط)');
 ok(!!document.getElementById('blTurn'), 'شارة الدور موجودة (مؤقت v19.5)');
 console.log('═══ UI-v4 layout: '+pass+'/'+(pass+fail)+' passed ═══');
 process.exit(fail?1:0);
