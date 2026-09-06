@@ -1688,41 +1688,9 @@ function renderChat() {
 }
 /* ═══════════ Daily Reward ═══════════ */
 function claimDaily() {
-  /* عند تسجيل الدخول: المكافأة تُصرف من الخادم */
-  if (AUTH.user) {
-    API.post('/api/claim').then(function (r) {
-      if (r.ok && r.data) {
-        ST.gold = r.data.gold;
-        ST.lastClaim = Date.now();
-        save();
-        wallet();
-        SND.coin();
-        confetti(40);
-        toast(T('ts.claim'), 'ok');
-        AUTH._lastSync = Date.now();
-      } else if (r.data && r.data.error === 'not_ready') {
-        toast(T('ts.wait'), 'warn');
-      } else {
-        toast((r.data && r.data.message) || T('auth.error'), 'err');
-      }
-    }).catch(function () {
-      toast(T('auth.error'), 'err');
-    });
-    return;
-  }
-  /* وضع الضيف: محلي */
-  const now = Date.now();
-  if (now - ST.lastClaim < 10000) {
-    toast(T('ts.wait'), 'warn');
-    return;
-  }
-  ST.gold += 100;
-  ST.lastClaim = now;
-  save();
-  wallet();
-  SND.coin();
-  confetti(40);
-  toast(T('ts.claim'), 'ok');
+  /* [موحّد] الكل عبر عجلة الحظ — الخادم يقرر الجائزة والمهلة للمسجّلين */
+  if (typeof openWheelModal === 'function') { openWheelModal(); return; }
+  toast(T('auth.error'), 'err');
 }
 /* ═══════════ Render All ═══════════ */
 /* مزامنة عدد الألعاب المعروض (الشارة + الإحصائية) مع العدد الفعلي في الكتالوج */
@@ -1925,13 +1893,41 @@ function closeWheelModal() {
 function spinLuckyWheel() {
   if (isSpinningWheel) return;
   const btn = document.getElementById('spinWheelBtn');
+  /* [أمان] المسجّلون: الخادم يقرر الجائزة ويفرض مهلة الساعتين — كانت الجائزة محلية = مكافأة لا نهائية */
+  if (typeof AUTH !== 'undefined' && AUTH.user) {
+    if (btn) btn.disabled = true;
+    API.post('/api/claim', {}).then(function (r) {
+      if (r.ok && r.data && r.data.ok) {
+        var idx = (typeof r.data.prize_index === 'number') ? r.data.prize_index : WHEEL_PRIZES.indexOf(r.data.amount);
+        if (idx < 0) idx = 0;
+        _wheelAnimate(idx, r.data.amount, r.data.gold);
+      } else {
+        if (btn) btn.disabled = false;
+        if (r.data && r.data.error === 'not_ready') {
+          var mins = Math.ceil((r.data.next_in_ms || 0) / 60000);
+          var res2 = document.getElementById('wheelResult');
+          if (res2) res2.textContent = '⏳ ' + (T('wheel.wait') || 'المكافأة التالية بعد') + ' ' + Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0');
+          toast(T('ts.wait'), 'warn');
+        } else {
+          toast((r.data && r.data.message) || T('auth.error'), 'err');
+        }
+      }
+    }).catch(function () { if (btn) btn.disabled = false; toast(T('auth.error'), 'err'); });
+    return;
+  }
+  /* وضع الضيف: محلي مع مهلة عبر ST.lastClaim */
+  var nowG = Date.now();
+  if (nowG - (ST.lastClaim || 0) < 2 * 60 * 60 * 1000) { toast(T('ts.wait'), 'warn'); return; }
+  ST.lastClaim = nowG; save();
+  const gIdx = Math.floor(Math.random() * WHEEL_PRIZES.length);
+  _wheelAnimate(gIdx, WHEEL_PRIZES[gIdx], null);
+}
+function _wheelAnimate(prizeIdx, prize, serverGold) {
+  const btn = document.getElementById('spinWheelBtn');
   if (btn) btn.disabled = true;
   isSpinningWheel = true;
   const res = document.getElementById('wheelResult');
   if (res) res.textContent = '';
-
-  const prizeIdx = Math.floor(Math.random() * WHEEL_PRIZES.length);
-  const prize = WHEEL_PRIZES[prizeIdx];
   const arc = (2 * Math.PI) / WHEEL_PRIZES.length;
   
   // Angle targeting the top pointer
@@ -1959,16 +1955,16 @@ function spinLuckyWheel() {
       isSpinningWheel = false;
       if (btn) btn.disabled = false;
       
-      // Credit prize
-      giveWin(prize);
+      // Credit prize — الخادم اعتمد المبلغ سلفاً للمسجّلين
+      if (serverGold !== null && serverGold !== undefined) {
+        ST.gold = serverGold; save(); wallet();
+      } else {
+        giveWin(prize);
+      }
       if (typeof SND !== 'undefined' && SND.win) SND.win();
       if (typeof confetti === 'function') confetti(50);
       if (res) res.textContent = '🎉 مبروك! فزت بـ ' + prize + ' كوينز!';
       toast('🎁 مكافأة يومية: +' + prize + ' 🪙', 'ok');
-
-      if (typeof AUTH !== 'undefined' && AUTH.user) {
-        API.post('/api/claim', {}).catch(function () {});
-      }
     }
   }
   requestAnimationFrame(animate);

@@ -5936,6 +5936,17 @@ body.rami-game-open { overflow: hidden; }
   /* كينو بورتريه: لوحة الرهانات المتعددة (gpanel) + شبكة 80 رقماً + أزرار
      كانت تتجاوز الارتفاع فتتراكب — تمرير عمودي وأحجام clamp بدل الضخامة */
   #pg-game.app-fs .stage:has(.ke-wrap) { overflow-y: auto; }
+  /* [ص3] عناصر الرأس (مختار/مسح) كانت أضخم من اللازم وتحشر الشبكة */
+  #pg-game.app-fs .stage:has(.ke-wrap) .ke-counter {
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
+    padding: 5px 10px;
+  }
+  #pg-game.app-fs .stage:has(.ke-wrap) .ke-counter b { font-size: clamp(0.85rem, 2.4vh, 1.05rem); }
+  #pg-game.app-fs .stage:has(.ke-wrap) .ke-clear {
+    font-size: clamp(0.7rem, 1.9vh, 0.85rem);
+    padding: 5px 10px;
+  }
+  #pg-game.app-fs .stage:has(.ke-wrap) .ke-hint { font-size: clamp(0.62rem, 1.7vh, 0.78rem); }
   #pg-game.app-fs .stage:has(.ke-wrap) .kgrid {
     max-width: min(470px, 96vw);
     gap: clamp(3px, 0.8vw, 5px);

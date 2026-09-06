@@ -58,6 +58,32 @@
       background-clip: text;
       color: transparent;
     }
+    .about-hero {
+      background: linear-gradient(160deg, rgba(245, 197, 24, 0.08), rgba(15, 20, 40, 0.35));
+      border: 1px solid rgba(245, 197, 24, 0.25);
+      border-radius: 16px;
+      padding: 22px 20px;
+      margin: 18px 0 6px;
+      text-align: center;
+    }
+    .about-hero .ah-title {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-weight: 900;
+      border: 0;
+      padding: 0;
+    }
+    .about-hero .ah-title b { color: var(--gold, #F5C518); }
+    .about-hero p { margin: 6px 0 12px; }
+    .ah-stats {
+      display: flex;
+      justify-content: center;
+      gap: 26px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .ahs .v { font-weight: 900; font-size: 1.15rem; color: var(--gold, #F5C518); }
+    .ahs .l { font-size: 0.78rem; opacity: 0.75; }
     .legal-wrap .updated {
       color: var(--t3);
       font-size: 0.78rem;
@@ -134,6 +160,18 @@
     <div class="legal-icon" aria-hidden="true"><i class="fa-solid fa-building-columns"></i></div>
     <h1 data-k="a.title">من نحن</h1>
     <div class="updated" data-k="a.updated">آخر تحديث: 12 أغسطس 2026</div>
+
+    <!-- [نُقلت من الرئيسية] حاوية التعريف بالمنصة -->
+    <div class="about-hero">
+      <h2 class="ah-title" data-k="a.heroTitle">44 لعبة فريدة <b>بجرافيك وصوتيات</b></h2>
+      <p data-k="a.heroSub">منصة كازينو مغربية رقمية بمؤثرات صوتية وبصرية، شرح قواعد مفصل، وجرافيك احترافي — العب واستمتع الآن.</p>
+      <p><a class="btn" href="index.html#pg-games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-k="a.heroPlay">العب الآن</span></a></p>
+      <div class="ah-stats">
+        <div class="ahs"><div class="v">12,458</div><div class="l" data-k="a.heroPlayers">لاعب</div></div>
+        <div class="ahs"><div class="v">44</div><div class="l" data-k="a.heroGames">الألعاب</div></div>
+        <div class="ahs"><div class="v">99.9%</div><div class="l" data-k="a.heroUptime">جاهزية</div></div>
+      </div>
+    </div>
 
     <p data-k="a.intro">Digital Moroccan Casino — منصة مغربية تجمع بين المتعة والترفيه والربح. يمكنك شحن حسابك بمال حقيقي، ومبادلة الكوينز بحرية بين اللاعبين، وسحب أرباحك بالطريقة التي تناسبك.</p>
 
@@ -226,6 +264,22 @@
     "fr": "À propos de nous",
     "en": "About Us"
   },
+  "a.heroTitle": {
+    "ar": "44 لعبة فريدة <b>بجرافيك وصوتيات</b>",
+    "da": "44 لعبة متميزة <b>بجرافيك ومؤثرات واعرة</b>",
+    "fr": "44 jeux uniques <b>avec graphismes et sons</b>",
+    "en": "44 Unique Games <b>with Graphics & Audio</b>"
+  },
+  "a.heroSub": {
+    "ar": "منصة كازينو مغربية رقمية بمؤثرات صوتية وبصرية، شرح قواعد مفصل، وجرافيك احترافي — العب واستمتع الآن.",
+    "da": "منصة كازينو مغربية رقمية بمؤثرات صوتية وبصرية، شرح القواعد، وجرافيك واعر — قصر ونشط دابا.",
+    "fr": "Plateforme marocaine de casino digital avec effets sonores et visuels, règles détaillées et graphismes soignés — jouez dès maintenant.",
+    "en": "Digital Moroccan casino platform with rich audio-visual effects, detailed rules, and pro graphics — play and enjoy now."
+  },
+  "a.heroPlay": { "ar": "العب الآن", "da": "قصر دابا", "fr": "Jouer maintenant", "en": "Play now" },
+  "a.heroPlayers": { "ar": "لاعب", "da": "لاعب", "fr": "joueurs", "en": "players" },
+  "a.heroGames": { "ar": "الألعاب", "da": "الألعاب", "fr": "jeux", "en": "games" },
+  "a.heroUptime": { "ar": "جاهزية", "da": "جاهزية", "fr": "disponibilité", "en": "uptime" },
   "a.updated": {
     "ar": "آخر تحديث: 12 أغسطس 2026",
     "da": "آخر تحديث: 12 غشت 2026",

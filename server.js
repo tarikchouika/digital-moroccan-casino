@@ -201,7 +201,7 @@ const HOUR_ROOM_MS = 3600000;   /* ساعة واحدة */
 
 /* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
 function loadUsersFromDB() {
-  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled, ref_code, admin_id, referred_by, muted_until, first_topup_done FROM users').all();
+  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled, ref_code, admin_id, referred_by, muted_until, first_topup_done, last_claim FROM users').all();
   rows.forEach(function (r) {
     users[r.id] = {
       id: r.id, username: r.username,
@@ -210,7 +210,8 @@ function loadUsersFromDB() {
       totpSecret: r.totp_secret || null, twofaEnabled: !!r.twofa_enabled,
       ref_code: r.ref_code || null, admin_id: r.admin_id || null,
       referred_by: r.referred_by || null,
-      muted_until: r.muted_until || 0, first_topup_done: !!r.first_topup_done
+      muted_until: r.muted_until || 0, first_topup_done: !!r.first_topup_done,
+      last_claim: r.last_claim || 0
     };
     if (r.id >= nextUserId) nextUserId = r.id + 1;
   });
@@ -474,8 +475,12 @@ Object.values(users).forEach(function (u) {
 /* ═══════ صلاحيات الأدوار ═══════ */
 function isAdmin(u) { return !!u && (u.role === 'admin' || u.role === 'super'); }
 function isSuper(u) { return !!u && u.role === 'super'; }
-/* الألعاب المعطّلة (سوبر أدمن فقط): id → enabled */
+/* الألعاب المعطّلة (سوبر أدمن فقط): id → enabled — [إصلاح] تُحفظ في القاعدة، كانت بالذاكرة فقط فتضيع مع كل إعادة تشغيل */
+db.exec("CREATE TABLE IF NOT EXISTS game_flags (game_id TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1)");
 const gameFlags = {};
+try {
+  db.prepare('SELECT game_id, enabled FROM game_flags').all().forEach(function (r) { gameFlags[r.game_id] = !!r.enabled; });
+} catch (e) {}
 
 const sseClients = [];          // [{res, userId}]
 const chatMessages = [
@@ -763,7 +768,8 @@ const server = http.createServer((req, res) => {
 
       /* ── المصادقة ── */
       if (pathname === '/api/me') {
-        json({ ok: true, user: publicUser(me), claim: { ready: true, interval_hours: 2 } });
+        const _claimReady = !me || (Date.now() - (me.last_claim || 0) * 1000) >= 2 * 60 * 60 * 1000;
+        json({ ok: true, user: publicUser(me), claim: { ready: _claimReady, interval_hours: 2, next_in_ms: (me && !_claimReady) ? (2 * 60 * 60 * 1000 - (Date.now() - me.last_claim * 1000)) : 0 } });
         return;
       }
       if (pathname === '/api/login') {
@@ -1049,7 +1055,25 @@ const server = http.createServer((req, res) => {
         json({ ok: true, message: msg });
         return;
       }
-      if (pathname === '/api/claim') { if (me) me.gold = (me.gold || 0) + 100; json({ ok: true, amount: 100, gold: me ? me.gold : 100 }); return; }
+      if (pathname === '/api/claim') {
+        /* [أمان] مكافأة كل ساعتين — كانت بلا أي فحص = ذهب لا نهائي بالنقر المتكرر.
+           الخادم يختار الجائزة (عجلة الحظ) ويفرض المهلة ويحفظها في القاعدة. */
+        if (!me) { json({ ok: false, error: 'unauthorized', message: 'غير مسجّل' }, 401); return; }
+        const CLAIM_MS = 2 * 60 * 60 * 1000;
+        const nowMs = Date.now();
+        const last = (me.last_claim || 0) * 1000;
+        if (nowMs - last < CLAIM_MS) {
+          json({ ok: false, error: 'not_ready', next_in_ms: CLAIM_MS - (nowMs - last), gold: me.gold }, 429);
+          return;
+        }
+        const WHEEL = [50, 100, 200, 500, 100, 300, 1000, 250];
+        const idx = crypto.randomInt(WHEEL.length);
+        me.last_claim = Math.floor(nowMs / 1000);
+        me.gold = (me.gold || 0) + WHEEL[idx];
+        try { db.prepare('UPDATE users SET gold = ?, last_claim = ? WHERE id = ?').run(me.gold, me.last_claim, me.id); } catch (e) {}
+        json({ ok: true, amount: WHEEL[idx], prize_index: idx, gold: me.gold });
+        return;
+      }
       if (pathname === '/api/chat') {
         if (isMuted(me)) { json({ ok: false, message: 'موقوف عن المراسلة حتى ' + new Date(me.muted_until).toLocaleString('ar-MA'), muted_until: me.muted_until }, 403); return; }
         const msg = { username: me ? me.username : 'زائر', message: data.message || '', created_at: Date.now() };
@@ -1392,6 +1416,7 @@ const server = http.createServer((req, res) => {
       if (mm) {
         if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
         gameFlags[mm[1]] = !!data.enabled;
+        try { db.prepare('INSERT INTO game_flags (game_id, enabled) VALUES (?,?) ON CONFLICT(game_id) DO UPDATE SET enabled = excluded.enabled').run(mm[1], data.enabled ? 1 : 0); } catch (e) {}
         json({ ok: true, enabled: gameFlags[mm[1]] });
         return;
       }

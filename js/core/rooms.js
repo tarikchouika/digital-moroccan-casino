@@ -28,7 +28,7 @@
   var Rooms = {
     state: null,
     /* الألعاب المدعومة للغرف: id -> أقصى عدد لاعبين */
-    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, dm: 2, ch: 2 },
+    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, dm: 2, ch: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً */
 
     isGameSupported: function (id) { return !!Rooms.roomGameIds[id]; },
     isActive: function () { return !!(Rooms.state && Rooms.state.status === 'playing'); },
@@ -93,7 +93,14 @@
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
         Rooms.closeModal();
-        if (_startHandler) _startHandler(room);   /* [Req3] يُبقى المعالج لإعادة إطلاقه عند المباراة الجديدة */
+        /* [إصلاح] اللاعب خارج صفحة اللعبة عند البدء (مثلاً في الرئيسية) — افتحها أولاً
+           ثم أطلق المعالج بعد أن تسجّله اللعبة أثناء فتحها */
+        if (typeof openGame === 'function' && window._currentGameId !== room.game_id) {
+          openGame(room.game_id);
+          setTimeout(function () { if (_startHandler) _startHandler(room); }, 400);
+        } else if (_startHandler) {
+          _startHandler(room);   /* [Req3] يُبقى المعالج لإعادة إطلاقه عند المباراة الجديدة */
+        }
       }
       /* غادرت الغرفة (حُذفت أو طردت) */
       if (!room) { Rooms.reset(); Rooms.render(); return; }

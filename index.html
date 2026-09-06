@@ -28,19 +28,19 @@
   }
   </script>
   <!-- CSS Files -->
-  <link rel="stylesheet" href="css/01-variables.css?v=unified12">
-  <link rel="stylesheet" href="css/02-base.css?v=unified12">
-  <link rel="stylesheet" href="css/03-components.css?v=unified12">
-  <link rel="stylesheet" href="css/04-games.css?v=unified12">
-  <link rel="stylesheet" href="css/05-ronda.css?v=unified12">
-  <link rel="stylesheet" href="css/06-parchisi.css?v=unified12">
-  <link rel="stylesheet" href="css/07-responsive.css?v=unified12">
-  <link rel="stylesheet" href="css/08-rami.css?v=unified12">
-  <link rel="stylesheet" href="css/09-chrome.css?v=unified12">
-  <link rel="stylesheet" href="css/10-dama.css?v=unified12">
-  <link rel="stylesheet" href="css/12-chess.css?v=unified12">
-  <link rel="stylesheet" href="css/11-game-theme.css?v=unified12">
-  <link rel="stylesheet" href="css/13-billiards.css?v=unified12">
+  <link rel="stylesheet" href="css/01-variables.css?v=unified13">
+  <link rel="stylesheet" href="css/02-base.css?v=unified13">
+  <link rel="stylesheet" href="css/03-components.css?v=unified13">
+  <link rel="stylesheet" href="css/04-games.css?v=unified13">
+  <link rel="stylesheet" href="css/05-ronda.css?v=unified13">
+  <link rel="stylesheet" href="css/06-parchisi.css?v=unified13">
+  <link rel="stylesheet" href="css/07-responsive.css?v=unified13">
+  <link rel="stylesheet" href="css/08-rami.css?v=unified13">
+  <link rel="stylesheet" href="css/09-chrome.css?v=unified13">
+  <link rel="stylesheet" href="css/10-dama.css?v=unified13">
+  <link rel="stylesheet" href="css/12-chess.css?v=unified13">
+  <link rel="stylesheet" href="css/11-game-theme.css?v=unified13">
+  <link rel="stylesheet" href="css/13-billiards.css?v=unified13">
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -158,20 +158,8 @@
           <div class="home-banner" aria-hidden="true">
             <img src="assets/logo/moroccan-casino-banner.webp" alt="">
           </div>
-          <div class="hero">
-            <h1 id="homeTitle" data-i18n-html="ui.heroTitle">35 لعبة فريدة <b>بجرافيك وصوتيات</b></h1>
-            <p data-i18n="ui.heroSub">كل لعبة بمؤثرات صوتية وبصرية، شرح قواعد مفصّل، وجرافيك Canvas احترافي — العب مجاناً الآن.</p>
-            <div class="hero-btns">
-              <button class="btn" onclick="nav('games', document.querySelector('[data-nav=games]'))"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-i18n="ui.playNow">العب الآن</span></button>
-              <button class="btn ghost" onclick="claimDaily()"><i class="fa-solid fa-gift" aria-hidden="true"></i> <span data-i18n="ui.claim">مكافأة</span></button>
-            </div>
-            <div class="hero-stats" role="list">
-              <div class="hs" role="listitem"><div class="v">12,458</div><div class="l" data-i18n="ui.players">لاعب</div></div>
-              <div class="hs" role="listitem"><div class="v" id="onlineN">892</div><div class="l" data-i18n="ui.online">متصل</div></div>
-              <div class="hs" role="listitem"><div class="v" id="statGamesCount">35</div><div class="l" data-i18n="ui.games">لعبة</div></div>
-              <div class="hs" role="listitem"><div class="v">99.9%</div><div class="l" data-i18n="ui.uptime">Uptime</div></div>
-            </div>
-          </div>
+          <!-- [نقل] حاوية الهيرو انتقلت لصفحة «من نحن» (about.html) بطلب المالك -->
+          <h1 id="homeTitle" class="sr-only" data-i18n-html="ui.heroTitle">35 لعبة فريدة <b>بجرافيك وصوتيات</b></h1>
           <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-star" aria-hidden="true"></i> <span data-i18n="ui.featured">ألعاب مميزة</span></div></div>
           <div class="grid g4" id="rowFeatured"></div>
           <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-rocket" aria-hidden="true"></i> Crash</div></div>
@@ -678,32 +666,32 @@
     <i class="fa-solid fa-compress" aria-hidden="true"></i>
   </button>
   <!-- ═══════════ Scripts ═══════════ -->
-  <script src="js/core/session.js?v=unified12"></script>
-  <script src="js/core/state.js?v=unified12"></script>
-  <script src="js/core/api.js?v=unified12"></script>
-  <script src="js/core/auth.js?v=unified12"></script>
-  <script src="js/core/audio.js?v=unified12"></script>
-  <script src="js/core/utils.js?v=unified12"></script>
-  <script src="js/core/fx.js?v=unified12"></script>
-  <script src="js/i18n/translations.js?v=unified12"></script>
-  <script src="js/rules/game-rules.js?v=unified12"></script>
-  <script src="js/games/catalog.js?v=unified12"></script>
-  <script src="js/games/blackjack.js?v=unified12"></script>
-  <script src="js/games/ronda.js?v=unified12"></script>
-  <script src="js/games/parchisi.js?v=unified12"></script>
-  <script src="js/games/rami.js?v=unified12"></script>
-  <script src="js/games/dama.js?v=unified12"></script>
-  <script src="js/games/chess.js?v=unified12"></script>
-  <script src="js/games/billiards-physics.js?v=unified12"></script>
-  <script src="js/games/billiards-rules.js?v=unified12"></script>
-  <script src="js/games/billiards.js?v=unified12"></script>
-  <script src="js/games/engines.js?v=unified12"></script>
-  <script type="module" src="js/games/crash.js?v=unified12"></script>
-  <script src="js/core/rooms.js?v=unified12"></script>
-  <script src="js/main.js?v=unified12"></script>
-  <script src="js/core/live.js?v=unified12"></script>
-  <script src="js/core/fair.js?v=unified12"></script>
-  <script src="js/games/group.js?v=unified12"></script>
+  <script src="js/core/session.js?v=unified13"></script>
+  <script src="js/core/state.js?v=unified13"></script>
+  <script src="js/core/api.js?v=unified13"></script>
+  <script src="js/core/auth.js?v=unified13"></script>
+  <script src="js/core/audio.js?v=unified13"></script>
+  <script src="js/core/utils.js?v=unified13"></script>
+  <script src="js/core/fx.js?v=unified13"></script>
+  <script src="js/i18n/translations.js?v=unified13"></script>
+  <script src="js/rules/game-rules.js?v=unified13"></script>
+  <script src="js/games/catalog.js?v=unified13"></script>
+  <script src="js/games/blackjack.js?v=unified13"></script>
+  <script src="js/games/ronda.js?v=unified13"></script>
+  <script src="js/games/parchisi.js?v=unified13"></script>
+  <script src="js/games/rami.js?v=unified13"></script>
+  <script src="js/games/dama.js?v=unified13"></script>
+  <script src="js/games/chess.js?v=unified13"></script>
+  <script src="js/games/billiards-physics.js?v=unified13"></script>
+  <script src="js/games/billiards-rules.js?v=unified13"></script>
+  <script src="js/games/billiards.js?v=unified13"></script>
+  <script src="js/games/engines.js?v=unified13"></script>
+  <script type="module" src="js/games/crash.js?v=unified13"></script>
+  <script src="js/core/rooms.js?v=unified13"></script>
+  <script src="js/main.js?v=unified13"></script>
+  <script src="js/core/live.js?v=unified13"></script>
+  <script src="js/core/fair.js?v=unified13"></script>
+  <script src="js/games/group.js?v=unified13"></script>
 
   <!-- ═══════════ Mobile Bottom Navigation Bar ═══════════ -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="التنقل السفلي">

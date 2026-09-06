@@ -235,6 +235,13 @@
     min-width: 44px;
     min-height: 44px;
   }
+  /* [ص3] كينو: 44px صلبة × 10 أعمدة تفيض عن الشبكة فتقص الخلايا بعضها —
+     اسمح بالانكماش مع الحفاظ على الدائرة (تنطبق داخل وخارج ملء الشاشة) */
+  .kgrid .kc {
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+  }
   .ronda-num-btn {
     padding: 10px 0;
   }
