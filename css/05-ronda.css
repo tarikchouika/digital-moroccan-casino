@@ -877,3 +877,12 @@ body.app-fs-on .fd-spec-strip {
 }
 /* ── بورتريه (الهواتف — الوضع التلقائي) ── لا حاجة لقفل اتجاه: التخطيط متجاوب
    ويتكيّف تلقائياً إن قلب المستخدم الشاشة */
+
+/* [ES] أيقونات الرموز الإسبانية الحقيقية داخل أزرار اختيار الرمز */
+.fd-sym-btn .fd-sym-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}

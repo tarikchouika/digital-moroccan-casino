@@ -636,11 +636,13 @@ footer {
   margin-top: 28px;
 }
 .foot-inner {
+  /* [Footer] توسيط منسق: الروابط والعلامة في المنتصف عمودياً وأفقياً */
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
   max-width: 1500px;
   margin: 0 auto;
   width: 100%;
@@ -714,7 +716,8 @@ footer {
 .foot-legal {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 10px 14px;
   flex-wrap: wrap;
 }
 .foot-legal a {

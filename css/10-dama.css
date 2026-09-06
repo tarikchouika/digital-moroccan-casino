@@ -633,3 +633,46 @@
     transform: translate(calc(-100% - 10px), -50%);
   }
 }
+
+/* ═══ [Landscape-3] شاشة إعداد الضاما (2026-09-06): كانت عموداً واحداً يفيض
+   (زر «ابدأ» عند 390px في شاشة 360px). الحل: شبكة عمودين تستغل العرض —
+   الصعوبة/اللون جنباً لجنب، المؤقت والرهان بعرض كامل، والزر أسفلها.
+   يبقى التمرير الداخلي احتياطاً للشاشات الأقصر. بورتريه لا يُمس. ═══ */
+@media (orientation: landscape) {
+  #pg-game.app-fs #damaStage .dama-wrap .dama-setup {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    align-content: start;
+    gap: 6px 10px;
+    max-width: min(720px, 96%);
+    padding: 4px 2px;
+  }
+  #pg-game.app-fs #damaStage .dama-setup::before,
+  #pg-game.app-fs #damaStage .dama-setup::after { display: none; }
+  #pg-game.app-fs #damaStage .dama-setup .dama-logo,
+  #pg-game.app-fs #damaStage .dama-setup .dama-sub { display: none; }
+  #pg-game.app-fs #damaStage .dama-setup .dama-title {
+    grid-column: 1 / -1;
+    font-size: 1rem;
+    margin: 0;
+  }
+  #pg-game.app-fs #damaStage .dama-setup .dama-field { margin: 0; width: 100%; }
+  /* المؤقت (6 خيارات) وخانة الرهان بعرض الصفّين */
+  #pg-game.app-fs #damaStage .dama-setup .dama-field:has(.dama-timer-row),
+  #pg-game.app-fs #damaStage .dama-setup .dama-field:has(.dama-betrow) {
+    grid-column: 1 / -1;
+  }
+  #pg-game.app-fs #damaStage .dama-setup .dama-timer-row { flex-wrap: wrap; }
+  #pg-game.app-fs #damaStage .dama-setup .dama-pay {
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 0;
+  }
+  #pg-game.app-fs #damaStage .dama-setup .dama-go {
+    grid-column: 1 / -1;
+    justify-self: center;
+    margin: 0 0 4px;
+    padding: 9px 26px;
+  }
+}

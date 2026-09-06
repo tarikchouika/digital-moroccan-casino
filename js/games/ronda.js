@@ -14,6 +14,19 @@ const RN_SUITS = {
   C: { glyph: '♠', name: 'suitC', dark: '#CBD5E1', face: '#1E293B' },
   D: { glyph: '♣', name: 'suitD', dark: '#34D399', face: '#059669' }
 };
+/* [ES] أيقونات الرموز الحقيقية من أوراق «1» الإسبانية — تُعرض بدل الرموز النصية */
+const RN_SYM_IMG = {
+  A: 'assets/cards/es/sym-oros.webp',
+  B: 'assets/cards/es/sym-copas.webp',
+  C: 'assets/cards/es/sym-espadas.webp',
+  D: 'assets/cards/es/sym-bastos.webp'
+};
+function rnSymHTML(k, size) {
+  const s = RN_SUITS[k] || RN_SUITS.A;
+  const src = RN_SYM_IMG[k];
+  if (src) return '<img class="fd-sym-img" src="' + src + '" alt="' + s.glyph + '" draggable="false"' + (size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '') + '>';
+  return '<span style="color:' + s.dark + '">' + s.glyph + '</span>';
+}
 const RN_NUMS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
 
 /* ── أوراق فلات دوغ الحقيقية: الورق الإسباني التقليدي 40 ورقة (assets/cards/es) ──
@@ -912,9 +925,8 @@ class RondaRenderer {
     this._sheet(
       '<div class="fd-syms">' +
         Object.keys(RN_SUITS).map(k => {
-          const s = RN_SUITS[k];
           return '<button class="fd-sym-btn" data-sym="' + k + '" onclick="RN_selectSym(\'' + k + '\')">' +
-            '<span style="color:' + s.dark + '">' + s.glyph + '</span>' +
+            rnSymHTML(k) +
           '</button>';
         }).join('') +
       '</div>'
