@@ -561,6 +561,8 @@
     flex-direction: column;
     width: 100%;
   }
+  /* [ص2] كانت !important تلغي [hidden] فتظهر اللوحة والأزرار خلف شاشة الإعداد */
+  #pg-game.app-fs #damaStage .dama-wrap .dama-play[hidden] { display: none !important; }
   #pg-game.app-fs #damaStage .dama-wrap .dama-play {
     display: grid !important;
     flex: 1 1 auto;                 /* يملأ عمود .dama-wrap بأكمله */

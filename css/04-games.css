@@ -4785,7 +4785,8 @@ body.rami-game-open { overflow: hidden; }
     margin: 0;
     font-size: clamp(0.78rem, 2.2vh, 1rem);
   }
-  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status):not(.res) {
+  /* [ص2] استثناء rulesBox/gtop/الخلفيات — كانت تُلتقط وتتراكب فوق أزرار التحكم */
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status):not(.res):not(.rulesBox):not(.gtop):not(.gstage-bg):not(.glogo-wm):not(.bets) {
     grid-column: 1;
     grid-row: 1;
     align-self: center;
@@ -4799,7 +4800,7 @@ body.rami-game-open { overflow: hidden; }
     align-self: end;
     margin: 0;
   }
-  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status) .big {
+  #pg-game.app-fs #gamePageBody .stage:has(.sl-wrap) > div:not(.sl-wrap):not(.sl-status):not(.rulesBox) .big {
     padding: clamp(8px, 2vh, 14px) clamp(14px, 3vw, 22px);
     font-size: clamp(0.8rem, 2.2vh, 1.05rem);
   }
@@ -5044,7 +5045,7 @@ body.rami-game-open { overflow: hidden; }
   #pg-game.app-fs #gamePageBody .stage:has(.bjt) {
     display: grid;
     grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 8px;
     padding: 8px;
     align-content: stretch;
@@ -5067,27 +5068,38 @@ body.rami-game-open { overflow: hidden; }
   #pg-game.app-fs #gamePageBody .stage:has(.bjt) .bjcs {
     gap: clamp(2px, 1vh, 8px);
   }
-  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets {
+  /* [ص2] شريط الرهان (بأزرار .bbtn) أعلى العمود؛ أزرار الأكشن شبكة 2×3 تحته:
+     توزيع (بعرض كامل) ثم [بطاقة|مضاعفة] ثم [تقسيم|وقوف] — المضاعفة فوق الوقوف. */
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets:has(.bbtn) {
     grid-column: 1;
     grid-row: 1;
+    align-self: start;
+    margin: 0;
+    gap: 6px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets:not(:has(.bbtn)) {
+    grid-column: 1;
+    grid-row: 2;
     align-self: center;
     margin: 0;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
   }
   #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets .big {
-    padding: clamp(8px, 2vh, 14px) clamp(12px, 2.5vw, 20px);
+    padding: clamp(8px, 2vh, 14px) clamp(6px, 1.5vw, 14px);
     font-size: clamp(0.72rem, 2vh, 0.95rem);
     min-width: 0;
+    width: 100%;
   }
-  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets:first-child {
-    grid-row: 2;
-    align-self: end;
-  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets #bDeal { grid-column: 1 / -1; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets #bHit { grid-column: 1; grid-row: 2; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets #bDouble { grid-column: 2; grid-row: 2; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets #bSplit { grid-column: 1; grid-row: 3; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bets #bStand { grid-column: 2; grid-row: 3; }
   #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .res {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: 1;
+    grid-row: 3;
     align-self: end;
     margin: 0;
     padding: 2px 8px;
@@ -5757,12 +5769,13 @@ body.rami-game-open { overflow: hidden; }
   /* ── 11) باكارا + دراغون تايغر (فجوة مؤكدة: لا كتلة لاندسكيب لهما أصلاً؛
      dt-table يحمل bc-table أيضاً فالمحدد يشملهما) — الطاولة يساراً بكامل
      الارتفاع، وأزرار الاختيار/التوزيع/الرهان صفوف منفصلة يميناً ── */
+  /* [ص2] 5 صفوف: رهانات | وزّع | فراغ مرن | +/− | نتيجة — كانت وزّع تتراكب فوق «تعادل» */
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) {
     display: grid;
     grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    gap: 8px;
-    padding: 8px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    gap: 6px 8px;
+    padding: 6px 8px;
     align-content: stretch;
     overflow: hidden;
   }
@@ -5783,8 +5796,9 @@ body.rami-game-open { overflow: hidden; }
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets {
     grid-column: 1;
     grid-row: 1;
-    align-self: center;
-    margin: 0;
+    align-self: start;
+    /* [ص2] إزاحة تحت زر الخروج الدائري (fixed أعلى الزاوية) — كان يتراكب مع أول زر رهان */
+    margin: calc(34px + var(--safe-top, 0px)) 0 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -5792,25 +5806,32 @@ body.rami-game-open { overflow: hidden; }
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets .bc-b,
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets .dt-b {
     width: 100%;
-    padding: clamp(6px, 1.8vh, 12px) 8px;
-    font-size: clamp(0.72rem, 2vh, 0.9rem);
+    padding: clamp(4px, 1.2vh, 9px) 8px;
+    font-size: clamp(0.7rem, 1.9vh, 0.88rem);
+  }
+  /* [ص2] زر وزّع أنحف قليلاً كي لا يفيض العمود على الشاشات القصيرة */
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets ~ .bets .big {
+    padding: clamp(7px, 1.8vh, 13px) clamp(14px, 3vw, 24px);
   }
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets ~ .bets {
     grid-row: 2;
-    align-self: end;
+    align-self: start;
     flex-direction: row;
     justify-content: center;
+    margin: 0;
   }
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bets ~ .bets ~ .bets {
-    grid-row: 3;
-    align-self: center;
+    grid-row: 4;
+    align-self: end;
   }
   #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .res {
     grid-column: 1;
-    grid-row: 4;
+    grid-row: 5;
     align-self: end;
     margin: 0;
-    font-size: clamp(0.75rem, 2.1vh, 0.95rem);
+    padding: 2px 8px;
+    min-height: 0;
+    font-size: clamp(0.72rem, 2vh, 0.9rem);
   }
 
   /* ── 12) لاكي 7 (فجوة مؤكدة: بلا كتلة لاندسكيب — النصوص كانت مطموسة) ── */
@@ -5921,7 +5942,14 @@ body.rami-game-open { overflow: hidden; }
     padding: clamp(6px, 1.6vw, 14px);
     margin: 8px auto;
   }
-  #pg-game.app-fs .stage:has(.ke-wrap) .kc { font-size: clamp(0.6rem, 2.6vw, 0.85rem); }
+  /* [ص2] قص العمود الأخير يساراً: min-width اللمسي 44px × 8 أعمدة يفيض عن
+     الشاشات الضيقة (352>320) — اسمح بالانكماش مع الحفاظ على الدائرة */
+  #pg-game.app-fs .stage:has(.ke-wrap) .kc {
+    font-size: clamp(0.6rem, 2.6vw, 0.85rem);
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+  }
   #pg-game.app-fs .stage:has(.ke-wrap) > .bets .big {
     padding: clamp(8px, 1.6vh, 14px) clamp(14px, 4vw, 26px);
     font-size: clamp(0.8rem, 2vh, 1rem);
