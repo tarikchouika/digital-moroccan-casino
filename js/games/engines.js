@@ -45,8 +45,9 @@ function give(w) {
   wallet();
   save();
 }
-function gres(m, w) {
-  if ((m !== '' || w > 0) && typeof recordRound === 'function') {
+function gres(m, w, noRec) {
+  /* noRec=true: عرض فقط بلا تسجيل تذكرة (ملخصات جماعية مثلاً) */
+  if (!noRec && (m !== '' || w > 0) && typeof recordRound === 'function') {
     recordRound(w > 0, (typeof w === 'number' && w > 0) ? w : 0, m);
   }
   const e = document.getElementById('GRes');
@@ -2416,7 +2417,8 @@ function kStart() {
     if (cc) cc.innerHTML = '🔢 <b>0</b>/10 ' + T('ke.sel') + ' · 🎫 ' + kPlacedBets.length;
     if (btn) btn.disabled = false;
     SND.spin();
-    gres(T('grp.placeBet') + ' 🎫 ' + kPlacedBets.length, 0);
+    /* عرض تأكيد الرهان فقط — التذكرة تُسجَّل مرة واحدة عند النتيجة (لا تكرار) */
+    gres(T('grp.placeBet') + ' 🎫 ' + kPlacedBets.length, 0, true);
   });
 }
 /* كشف أرقام الجولة المسحوبة (يستدعيها Group.keOnDraw عبر SSE/round API) */
@@ -2467,7 +2469,8 @@ function keFinish() {
 /* نتيجة الجولة الجماعية من السيرفر (winners/total_paid) */
 function keResolveResult(result) {
   if (result && result.winners !== undefined) {
-    gres('🏆 ' + T('grp.winners') + ': ' + result.winners + ' · ' + T('grp.totalPaid') + ': ' + fmt(result.total_paid) + ' 🪙', 0);
+    /* عرض ملخص الجولة الجماعية فقط — تذكرتي سُجلت في keFinish (لا تكرار) */
+    gres('🏆 ' + T('grp.winners') + ': ' + result.winners + ' · ' + T('grp.totalPaid') + ': ' + fmt(result.total_paid) + ' 🪙', 0, true);
   }
 }
 /* جولة جديدة: إعادة تعيين الاختيارات والتمكين */

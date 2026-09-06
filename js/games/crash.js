@@ -548,7 +548,8 @@ export function crashGo() {
     cPts = [1];
     elapsed = 0;
     SND.spin();
-    gres(T('grp.placeBet'), 0);
+    /* عرض تأكيد الرهان فقط — التذكرة تُسجَّل مرة واحدة عند النتيجة (لا تكرار) */
+    gres(T('grp.placeBet'), 0, true);
     const cEl = document.getElementById('cCash');
     if (cEl) cEl.disabled = true;
   });
@@ -660,9 +661,10 @@ function handleCrash(crashAtVal) {
 
   cChartDraw();
 
-  /* إن كنت سحبت في هذه الجولة → أبقِ نتيجة سحبي بدل رسالة الخسارة */
+  /* إن كنت سحبت في هذه الجولة → أبقِ نتيجة سحبي بدل رسالة الخسارة
+     (عرض فقط — التذكرة سُجلت لحظة السحب في crashOut، فلا تُكرَّر) */
   if (cCashered > 0) {
-    gres(' ' + cCashMult.toFixed(2) + '× +' + fmt(cCashered) + ' 🪙', cCashered);
+    gres(' ' + cCashMult.toFixed(2) + '× +' + fmt(cCashered) + ' 🪙', cCashered, true);
     cCashered = 0;
     cCashMult = 0;
   } else {

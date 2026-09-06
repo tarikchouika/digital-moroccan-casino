@@ -12,6 +12,8 @@ const GAME_IMG = {
   rl: 'roulette', bj: 'blackjack', bc: 'baccarat', dt: 'dragon', vp: 'poker',
   ke: 'keno', sl: 'slot-spin', ab: 'andar-bahar',
   rm: 'rami',
+  ch: 'chess', dm: 'dama',
+  bl8: 'billiards', blbb: 'billiards', blgv: 'billiards', blsn: 'billiards', blca: 'billiards',
   crabbin: 'crabbin',
   fishing: 'fishing',
   gates: 'gates',
@@ -1695,11 +1697,9 @@ function claimDaily() {
 /* ═══════════ Render All ═══════════ */
 /* مزامنة عدد الألعاب المعروض (الشارة + الإحصائية) مع العدد الفعلي في الكتالوج */
 function syncGamesCount() {
-  var n = (typeof GAMES !== 'undefined' && GAMES.length) ? GAMES.length : 35;
+  /* [UI] عدد الألعاب لم يعد يُعرض — إزالة الشارة إن وُجدت في نسخ قديمة */
   var badge = document.getElementById('gamesCountBadge');
-  if (badge) { badge.textContent = n; badge.setAttribute('aria-label', n + ' لعبة'); }
-  var stat = document.getElementById('statGamesCount');
-  if (stat) stat.textContent = n;
+  if (badge) badge.remove();
 }
 
 function renderAll() {

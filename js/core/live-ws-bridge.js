@@ -3,6 +3,8 @@
    عبر Durable Objects (نفس أسماء الأحداث: room:update, room:move...)
    الشبكة: wss://casino-api.../api/rooms/<roomId>/ws?uid=<uid>
    غرفة الدردشة العامة: roomId = 'global'
+   [إصلاح التكرار] اتصال WS واحد مشترك لغرفة global مهما تعددت
+   نداءات EventSource — كل رسالة تُوزَّع على كل مستمع مرة واحدة فقط.
    ═════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -16,42 +18,81 @@
     return window.RC_currentRoomId || 'global';
   }
 
+  /* ── قناة مشتركة: WS واحد لكل roomId، وواجهات (facades) متعددة فوقه ── */
+  function Channel(rid) {
+    var self = this;
+    self.rid = rid;
+    self.facades = [];
+    self.closed = false;
+    self._connect();
+  }
+  Channel.prototype = {
+    _connect: function () {
+      var self = this;
+      if (self.closed) return;
+      self._ws = new WebSocket(API_BASE + '/api/rooms/' + encodeURIComponent(self.rid) + '/ws?uid=' + encodeURIComponent(getUid()));
+      self._ws.onopen = function () {
+        for (var i = 0; i < self.facades.length; i++) {
+          var f = self.facades[i];
+          f.readyState = 1;
+          if (f.onopen) try { f.onopen(); } catch (e) { }
+        }
+      };
+      self._ws.onclose = function () {
+        if (self.closed) return;
+        for (var i = 0; i < self.facades.length; i++) self.facades[i].readyState = 0;
+        setTimeout(function () { self._connect(); }, 3000);
+      };
+      self._ws.onerror = function () { };
+      self._ws.onmessage = function (ev) {
+        var m;
+        try { m = JSON.parse(ev.data); } catch (e) { return; }
+        var evObj = { data: JSON.stringify(m.data) };
+        /* توزيع واحد: كل مستمع مسجَّل على أي واجهة يُستدعى مرة واحدة فقط */
+        for (var i = 0; i < self.facades.length; i++) {
+          var ls = self.facades[i]._listeners[m.event];
+          if (!ls) continue;
+          for (var j = 0; j < ls.length; j++) try { ls[j](evObj); } catch (e) { }
+        }
+      };
+    },
+    send: function (o) { try { this._ws.send(JSON.stringify(o)); } catch (e) { } },
+    close: function () { this.closed = true; try { this._ws.close(); } catch (e) { } }
+  };
+
+  var globalChannel = null;
+  function getGlobalChannel() {
+    if (!globalChannel || globalChannel.closed) globalChannel = new Channel('global');
+    return globalChannel;
+  }
+
+  /* واجهة بمظهر EventSource فوق القناة المشتركة */
   function LiveWS(roomId) {
     var self = this;
     self._listeners = {};
-    self.readyState = 0;
-    self._connect(roomId || currentRoomId);
+    var rid = (typeof roomId === 'string' && roomId) ? roomId : getCurrentRoomId();
+    if (rid === 'global') {
+      self._ch = getGlobalChannel();
+    } else {
+      self._ch = new Channel(rid);
+      self._own = true; /* قناة خاصة بغرفة لعب — تُغلق مع الواجهة */
+    }
+    self._ch.facades.push(self);
+    self.readyState = (self._ch._ws && self._ch._ws.readyState === 1) ? 1 : 0;
+    if (self.readyState === 1 && self.onopen) { setTimeout(function () { try { self.onopen(); } catch (e) { } }, 0); }
   }
-  /* سجل مستمعين موحّد: كل اتصالات الجسر توزع عليه */
-  var globalListeners = {};
   LiveWS.prototype = {
-    _connect: function (rid) {
-      var self = this;
-      var target = (typeof rid === 'string' && rid) ? rid : getCurrentRoomId();
-      self._ws = new WebSocket(API_BASE + '/api/rooms/' + encodeURIComponent(target) + '/ws?uid=' + encodeURIComponent(getUid()));
-      self._ws.onopen = function () { self.readyState = 1; self._emitOpen(); };
-      self._ws.onclose = function () { self.readyState = 3; setTimeout(function () { self.readyState = 0; self._connect(getCurrentRoomId()); }, 3000); };
-      self._ws.onerror = function () { };
-      self._ws.onmessage = function (ev) {
-        try {
-          var m = JSON.parse(ev.data);
-          self._dispatch(m.event, m.data);
-        } catch (e) { }
-      };
-    },
-    _emitOpen: function () { if (this.onopen) try { this.onopen(); } catch (e) { } },
     addEventListener: function (type, fn) {
       (this._listeners[type] = this._listeners[type] || []).push(fn);
-      (globalListeners[type] = globalListeners[type] || []).push(fn);
     },
-    _dispatch: function (type, data) {
-      var ls = this._listeners[type] && this._listeners[type].length ? this._listeners[type] : globalListeners[type];
-      if (!ls || !ls.length) return;
-      var ev = { data: JSON.stringify(data) };
-      for (var i = 0; i < ls.length; i++) try { ls[i](ev); } catch (e) { }
-    },
-    send: function (o) { try { this._ws.send(JSON.stringify(o)); } catch (e) { } },
-    close: function () { try { this._ws.close(); } catch (e) { } }
+    send: function (o) { this._ch.send(o); },
+    close: function () {
+      var idx = this._ch.facades.indexOf(this);
+      if (idx !== -1) this._ch.facades.splice(idx, 1);
+      /* قناة غرفة لعب خاصة: أغلق WS؛ قناة global تبقى حية للواجهات الأخرى */
+      if (this._own && !this._ch.facades.length) this._ch.close();
+      this.readyState = 3;
+    }
   };
 
   /* polyfill: استبدال EventSource للـ '/api/live' فقط */
