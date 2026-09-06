@@ -41,14 +41,19 @@ ok(rail.contains(document.getElementById('blPower')), 'يمين: شريط الق
 ok(rail.contains(document.getElementById('blShoot')), 'يمين: زر التنفيذ');
 ok(!document.getElementById('blCell0') && !document.getElementById('blCell1'), 'كرة اللون المستقلة أزيلت (اللون في الأفاتار)');
 
-/* الاتجاه: تبديل صنف فقط، بلا نقل DOM */
+/* [UI-v6] الاتجاه: لاندسكيب = كراتي في العمود الأيمن؛ بورتريه = كل الأفاتارات
+   والكرات في الشريط العلوي والسبين/القوة/التنفيذ في السفلي */
 const size=(w,h)=>{ Object.defineProperty(frame,'clientWidth',{value:w,configurable:true}); Object.defineProperty(frame,'clientHeight',{value:h,configurable:true}); frame._blOriented=false; };
 size(800,360); W.blOrientLayout();
 ok(frame.classList.contains('bl-land') && !frame.classList.contains('bl-port'), 'لاندسكيب: bl-land');
-const parentBefore = document.getElementById('blSpin').parentNode.id;
+ok(rail.contains(document.getElementById('blAv0')) && rail.contains(document.getElementById('blTrayR')), 'لاندسكيب: أفاتاري وكراتي في العمود الأيمن');
+ok(lr.contains(document.getElementById('blSpin')), 'لاندسكيب: السبين أسفل العمود الأيسر');
 size(360,800); W.blOrientLayout();
 ok(frame.classList.contains('bl-port') && !frame.classList.contains('bl-land'), 'بورتريه: bl-port');
-ok(document.getElementById('blSpin').parentNode.id === parentBefore, 'البورتريه لا ينقل العناصر — قلب CSS فقط');
+ok(lr.contains(document.getElementById('blAv0')) && lr.contains(document.getElementById('blTrayR')), 'بورتريه: أفاتاري وكراتي في الشريط العلوي');
+ok(rail.contains(document.getElementById('blSpin')) && rail.contains(document.getElementById('blPower')) && rail.contains(document.getElementById('blShoot')), 'بورتريه: سبين+قوة+تنفيذ في الشريط السفلي');
+size(800,360); W.blOrientLayout();
+ok(rail.contains(document.getElementById('blAv0')) && lr.contains(document.getElementById('blSpin')), 'ذهاب-إياب: العناصر رجعت لمواضع اللاندسكيب');
 
 /* الأفاتار: لون الكرات + حرفان من الاسم */
 W.AUTH = { user: { id: 9, username: 'tarik' } };

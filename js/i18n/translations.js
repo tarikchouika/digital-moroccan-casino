@@ -1302,6 +1302,9 @@ const TR = {
   'fr.invite': [ 'دعوة لغرفة', 'Inviter dans une salle', 'Invite to room', 'عيّط لغرفة' ],
   'fr.inbox': [ 'الوارد', 'Boîte de réception', 'Inbox', 'الوارد' ],
   'fr.online': [ 'متصل', 'En ligne', 'Online', 'كاين' ],
+  'fr.noConv': [ 'لا توجد رسائل بعد — ابدأ المحادثة.', 'Aucun message — commencez la conversation.', 'No messages yet — start the conversation.', 'ما كاينة حتى رسالة — بدا الهضرة.' ],
+  'fr.msgPlaceholder': [ 'رسالتك...', 'Votre message...', 'Your message...', 'الرسالة ديالك...' ],
+  'fr.userPlaceholder': [ 'اسم المستخدم...', "Nom d'utilisateur...", 'Username...', 'سمية المستخدم...' ],
 
   /* ── Rooms settings / paid rooms (rm.*) ── */
   'rm.type': [ 'نوع الغرفة', 'Type de salle', 'Room type', 'نوع الغرفة' ],

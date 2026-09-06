@@ -1122,9 +1122,12 @@ function blAimTo(p) {
   B.aim = Math.atan2(p.y - c.y, p.x - c.x);
 }
 
-/* ═══ [UI-v4] الاتجاه: البنية ثابتة في الـDOM — البورتريه قلبٌ للحاوية 90°
-   (يسار اللاندسكيب = أعلى البورتريه، يمينه = أسفله) عبر CSS grid فقط،
-   بلا أي نقل عناصر — فتبقى المواضع والمستمعون كما هم حرفياً. */
+/* ═══ [UI-v6] الاتجاه حسب الصورتين المرجعيتين ═══
+   لاندسكيب: يسار = تدوير بالزاوية + أفاتار الخصم وكراته بخط عمودي مستقيم
+   تحته + السبين أسفلاً؛ يمين = أفاتاري (بجوار زر الخروج) وكراتي بخط
+   عمودي تحته + القوة + التنفيذ — كله على محور عمودي واحد.
+   بورتريه: شريط علوي واحد مستقيم (تدوير أقصى يسار، أفاتار الخصم+كراته،
+   ثم كراتي+أفاتاري، زر الخروج أقصى يمين) وشريط سفلي (سبين، قوة، تنفيذ). */
 function blOrientLayout() {
   var B = BILLIARDS;
   if (!B) return;
@@ -1135,11 +1138,30 @@ function blOrientLayout() {
   B._blLand = land; frame._blOriented = true;
   frame.classList.toggle('bl-land', land);
   frame.classList.toggle('bl-port', !land);
-  /* [UI-v5 fix] مسح قوالب grid المضمّنة للاتجاه السابق — بقاؤها كان يغلب
-     قواعد CSS الجديدة فتختفي الطاولة حتى يعاد الحساب */
+  /* مسح قوالب grid المضمّنة للاتجاه السابق (كانت تخفي الطاولة) */
   frame.style.gridTemplateColumns = '';
   frame.style.gridTemplateRows = '';
   frame._blColsT = frame._blRowsT = null;
+  var g = function (id) { return document.getElementById(id); };
+  var lr = g('blLRail'), rail = g('blRail'), ltop = g('blLTop');
+  var av0 = g('blAv0'), trayR = g('blTrayR'), spin = g('blSpin'),
+      pow = g('blPower'), sc0 = g('blScore0'), rtop = g('blRTop');
+  if (lr && rail && ltop && av0 && trayR && spin && pow) {
+    if (land) {
+      /* يسار: [تدوير+أفاتار الخصم] فكراته فالسبين — يمين: أفاتاري فكراتي فالقوة فالتنفيذ */
+      lr.appendChild(spin);
+      if (rtop) rtop.appendChild(av0);
+      if (sc0) rail.insertBefore(sc0, trayR.parentNode === rail ? trayR : null);
+      rail.insertBefore(trayR, pow);
+    } else {
+      /* بورتريه: الشريط العلوي = تدوير، أفاتار الخصم+كراته | كراتي+أفاتاري.
+         الشريط السفلي = سبين، قوة، تنفيذ. */
+      lr.appendChild(trayR);
+      if (sc0) lr.appendChild(sc0);
+      lr.appendChild(av0);
+      rail.insertBefore(spin, rail.firstChild);
+    }
+  }
   blTray();
 }
 
