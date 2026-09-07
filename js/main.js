@@ -519,7 +519,11 @@ function openGame(id) {
      نُجمّد حالة اللعبة عند الخروج ونعيدها كما هي عند العودة — دون بدء جولة جديدة.
      (الألعاب الفورية كالكراش/الكينو لا تُستأنف: تُسجَّل نتائجها في السجل فقط) */
   var RESUMABLE = ['rm', 'rn', 'bj', 'pr'];
-  if (RESUMABLE.indexOf(id) !== -1 && window._liveGameId === id &&
+  /* [PR-Sync] جولة غرفة جارية لنفس اللعبة: الاستئناف المجمّد يعرض لوحة قديمة متجمدة —
+     يجب إعادة البناء الكاملة ليُعاد بناء الجولة من سجل الخادم (room:replay) */
+  var roomLive = typeof Rooms !== 'undefined' && Rooms.state &&
+    Rooms.state.game_id === id && Rooms.state.status === 'playing';
+  if (!roomLive && RESUMABLE.indexOf(id) !== -1 && window._liveGameId === id &&
       bodyEl.children.length > 0 && window.SessionResume && window.SessionResume.isResumable()) {
     window._currentGameId = id;
     nav('game', null);
@@ -614,6 +618,9 @@ function closeGamePage() {
   var curId = window._currentGameId;
   var keepLive = RESUMABLE.indexOf(curId) !== -1 &&
     window.SessionResume && window.SessionResume.isResumable();
+  /* [PR-Sync] جولة غرفة جارية: DOM المجمد يفقد المزامنة — التنظيف ثم إعادة البناء من السجل عند العودة */
+  if (typeof Rooms !== 'undefined' && Rooms.state && Rooms.state.status === 'playing' &&
+      Rooms.state.game_id === curId) keepLive = false;
 
   window._currentGameId = null;
   /* تنظيف Crash إن كان نشطاً */

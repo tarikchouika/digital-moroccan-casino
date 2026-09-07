@@ -452,7 +452,7 @@
       var timer = { key: 'timer', label: T('dama.timer') || 'مؤقت الدور', opts: [[0, T('dama.timerOff') || 'بدون'], [30, sec(30)], [60, sec(60)], [120, sec(120)], [180, sec(180)], [300, sec(300)]], def: 0 };
       var timer90 = { key: 'timer', label: T('dama.timer') || 'مؤقت الدور', opts: [[30, sec(30)], [60, sec(60)], [90, sec(90)], [120, sec(120)], [180, sec(180)], [300, sec(300)]], def: 90 };
       if (gid === 'rm') return [
-        { key: 'mode', label: T('rami.roundType') || 'نوع الجولة', opts: [['talaj', T('rami.talaj') || 'طالاج'], ['simple', T('rami.sambel') || 'سامبل']], def: 'talaj' },
+        { key: 'mode', label: T('rami.roundType') || 'نوع الجولة', opts: [['talaj', T('rami.talaj') || 'طالاج'], ['simple', T('rami.simple') || 'سامبل']], def: 'talaj' },
         { key: 'target', label: T('rami.target') || 'الهدف', opts: [['single', T('rami.singleRound') || 'جولة واحدة'], ['301', '301'], ['501', '501'], ['701', '701']], def: 'single' },
         timer90
       ];

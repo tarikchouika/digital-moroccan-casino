@@ -1382,6 +1382,9 @@ class RondaPlatformAdapter {
     if (this.renderer) this.renderer._onBetDecide({ accept: false, bet: this.room.bet });
   }
   _settle(d) {
+    /* [RondaBet] تسوية عادلة بين البشر: المتخمن يخاطر بالرهان ×1، الموزع يخاطر ×2 (رقم)
+       أو ×3 (رقم+رمز) — الخاسر يدفع رهانه كاملاً للرابح، ورسم المنصة 5% من الرابح
+       في غرف النسبة (يحسبه الخادم). لا خلق نقود من العدم. */
     if (!this.room || !this.core.multiplayer || !this.room.isOwner) return;
     const winnerSide = d.winner;
     if (!winnerSide || typeof API === 'undefined') return;
@@ -1391,15 +1394,22 @@ class RondaPlatformAdapter {
     const dealer = players.find(function (p) { return p.id === self.room.order[0]; });
     const selector = players.find(function (p) { return p.id === self.room.order[1]; });
     if (!dealer || !selector) return;
-    var winner, loser, amount;
-    if (winnerSide === 'selector') { winner = selector; loser = dealer; amount = this.room.bet * mult; }
-    else { winner = dealer; loser = selector; amount = this.room.bet; }
-    API.post('/api/rooms/settle', { room_id: this.room.id, loser: loser.username, winner: winner.username, amount: amount }).then(function (r) {
-      if (r && r.ok && typeof ST !== 'undefined') {
+    /* البوتات بلا أرصدة — التسوية النقدية بين بشريين فقط */
+    if (String(dealer.id).indexOf('bot:') === 0 || String(selector.id).indexOf('bot:') === 0) return;
+    var winner, loser, wStake, lStake;
+    if (winnerSide === 'selector') { winner = selector; loser = dealer; wStake = this.room.bet; lStake = this.room.bet * mult; }
+    else { winner = dealer; loser = selector; wStake = this.room.bet * mult; lStake = this.room.bet; }
+    API.post('/api/rooms/settle', {
+      room_id: this.room.id, mode: 'ronda',
+      round_id: this.room.round + ':' + (this.room.seed || 0),
+      winner_id: winner.id, loser_id: loser.id,
+      winner_stake: wStake, loser_stake: lStake
+    }).then(function (r) {
+      var rd = (r && r.data) ? r.data : r;
+      if (rd && rd.ok && typeof ST !== 'undefined') {
         var u = (typeof AUTH !== 'undefined' && AUTH.user) ? AUTH.user : null;
-        if (u && r.winner && r.winner.username === u.username) { ST.gold = r.winner.gold; if (AUTH.user) AUTH.user.gold = r.winner.gold; save(); wallet(); }
-        else if (u && r.loser && r.loser.username === u.username) { ST.gold = r.loser.gold; if (AUTH.user) AUTH.user.gold = r.loser.gold; save(); wallet(); }
-        if (typeof toast === 'function') toast((winnerSide === 'selector' ? '🏆 ' : '💔 ') + loser.username + ' ← ' + fmt(amount) + ' 🪙' + (r.fee ? ' (رسم ' + fmt(r.fee) + ')' : ''), 'ok');
+        if (u && rd.winner && rd.winner.id === u.id) { ST.gold = rd.winner.gold; AUTH.user.gold = rd.winner.gold; save(); wallet(); }
+        else if (u && rd.loser && rd.loser.id === u.id) { ST.gold = rd.loser.gold; AUTH.user.gold = rd.loser.gold; save(); wallet(); }
       }
     }).catch(function () {});
   }

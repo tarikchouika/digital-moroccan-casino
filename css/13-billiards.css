@@ -748,3 +748,7 @@ body.bl-game-open .game-fs-exit { z-index: 14500 !important; }
 
 /* دفاع: زر التدوير فوق أي تراكب داخل عموده */
 .bl-rotbtn { position: relative; z-index: 7; }
+
+/* [v23] رسالة انتقال الدور ومجموع الرهان أزيلا — لا يحجبان حفر الطاولة */
+.bl-turnpill[hidden], .bl-stake[hidden] { display: none !important; }
+.bl-grp.bl-time-low { color: #ff7b6e; }

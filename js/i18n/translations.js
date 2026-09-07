@@ -4,6 +4,18 @@
    ═══════════════════════════════════════════ */
 "use strict";
 const TR = {
+  /* ── [v23] مفاتيح الغرف وإعدادات اللعبة ── */
+  'ui.roomBackToGame': [ 'العودة للعبة', 'Retour au jeu', 'Back to game', 'الرجوع للعبة' ],
+  'ui.roomRequestSeat': [ 'اطلب مقعداً للعب', 'Demander une place', 'Request a seat', 'طلب بلاصة تلعب' ],
+  'ui.roomSeatPending': [ 'في انتظار مقعد شاغر…', 'En attente d\'une place libre…', 'Waiting for a free seat…', 'كنتسناو بلاصة خاوية…' ],
+  'rm.playersCount': [ 'عدد اللاعبين', 'Nombre de joueurs', 'Players count', 'عدد اللاعبين' ],
+  'parchisi.mode': [ 'نمط اللعب', 'Mode de jeu', 'Game mode', 'نمط اللعب' ],
+  'rn.mode': [ 'نمط التخمين', 'Mode de devinette', 'Guess mode', 'نمط التخمين' ],
+  'rn.modeNum': [ 'الرقم فقط', 'Numéro seul', 'Number only', 'الرقم فقط' ],
+  'rn.modeSym': [ 'الرقم والرمز', 'Numéro et symbole', 'Number & symbol', 'الرقم والرمز' ],
+  'rp.rounds': [ 'عدد الجولات', 'Nombre de manches', 'Rounds', 'عدد الجولات' ],
+  'pn.rounds': [ 'عدد الركلات', 'Nombre de tirs', 'Kicks', 'عدد الركلات' ],
+  'rami.roundType': [ 'نوع الجولة', 'Type de manche', 'Round type', 'نوع الجولة' ],
   'rami.recycledMsg': [ '🔄 نفدت أوراق السحب — تم خلط المرموق وتجديد المجرف بنجاح!', '🔄 Talon épuisé — Défausse mélangée et nouveau talon prêt !', '🔄 Draw pile exhausted — Discard pile reshuffled and new deck ready!', '🔄 سالاو وريقات المجرف — تخبل المرموق وتجدد الباكي بنجاح!' ],
 
   '2fa.back': [ 'العودة للموقع', 'Retour au site', 'Back to site', 'الرجوع للموقع' ],

@@ -11,6 +11,7 @@ const AUTH = {
   user: null,
   _lastSync: 0
 };
+if (typeof window !== 'undefined') window.AUTH = AUTH;   /* [PR-Sync] يقرؤه جسر WS */
 
 /* حالة مؤقتة أثناء إتمام دخول 2FA: { userId, username } */
 var _twofaPending = null;

@@ -13,7 +13,13 @@
       ? 'https://casino-api.dmgames-api.workers.dev'
       : 'https://casino-api.tarikc.workers.dev');
   function getUid() {
-    try { return String((window.AUTH && window.AUTH.user && window.AUTH.user.id) || (window.RC_user && window.RC_user.id) || (window.ST && window.ST.user && window.ST.user.id) || '0'); }
+    /* [PR-Sync] const AUTH لا يظهر على window — يقرأ كرابطة عالمية مباشرة.
+       كان uid يصل '0' فلا يتعرف الخادم على اللاعب ولا يرسل room:replay (لوحة مجمدة). */
+    try {
+      var a = (typeof AUTH !== 'undefined' && AUTH) || window.AUTH || null;
+      var s = (typeof ST !== 'undefined' && ST) || window.ST || null;
+      return String((a && a.user && a.user.id) || (window.RC_user && window.RC_user.id) || (s && s.user && s.user.id) || '0');
+    }
     catch (e) { return '0'; }
   }
   function getCurrentRoomId() {
@@ -137,11 +143,15 @@
       gameConn = null;
     }
   }
-  /* هوك على تحديث Rooms.state */
+  /* هوك على تحديث Rooms.state + إعادة الاتصال إذا تغيّر uid (دخول متأخر) */
+  var lastUid = getUid();
   setInterval(function () {
     try {
       var st = window.Rooms && window.Rooms.state;
-      if (st && st.id && st.id !== window.__liveLastRoom) { window.__liveLastRoom = st.id; watchRoom(); }
+      var u = getUid();
+      var uidChanged = (u !== lastUid);
+      lastUid = u;
+      if (st && st.id && (st.id !== window.__liveLastRoom || uidChanged)) { window.__liveLastRoom = st.id; watchRoom(true); }
       else if (!st && window.__liveLastRoom) { window.__liveLastRoom = null; watchRoom(); }
     } catch (e) { }
   }, 800);

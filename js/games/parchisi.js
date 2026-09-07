@@ -942,6 +942,8 @@ const ParchisiApp = {
       const rp = (typeof Rooms.hasPendingReplay === 'function' && Rooms.hasPendingReplay()) ? Rooms.consumePendingReplay() : null;
       this.start();
       if (rp && rp.history && rp.history.length) this.applyReplay(rp);
+      /* [PR-Sync] لا إعادة معلقة → اطلبها من الخادم (إعادة اتصال WS تبث room:replay) */
+      else if (typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
     }
   },
 
@@ -1059,6 +1061,10 @@ const ParchisiApp = {
     } finally {
       this._replaying = false;
     }
+    /* [PR-SEQ] لقطة فورية بعد الإعادة: لا مشي تراكمي عبر كل التاريخ */
+    this._animXY = new Map();
+    this._prLog = new Map();
+    this._walkFifo = [];
     this.onEngineChange();
   },
   /* مقعد غادر صاحبه → يُدار آلياً كي لا تتعطل الجولة */
@@ -1217,6 +1223,8 @@ const ParchisiApp = {
     this._votes = null;
     this.hideOverModal();
     this._animXY = new Map();      /* انسياب نظيف من البداية */
+    this._prLog = new Map();
+    this._walkFifo = [];           /* [PR-SEQ] */
     this._logFor = null;
     this.hideRollLog();
     this.setupBoardFit();
@@ -1299,7 +1307,11 @@ const ParchisiApp = {
     if (!wrap || !this.engine) return;
     const e = this.engine;
     const titleEl = document.getElementById('prTitle');
-    if (titleEl) titleEl.textContent = T('parchisi.gameTitle');
+    if (titleEl) {
+      /* [v23] الإشارة لنمط الجولة (كلاسيك/رابيدو/إسباني) تحت العنوان */
+      const mk = PR_MODES[this.mode] ? this.mode : 'classic';
+      titleEl.textContent = T('parchisi.gameTitle') + ' · ' + T(PR_MODES[mk].labelKey);
+    }
     const potWrap = document.getElementById('prPotWrap');
     const potEl = document.getElementById('prPot');
     const pot = this.roomMode ? 0 : (this.bet * e.players.length);
@@ -1641,9 +1653,20 @@ const ParchisiApp = {
     else { if (this.roomMode) this.prEmit('pass', {}); e.forcePass(); }
   },
 
+  /* [PR-SEQ] هل توجد حركة بيدق جارية على اللوحة؟ */
+  _animBusy() {
+    return !!(this._walkFifo && this._walkFifo.length);
+  },
+
   /* ── الذكاء الاصطناعي ── */
   processTurn() {
     if (!this.gameActive || !this.engine || this.engine.gameOver) return;
+    /* [PR-SEQ] لا يبدأ اللاعب التالي (آلي/سائق) حتى يستقر البيدق المتحرك */
+    if (this._animBusy()) {
+      clearTimeout(this._aiT);
+      this._aiT = setTimeout(() => this.processTurn(), 180);
+      return;
+    }
     const e = this.engine;
     const cur = e.players[e.current];
     if (this.roomMode) {
@@ -1662,6 +1685,7 @@ const ParchisiApp = {
   /* دور مقعد آلي داخل الغرفة: يُبَثّ للجميع */
   roomBotStep() {
     if (!this.gameActive || !this.engine || this.engine.gameOver) return;
+    if (this._animBusy()) { clearTimeout(this._aiT); this._aiT = setTimeout(() => this.roomBotStep(), 180); return; }   /* [PR-SEQ] */
     const e = this.engine;
     const cur = e.players[e.current];
     if (cur.type !== 'ai') return;
@@ -1681,6 +1705,7 @@ const ParchisiApp = {
 
   aiStep() {
     if (!this.gameActive || !this.engine || this.engine.gameOver) return;
+    if (this._animBusy()) { clearTimeout(this._aiT); this._aiT = setTimeout(() => this.aiStep(), 180); return; }   /* [PR-SEQ] */
     const e = this.engine;
     if (e.players[e.current].type !== 'ai') return;
     if (e.phase === 'WAIT_ROLL') { e.roll(); return; }
@@ -2366,6 +2391,10 @@ const ParchisiApp = {
           this._prLog.set(pc, { state: pc.state, pos: pc.pos });
           if (path) {
             ap.q = path; ap._hl = null;
+            /* [PR-SEQ] طابور المسير: بيدق واحد فقط يتحرك في اللحظة الواحدة —
+               التالي لا يبدأ حتى يستقر الأول في خانته (واقعية الحركة) */
+            if (!this._walkFifo) this._walkFifo = [];
+            if (this._walkFifo.indexOf(pc) === -1) this._walkFifo.push(pc);
             if (!this._replaying && typeof SND !== 'undefined') {
               try {
                 if (prev.state === 'home' && pc.state === 'onboard') { if (SND.prEnter) SND.prEnter(); }
@@ -2375,7 +2404,9 @@ const ParchisiApp = {
             }
           }
         }
-        if (ap.q && ap.q.length) {
+        if (ap.q && ap.q.length && this._walkFifo && this._walkFifo[0] !== pc) {
+          /* [PR-SEQ] بيدق آخر يتحرك الآن — هذا ينتظر دوره في مكانه */
+        } else if (ap.q && ap.q.length) {
           /* مسير بسرعة ثابتة: ~150مث لكل خانة — واقعي لا فجائي */
           const wp = ap.q[0];
           if (ap._hl == null) ap._hl = Math.max(1, Math.hypot(wp.x - ap.x, wp.y - ap.y));
@@ -2384,6 +2415,11 @@ const ParchisiApp = {
           const dx = wp.x - ap.x, dy = wp.y - ap.y, dd = Math.hypot(dx, dy);
           if (dd <= step || dd < 0.3) {
             ap.x = wp.x; ap.y = wp.y; ap.q.shift(); ap._hl = null;
+            if (!ap.q.length && this._walkFifo) {
+              /* [PR-SEQ] استقر البيدق — أخرجه من الطابور ليتحرك التالي */
+              const fi = this._walkFifo.indexOf(pc);
+              if (fi !== -1) this._walkFifo.splice(fi, 1);
+            }
             if (!this._replaying && ap.q.length && typeof SND !== 'undefined' && SND.prStep) { try { SND.prStep(); } catch (er) {} }
           } else { ap.x += dx / dd * step; ap.y += dy / dd * step; }
         } else if (ap.x !== L.x || ap.y !== L.y) {

@@ -312,13 +312,9 @@ function billiardsStart(mode) {
   if (nm0) nm0.textContent = T('bl.player1');
   if (nm1) nm1.textContent = (BILLIARDS.mode === 'ai') ? T('bl.computer') : T('bl.player2');
 
+  /* [v23] «مجموع الرهان» أزيل نهائياً — كان يحجب حفر الطاولة بلا فائدة */
   var st = document.getElementById('blStake');
-  if (st) {
-    if (BILLIARDS.mode === 'room' && BILLIARDS.bet > 0) {
-      st.hidden = false;
-      st.textContent = T('dama.stakeLabel') + ' ' + BILLIARDS.bet + ' 🪙';
-    } else st.hidden = true;
-  }
+  if (st) st.hidden = true;
 
   var stl = document.getElementById('blStale');
   if (stl) stl.hidden = (BILLIARDS.variant !== 'blackball');
@@ -413,8 +409,10 @@ function billiardsShoot() {
   if (!c || c.status !== 'ON_TABLE') return;
   var pl = B.G.shotPayload(B.aim, B.power, (B.spin.x || B.spin.y) ? B.spin : null);
   if (B.mode === 'room') {
-    /* تنفيذ متزامن حتمي بعدد خطوات مطابق للمستقبل (بلا raf) ثم بثّ الوصف */
-    B.G.shootAndResolve(B.aim, B.power, (B.spin.x || B.spin.y) ? B.spin : null);
+    /* [BL-Anim] عرض متحرك للجميع: الفيزياء بخطوة ثابتة (HZ) في حلقة الرسم —
+       حتمية مطابقة تماماً لـ shootAndResolve لكن الكرات تُرى وهي تتحرك.
+       الوصف يُبث فوراً؛ resolve يقع في blTick عند توقف الكرات. */
+    B.G.shoot(B.aim, B.power, (B.spin.x || B.spin.y) ? B.spin : null);
     blSendRoom(pl);
   } else {
     B.G.shoot(B.aim, B.power, (B.spin.x || B.spin.y) ? B.spin : null);
@@ -575,27 +573,19 @@ function blUpdateHud() {
       el.className = 'bl-grp' + (g ? ' g-' + g.toLowerCase() : '');
     }
   }
+  /* [v23] رسالة انتقال الدور أزيلت — كانت تحجب حفر الطاولة؛ الدور يُشار إليه
+     بتوهج أفاتار اللاعب النشط، والمؤقت يُعرض بجانب شارة مجموعته */
   var tn = document.getElementById('blTurn');
-  if (tn) {
-    if (S.frameOver) tn.textContent = T('bl.frameOver');
-    else if (S.phase === 'RERACK') tn.textContent = T('bl.turnRerack');
-    else if (S.phase === 'PLACE') tn.textContent = isSn ? T('bl.turnPlaceD') : T('bl.turnPlace');
-    else if (S.phase === 'SHOT') tn.textContent = T('bl.turnShot');
-    else if (isSn) tn.textContent = (S.active === 0 ? T('bl.player1') : T('bl.player2')) + ' — ' +
-      (BILLIARDS.variant === 'carom' ? blCaromTurnText() : blSnBallOnText());
-    else {
-      var gvx = (BILLIARDS.variant === 'golvazor' && S.extraShots && S.extraShots[S.active] > 0)
-        ? ' · ' + T('bl.gvShotsLeft') + ' ' + S.extraShots[S.active] : '';
-      tn.textContent = (S.active === 0 ? T('bl.player1') : T('bl.player2')) + ' — ' + (S.breakShot ? T('bl.turnBreak') : T('bl.turnAim')) + gvx;
+  if (tn) tn.hidden = true;
+  if (!S.frameOver && BILLIARDS.turnTimer && blHumanTurn() &&
+      (S.phase === 'AIM' || S.phase === 'PLACE' || S.phase === 'RERACK') &&
+      !BILLIARDS._aiAim && !BILLIARDS.aiPending) {
+    var tl = Math.ceil(BILLIARDS.timerLeft || BILLIARDS.turnTimer);
+    var gEl = document.getElementById('blGrp' + S.active);
+    if (gEl) {
+      gEl.textContent = (gEl.textContent ? gEl.textContent + ' · ' : '') + '⏱' + tl;
+      gEl.classList.toggle('bl-time-low', tl <= 10);
     }
-    /* [V19.5] عدّاد الدور: يظهر فقط أثناء انتظار ضربة بشرية */
-    if (!S.frameOver && BILLIARDS.turnTimer && blHumanTurn() &&
-        (S.phase === 'AIM' || S.phase === 'PLACE' || S.phase === 'RERACK') &&
-        !BILLIARDS._aiAim && !BILLIARDS.aiPending) {
-      var tl = Math.ceil(BILLIARDS.timerLeft || BILLIARDS.turnTimer);
-      tn.textContent += ' · ⏱ ' + tl + 's';
-      tn.classList.toggle('bl-time-low', tl <= 10);
-    } else tn.classList.remove('bl-time-low');
   }
   blSyncNoms();
   blCellRender();
@@ -868,6 +858,11 @@ function blTick(now) {
       B.acc = 0;
       var ev = B.G.resolve();
       if (ev && B.mode !== 'room') { /* blOnShotEvent يُستدعى عبر G.on */ }
+      /* [BL-Anim] وصف وارد وصل أثناء الحركة → طبّقه الآن بالترتيب */
+      if (B._pendQ && B._pendQ.length && B.G.S.phase !== 'SHOT' && !B.G.S.frameOver) {
+        var nx = B._pendQ.shift();
+        setTimeout(function () { blApplyIncoming(nx); }, 350);
+      }
     }
   } else B.acc = 0;
   /* تحريك تصويب الآلي أمام اللاعب قبل تنفيذ الضربة */
@@ -1703,7 +1698,20 @@ function blRoomMove(d) {
     blEndFrame();
     return;
   }
-  BILLIARDS.G.applyPayload(d);
+  /* [BL-Anim] ضربة جارية على اللوحة → صفّ الوارد حتى تستقر (يُصرف في blTick) */
+  if (BILLIARDS.G.S.phase === 'SHOT') {
+    BILLIARDS._pendQ = BILLIARDS._pendQ || [];
+    BILLIARDS._pendQ.push(d);
+    return;
+  }
+  blApplyIncoming(d);
+}
+/* [BL-Anim] تطبيق وصف وارد: الوضع place فوري، والضربة تُعرض متحركة كما عند الرامي */
+function blApplyIncoming(d) {
+  if (!BILLIARDS || !BILLIARDS.G || !d) return;
+  if (d.t === 'place') { BILLIARDS.G.applyPayload(d); }
+  else if (d.t === 'shot') { BILLIARDS.G.shoot(d.a, d.p, d.s); }
+  else { BILLIARDS.G.applyPayload(d); }
   blUpdateHud(); blTray();
 }
 
