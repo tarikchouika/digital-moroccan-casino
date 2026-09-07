@@ -1717,32 +1717,12 @@ class RamiGame {
     }
 
     if (meldObjects.length === 0) {
-      // إذا سحب اللاعب ورقة المرموق/لا تور ولم يستطع إنزالها: تُسترجع فوراً + جزاء + حرمان من الدور
-      // [V19] السامبل: لا التزام بإنزال المرموق — لا استرجاع ولا جزاء سحب، فقط رفض الإنزال الفارغ
-      if (this.rules.mode === 'talaj' && (player.drawnDiscardCard || player.tookLaTour)) {
-        const pen = this.rules.finishPenalty;
-        const penaltyCardId = player.drawnDiscardCard ? player.drawnDiscardCard.id : (player.drawnLaTourCard ? player.drawnLaTourCard.id : null);
-        this._applyPenalty(player, 'DISCARD_DRAW', 'لا توجد مجموعات صالحة');
-        if (penaltyCardId) {
-          const retCard = player.removeCard(penaltyCardId);
-          if (retCard) {
-            this.roundManager.discardPile.push(retCard);
-            if (player.displayCards) player.displayCards = player.displayCards.filter(c => c.id !== penaltyCardId);
-          }
-          if (adapter && adapter.handSlots) {
-            for (let s2 = 0; s2 < 5; s2++) adapter.handSlots[s2] = adapter.handSlots[s2].filter(c => c.id !== penaltyCardId);
-          }
-        }
-        player.drawnDiscardCard = null;
-        player.drawnLaTourCard = null;
-        player.tookLaTour = false;
-        this.roundManager.nextPlayer();
-        return { success: false, penaltyApplied: true, penalty: pen, error: 'مخالفة: سحبت ورقة المرموق دون إنزالها في مجموعات صالحة — تم استرجاعها وتطبيق جزاء +' + pen + ' وتمرير الدور' };
-      }
-      /* [T3.4] إظهار بدون شروط = +71 — فقط لمن لم يفتتح بعد (اللاعب المفتوح يُنزل بحرية ولا يُعاقب) */
+      /* [OPEN-DEFER] سامبل وطالاج: الإظهار الخاطئ لا يُحتسب فوراً — يُؤكَّد الخطأ
+         فقط بعد رمي ورقة التخلص (للاعب مهلة إصلاح إظهاره في نفس الدور).
+         مسار طالاج مع مرموق مسحوب يُحسم أصلاً في _doDiscard (استرجاع + جزاء). */
       if (!player.hasOpened) {
-        this._applyPenalty(player, 'OPEN_ERROR', '');
-        return { success: false, penaltyApplied: true, penalty: this.rules.finishPenalty, error: 'لا توجد مجموعات صالحة للإنزال (تحتاج 3 بطاقات متتالية أو متماثلة على الأقل)' };
+        player.pendingOpenError = 'لا توجد مجموعات صالحة للإنزال';
+        return { success: false, deferred: true, error: 'لا توجد مجموعات صالحة للإنزال (تحتاج 3 بطاقات متتالية أو متماثلة على الأقل) — أصلح إظهارك قبل الرمي وإلا احتُسب الجزاء عند التخلص' };
       }
       return { success: false, error: 'لا توجد مجموعات صالحة للإنزال (تحتاج 3 بطاقات متتالية أو متماثلة على الأقل)' };
     }
@@ -1796,52 +1776,22 @@ class RamiGame {
     );
 
     if (!checkResult.valid) {
-      /* تطبيق قانون الخطأ في الافتتاح عند سحب ورقة المرموق/لا تور: استرجاع الورقة + جزاء 71 نقطة + حرمان من الدور وتمريره للاعب التالي
-         [V19] السامبل: لا استرجاع ولا حرمان — جزاء الافتتاح الخاطئ فقط (المسار العام أدناه) */
-      const pen = this.rules.finishPenalty;
-      if (this.rules.mode === 'talaj' && (player.drawnDiscardCard || player.tookLaTour)) {
-        const penaltyCardId = player.drawnDiscardCard ? player.drawnDiscardCard.id : (player.drawnLaTourCard ? player.drawnLaTourCard.id : null);
-        this._applyPenalty(player, 'OPEN_ERROR', '');
-
-        if (penaltyCardId) {
-          const retCard = player.removeCard(penaltyCardId);
-          if (retCard) {
-            this.roundManager.discardPile.push(retCard);
-            if (player.displayCards) player.displayCards = player.displayCards.filter(c => c.id !== penaltyCardId);
-          }
-          if (adapter && adapter.handSlots && penaltyCardId) {
-            for (let s = 0; s < 5; s++) {
-              adapter.handSlots[s] = adapter.handSlots[s].filter(c => c.id !== penaltyCardId);
-            }
-          }
-        }
-
-        player.drawnDiscardCard = null;
-        player.drawnLaTourCard = null;
-        player.tookLaTour = false;
-
-        // حرمان اللاعب من دوره وتمرير الدور مباشرة للاعب الموالي
-        this.roundManager.nextPlayer();
-
-        return {
-          success: false,
-          penaltyApplied: true,
-          penalty: pen,
-          error: checkResult.error || ('خطأ في شروط الافتتاح — تم استرجاع ورقة المرموق/لا تور، وتطبيق جزاء +' + pen + ' نقطة، وتمرير الدور مباشرة للاعب التالي!')
-        };
+      /* [OPEN-DEFER] سامبل وطالاج: خطأ شروط الافتتاح لا يُحتسب إلا بعد التخلص من ورقة —
+         للاعب مهلة سحب إظهاره وإصلاحه في نفس الدور. التأكيد والجزاء في _doDiscard.
+         (طالاج مع مرموق مسحوب: الاسترجاع + الجزاء يقعان هناك أيضاً عند الرمي) */
+      if (!player.hasOpened) {
+        player.pendingOpenError = checkResult.error || 'الأوراق لا تستوفي شروط الافتتاح';
       }
-
-      /* [T3.4] إظهار بدون شروط = +71 حتى لو لم يسحب المرموق */
-      this._applyPenalty(player, 'OPEN_ERROR', '');
       return {
         success: false,
-        penaltyApplied: true,
-        penalty: this.rules.finishPenalty,
-        error: checkResult.error || ('الأوراق لا تستوفي شروط الافتتاح — يلزم متتالية ومتماثلة نقيتين بمجموع ≥ ' + this.rules.openingThreshold + ' نقطة بدون جوكر')
+        deferred: !player.hasOpened,
+        error: (checkResult.error || ('الأوراق لا تستوفي شروط الافتتاح — يلزم متتالية ومتماثلة نقيتين بمجموع ≥ ' + this.rules.openingThreshold + ' نقطة بدون جوكر'))
+          + ' — أصلح إظهارك قبل رمي ورقة التخلص وإلا احتُسب الجزاء'
       };
     }
 
     // الافتتاح الأولي ناجح!
+    player.pendingOpenError = null;   /* [OPEN-DEFER] إظهار صالح يمحو أي خطأ معلق */
     player.drawnDiscardCard = null;
     player.drawnLaTourCard = null;
     player.tookLaTour = false;
@@ -1931,6 +1881,7 @@ class RamiGame {
       player.tookLaTour = false;
       player.drawnLaTourCard = null;
       player.drawnDiscardCard = null;
+      player.pendingOpenError = null;   /* [OPEN-DEFER] جزاء واحد فقط — لا تراكم مع خطأ الإظهار المعلق */
       this._applyPenalty(player, 'DISCARD_DRAW', '');
 
       _ramiToast('⚠️ مخالفة: سحبت ورقة المرموق دون إنزالها في مجموعة أو دمجها في الطاولة — تم استرجاع الورقة وتسجيل جزاء +' + this.rules.finishPenalty + ' نقطة وتمرير الدور للاعب التالي!', 'err');
@@ -1947,6 +1898,16 @@ class RamiGame {
     const card = player.removeCard(cardId);
     if (!card) return { success: false, error: 'بطاقة غير موجودة في اليد' };
     if (player.displayCards) player.displayCards = player.displayCards.filter(c => c.id !== cardId);
+
+    /* [OPEN-DEFER] تأكيد خطأ الإظهار/الافتتاح المعلق: اللاعب رمى ورقة التخلص
+       دون إصلاح إظهاره الخاطئ ⇒ الآن فقط يُحتسب جزاء الافتتاح (+71) حسب القواعد */
+    if (!player.hasOpened && player.pendingOpenError) {
+      this._applyPenalty(player, 'OPEN_ERROR', player.pendingOpenError);
+      _ramiToast('⚠️ تأكد خطأ الإظهار بعد التخلص: ' + player.pendingOpenError + ' — جزاء +' + this.rules.finishPenalty + ' نقطة', 'err');
+      player.pendingOpenError = null;
+    } else {
+      player.pendingOpenError = null;
+    }
     
     // إذا كانت هذه أول ورقة مرمية في الشوط (من الموزع)، تُعيّن كورقة «لا تور» — طالاج فقط
     // [V19] السامبل: لا «لا تور» — دور الورقة الأولى تلعبه الفوجوك المقلوبة من ورق التوزيع

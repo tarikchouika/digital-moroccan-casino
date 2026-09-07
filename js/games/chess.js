@@ -883,7 +883,7 @@ function chessBotTurn() {
   if (CHESS.state.turn === CHESS.myColor) { CHESS.busy = false; return; }
   /* [v18] بوت خبير 0% خطأ: تعميق تكراري حتى عمق 5 بميزانية 2.5 ثانية
      (كان عمق 2 / 650مث — مستوى ضعيف غير لائق بمنافسات الرهان) */
-  var mv = chessPickMove(CHESS.state, 5, 2500);
+  var mv = chessPickMove(CHESS.state, 9, 6000);   /* [AI-MAX] أقصى خبرة: تعميق تكراري حتى 9 بميزانية 6ث ضمن مؤقت الدور */
   CHESS.busy = false;
   if (mv) chessPlayMove(mv);
   else chessFinalize();

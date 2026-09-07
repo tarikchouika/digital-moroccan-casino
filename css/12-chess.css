@@ -428,3 +428,16 @@
     padding: 4px 0;
   }
 }
+
+/* ═══ [P-Seats] بورتريه: أيقونتا اللاعبين خارج رقعة الشطرنج تماماً (كما الضاما) ═══ */
+@media (orientation: portrait) {
+  .ch-boardbox { margin-top: 26px; margin-bottom: 26px; }
+  .ch-boardbox > .ch-seat-top {
+    top: 0;
+    transform: translate(-50%, calc(-100% - 5px));
+  }
+  .ch-boardbox > .ch-seat-bot {
+    top: 100%;
+    transform: translate(-50%, 5px);
+  }
+}

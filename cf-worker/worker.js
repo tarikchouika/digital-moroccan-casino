@@ -845,7 +845,7 @@ function corsHeaders(req) {
   try {
     const o = new URL(origin);
     const h = o.hostname;
-    if (o.protocol === "https:" && (h === "casino-9xj.pages.dev" || h.endsWith(".casino-9xj.pages.dev") || h === "casino-api.tarikc.workers.dev")) allowed = origin;
+    if (o.protocol === "https:" && (h === "casino-9xj.pages.dev" || h.endsWith(".casino-9xj.pages.dev") || h === "dmcasino.pages.dev" || h.endsWith(".dmcasino.pages.dev") || h === "casino-api.tarikc.workers.dev")) allowed = origin;
   } catch (e) {}
   const base = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie",
@@ -1505,7 +1505,7 @@ var C = {
     }
     if (p === "/api/transfers") {
       if (!me) return _json({ ok: false, message: "\u063A\u064A\u0631 \u0645\u0633\u062C\u0644" }, 401);
-      const rows = await dbAll(env, "SELECT id, from_name, to_name, amount, created_at FROM transfers WHERE from_id = ? OR to_id = ? ORDER BY id DESC LIMIT 50", [me.id, me.id]);
+      const rows = await dbAll(env, "SELECT id, from_id, from_name, to_id, to_name, amount, created_at FROM transfers WHERE from_id = ? OR to_id = ? ORDER BY id DESC LIMIT 50", [me.id, me.id]);
       return _json({ ok: true, transfers: rows });
     }
     if (p === "/api/chat" && method === "POST") {

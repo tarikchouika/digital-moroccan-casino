@@ -676,3 +676,18 @@
     padding: 9px 26px;
   }
 }
+
+/* ═══ [P-Seats] بورتريه: أيقونتا اللاعبين خارج لوحة الضاما تماماً —
+   كانتا نصف-غاطستين في حافة اللوحة (translate -50%). نبعدهما بالكامل
+   ونحجز هامشاً للوحة كي لا تُقصّا. لاندسكيب له قواعده الخاصة (لا يُمسّ). ═══ */
+@media (orientation: portrait) {
+  .dama-boardbox { margin-top: 34px; margin-bottom: 34px; }
+  .dama-boardbox > .dama-seat-top {
+    top: 0;
+    transform: translate(-50%, calc(-100% - 6px));
+  }
+  .dama-boardbox > .dama-seat-bottom {
+    top: 100%;
+    transform: translate(-50%, 6px);
+  }
+}

@@ -475,9 +475,10 @@ DamaEngine.prototype.aiPick = function (s, ai, maxDepth, budgetMs) {
 var DAMA = null;   /* { eng, state, human, ai, depth, budget, sel, legal, busy, lastFrom, lastTo, bet, mult } */
 
 var DAMA_LEVELS = [
-  { key: 'med', name: 'متوسط', depth: 4, budget: 600,  mult: 2.0 },
-  { key: 'pro', name: 'محترف', depth: 6, budget: 1100, mult: 2.5 },
-  { key: 'exp', name: 'خبير',  depth: 9, budget: 1600, mult: 3.0 }
+  /* [AI-MAX] مهلة تفكير أطول ضمن حدود مؤقت الدور (أدناه 30ث) — تعميق تكراري بميزانية زمنية */
+  { key: 'med', name: 'متوسط', depth: 6,  budget: 1200, mult: 2.0 },
+  { key: 'pro', name: 'محترف', depth: 10, budget: 2800, mult: 2.5 },
+  { key: 'exp', name: 'خبير',  depth: 16, budget: 5000, mult: 3.0 }
 ];
 
 function eDama(g) {
@@ -568,7 +569,7 @@ function damaFitBoard() {
     if (!host.clientWidth || !host.clientHeight) return; // الخلية مخفية — ننتظر الظهور
     /* حجم اللوحة = أصغر بُعد متاح (مربّع) — نحسبه هنا لأن CSS aspect-ratio
        وحده قد يوسّع اللوحة خارج الشاشة في اللاندسكيه إذا كان العمود أعرض من طوله */
-    var reserve = landscape ? 10 : 6;   // هامش أمان
+    var reserve = landscape ? 10 : 40;  // [P-Seats] بورتريه: 40px لكل جهة — مكان أيقونتي اللاعبين خارج اللوحة
     var w = host.clientWidth, h = host.clientHeight - reserve * 2;
     if (w < 10 || h < 10) return;
     var maxSz = landscape ? 9999 : 560;  // اللاندسكيه: لا حد أقصى

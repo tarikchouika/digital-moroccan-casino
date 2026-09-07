@@ -6176,3 +6176,201 @@ body.rami-game-open { overflow: hidden; }
     font-size: clamp(0.72rem, 2vh, 0.9rem);
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   [FELT] ألعاب الورق (باكارا/دراغون، بلاكجاك، أندار باهار، بوكر، ڤيديو بوكر):
+   حاوية اللعبة = طاولة جوخ تملأ الشاشة كاملة، والعناصر موزعة فوقها.
+   - المسرح نفسه يصبح الطاولة (جوخ أخضر + إطار خشبي ذهبي داخلي).
+   - الحاويات الداخلية تفقد خلفياتها/حدودها كي تجلس فوق الطاولة مباشرة.
+   - اللوغو المائي يبقى (شرط قائم). صورة الخلفية العامة تُخفى للنظافة.
+   بورتريه: عمود موزع space-evenly. لاندسكيب: الشبكات الموجودة تُكمل. ═══ */
+#pg-game.app-fs #gamePageBody .stage:has(.bc-table),
+#pg-game.app-fs #gamePageBody .stage:has(.bjt),
+#pg-game.app-fs #gamePageBody .stage:has(.ab-sides),
+#pg-game.app-fs #gamePageBody .stage:has(.pk-row),
+#pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) {
+  background:
+    radial-gradient(ellipse at 50% 28%, rgba(28, 142, 88, 0.55), transparent 75%),
+    radial-gradient(circle at 50% 0%, rgba(245, 197, 24, 0.08), transparent 55%),
+    linear-gradient(168deg, #0d6b41, #085232 55%, #05341f);
+  box-shadow:
+    inset 0 0 0 4px rgba(139, 105, 20, 0.9),
+    inset 0 0 0 6px rgba(245, 197, 24, 0.25),
+    inset 0 0 110px rgba(0, 0, 0, 0.55);
+  border-radius: 14px;
+}
+/* صورة الخلفية العامة تُخفى — الجوخ هو الخلفية */
+#pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .gstage-bg,
+#pg-game.app-fs #gamePageBody .stage:has(.bjt) > .gstage-bg,
+#pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .gstage-bg,
+#pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .gstage-bg,
+#pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .gstage-bg { display: none; }
+/* اللوغو المائي فوق الجوخ بشفافية خفيفة (شرط قائم) */
+#pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .glogo-wm,
+#pg-game.app-fs #gamePageBody .stage:has(.bjt) > .glogo-wm,
+#pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .glogo-wm,
+#pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .glogo-wm,
+#pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .glogo-wm { opacity: 0.1; }
+
+/* الحاويات الداخلية شفافة — عناصرها تجلس فوق الطاولة مباشرة */
+#pg-game.app-fs #gamePageBody .stage:has(.bc-table) .bc-table,
+#pg-game.app-fs #gamePageBody .stage:has(.bjt) .bjt,
+#pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-wrap {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* ── بورتريه: توزيع عمودي مريح على كامل الطاولة ── */
+@media (orientation: portrait) {
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table),
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt),
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides),
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row),
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 10px 10px calc(10px + var(--safe-bottom, 0px));
+  }
+  /* الحاوية الرئيسية تتمدد لتملأ الحصة الكبرى */
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bc-table,
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) > .bjt,
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .vp-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    width: 100%;
+    max-width: min(96vw, 640px);
+    margin: 0 auto;
+    padding: 6px 4px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) > .bc-table { flex-direction: row; align-items: center; }
+  /* باكارا: بطاقات أكبر في المساحة المتاحة */
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) .bc-cards { min-height: clamp(110px, 22vh, 220px); }
+  #pg-game.app-fs #gamePageBody .stage:has(.bc-table) .bc-card { font-size: clamp(2.4rem, 9vh, 4.6rem); }
+  /* بلاكجاك: صفوف الأوراق تتباعد على ارتفاع الطاولة */
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) .bjt { justify-content: space-evenly; }
+  #pg-game.app-fs #gamePageBody .stage:has(.bjt) .bjcs { gap: clamp(4px, 1.6vh, 14px); }
+  /* أندار باهار: الجانبان يتمددان */
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .ab-sides {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: min(96vw, 640px);
+    margin: 0 auto;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) .ab-cards { min-height: clamp(90px, 18vh, 200px); }
+  /* بوكر: صف الأوراق يكبر مع الشاشة */
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .pk-row {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-content: center;
+    width: 100%;
+    max-width: min(96vw, 560px);
+    margin: 0 auto;
+    gap: clamp(8px, 2vw, 14px);
+  }
+  /* ڤيديو بوكر: جدول الدفع أنحف والبطاقات أكبر */
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt { margin-bottom: 8px; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-hand { flex: 1 1 auto; min-height: 0; align-items: center; }
+}
+
+/* ── لاندسكيب: أندار باهار وبوكر وڤيديو بوكر — شبكات عمودين (الفجوات المتبقية) ── */
+@media (orientation: landscape) {
+  /* أندار باهار */
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) {
+    display: grid !important;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    gap: 6px 10px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .gtop,
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .rulesBox,
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .ab-hint { display: none; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .ab-joker-box {
+    grid-column: 1; grid-row: 1; margin: calc(30px + var(--safe-top, 0px)) 0 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .ab-sides {
+    grid-column: 2; grid-row: 1 / -1; min-height: 0; margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) .ab-cards { min-height: clamp(80px, 32vh, 190px); overflow-y: auto; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .ab-status { grid-column: 1; grid-row: 2; align-self: center; margin: 0; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .bets {
+    grid-column: 1; grid-row: 3; margin: 0;
+    display: flex; flex-direction: row !important; flex-wrap: nowrap;
+    justify-content: center; align-items: center; gap: 6px; min-height: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .bets .abBtn { flex: 1 1 0; padding: clamp(6px, 1.6vh, 10px) 6px; }
+  /* شريط الرهان (betRow) صف رابع مستقل */
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .bets ~ .bets { grid-row: 4; }
+  #pg-game.app-fs #gamePageBody .stage:has(.ab-sides) > .res { grid-column: 1; grid-row: 5; align-self: end; margin: 0; padding: 2px 8px; }
+
+  /* بوكر (pk-row بلا pk-wrap) */
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row):not(:has(.pk-wrap)) {
+    display: grid !important;
+    grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    gap: 6px 10px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .gtop,
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .rulesBox { display: none; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .pk-hint { grid-column: 1; grid-row: 1; margin: calc(30px + var(--safe-top, 0px)) 0 0; font-size: 0.78rem; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .pk-row {
+    grid-column: 2; grid-row: 1 / -1; align-self: center; margin: 0;
+    max-width: none; gap: clamp(6px, 1.5vw, 12px);
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .cr-status { grid-column: 1; grid-row: 2; align-self: center; margin: 0; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets {
+    grid-column: 1; grid-row: 3; margin: 0;
+    display: flex; flex-direction: row !important; flex-wrap: nowrap;
+    justify-content: center; align-items: center; gap: 6px; min-height: 0;
+  }
+  /* شريط الرهان (betRow) صف رابع مستقل */
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .bets ~ .bets { grid-row: 4; }
+  #pg-game.app-fs #gamePageBody .stage:has(.pk-row) > .res { grid-column: 1; grid-row: 5; align-self: end; margin: 0; padding: 2px 8px; }
+
+  /* ڤيديو بوكر */
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) {
+    display: grid !important;
+    grid-template-columns: minmax(200px, 290px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    gap: 6px 10px;
+    padding: 8px;
+    overflow: hidden;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .gtop,
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .rulesBox { display: none; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .vp-wrap {
+    grid-column: 2; grid-row: 1 / -1; min-height: 0; margin: 0;
+    display: flex; flex-direction: column; justify-content: space-evenly;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt {
+    margin: calc(30px + var(--safe-top, 0px)) 0 0;
+    grid-column: 1; grid-row: 1;
+    position: absolute; /* يوضع في العمود الأيسر عبر ترتيب الشبكة أدناه */
+  }
+  /* جدول الدفع ينتقل للعمود الأيسر: نخرجه من vp-wrap بصرياً غير ممكن بلا JS —
+     بدلاً من ذلك: نبقيه داخل العمود الأيمن أعلى اليد لكن مضغوطاً */
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt {
+    position: static;
+    margin: 0;
+    padding: 4px 8px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-grid { grid-template-columns: repeat(3, 1fr); gap: 1px 8px; font-size: 0.66rem; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-row { font-size: 0.66rem; padding: 1px 2px; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) .vp-pt-title { font-size: 0.7rem; margin-bottom: 2px; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets {
+    grid-column: 1; grid-row: 1; align-self: center; margin: 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets .big { width: 100%; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets ~ .bets { grid-row: 2; }
+  #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .res { grid-column: 1; grid-row: 3; align-self: end; margin: 0; padding: 2px 8px; }
+}
