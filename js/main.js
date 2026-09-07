@@ -601,8 +601,12 @@ function closeGamePage() {
   stopGameHistory();
   /* إيقاف لوحة الجولات الجماعية إن كانت نشطة */
   if (typeof Group !== 'undefined') Group.deactivate();
-  /* مغادرة صامتة لأي غرفة (الانضمام عبر زر الرجوع من صفحة اللعبة) */
-  if (typeof Rooms !== 'undefined') Rooms.leaveQuiet();
+  /* مغادرة صامتة لأي غرفة (الانضمام عبر زر الرجوع من صفحة اللعبة)
+     [Persist] استثناء: جولة جماعية جارية — تبقى العضوية والجولة حية ليعود إليها
+     اللاعب من صفحة اللعبة/الغرف/الرابط؛ الحركات تُعاد من سجل الخادم عند العودة. */
+  if (typeof Rooms !== 'undefined') {
+    if (!(Rooms.state && Rooms.state.status === 'playing')) Rooms.leaveQuiet();
+  }
 
   /* ألعاب الورق/اللوحة المحلية (متعددة الأدوار): نُجمّد DOMها وحالتها
      لاستئناف الجولة كما هي عند العودة. غيرها يُنظَّف كالمعتاد. */
@@ -861,8 +865,9 @@ let _histGame = null;
 let _localRounds = [];
 let _serverRounds = [];
 /* تسجيل جولة محلية (وإرسالها للخادم إن كان المستخدم مسجلاً) */
-function recordRound(won, payout, txt, betOverride) {
-  const gid = window._currentGameId;
+function recordRound(won, payout, txt, betOverride, gidOverride) {
+  /* [Persist] gidOverride: تسجيل تذكرة جولة جماعية حتى لو كان اللاعب في صفحة أخرى */
+  const gid = gidOverride || window._currentGameId;
   if (!gid) return;
   /* إنهاء حالة «الجولة قيد التقدم» — تُسجَّل الجولة في كل الألعاب */
   if (typeof window.SessionResume !== 'undefined') {

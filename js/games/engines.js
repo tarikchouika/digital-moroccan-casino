@@ -2023,7 +2023,7 @@ function eBaccarat(g) {
         '<div class="bc-cards" id="bcP"></div>' +
         '<div class="bc-total" id="bcPs">0</div>' +
       '</div>' +
-      '<div class="bc-vs">🂡</div>' +
+      '<div class="bc-vs"><img src="assets/cards/back.webp" class="card-ic" alt=""></div>' +
       '<div class="bc-side">' +
         '<div class="bjal">' + T('bc.banker') + '</div>' +
         '<div class="bc-cards" id="bcB"></div>' +
@@ -2036,7 +2036,7 @@ function eBaccarat(g) {
       '<button class="rb bc-b bc-tie" id="bcBtnTie" onclick="bacBet(\'tie\')"> ' + T('bc.tie') + ' <b>×9</b></button>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big bc-deal" id="bcDealBtn" onclick="bacDeal()">🂠 ' + T('bc.deal') + '</button>' +
+      '<button class="big bc-deal" id="bcDealBtn" onclick="bacDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('bc.deal') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2138,22 +2138,22 @@ function eDragonTiger(g) {
   return gFrame(
     '<div class="bc-table dt-table">' +
       '<div class="bc-side">' +
-        '<div class="bjal dt-label dt-label-dragon">🐉 ' + T('dt.dragon') + '</div>' +
+        '<div class="bjal dt-label dt-label-dragon"><i class="fa-solid fa-dragon" aria-hidden="true"></i> ' + T('dt.dragon') + '</div>' +
         '<div class="bc-cards" id="dtD"></div>' +
       '</div>' +
-      '<div class="dt-vs">⚔️</div>' +
+      '<div class="dt-vs"><span class="vs-txt">VS</span></div>' +
       '<div class="bc-side">' +
-        '<div class="bjal dt-label dt-label-tiger">🐯 ' + T('dt.tiger') + '</div>' +
+        '<div class="bjal dt-label dt-label-tiger"><i class="fa-solid fa-paw" aria-hidden="true"></i> ' + T('dt.tiger') + '</div>' +
         '<div class="bc-cards" id="dtT"></div>' +
       '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="rb dt-b dt-dragon active" id="dtBtnDragon" onclick="dtBet(\'dragon\')">🐉 ' + T('dt.dragon') + ' <b>×2</b></button>' +
-      '<button class="rb dt-b dt-tiger" id="dtBtnTiger" onclick="dtBet(\'tiger\')">🐯 ' + T('dt.tiger') + ' <b>×2</b></button>' +
-      '<button class="rb dt-b dt-tie" id="dtBtnTie" onclick="dtBet(\'tie\')">🤝 ' + T('dt.tie') + ' <b>×11</b></button>' +
+      '<button class="rb dt-b dt-dragon active" id="dtBtnDragon" onclick="dtBet(\'dragon\')"><i class="fa-solid fa-dragon" aria-hidden="true"></i> ' + T('dt.dragon') + ' <b>×2</b></button>' +
+      '<button class="rb dt-b dt-tiger" id="dtBtnTiger" onclick="dtBet(\'tiger\')"><i class="fa-solid fa-paw" aria-hidden="true"></i> ' + T('dt.tiger') + ' <b>×2</b></button>' +
+      '<button class="rb dt-b dt-tie" id="dtBtnTie" onclick="dtBet(\'tie\')"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('dt.tie') + ' <b>×11</b></button>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big dt-deal" id="dtDealBtn" onclick="dtDeal()">🂠 ' + T('dt.deal') + '</button>' +
+      '<button class="big dt-deal" id="dtDealBtn" onclick="dtDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('dt.deal') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2207,7 +2207,7 @@ function eVp(g) {
   return gFrame(
     '<div class="vp-wrap">' +
       '<div class="vp-pt">' +
-        '<div class="vp-pt-title">💎 ' + T('vp.paytitle') + '</div>' +
+        '<div class="vp-pt-title"><i class="fa-solid fa-gem" aria-hidden="true"></i> ' + T('vp.paytitle') + '</div>' +
         '<div class="vp-pt-grid">' +
           '<div class="vp-pt-row"><span>' + T('vp.hand.royal') + '</span><b>×250</b></div>' +
           '<div class="vp-pt-row"><span>' + T('vp.hand.sflush') + '</span><b>×50</b></div>' +
@@ -2221,10 +2221,10 @@ function eVp(g) {
         '</div>' +
       '</div>' +
       '<div class="vp-hand" id="vpHand"></div>' +
-      '<div class="vp-hint" id="vpHint">🂠 ' + T('vp.dealhint') + '</div>' +
+      '<div class="vp-hint" id="vpHint"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('vp.dealhint') + '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big vp-deal" id="vpDeal" onclick="vpDeal()">🂠 ' + T('g.deal') + '</button>' +
+      '<button class="big vp-deal" id="vpDeal" onclick="vpDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('g.deal') + '</button>' +
       '<button class="big vp-draw" id="vpDraw" onclick="vpDraw()" disabled> ' + T('g.draw') + '</button>' +
     '</div>' +
     betRow(),
@@ -2319,7 +2319,7 @@ function evaluateVP() {
   const dl = document.getElementById('vpDeal');
   if (dl) dl.disabled = false;
   const h = document.getElementById('vpHint');
-  if (h) h.textContent = '🂠 ' + T('vp.dealhint');
+  if (h) h.innerHTML = '<img src=\"assets/cards/back.webp\" class=\"card-ic\" alt=\"\"> ' + T('vp.dealhint');
 }
 
 /* ═══════════ 18. Keno ═══════════ */
@@ -2347,14 +2347,14 @@ function eKeno(g) {
     '<div id="gpanel"></div>' +
     '<div class="ke-wrap">' +
       '<div class="ke-top">' +
-        '<div class="ke-counter" id="kCounter">🔢 <b>0</b>/10 ' + T('ke.sel') + '</div>' +
-        '<button type="button" class="ke-clear" id="kClear" onclick="kClear()">🗑 ' + T('ke.clear') + '</button>' +
+        '<div class="ke-counter" id="kCounter"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> <b>0</b>/10 ' + T('ke.sel') + '</div>' +
+        '<button type="button" class="ke-clear" id="kClear" onclick="kClear()"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> ' + T('ke.clear') + '</button>' +
       '</div>' +
       '<div class="kgrid" id="kGrid">' + cells + '</div>' +
-      '<div class="ke-hint">🎱 ' + T('ke.hint') + '</div>' +
+      '<div class="ke-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + T('ke.hint') + '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big ke-draw" id="kDraw" onclick="kStart()">🎯 ' + T('ke.draw') + '</button>' +
+      '<button class="big ke-draw" id="kDraw" onclick="kStart()"><i class="fa-solid fa-play" aria-hidden="true"></i> ' + T('ke.draw') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2516,17 +2516,17 @@ function eAndarbahar(g) {
   return gFrame(
     '<div class="ab-hint">' + T('ab.hint') + '</div>' +
     '<div class="ab-joker-box">' +
-      '<div class="ab-joker-label">🂠 ' + T('ab.joker') + '</div>' +
-      '<div class="ab-joker" id="abJoker">🂠</div>' +
+      '<div class="ab-joker-label"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('ab.joker') + '</div>' +
+      '<div class="ab-joker" id="abJoker"><img src="assets/cards/back.webp" class="card-ic" alt=""></div>' +
     '</div>' +
     '<div class="ab-sides">' +
       '<div class="ab-side ab-side-andar">' +
-        '<div class="ab-side-name">🔵 ' + T('ab.andar') + '</div>' +
+        '<div class="ab-side-name"><i class="fa-solid fa-circle ab-dot-a" aria-hidden="true"></i> ' + T('ab.andar') + '</div>' +
         '<div class="ab-cards" id="abAndar"></div>' +
         '<div class="ab-cnt" id="abAndarCnt">0</div>' +
       '</div>' +
       '<div class="ab-side ab-side-bahar">' +
-        '<div class="ab-side-name">🔴 ' + T('ab.bahar') + '</div>' +
+        '<div class="ab-side-name"><i class="fa-solid fa-circle ab-dot-b" aria-hidden="true"></i> ' + T('ab.bahar') + '</div>' +
         '<div class="ab-cards" id="abBahar"></div>' +
         '<div class="ab-cnt" id="abBaharCnt">0</div>' +
       '</div>' +
@@ -3147,7 +3147,7 @@ function ePoker(g) {
     '<div class="pk-hint">' + T('pk.hint') + '</div>' +
     '<div class="pk-row" id="pkRow">' + cards + '</div>' +
     '<div class="cr-status" id="pkResult"></div>' +
-    '<div class="bets"><button class="crBtn" id="pkBtn" onclick="pkGo()">🃏 ' + T('pk.go') + '</button></div>' +
+    '<div class="bets"><button class="crBtn" id="pkBtn" onclick="pkGo()"><i class="fa-solid fa-clone" aria-hidden="true"></i> ' + T('pk.go') + '</button></div>' +
     betRow(),
     g
   );

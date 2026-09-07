@@ -249,11 +249,12 @@ const RamiExpertAI = {
   _cardHelps(game, player, card, allowLayoffTake) {
     if (this.simCanFinish(player.hand, card, game.rules)) return true;
     if (!player.hasOpened) {
-      const rm = game.roundManager;
-      const testHand = player.hand.concat([card]);
-      const candidateMelds = partitionSelectedCards(testHand, game.rules);
-      const check = game.rules.validateOpening(candidateMelds, card, rm.jokerIndicator, rm.highestOpeningScore || 0, false);
-      return !!check.valid;
+      /* [DRAW-CONSISTENT] بمحاكاة expertOpening الفعلية (تقسيم opening + حارس الورقتين) */
+      const fake = Object.create(player);
+      fake.hand = player.hand.concat([card]);
+      fake.drawnDiscardCard = card;
+      fake.hasOpened = false;
+      return !!this.expertOpening(game, fake);
     }
     if (allowLayoffTake && player.hand.length >= 4 && game.doesCardFitAnyTableMeld(card)) return true;
     if (this.completesNewMeld(player.hand, card, game.rules)) return true;
@@ -298,20 +299,54 @@ const RamiExpertAI = {
       return synergy >= 2 ? 'draw_discard' : 'draw_deck';
     }
 
-    /* 1) إنهاء الشوط فوراً بهذه الورقة */
-    if (this.simCanFinish(player.hand, top, game.rules)) return 'draw_discard';
-    /* 2) إكمال شروط الافتتاح */
+    /* 1) إنهاء الشوط فوراً بهذه الورقة — [DRAW-CONSISTENT] للمفتوح فقط:
+       غير المفتوح في طالاج لا يملك حركة إنهاء (بوابة اليد ≤7)، وإنهاؤه عبر
+       الافتتاح الكامل يشترط صحة شروط الافتتاح — يُحسم في الفحص أدناه */
+    if (player.hasOpened && this.simCanFinish(player.hand, top, game.rules)) return 'draw_discard';
+    /* 2) إكمال شروط الافتتاح — [DRAW-CONSISTENT] القرار بمحاكاة expertOpening
+       الفعلية (نفس التقسيم ونفس حارس الورقتين): سحب المرموق في طالاج يلزم
+       بالافتتاح وإلا جزاء 71 — فلا نسحبه إلا إذا كان الافتتاح المنفَّذ مضموناً */
     if (!player.hasOpened) {
-      const testHand = player.hand.concat([top]);
-      const candidateMelds = partitionSelectedCards(testHand, game.rules);
-      const check = game.rules.validateOpening(candidateMelds, top, rm.jokerIndicator, rm.highestOpeningScore || 0, false);
-      return check.valid ? 'draw_discard' : 'draw_deck';
+      const fake = Object.create(player);
+      fake.hand = player.hand.concat([top]);
+      fake.drawnDiscardCard = top;
+      fake.hasOpened = false;
+      /* [PLAN-EXACT] إن كانت الورقة هي «لا تور» فالتنفيذ سيتحقق بشروطها */
+      fake.tookLaTour = !!(rm.laTourCard && top.id === rm.laTourCard.id);
+      const simOpen = this.expertOpening(game, fake);
+      if (simOpen) {
+        /* [PLAN-EXACT] احفظ الخطة الحرفية — تنفذ بلا إعادة تقسيم */
+        player._openPlanMove = { type: 'open', playerId: player.id, cardIds: simOpen.cardIds, meldGroups: simOpen.meldGroups };
+        return 'draw_discard';
+      }
+      return 'draw_deck';
     }
     /* 3) مفتوح: تصلح للإدراج الفوري في مجموعات الطاولة (بيد ≥ 4 فقط —
-       أقل من ذلك لا يفرّغ اليد بل يقود للحصار) */
-    if (allowLayoffTake && player.hand.length >= 4 && game.doesCardFitAnyTableMeld(top)) return 'draw_discard';
-    /* 4) مفتوح: تُكمل مجموعة جديدة في اليد (تُنزّل هذا الدور) */
-    if (this.completesNewMeld(player.hand, top, game.rules)) return 'draw_discard';
+       أقل من ذلك لا يفرّغ اليد بل يقود للحصار)
+       [DRAW-CONSISTENT] بنفس صرامة التنفيذ: canLayOff (يحترم حماية
+       المجموعة الحرة _justOpened) لا doesCardFitAnyTableMeld المتساهلة */
+    if (allowLayoffTake && player.hand.length >= 4) {
+      let fits = false;
+      for (const meld of rm.tableMelds) { if (this.canLayOff(game.rules, meld, top, top)) { fits = true; break; } }
+      if (fits) return 'draw_discard';
+    }
+    /* 4) مفتوح: تُكمل مجموعة جديدة تُنزَّل فعلاً هذا الدور —
+       [DRAW-CONSISTENT] بنفس حرّاس التنفيذ (dump>=3 وليس leftovers==2):
+       وإلا سحب المرموق يلزم بالإنزال ويرتدّ جزاء 71 عند التأجيل */
+    if (this.completesNewMeld(player.hand, top, game.rules)) {
+      const testHand = player.hand.concat([top]);
+      const hm = partitionSelectedCards(testHand, game.rules);
+      if (hm && hm.length) {
+        const ids = new Set(hm.flatMap(m => m.cards.map(c => c.id)));
+        const leftovers = testHand.length - ids.size;
+        if (ids.has(top.id) && ids.size >= 3 && leftovers !== 2) {
+          /* [DRAW-PLAN] احفظ خطة الإنزال الملزمة — تنفذ حرفياً بعد السحب */
+          player._drawPlanIds = Array.from(ids);
+          return 'draw_discard';
+        }
+      }
+      return 'draw_deck';
+    }
     return 'draw_deck';
   },
 
@@ -422,7 +457,7 @@ const RamiExpertAI = {
     /* [0% خطأ] لا محاولة افتتاح إلا إذا كانت الشروط مستوفاة فعلاً.
        تقسيم التغطية القصوى قد يُفقد المتتالية/المتماثلة النقية المطلوبة —
        لذا نبحث عن تقسيم بديل يضمن وجودهما مع أعلى مجموع */
-    let chk = rules.validateOpening(melds, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, false);
+    let chk = rules.validateOpening(melds, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, !!player.tookLaTour);
     if (!chk.valid) {
       let bestMelds = null, bestScore = -1;
       const tryFix = (anchor) => {
@@ -432,7 +467,7 @@ const RamiExpertAI = {
         const cand = [new RamiMeld(
           (anchor[1] && anchor[0] && anchor[0].suit !== undefined && new Set(anchor.map(c => c.suit)).size === 1)
             ? MELD_TYPE.SEQUENCE : MELD_TYPE.SET, anchor.slice())].concat(rest || []);
-        const c2 = rules.validateOpening(cand, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, false);
+        const c2 = rules.validateOpening(cand, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, !!player.tookLaTour);
         if (c2.valid && c2.score > bestScore) { bestScore = c2.score; bestMelds = cand; }
       };
       for (const seq of this._pureSequences(player.hand, rules)) tryFix(seq);
@@ -455,13 +490,13 @@ const RamiExpertAI = {
           /* تحقق على إعادة تقسيم الأوراق نفسها — نفس ما سيراه المحرك */
           const rePart = partitionSelectedCards(
             keepCards.map(id => player.hand.find(c => c.id === id)), game.rules);
-          const chk = game.rules.validateOpening(rePart, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, false);
+          const chk = game.rules.validateOpening(rePart, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, !!player.tookLaTour);
           if (chk.valid) { chosen = rePart.length ? rePart : keep; ok = true; }
         }
       }
       if (!ok) return null; /* تأجيل الافتتاح */
     }
-    return { type: 'open', playerId: player.id, cardIds: chosen.flatMap(m => m.cards.map(c => c.id)) };
+    return { type: 'open', playerId: player.id, cardIds: chosen.flatMap(m => m.cards.map(c => c.id)), meldGroups: chosen.map(m => m.cards.map(c => c.id)) };
   },
 
   /* النقاط الحرة لمجموعات التقسيم (بدون جوكر — كما في عتبة الافتتاح)
@@ -1472,7 +1507,7 @@ class RamiGame {
         case 'draw_fojok':
           return this._doDrawFojok(player);
         case 'open':
-          return this._doOpen(player, move.cardIds);
+          return this._doOpen(player, move.cardIds, move.meldGroups);
         case 'discard':
           return this._doDiscard(player, move.cardId);
         case 'finish':
@@ -1634,8 +1669,22 @@ class RamiGame {
     return { success: true, card: fojok, isFojok: true };
   }
 
-      _doOpen(player, cardIds) {
+      _doOpen(player, cardIds, meldGroups) {
     let meldObjects = [];
+    /* [PLAN-EXACT] مجموعات صريحة (خطة البوت الخبيرة): تُبنى حرفياً بلا إعادة
+       تقسيم — يستحيل اختلاف التنفيذ عن القرار. كل مجموعة تُتحقق كنسق صالح. */
+    if (meldGroups && meldGroups.length) {
+      const exact = [];
+      let allOk = true;
+      for (const grp of meldGroups) {
+        const cards = grp.map(id => player.getCard(id)).filter(c => c);
+        if (cards.length < 3 || cards.length !== grp.length) { allOk = false; break; }
+        if (this.rules.isValidSet(cards, true)) exact.push(new RamiMeld(MELD_TYPE.SET, cards.slice()));
+        else if (this.rules.isValidSequence(cards, true)) exact.push(new RamiMeld(MELD_TYPE.SEQUENCE, ramiOrderSequenceCards(cards.slice(), c => this.rules.isWildCard(c))));
+        else { allOk = false; break; }
+      }
+      if (allOk && exact.length) meldObjects = exact;
+    }
     const adapter = (typeof window !== 'undefined' && (window.RamiAdapter || window.RAMI_ADAPTER)) ? (window.RamiAdapter || window.RAMI_ADAPTER) : null;
 
     /* [V29] الموزع لا يفتتح في دوره الأول (ملزم بالسحب من ورق التوزيع قبل الافتتاح) */
@@ -1662,22 +1711,22 @@ class RamiGame {
             meldObjects.push(new RamiMeld(MELD_TYPE.SEQUENCE, ordered));
           }
         }
-      } else if (adapter && adapter.handSlots) {
-        for (let s = 0; s < 5; s++) {
-          const slotCards = (adapter.handSlots[s] || []).filter(c => ids.has(c.id));
-          if (slotCards.length >= 3) {
-            if (this.rules.isValidSet(slotCards, true)) {
-              meldObjects.push(new RamiMeld(MELD_TYPE.SET, slotCards.slice()));
-            } else if (this.rules.isValidSequence(slotCards, true)) {
-              const ordered = ramiOrderSequenceCards(slotCards.slice(), c => this.rules.isWildCard(c));
-              meldObjects.push(new RamiMeld(MELD_TYPE.SEQUENCE, ordered));
-            }
-          }
-        }
       }
+      /* [BOT-OPEN-FIX] كان هنا فرع يقرأ خانات البشري (adapter.handSlots) للبوت — خطأ.
+         للبوت وللبشري على السواء: إن لم تُبنَ مجموعة مباشرة من التحديد،
+         جرّب تقسيم 'opening' أولاً (نفس ما تحقق منه الخبير) ثم تقسيم التغطية،
+         واختر الصالح منهما لشروط الافتتاح */
       if (meldObjects.length === 0) {
         const cards = cardIds.map(id => player.getCard(id)).filter(c => c);
-        meldObjects = partitionSelectedCards(cards, this.rules);
+        if (!player.hasOpened) {
+          const candA = partitionSelectedCards(cards, this.rules, 'opening');
+          const candB = partitionSelectedCards(cards, this.rules);
+          const okA = candA && candA.length && this.rules.validateOpening(candA, player.drawnDiscardCard, this.roundManager.jokerIndicator, this.roundManager.highestOpeningScore || 0, player.tookLaTour).valid;
+          const okB = candB && candB.length && this.rules.validateOpening(candB, player.drawnDiscardCard, this.roundManager.jokerIndicator, this.roundManager.highestOpeningScore || 0, player.tookLaTour).valid;
+          meldObjects = okA ? candA : (okB ? candB : ((candA && candA.length) ? candA : (candB || [])));
+        } else {
+          meldObjects = partitionSelectedCards(cards, this.rules);
+        }
       }
     }
 
@@ -2971,9 +3020,16 @@ class RamiUIAdapter {
         if (drawRes && drawRes.success) usedDraw = drawType;
         else if (drawRes && drawRes.penaltyApplied) usedDraw = drawType;
         else {
-          const alt = drawType === 'draw_deck' ? 'draw_discard' : 'draw_deck';
-          const altRes = this.game.executeMove({ type: alt, playerId: bot.id });
-          if (altRes && (altRes.success || altRes.penaltyApplied)) usedDraw = alt;
+          /* [V24+] البديل الآمن: draw_deck أولاً دائماً؛ سحب المرموق كملاذ أخير
+             فقط في السامبل (بلا جزاء) — في طالاج يجر جزاء 71 فلا يُجرَّب قسراً */
+          if (drawType !== 'draw_deck') {
+            const altRes = this.game.executeMove({ type: 'draw_deck', playerId: bot.id });
+            if (altRes && (altRes.success || altRes.penaltyApplied)) usedDraw = 'draw_deck';
+          }
+          if (!usedDraw && this.game.rules.mode !== 'talaj') {
+            const altRes2 = this.game.executeMove({ type: 'draw_discard', playerId: bot.id });
+            if (altRes2 && (altRes2.success || altRes2.penaltyApplied)) usedDraw = 'draw_discard';
+          }
         }
         if (!usedDraw) {
           /* لا يمكن السحب إطلاقاً: تمرير الدور قسرياً */
@@ -2992,11 +3048,18 @@ class RamiUIAdapter {
         if (!this.game || this.game.gamePhase !== 'PLAYING') { setRamiBusy(false); return; }
 
         const legalMoves = this.game.getLegalMoves(bot.id);
-        /* [EXPERT-AI] افتتاح خبير يتجنّب حصار الورقتين */
-        const openMove = (!bot.hasOpened) ? RamiExpertAI.expertOpening(this.game, bot) : null;
+        /* [EXPERT-AI] افتتاح خبير يتجنّب حصار الورقتين —
+           [PLAN-EXACT] خطة السحب المحفوظة أولاً (كل أوراقها ما زالت في اليد) */
+        let openMove = null;
+        if (!bot.hasOpened && bot._openPlanMove) {
+          const pm = bot._openPlanMove;
+          bot._openPlanMove = null;
+          if (pm.cardIds.every(id => bot.hand.some(c => c.id === id))) openMove = pm;
+        }
+        if (!openMove && !bot.hasOpened) openMove = RamiExpertAI.expertOpening(this.game, bot);
         if (openMove && !bot.hasOpened) {
           const or = this.game.executeMove(openMove);
-          if (or && (or.success || or.penaltyApplied)) this._botEmit('open', { playerId: bot.id, cardIds: openMove.cardIds });
+          if (or && (or.success || or.penaltyApplied)) this._botEmit('open', { playerId: bot.id, cardIds: openMove.cardIds, meldGroups: openMove.meldGroups || null });
           if (typeof SND !== 'undefined' && SND.card) SND.card();
           this._updateUI();
           // إذا أنهى الافتتاح الشوط مباشرة (نزول كامل اليد) نتوقف فوراً لتجنب إنهاء مزدوج
@@ -3011,6 +3074,20 @@ class RamiUIAdapter {
            أسرع طريق لتفريغ اليد والفوز، ويحمي ورقة المرموق من الجزاء.
            حركة حتمية بمعرّفات صريحة: تعمل محلياً وجماعياً بنفس النتيجة. */
         if (bot.hasOpened && rm.turnPhase !== 'WAITING_DRAW') {
+          /* [DRAW-PLAN] خطة الإنزال المرافقة لسحب المرموق تُنفَّذ حرفياً أولاً */
+          if (bot._drawPlanIds && bot._drawPlanIds.length) {
+            const planIds = bot._drawPlanIds.filter(id => bot.hand.some(c => c.id === id));
+            bot._drawPlanIds = null;
+            if (planIds.length >= 3) {
+              const pr = this.game.executeMove({ type: 'open', playerId: bot.id, cardIds: planIds });
+              if (pr && pr.success) {
+                this._botEmit('open', { playerId: bot.id, cardIds: planIds });
+                if (typeof SND !== 'undefined' && SND.card) SND.card();
+                this._updateUI();
+                if (this.game.gamePhase !== 'PLAYING') { setRamiBusy(false); this._endRoundUI(); return; }
+              }
+            }
+          }
           const handMelds = partitionSelectedCards(bot.hand.slice(), this.game.rules);
           if (handMelds && handMelds.length > 0) {
             const dumpIds = handMelds.flatMap(m => m.cards.map(c => c.id));
@@ -3277,7 +3354,7 @@ class RamiUIAdapter {
       lineHtml += '</div>';
       /* [Spectator] شارة عدد الأوراق المخفية بدل إظهار الوجوه */
       if (countMode) {
-        lineHtml += '<span class="rami-spec-count">' + _ramiF('rami.specHandCount', '🂠 {n} ورقة', { n: p.hand.length }) + '</span>';
+        lineHtml += '<span class="rami-spec-count">' + _ramiF('rami.specHandCount', '🃏 {n} ورقة', { n: p.hand.length }) + '</span>';
       }
 
       return '<div class="rami-seat-node seat-row' + activeCls + activeHalo + '">' +
@@ -4514,7 +4591,7 @@ function ramiPilePointerDown(e) {
   const hintVisible = hintEl && !hintEl.hidden;
   if (!hintVisible) {
     if (adapter.game.roundManager.turnPhase === 'WAITING_DRAW') {
-      _ramiToast((kind === 'deck' ? '🂠 اضغط مرة ثانية للسحب من المجرف' : (kind === 'fojok' ? '🃏 اضغط مرة ثانية لسحب الفوجوك (الدور الأول فقط)' : '🃏 اضغط مرة ثانية لأخذ ' + (adapter.game.roundManager.laTourCard ? 'ورقة لا تور' : 'المرموق'))), 'info');
+      _ramiToast((kind === 'deck' ? '🃏 اضغط مرة ثانية للسحب من المجرف' : (kind === 'fojok' ? '🃏 اضغط مرة ثانية لسحب الفوجوك (الدور الأول فقط)' : '🃏 اضغط مرة ثانية لأخذ ' + (adapter.game.roundManager.laTourCard ? 'ورقة لا تور' : 'المرموق'))), 'info');
     } else {
       _ramiToast(_ramiT('rami.mustDrawFirst') || 'يجب السحب أولاً قبل الرمي', 'info');
     }
@@ -4934,6 +5011,8 @@ function ramiRegisterRooms() {
   if (Rooms.state && Rooms.state.game_id === 'rm' && Rooms.state.status === 'playing') {
     var ad2 = (typeof window !== 'undefined') ? (window.RamiAdapter || window.RAMI_ADAPTER) : null;
     if (ad2 && typeof ad2.enterRoom === 'function') ad2.enterRoom(Rooms.state);
+    /* [Persist] لا replay معلق → اطلب سجل الحركات من الخادم لإعادة بناء الجولة */
+    if (typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
   }
 }
 
@@ -4948,6 +5027,8 @@ function RM_applyReplay(d) {
 /* ═══ امتداد النموذج الأولي لطبقة الشبكة ═══ */
 /* الدخول في غرفة جماعية: المالك يبثّ التهيئة والبذرة، والضيوف ينتظرونها ثم يطبقونها */
 RamiUIAdapter.prototype.enterRoom = function (room) {
+  /* [Persist] استهلاك علم إعادة الانضمام (رهان الرامي يُدار خادمياً) */
+  if (typeof Rooms !== 'undefined' && Rooms && Rooms._rejoinLive) Rooms._rejoinLive = false;
   this.multiplayer = true;
   this.room = room || null;
 
@@ -5097,7 +5178,8 @@ RamiUIAdapter.prototype._netApplyMove = function (d) {
       g.executeMove({ type: 'discard', playerId: data.playerId, cardId: data.cardId });
       break;
     case 'open':
-      g.executeMove({ type: 'open', playerId: data.playerId, cardIds: data.cardIds || [] });
+      /* [PLAN-EXACT] المجموعات الصريحة تُمرَّر عبر الشبكة أيضاً — تطابق تام بين الأطراف */
+      g.executeMove({ type: 'open', playerId: data.playerId, cardIds: data.cardIds || [], meldGroups: data.meldGroups || null });
       break;
     case 'finish':
       {

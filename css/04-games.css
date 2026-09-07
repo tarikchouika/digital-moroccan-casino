@@ -6374,3 +6374,28 @@ body.rami-game-open { overflow: hidden; }
   #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .bets ~ .bets { grid-row: 2; }
   #pg-game.app-fs #gamePageBody .stage:has(.vp-wrap) > .res { grid-column: 1; grid-row: 3; align-self: end; margin: 0; padding: 2px 8px; }
 }
+
+/* ═══ [ICON-FIX] أيقونة ظهر الورقة (بدل محارف 🂠/🂡 التي تُرسم مربعات فارغة على أندرويد) ═══ */
+.card-ic {
+  display: inline-block;
+  width: 1.05em;
+  height: 1.45em;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: -0.28em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.ab-joker .card-ic { width: 2.2em; height: 3em; border-radius: 5px; }
+.bc-vs .card-ic { width: 1.3em; height: 1.8em; }
+
+/* ═══ [ICON-FIX2] أيقونات احترافية بدل الإيموجي ═══ */
+.vs-txt {
+  font-weight: 900;
+  font-size: 0.9em;
+  letter-spacing: 1px;
+  color: var(--gold, #f5c518);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.ab-dot-a { color: #3f7fff; font-size: 0.72em; vertical-align: 1px; }
+.ab-dot-b { color: #ff4d6d; font-size: 0.72em; vertical-align: 1px; }

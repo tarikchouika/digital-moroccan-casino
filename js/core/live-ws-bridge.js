@@ -108,9 +108,9 @@
 
   /* مراقبة الغرفة الحالية: عند فتح غرفة لعب → اتصال إضافي بها */
   var gameConn = null;
-  function watchRoom() {
+  function watchRoom(force) {
     var rid = getCurrentRoomId();
-    if (rid && rid !== 'global' && (!gameConn || gameConn._rid !== rid)) {
+    if (rid && rid !== 'global' && (force || !gameConn || gameConn._rid !== rid)) {
       if (gameConn) { try { gameConn.close(); } catch (e) { } }
       gameConn = new LiveWS(rid);
       gameConn._rid = rid;

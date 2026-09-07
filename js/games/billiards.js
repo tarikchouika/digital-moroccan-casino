@@ -80,9 +80,9 @@ function eBilliards(g) {
           '</div>' +
         '</div>' +
         '<div class="bl-modes">' +
-          '<button class="big dama-go" onclick="billiardsStartLocal()">👥 ' + T('bl.faceToFace') + '</button>' +
-          '<button class="big dama-go" onclick="billiardsStartAI()">🤖 ' + T('bl.vsAI') + '</button>' +
-          '<button class="big ch-online" onclick="billiardsOnline()">🌐 ' + T('chess.onlineRoom') + '</button>' +
+          '<button class="big dama-go" onclick="billiardsStartLocal()"><i class="fa-solid fa-user-group" aria-hidden="true"></i> ' + T('bl.faceToFace') + '</button>' +
+          '<button class="big dama-go" onclick="billiardsStartAI()"><i class="fa-solid fa-robot" aria-hidden="true"></i> ' + T('bl.vsAI') + '</button>' +
+          '<button class="big ch-online" onclick="billiardsOnline()"><i class="fa-solid fa-globe" aria-hidden="true"></i> ' + T('chess.onlineRoom') + '</button>' +
         '</div>' +
         '<div class="dama-pay bl-hint" id="blVariantHint"></div>' +
       '</div>' +
@@ -1739,7 +1739,10 @@ function blRoomStart(room) {
   BILLIARDS.oppBot = !!oppBot;
   BILLIARDS.isSpectator = spec;
   BILLIARDS.bet = spec ? 0 : bet;
-  if (!spec && bet > 0 && typeof takeBet === 'function' && !takeBet(bet)) BILLIARDS.bet = 0;  /* رصيد غير كافٍ → ودية */
+  /* [Persist] عائد لجولة جارية: لا خصم رهان مكرر (خُصم قبل الانقطاع) */
+  var _rejoin = (typeof Rooms !== 'undefined' && Rooms && Rooms._rejoinLive);
+  if (_rejoin && typeof Rooms !== 'undefined') Rooms._rejoinLive = false;
+  if (!spec && bet > 0 && !_rejoin && typeof takeBet === 'function' && !takeBet(bet)) BILLIARDS.bet = 0;  /* رصيد غير كافٍ → ودية */
   billiardsStart('room');
   if (!spec && mySeat === 0 && BILLIARDS.variant === 'carom') {
     blSendRoom({ t: 'cfg', d: BILLIARDS.caromDisc, g: BILLIARDS.caromTarget, tm: BILLIARDS.turnTimer });
@@ -1795,6 +1798,9 @@ function blRegisterRooms() {
     if (typeof Rooms.consumePendingReplay === 'function') {
       var pr = Rooms.consumePendingReplay();
       if (pr) blApplyReplay(pr);
+      /* [Persist] غرفة بلياردو جارية بلا replay معلق → اطلبه من الخادم */
+      else if (Rooms.state && /^bl/.test(String(Rooms.state.game_id || '')) && Rooms.state.status === 'playing' &&
+               typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
     }
   } catch (e) {}
 }

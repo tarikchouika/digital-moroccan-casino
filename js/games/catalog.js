@@ -335,7 +335,7 @@ const GAMES = [
   {
     id: 'vp',
     eng: 'vp',
-    em: '🂠',
+    em: '🃏',
     art: 'pk',
     cat: 'card',
     tag: 'NEW',

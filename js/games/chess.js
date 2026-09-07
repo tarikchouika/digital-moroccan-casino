@@ -522,8 +522,8 @@ function eChess(g) {
           '<div class="dama-timer-row" id="chessTimerRow">' + timerChips + '</div>' +
         '</div>' +
         '<div class="ch-modes">' +
-          '<button class="big dama-go" onclick="chessStartLocal()">👥 ' + T('chess.faceToFace') + '</button>' +
-          '<button class="big ch-online" onclick="Rooms.toggleFromGame()">🌐 ' + T('chess.onlineRoom') + '</button>' +
+          '<button class="big dama-go" onclick="chessStartLocal()"><i class="fa-solid fa-user-group" aria-hidden="true"></i> ' + T('chess.faceToFace') + '</button>' +
+          '<button class="big ch-online" onclick="Rooms.toggleFromGame()"><i class="fa-solid fa-globe" aria-hidden="true"></i> ' + T('chess.onlineRoom') + '</button>' +
         '</div>' +
         '<div class="dama-pay ch-hint">' + T('chess.modeHint') + '</div>' +
       '</div>' +
@@ -539,8 +539,8 @@ function eChess(g) {
           '<div class="ch-log" id="chessLog"></div>' +
           '<div class="dama-status" id="chessStatus"></div>' +
           '<div class="dama-ctrls">' +
-            '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()">🤝 ' + T('chess.drawBtn') + '</button>' +
-            '<button class="dama-mini" onclick="chessResign()">🏳️ ' + T('dama.resignBtn') + '</button>' +
+            '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('chess.drawBtn') + '</button>' +
+            '<button class="dama-mini" onclick="chessResign()"><i class="fa-solid fa-flag" aria-hidden="true"></i> ' + T('dama.resignBtn') + '</button>' +
           '</div>' +
           '<div class="dama-drawbar" id="chessDrawBar" hidden>' +
             '<span id="chessDrawTxt"></span>' +
@@ -568,7 +568,7 @@ function eChess(g) {
           '<div class="dama-over-em" id="chessOverEm">🏆</div>' +
           '<div class="dama-over-tx" id="chessOverTx"></div>' +
           '<div class="dama-over-amt" id="chessOverAmt"></div>' +
-          '<button class="big dama-go" onclick="chessNewMatch()">↩️ ' + T('dama.newMatch') + '</button>' +
+          '<button class="big dama-go" onclick="chessNewMatch()"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> ' + T('dama.newMatch') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>'
@@ -991,7 +991,11 @@ function chessNewMatch() {
   var ov = document.getElementById('chessOver');
   if (ov) ov.hidden = true;
   if (CHESS && CHESS.mode === 'room') {
-    /* غرفة: إعادة جولة جديدة للجميع */
+    /* [MP-Uni] نفس منهجية البلياردو: إعادة المباراة عبر الخادم (تصويت المشاركين) */
+    if (!CHESS.oppBot && typeof Rooms !== 'undefined' && Rooms && typeof Rooms.startRematch === 'function' && Rooms.state) {
+      Rooms.startRematch();
+      return;
+    }
     if (!CHESS.isSpectator && !CHESS.oppBot) chessEmit('newgame', {});
     chessResetBoardOnly();
     return;
@@ -1222,8 +1226,12 @@ function chessStartRoom(myColor, oppBot, spec, bet) {
   CHESS.sel = null; CHESS.legal = []; CHESS.busy = false;
   CHESS.lastFrom = null; CHESS.lastTo = null; CHESS.drawBanUntil = 0;
   CHESS.flipped = (myColor === 'b');
-  /* رهان الغرفة: كل طرف يخصم حصته */
-  if (!spec && CHESS.bet > 0) {
+  /* رهان الغرفة: كل طرف يخصم حصته
+     [Persist] عائد لجولة جارية (تجديد صفحة/انقطاع): حصته خُصمت قبل الانقطاع
+     والرصيد المحلي محفوظ — لا خصم مكرر. */
+  var _rejoin = (typeof Rooms !== 'undefined' && Rooms && Rooms._rejoinLive);
+  if (_rejoin && typeof Rooms !== 'undefined') Rooms._rejoinLive = false;
+  if (!spec && CHESS.bet > 0 && !_rejoin) {
     if (typeof takeBet === 'function' && !takeBet(CHESS.bet)) {
       CHESS.bet = 0;
       CHESS.state.over = true;
@@ -1279,8 +1287,11 @@ function chessRegisterRooms() {
   if (typeof window !== 'undefined') window.applyRoomReplay = chessApplyReplay;
   if (Rooms.state && Rooms.state.game_id === 'ch' && Rooms.state.status === 'playing') {
     var rp = (typeof Rooms.hasPendingReplay === 'function' && Rooms.hasPendingReplay()) ? Rooms.consumePendingReplay() : null;
+    Rooms._rejoinLive = true;   /* [Persist] عودة لجولة جارية — الرهان خُصم عند بدايتها */
     chessRoomStart(Rooms.state);
     if (rp && rp.history && rp.history.length) chessApplyReplay(rp);
+    /* [Persist] لا replay معلق → اطلب سجل الحركات من الخادم */
+    else if (typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
   }
 }
 

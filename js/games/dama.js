@@ -516,20 +516,21 @@ function eDama(g) {
           '<div class="dama-betrow">' + betRow() + '</div>' +   /* [B10] خانة الرهان في الإعدادات فقط */
         '</div>' +
         '<div class="dama-pay" id="damaPay"></div>' +
-        '<button class="big dama-go" id="damaGo" onclick="damaStart()">' + T('dama.startMatch') + '</button>' +
+        '<button class="big dama-go" id="damaGo" onclick="damaStart()"><i class="fa-solid fa-trophy" aria-hidden="true"></i> ' + T('dama.startMatch') + '</button>' +
+        '<button class="big ch-online" onclick="damaOnline()"><i class="fa-solid fa-globe" aria-hidden="true"></i> ' + T('chess.onlineRoom') + '</button>' +
       '</div>' +
       /* ── play screen ── */
       '<div class="dama-play" id="damaPlay" hidden>' +
         '<div class="dama-spectators" id="damaSpectators" aria-hidden="true"></div>' +   /* [Owner] شريط متفرجين شفاف 100% — فارغ بلا متفرجين */
         '<div class="dama-timer" id="damaTimer"></div>' +
         '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div>' +
-          '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface">⚑</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
-          '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface">★</span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
+          '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface"><i class="fa-solid fa-robot" aria-hidden="true"></i></span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
+          '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface"><i class="fa-solid fa-user" aria-hidden="true"></i></span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
         '</div>' +
         '<div class="dama-status" id="damaStatus"></div>' +
         '<div class="dama-ctrls">' +
-          '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()">' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
-          '<button class="dama-mini" onclick="damaResign()">' + T('dama.resignBtn') + '</button>' +
+          '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
+          '<button class="dama-mini" onclick="damaResign()"><i class="fa-solid fa-flag" aria-hidden="true"></i> ' + T('dama.resignBtn') + '</button>' +
         '</div>' +
         '<div class="dama-drawbar" id="damaDrawBar" hidden>' +   /* [B10] شريط مصادقة التعادل الوارد من الخصم */
           '<span id="damaDrawTxt"></span>' +
@@ -675,6 +676,14 @@ function damaAutoMove() {
   damaSetStatus(T('dama.timeUp') + ' \u2014 ' + T('dama.autoMoved'));
   if (typeof SND !== 'undefined' && SND.lose) SND.lose();
   damaHumanMove(mv);
+}
+
+/* [MP] فتح الغرف الجماعية من شاشة الإعداد — نفس منهجية البلياردو */
+function damaOnline() {
+  if (typeof Rooms === 'undefined' || !Rooms || typeof Rooms.toggleFromGame !== 'function') {
+    toast(T('bl.soon') || 'قريباً', 'warn'); return;
+  }
+  Rooms.toggleFromGame();
 }
 
 function damaStart() {
@@ -1282,6 +1291,9 @@ function damaRegisterRooms() {
     var rp = (typeof Rooms.hasPendingReplay === 'function' && Rooms.hasPendingReplay()) ? Rooms.consumePendingReplay() : null;
     damaRoomStart(Rooms.state);   /* يهيّئ وضع الغرفة */
     if (rp && rp.history && rp.history.length) damaApplyReplay(rp);
+    /* [Persist] عائد من لعبة أخرى/تجديد: لا replay معلق — اطلبه من الخادم
+       (إعادة فتح قناة WS تعيد hello + room:replay فيُبنى سجل الحركات كاملاً) */
+    else if (typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
   }
 }
 
@@ -1341,6 +1353,8 @@ function damaRoomStart(room) {
 
 /* تهيئة مباراة غرفة (بلا رهان) — اللوحة الأولية واحدة عند الجميع */
 function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
+  /* [Persist] استهلاك علم إعادة الانضمام (الرهان يُدار خادمياً في ضاما — لا خصم محلي) */
+  if (typeof Rooms !== 'undefined' && Rooms && Rooms._rejoinLive) Rooms._rejoinLive = false;
   DAMA = DAMA || {};
   DAMA.eng = new DamaEngine();
   DAMA.state = damaNewState();
@@ -1475,7 +1489,14 @@ function damaResetBoardOnly() {
 /* «مباراة جديدة» في الغرفة: إعادة التهيئة + بثّ (تأثير متماثل عند الطرفين) */
 function damaRoomNewGame() {
   if (!DAMA) return;
-  damaStartRoom(DAMA.human, DAMA.oppBot, DAMA.isSpectator, !DAMA.isSpectator);
+  /* [MP-Uni] نفس منهجية البلياردو: إعادة المباراة عبر الخادم (تصويت المشاركين)
+     كي تبقى حالة الغرفة (waiting/playing) متزامنة عند الجميع؛
+     البوت لا يصوت → إعادة محلية مباشرة. */
+  if (!DAMA.oppBot && typeof Rooms !== 'undefined' && Rooms && typeof Rooms.startRematch === 'function' && Rooms.state) {
+    Rooms.startRematch();
+    return;
+  }
+  damaStartRoom(DAMA.human, DAMA.oppBot, DAMA.isSpectator, false);
 }
 
 /* نتيجة المباراة في الغرفة (بلا رهان) */
@@ -1568,6 +1589,7 @@ window.damaResign = damaResign;
 window.damaSetTimer = damaSetTimer;
 window.damaLevelName = damaLevelName;
 window.damaToSetup = damaToSetup;
+window.damaOnline = damaOnline;
 window.damaNewMatch = damaNewMatch;
 window.damaHumanMove = damaHumanMove;          /* للاختبار/التكامل */
 window.damaRoomStart = damaRoomStart;

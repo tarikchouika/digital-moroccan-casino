@@ -31,6 +31,18 @@
     roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, dm: 2, ch: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً */
 
     isGameSupported: function (id) { return !!Rooms.roomGameIds[id]; },
+    /* [Persist] طلب إعادة بناء الجولة: إعادة فتح قناة WS للغرفة — الخادم يعيد
+       hello + room:replay فيُعاد تشغيل سجل الحركات على اللوحة الجديدة */
+    requestReplay: function () {
+      try { if (typeof window !== 'undefined' && typeof window.__liveWatchRoom === 'function') window.__liveWatchRoom(true); } catch (e) {}
+    },
+    /* [Persist] حفظ عضوية الغرفة محلياً — تنجو من تجديد الصفحة وانقطاع النت */
+    _persistRoom: function (room) {
+      try {
+        if (room && room.id) localStorage.setItem('rc_active_room', JSON.stringify({ id: room.id, code: room.code, game_id: room.game_id, ts: Date.now() }));
+        else localStorage.removeItem('rc_active_room');
+      } catch (e) {}
+    },
     isActive: function () { return !!(Rooms.state && Rooms.state.status === 'playing'); },
     maxFor: function (id) { return Rooms.roomGameIds[id] || 2; },
     /* إظهار/إخفاء زر «العب مع صديق» حسب اللعبة المفتوحة */
@@ -86,6 +98,7 @@
       var prev = Rooms.state;
       var prevStatus = prev ? prev.status : null;
       Rooms.state = room;
+      Rooms._persistRoom(room);   /* [Persist] */
       /* [B-rooms] مؤقّت واحد للعدّاد التنازلي (غرف الساعة) — يُنشأ مرة ويُزال في reset() */
       if (room && room.room_type === 'hour' && room.expires_at && !Rooms._cdTi) {
         Rooms._cdTi = setInterval(function () { Rooms._renderCountdown(); }, 1000);
@@ -108,6 +121,10 @@
       if (_updateHandler) { try { _updateHandler(room); } catch (e) {} }   /* [Req3] تحديث واجهة التصويت */
     },
     _onMove: function (d) {
+      /* [Persist] اللاعب خارج صفحة لعبة الغرفة (تصفح لعبة أخرى/الرئيسية):
+         لا نمرر الحركة لواجهة غير موجودة — سجل الخادم يحفظها، وعند العودة
+         يعاد بناء الجولة كاملة عبر room:replay. */
+      if (Rooms.state && Rooms.state.game_id && window._currentGameId !== Rooms.state.game_id) return;
       if (_gameHandler) _gameHandler(d);
     },
     /* رسالة غرفة جديدة (جماعية أو فردية واردة) */
@@ -558,6 +575,7 @@
           return;
         }
         Rooms.state = r.data.room;
+        Rooms._persistRoom(r.data.room);   /* [Persist] */
         Rooms.render();
         Rooms.openModal();
       });
@@ -576,6 +594,9 @@
           return;
         }
         Rooms.state = r.data.room;
+        Rooms._persistRoom(r.data.room);   /* [Persist] */
+        /* [Persist] عائد لجولة جارية: لا خصم رهان مكرر عند إعادة تهيئة اللعبة */
+        Rooms._rejoinLive = (r.data.room.status === 'playing');
         /* فتح اللعبة إن لم تكن مفتوحة */
         var gid = r.data.room.game_id;
         if (typeof openGame === 'function' && window._currentGameId !== gid) openGame(gid);
@@ -643,6 +664,7 @@
       if (!Rooms.state) return;
       var id = Rooms.state.id;
       Rooms.state = null;
+      Rooms._persistRoom(null);   /* [Persist] */
       _gameHandler = null;
       _startHandler = null;
       API.post('/api/rooms/leave', { room_id: id }).catch(function () {});
@@ -923,10 +945,14 @@
         if (typeof d.winner.gold === 'number') { AUTH.user.gold = d.winner.gold; ST.gold = d.winner.gold; }
         wallet();
         toast(T('rm.winRound') + ' (+' + fmt(Math.max(0, (d.pot || 0) - (d.fee || 0))) + ' 🪙)', 'ok');
+        /* [Tickets] تسجيل الجولة فوزاً في سجل رهانات الجولات */
+        try { if (typeof recordRound === 'function') recordRound(true, Math.max(0, d.payout || 0), T('rm.winRound'), d.pot || 0, Rooms.state && Rooms.state.game_id); } catch (e) {}
       } else if (isLoser) {
         if (typeof d.loser.gold === 'number') { AUTH.user.gold = d.loser.gold; ST.gold = d.loser.gold; }
         wallet();
         toast(T('rm.loseRound') + ' (-' + fmt(Math.max(0, d.pot || 0)) + ' 🪙)', 'err');
+        /* [Tickets] تسجيل الجولة خسارةً في سجل رهانات الجولات */
+        try { if (typeof recordRound === 'function') recordRound(false, 0, T('rm.loseRound'), d.pot || 0, Rooms.state && Rooms.state.game_id); } catch (e) {}
       } else if (isRefund) {
         var mine = d.refunds.filter(function (r) { return r && r.id != null && r.id == uid; })[0];
         if (mine && typeof mine.gold === 'number') { AUTH.user.gold = mine.gold; ST.gold = mine.gold; wallet(); }
@@ -1033,6 +1059,21 @@
           setTimeout(function () {
             Rooms.joinRoom(code);
           }, 300);
+          return;
+        }
+        /* [Persist] استئناف غرفة جارية بعد تجديد الصفحة/انقطاع النت:
+           العضوية محفوظة محلياً؛ /join يعيد اللاعب المسجل حتى أثناء اللعب،
+           وDO يرسل room:replay عند اتصال WS فيُعاد بناء الجولة كما كانت. */
+        if (!Rooms.state && AUTH && AUTH.user) {
+          var raw = localStorage.getItem('rc_active_room');
+          if (raw) {
+            var ar = JSON.parse(raw);
+            if (ar && ar.code && (Date.now() - (ar.ts || 0)) < 6 * 60 * 60 * 1000) {
+              setTimeout(function () { Rooms.joinRoom(ar.code); }, 600);
+            } else {
+              localStorage.removeItem('rc_active_room');
+            }
+          }
         }
       } catch (e) {}
     },
@@ -1041,6 +1082,7 @@
       _gameHandler = null;
       _startHandler = null;
       Rooms.state = null;
+      Rooms._persistRoom(null);   /* [Persist] */
       _messages = [];
       _recipient = null;
       /* [B-rooms] إزالة مؤقّت العدّاد التنازلي عند مغادرة الغرفة */
