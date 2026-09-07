@@ -504,7 +504,7 @@ if (typeof document !== 'undefined') {
   window.addEventListener('beforeunload', function () {
     if (AUTH.user) {
       try {
-        fetch((window.API_BASE_URL || 'https://casino-api.tarikc.workers.dev') + '/api/sync', {
+        fetch((window.API_BASE_URL || (/(^|\.)dmgames\.pages\.dev$/.test(location.hostname) ? 'https://casino-api.dmgames-api.workers.dev' : 'https://casino-api.tarikc.workers.dev')) + '/api/sync', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

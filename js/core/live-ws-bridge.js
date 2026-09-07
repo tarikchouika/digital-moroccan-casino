@@ -8,7 +8,10 @@
    ═════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
-  var API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) || 'https://casino-api.tarikc.workers.dev';
+  var API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) ||
+    ((typeof location !== 'undefined' && /(^|\.)dmgames\.pages\.dev$/.test(location.hostname))
+      ? 'https://casino-api.dmgames-api.workers.dev'
+      : 'https://casino-api.tarikc.workers.dev');
   function getUid() {
     try { return String((window.AUTH && window.AUTH.user && window.AUTH.user.id) || (window.RC_user && window.RC_user.id) || (window.ST && window.ST.user && window.ST.user.id) || '0'); }
     catch (e) { return '0'; }

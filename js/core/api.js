@@ -4,7 +4,12 @@
    (cookies عبر credentials: include لأن الباك على نطاق workers.dev)
    ═══════════════════════════════════════════ */
 "use strict";
-const API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) || 'https://casino-api.tarikc.workers.dev';
+/* [Replica] اختيار خادم الـAPI حسب نطاق الاستضافة — dmgames لها Worker/D1 مستقلان */
+const API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) ||
+  ((typeof location !== 'undefined' && /(^|\.)dmgames\.pages\.dev$/.test(location.hostname))
+    ? 'https://casino-api.dmgames-api.workers.dev'
+    : 'https://casino-api.tarikc.workers.dev');
+if (typeof window !== 'undefined' && !window.API_BASE_URL) window.API_BASE_URL = API_BASE;
 const API = {
   request(method, url, body) {
     const full = url.startsWith('/api/') ? (API_BASE + url) : url;
