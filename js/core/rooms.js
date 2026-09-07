@@ -443,6 +443,81 @@
         }
       });
     },
+    /* [RS-GameOpts] خانات إعدادات اللعبة المختارة داخل مودال إعدادات الغرفة.
+       تُطبَّق على حالة المالك محلياً — هو من يبثّ التهيئة (init/cfg) للجميع عند البدء. */
+    _gameOptsDefs: function (gid) {
+      var sec = function (v) { return v + ' ' + (T('dama.seconds') || 'ث'); };
+      var timer = { key: 'timer', label: T('dama.timer') || 'مؤقت الدور', opts: [[0, T('dama.timerOff') || 'بدون'], [30, sec(30)], [60, sec(60)], [120, sec(120)], [180, sec(180)], [300, sec(300)]], def: 0 };
+      var timer90 = { key: 'timer', label: T('dama.timer') || 'مؤقت الدور', opts: [[30, sec(30)], [60, sec(60)], [90, sec(90)], [120, sec(120)], [180, sec(180)], [300, sec(300)]], def: 90 };
+      if (gid === 'rm') return [
+        { key: 'mode', label: T('rami.roundType') || 'نوع الجولة', opts: [['talaj', T('rami.talaj') || 'طالاج'], ['simple', T('rami.sambel') || 'سامبل']], def: 'talaj' },
+        { key: 'target', label: T('rami.target') || 'الهدف', opts: [['single', T('rami.singleRound') || 'جولة واحدة'], ['301', '301'], ['501', '501'], ['701', '701']], def: 'single' },
+        timer90
+      ];
+      if (gid === 'dm' || gid === 'ch') return [timer];
+      if (gid === 'blca') return [
+        { key: 'disc', label: T('bl.caDisc') || 'الاختصاص', opts: [['FREE', T('bl.caFree') || 'حرة'], ['ONE', T('bl.caOne') || 'وسادة'], ['THREE', T('bl.caThree') || '3 وسائد']], def: 'THREE' },
+        { key: 'target', label: T('bl.caTarget') || 'هدف النقاط', opts: [[5, '5'], [10, '10'], [25, '25']], def: 10 },
+        timer90
+      ];
+      if (gid === 'blgv') return [
+        { key: 'fin', label: T('bl.gvFinish') || 'نمط الإنهاء', opts: [['DIRECT', T('bl.gvDirect') || 'ديريكت'], ['DERNIER', T('bl.gvDernier') || 'ديرنيي'], ['BOUND', T('bl.gvBound') || 'بوند'], ['ANNONCE', T('bl.gvAnnonce') || 'أنونص'], ['ANNONCE_BOUND', T('bl.gvAnnBound') || 'أنونص بوند']], def: 'DIRECT' },
+        { key: 'bound', label: T('bl.gvBoundN') || 'عدد البوند', opts: [[2, '2'], [3, '3'], [4, '4'], [5, '5']], def: 2 },
+        timer90
+      ];
+      if (/^bl/.test(gid || '')) return [timer90];
+      return [];
+    },
+    _renderGameOpts: function (gid) {
+      var box = document.getElementById('rsGameOpts');
+      if (!box) return;
+      var defs = Rooms._gameOptsDefs(gid);
+      if (!defs.length) { box.innerHTML = ''; return; }
+      var html = '';
+      for (var i = 0; i < defs.length; i++) {
+        var d = defs[i];
+        html += '<label class="aflabel" for="rsOpt_' + d.key + '"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ' + esc(d.label) + '</label>' +
+          '<select class="afinput" id="rsOpt_' + d.key + '">' +
+          d.opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(o[0]) === String(d.def) ? ' selected' : '') + '>' + esc(String(o[1])) + '</option>'; }).join('') +
+          '</select>';
+      }
+      box.innerHTML = html;
+    },
+    _collectGameOpts: function (gid) {
+      var defs = Rooms._gameOptsDefs(gid);
+      var out = {};
+      for (var i = 0; i < defs.length; i++) {
+        var el = document.getElementById('rsOpt_' + defs[i].key);
+        if (!el) continue;
+        var v = el.value;
+        out[defs[i].key] = (/^\d+$/.test(v)) ? parseInt(v, 10) : v;
+      }
+      return out;
+    },
+    _applyGameOpts: function (gid, o) {
+      if (!o) return;
+      try {
+        if (gid === 'rm') {
+          window.RAMI_ROOM_CFG = o;   /* يقرؤها _netConfig عند بدء جولة الغرفة */
+          if (o.mode) {
+            window.RAMI_SETUP_MODE = (o.mode === 'simple') ? 'simple' : 'talaj';
+            if (typeof ramiSetMode === 'function') { try { ramiSetMode(window.RAMI_SETUP_MODE); } catch (e) {} }
+          }
+        } else if (gid === 'dm') {
+          window.DM_ROOM_TIMER = o.timer || 0;
+          if (typeof DAMA !== 'undefined' && DAMA) DAMA.timeLimit = o.timer || 0;
+        } else if (gid === 'ch') {
+          window.CH_ROOM_TIMER = o.timer || 0;
+          if (typeof CHESS !== 'undefined' && CHESS) CHESS.timer = o.timer || 0;
+        } else if (/^bl/.test(gid || '') && typeof BILLIARDS !== 'undefined' && BILLIARDS) {
+          if (o.timer) BILLIARDS.turnTimer = Math.max(30, Math.min(300, o.timer));
+          if (o.disc) BILLIARDS.caromDisc = o.disc;
+          if (o.target) BILLIARDS.caromTarget = o.target;
+          if (o.fin) BILLIARDS.gvFinish = o.fin;
+          if (o.bound) BILLIARDS.gvBound = o.bound;
+        }
+      } catch (e) {}
+    },
     _openSettings: function (forceNoRoom) {
       var sm = document.getElementById('roomSettingsModal');
       if (!sm) return;
@@ -454,6 +529,12 @@
       if (game) {
         var def = window._currentGameId || (Rooms.state && Rooms.state.game_id) || 'rm';
         game.value = def;
+        /* [RS-GameOpts] خانات إعدادات اللعبة المختارة — تُحدَّث مع كل تغيير */
+        Rooms._renderGameOpts(def);
+        if (!game._optsBound) {
+          game._optsBound = true;
+          game.addEventListener('change', function () { Rooms._renderGameOpts(game.value); });
+        }
       }
       if (Rooms.state) {
         if (rt && Rooms.state.room_type) rt.value = Rooms.state.room_type;
@@ -505,6 +586,8 @@
       }
       if (rt) rt.classList.remove('err');
       if (bet) bet.classList.remove('err');
+      /* [RS-GameOpts] تطبيق إعدادات اللعبة على حالة المالك قبل إنشاء الغرفة */
+      Rooms._applyGameOpts(gid, Rooms._collectGameOpts(gid));
       Rooms.createRoom(gid, { room_type: roomType, bet: betVal, visibility: visVal }).then(function () {
         var sm = document.getElementById('roomSettingsModal');
         if (sm) sm.style.display = 'none';

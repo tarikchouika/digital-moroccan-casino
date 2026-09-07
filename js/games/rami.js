@@ -5082,18 +5082,27 @@ RamiUIAdapter.prototype.enterRoom = function (room) {
 
 /* قراءة تهيئة الإعداد الحالية (المالك فقط) */
 RamiUIAdapter.prototype._netConfig = function () {
-  var mode = (typeof window !== 'undefined' && window.RAMI_SETUP_MODE) ? window.RAMI_SETUP_MODE : 'talaj';
+  /* [RS-GameOpts] إعدادات الغرفة (من مودال إعدادات الغرفة) لها الأولوية */
+  var rc = (typeof window !== 'undefined' && window.RAMI_ROOM_CFG) ? window.RAMI_ROOM_CFG : null;
+  var mode = (rc && rc.mode) ? ((rc.mode === 'simple') ? 'simple' : 'talaj')
+    : ((typeof window !== 'undefined' && window.RAMI_SETUP_MODE) ? window.RAMI_SETUP_MODE : 'talaj');
   var targetVal = 'single', target = 999999, isSingle = true;
-  var sel = document.getElementById('ramiTarget');
-  if (sel && sel.value) {
-    targetVal = sel.value;
+  var tv = (rc && rc.target != null) ? String(rc.target) : null;
+  if (tv == null) {
+    var sel = document.getElementById('ramiTarget');
+    if (sel && sel.value) tv = sel.value;
+  }
+  if (tv) {
+    targetVal = tv;
     isSingle = (targetVal === 'single');
     target = isSingle ? 999999 : (parseInt(targetVal, 10) || (mode === 'talaj' ? 501 : 301));
   }
   var bet = (typeof window !== 'undefined' && window.RAMI_BET) ? window.RAMI_BET : 50;
-  var timerSec = 90;
-  var tSel = document.getElementById('ramiTimerSelect');
-  if (tSel) timerSec = parseInt(tSel.value, 10) || 90;
+  var timerSec = (rc && rc.timer) ? rc.timer : 90;
+  if (!(rc && rc.timer)) {
+    var tSel = document.getElementById('ramiTimerSelect');
+    if (tSel) timerSec = parseInt(tSel.value, 10) || 90;
+  }
   return { mode: mode, target: target, isSingle: isSingle, targetVal: targetVal, bet: bet, timer: timerSec };
 };
 

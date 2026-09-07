@@ -166,7 +166,21 @@ const SND = {
   /* ترقية: رنّة صاعدة */
   chessPromote() { playChord([523, 659, 784], 0.22, 0.16); playTone(1046, 0.3, 'triangle', 0.09, 0.12); },
   /* نهاية الجولة */
-  chessEnd() { playChord([392, 523, 659, 784], 0.5, 0.2); }
+  chessEnd() { playChord([392, 523, 659, 784], 0.5, 0.2); },
+
+  /* ══ [PR-SND] أصوات بارتشي المميزة لكل حركة ══ */
+  /* رمية النرد: خشخشة مكعبات على الخشب — أثقل من dice العام */
+  prDice() { for (let i = 0; i < 7; i++) playTone(300 + Math.random() * 350, 0.045, 'square', 0.07, i * 0.05); playNoise(0.12, 0.06, 'pink'); playTone(140, 0.09, 'sine', 0.1, 0.3); },
+  /* بداية تحريك بيدق: انزلاق خشبي ناعم */
+  prMove() { playNoise(0.05, 0.045, 'pink'); playTone(330, 0.06, 'sine', 0.11); playTone(220, 0.05, 'sine', 0.07, 0.04); },
+  /* خطوة بين خانتين: طقطقة خفيفة جداً */
+  prStep() { playTone(290 + Math.random() * 70, 0.03, 'triangle', 0.045); },
+  /* دخول بيدق للعبة (من البيت إلى الساليدة): نغمة صعود مفتوحة */
+  prEnter() { playTone(392, 0.09, 'triangle', 0.13); playTone(523, 0.1, 'triangle', 0.11, 0.08); playTone(659, 0.12, 'sine', 0.09, 0.16); },
+  /* قتل: ارتطام عميق + سقوط الضحية بنغمة هابطة */
+  prCapture() { playTone(100, 0.13, 'sine', 0.22); playNoise(0.1, 0.11); playTone(600, 0.1, 'sawtooth', 0.07, 0.08); playTone(380, 0.12, 'sawtooth', 0.06, 0.18); playTone(220, 0.16, 'sawtooth', 0.05, 0.3); },
+  /* إنهاء بيدق للدورة (الوصول للمركز): رنّة احتفالية صاعدة */
+  prFinish() { playChord([523, 659, 784, 1046], 0.32, 0.18); playTone(1318, 0.28, 'triangle', 0.09, 0.16); playTone(1568, 0.24, 'sine', 0.06, 0.3); }
 };
 /* ── كتم / تشغيل الصوت ── */
 function syncMuteBtns() {

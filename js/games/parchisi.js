@@ -175,7 +175,7 @@ class ParchisiEngine {
   /* ── تطبيق نرد حرفي (غرف MP) ── */
   applyRoll(diceArr) {
     if (this.gameOver || this.phase !== 'WAIT_ROLL' || !diceArr || !diceArr.length) return;
-    if (typeof SND !== 'undefined' && SND.dice) { try { SND.dice(); } catch (e) {} }
+    if (typeof SND !== 'undefined') { try { (SND.prDice || SND.dice)(); } catch (e) {} }   /* [PR-SND] */
     this.dice = diceArr.slice(0, this.mode.dice).map(d => Math.max(1, Math.min(6, d | 0)));
     this.used = this.dice.map(() => false);
     /* [Gift-priority] لا نمسح الهدية المعلّقة من دور سابق — ستُلعَب قبل النرد. */
@@ -1247,8 +1247,12 @@ const ParchisiApp = {
   toastNotice(n) {
     /* [B6] الإشعارات النصية أُلغيت بطلب صريح — ضجيج بصري يغطي اللوحة بلا فائدة.
        المكافآت صارت تُشار بأيقونة دائرية أعلى الشاشة (renderBonus).
-       تبقى الإشعارات داخل المحرك للسجل والاختبارات بلا عرض مرئي. */
-    void n;
+       [PR-SND] تبقى مصدراً لأصوات الأحداث المميزة (قتل / إنهاء الدورة). */
+    if (!n || this._replaying || typeof SND === 'undefined') return;
+    try {
+      if (n.key === 'parchisi.capture' && SND.prCapture) SND.prCapture();
+      else if (n.key === 'parchisi.entry10' && SND.prFinish) SND.prFinish();
+    } catch (er) {}
   },
 
   playerName(i) {
@@ -1924,6 +1928,30 @@ const ParchisiApp = {
 
   rc(t) { return { x: t.x + t.w / 2, y: t.y + t.h / 2 }; },
 
+  /* [PR-WALK] مسار الخانات بين موقعين منطقيين — البيدق يمشي عليها واحدة واحدة */
+  _hopPath(pc, prev, L) {
+    const e = this.engine;
+    const pts = [];
+    try {
+      if (prev.state === 'onboard' && pc.state === 'onboard' &&
+          pc.pos > prev.pos && pc.pos - prev.pos <= 20) {
+        for (let p = prev.pos + 1; p <= pc.pos; p++) {
+          let cell = null;
+          if (p < 64) cell = PR_TRACK[e.toGlobal(pc.owner, p)];
+          else {
+            const cor = PR_CORRIDOR[e.seats[pc.owner]];
+            cell = cor && cor[p - 64];
+          }
+          if (cell) { const xy = this.rc(cell); pts.push({ x: xy.x, y: xy.y }); }
+        }
+      }
+    } catch (er) {}
+    /* آخر نقطة = الموقع النهائي الدقيق (مع إزاحة التجميع) */
+    if (pts.length) pts[pts.length - 1] = { x: L.x, y: L.y };
+    else pts.push({ x: L.x, y: L.y });
+    return pts;
+  },
+
   /* مواقع القطع (مع إزاحة التكتّل) */
   pieceLayout() {
     const e = this.engine;
@@ -2311,20 +2339,51 @@ const ParchisiApp = {
     }
     const layout = this.pieceLayout();
     if (!this._animXY) this._animXY = new Map();
-    /* انسياب مريح بصرياً: البيادق تنزلق لخاناتها بهدوء بدل القفز الفوري */
+    if (!this._prLog) this._prLog = new Map();   /* [PR-WALK] آخر موقع منطقي لكل بيدق */
+    /* انسياب مريح بصرياً: البيادق تمشي خانةً خانة (مسير واقعي) بدل القفز الفوري */
     const k = this._frameDt ? (1 - Math.exp(-this._frameDt / 190)) : 1;
     const pulse = 0.55 + 0.45 * Math.sin(now / 260);
     for (const pl of e.players) {
       const seat = e.seats[pl.id];
       for (const pc of pl.pieces) {
-        if (pc.state === 'finished') continue;   /* تُرسم في المركز */
+        if (pc.state === 'finished') { this._prLog.set(pc, { state: 'finished', pos: pc.pos }); continue; }   /* تُرسم في المركز */
         const L = layout.get(pc);
         if (!L) continue;
         let ap = this._animXY.get(pc);
         if (!ap) {
-          ap = { x: L.x, y: L.y };
+          ap = { x: L.x, y: L.y, q: [] };
           this._animXY.set(pc, ap);
+          this._prLog.set(pc, { state: pc.state, pos: pc.pos });
+        }
+        /* [PR-WALK] تغيّر الموقع المنطقي ⇒ بناء مسار خانة-خانة */
+        const prev = this._prLog.get(pc);
+        if (!prev || prev.state !== pc.state || prev.pos !== pc.pos) {
+          const path = prev ? this._hopPath(pc, prev, L) : null;
+          this._prLog.set(pc, { state: pc.state, pos: pc.pos });
+          if (path) {
+            ap.q = path; ap._hl = null;
+            if (!this._replaying && typeof SND !== 'undefined') {
+              try {
+                if (prev.state === 'home' && pc.state === 'onboard') { if (SND.prEnter) SND.prEnter(); }
+                else if (pc.state === 'home') { /* ضحية قتل — الصوت من إشعار القتل */ }
+                else if (path.length > 1 && SND.prMove) SND.prMove();
+              } catch (er) {}
+            }
+          }
+        }
+        if (ap.q && ap.q.length) {
+          /* مسير بسرعة ثابتة: ~150مث لكل خانة — واقعي لا فجائي */
+          const wp = ap.q[0];
+          if (ap._hl == null) ap._hl = Math.max(1, Math.hypot(wp.x - ap.x, wp.y - ap.y));
+          const dtm = this._frameDt || 16;
+          const step = ap._hl * dtm / 150;
+          const dx = wp.x - ap.x, dy = wp.y - ap.y, dd = Math.hypot(dx, dy);
+          if (dd <= step || dd < 0.3) {
+            ap.x = wp.x; ap.y = wp.y; ap.q.shift(); ap._hl = null;
+            if (!this._replaying && ap.q.length && typeof SND !== 'undefined' && SND.prStep) { try { SND.prStep(); } catch (er) {} }
+          } else { ap.x += dx / dd * step; ap.y += dy / dd * step; }
         } else if (ap.x !== L.x || ap.y !== L.y) {
+          /* إزاحة تجميع داخل نفس الخانة: انسياب ناعم قصير */
           ap.x += (L.x - ap.x) * k;
           ap.y += (L.y - ap.y) * k;
           if (Math.abs(L.x - ap.x) < 0.25 && Math.abs(L.y - ap.y) < 0.25) { ap.x = L.x; ap.y = L.y; }

@@ -6399,3 +6399,81 @@ body.rami-game-open { overflow: hidden; }
 }
 .ab-dot-a { color: #3f7fff; font-size: 0.72em; vertical-align: 1px; }
 .ab-dot-b { color: #ff4d6d; font-size: 0.72em; vertical-align: 1px; }
+
+/* ═══ [BC-Portrait] باكارا: أوراق متجاوبة في البورتريه — لا قص إطلاقاً ═══
+   العلة: عرض ثابت 58px ×3 أوراق ×جانبين + فاصل > عرض الشاشة الضيقة. */
+@media (max-width: 540px) and (orientation: portrait) {
+  .bc-table { padding: 16px 6px; gap: 0; }
+  .bc-side { padding: 0 3px; gap: 8px; min-width: 0; }
+  .bc-vs { padding: 0 3px; }
+  .bc-cards { gap: 4px; min-height: 74px; flex-wrap: nowrap; }
+  .bc-card {
+    width: clamp(34px, 10.5vw, 58px);
+    height: auto;
+    aspect-ratio: 58 / 84;
+  }
+  .bc-total { min-width: 48px; padding: 5px 10px; }
+  /* ملء الشاشة: نفس المنطق يغلب أحجام app-fs الكبيرة */
+  #pg-game.app-fs .stage .bc-card {
+    width: clamp(34px, 10.5vw, 58px) !important;
+    height: auto !important;
+    aspect-ratio: 58 / 84;
+    font-size: clamp(1.4rem, 5vw, 2.4rem) !important;
+  }
+  #pg-game.app-fs .stage .bc-cards { min-height: clamp(70px, 14vh, 120px) !important; }
+}
+
+/* ═══ [BetUI] خانة الرهان: حلقتان دائريتان + إدخال يدوي — بلا حاوية مستطيلة ═══ */
+.bet-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold);
+  font-weight: 800;
+}
+.bet-field .fa-coins { font-size: 0.95rem; opacity: 0.9; }
+.bet-input {
+  width: 68px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid rgba(245, 197, 24, 0.55);
+  border-radius: 0;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-align: center;
+  padding: 3px 2px;
+  outline: none;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.bet-input::-webkit-outer-spin-button,
+.bet-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.bet-input:focus {
+  border-bottom-color: var(--gold);
+  box-shadow: 0 6px 14px -8px rgba(245, 197, 24, 0.7);
+}
+.bet-field.pulse { animation: bamtPulse 0.35s var(--ease); }
+
+/* ═══ [RoundBtn] زرا التعادل/الاستسلام (ضاما/شطرنج): دائرة بأيقونة فقط ═══ */
+.dama-mini.dama-round {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  border: 1px solid rgba(245, 197, 24, 0.55);
+  color: var(--gold);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s var(--ease);
+}
+.dama-mini.dama-round:hover {
+  background: rgba(245, 197, 24, 0.14);
+  box-shadow: 0 0 12px rgba(245, 197, 24, 0.5);
+}
+.dama-mini.dama-round:active { transform: scale(0.88); }

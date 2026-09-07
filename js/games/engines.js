@@ -17,17 +17,32 @@ let GB = 10;
 
 // ── Shared functions ──
 function betRow() {
-  return '<div class="bets">' +
+  /* [BetUI] حلقتان دائريتان − / + وخانة رقمية للإدخال اليدوي — بلا حاوية مستطيلة */
+  return '<div class="bets bets-min">' +
     '<button class="bbtn" onclick="chB(-10)" aria-label="تقليل الرهان">−</button>' +
-    '<div class="bamt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span id="GBd">' + GB + '</span></div>' +
+    '<span class="bet-field"><i class="fa-solid fa-coins" aria-hidden="true"></i>' +
+      '<input type="number" inputmode="numeric" class="bet-input" id="GBd" value="' + GB + '" min="10"' +
+      ' onfocus="this.select()" onchange="setBetInput(this)" aria-label="مبلغ الرهان"></span>' +
     '<button class="bbtn" onclick="chB(10)" aria-label="زيادة الرهان">+</button>' +
     '</div>';
+}
+/* [BetUI] GBd صار <input> — التحديث عبر value مع دعم أي عنصر نصي قديم */
+function _setGBd(v) {
+  const el = document.getElementById('GBd');
+  if (!el) return;
+  if ('value' in el && el.tagName === 'INPUT') el.value = v;
+  else el.textContent = v;
+}
+function setBetInput(el) {
+  const v = parseInt(el.value, 10);
+  GB = Math.max(10, Math.min(ST.gold || 100, isNaN(v) ? 10 : v));
+  _setGBd(GB);
+  SND.click();
 }
 function chB(d) {
   SND.click();
   GB = Math.max(10, Math.min(ST.gold || 100, GB + d));
-  const el = document.getElementById('GBd');
-  if (el) el.textContent = GB;
+  _setGBd(GB);
 }
 function take() {
   if (ST.gold < GB) {

@@ -539,8 +539,8 @@ function eChess(g) {
           '<div class="ch-log" id="chessLog"></div>' +
           '<div class="dama-status" id="chessStatus"></div>' +
           '<div class="dama-ctrls">' +
-            '<button class="dama-mini" id="chessDrawBtn" onclick="chessDrawOffer()"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('chess.drawBtn') + '</button>' +
-            '<button class="dama-mini" onclick="chessResign()"><i class="fa-solid fa-flag" aria-hidden="true"></i> ' + T('dama.resignBtn') + '</button>' +
+            '<button class="dama-mini dama-round" id="chessDrawBtn" onclick="chessDrawOffer()" title="' + T('chess.drawBtn') + '" aria-label="' + T('chess.drawBtn') + '"><i class="fa-solid fa-handshake" aria-hidden="true"></i></button>' +
+            '<button class="dama-mini dama-round" onclick="chessResign()" title="' + T('dama.resignBtn') + '" aria-label="' + T('dama.resignBtn') + '"><i class="fa-solid fa-flag" aria-hidden="true"></i></button>' +
           '</div>' +
           '<div class="dama-drawbar" id="chessDrawBar" hidden>' +
             '<span id="chessDrawTxt"></span>' +
@@ -898,15 +898,35 @@ function chessStopTimer() {
 function chessStartTimer() {
   chessStopTimer();
   if (!CHESS || !CHESS.state || CHESS.state.over) return;
-  if (!CHESS.timer || CHESS.mode !== 'local') return;
+  if (!CHESS.timer) return;
+  /* [RS-GameOpts] في الغرفة: المؤقت يعمل على دوري فقط وبحركة آلية متزامنة عند انتهائه
+     (لا إنهاء محلي أحادي الجانب يفسد التزامن) */
+  if (CHESS.mode === 'room') {
+    if (CHESS.isSpectator || CHESS.state.turn !== CHESS.myColor) return;
+  } else if (CHESS.mode !== 'local') return;
   CHESS._turnLeft = CHESS.timer;
   chessRenderTimer();
   CHESS._turnTi = setInterval(function () {
     if (!CHESS || !CHESS.state || CHESS.state.over) { chessStopTimer(); return; }
     CHESS._turnLeft--;
     chessRenderTimer();
-    if (CHESS._turnLeft <= 0) chessTimeout();
+    if (CHESS._turnLeft <= 0) {
+      if (CHESS.mode === 'room') chessRoomAutoMove();
+      else chessTimeout();
+    }
   }, 1000);
+}
+/* [RS-GameOpts] انتهاء مؤقت دورك في الغرفة: حركة قانونية آلية تُبث للجميع */
+function chessRoomAutoMove() {
+  chessStopTimer();
+  if (!CHESS || !CHESS.state || CHESS.state.over) return;
+  var lm = chessLegalMoves(CHESS.state);
+  if (!lm.length) return;
+  var quiet = lm.filter(function (m) { return !m.capture; });
+  var mv = quiet.length ? quiet[Math.floor(Math.random() * quiet.length)] : lm[0];
+  chessSetStatus(T('chess.timeUp') || 'انتهى الوقت');
+  if (typeof SND !== 'undefined' && SND.lose) { try { SND.lose(); } catch (e) {} }
+  chessPlayMove(mv);
 }
 function chessRenderTimer() {
   var el = document.getElementById('chessTimer');
@@ -1218,6 +1238,8 @@ function chessRoomStart(room) {
 function chessStartRoom(myColor, oppBot, spec, bet) {
   if (!CHESS) initChess();
   CHESS.mode = 'room';
+  /* [RS-GameOpts] مؤقت الدور من إعدادات الغرفة (اختيار المالك) */
+  if (typeof window !== 'undefined' && window.CH_ROOM_TIMER != null) CHESS.timer = window.CH_ROOM_TIMER || 0;
   CHESS.myColor = myColor;
   CHESS.oppBot = !!oppBot;
   CHESS.isSpectator = !!spec;

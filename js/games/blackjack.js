@@ -14,18 +14,21 @@ let bDbl = [false, false]; /* مضاعفة لكل يد: [اليد الأصلية
 let bSeq = 0; /* عدّاد الجولات — لإبطال الأنيميشن القديم عند توزيع جولة جديدة */
 /* ── نبض عدّاد الرهان عند تغيّر قيمته ── */
 function bindBetPulse() {
-  if (typeof MutationObserver !== 'function') return;
+  /* [BetUI] GBd صار <input> — النبض عند تغيّر القيمة (input event بدل MutationObserver) */
   setTimeout(function () {
     const el = document.getElementById('GBd');
     if (!el) return;
-    const obs = new MutationObserver(function () {
-      const b = el.closest('.bamt');
+    const fire = function () {
+      const b = el.closest('.bet-field') || el.closest('.bamt');
       if (!b) return;
       b.classList.remove('pulse');
       void b.offsetWidth;
       b.classList.add('pulse');
-    });
-    obs.observe(el, { childList: true, characterData: true, subtree: true });
+    };
+    if (el.tagName === 'INPUT') { el.addEventListener('input', fire); el.addEventListener('change', fire); }
+    else if (typeof MutationObserver === 'function') {
+      new MutationObserver(fire).observe(el, { childList: true, characterData: true, subtree: true });
+    }
   }, 0);
 }
 /* ── بناء الواجهة ── */

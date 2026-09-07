@@ -529,8 +529,8 @@ function eDama(g) {
         '</div>' +
         '<div class="dama-status" id="damaStatus"></div>' +
         '<div class="dama-ctrls">' +
-          '<button class="dama-mini" id="damaDrawBtn" onclick="damaDrawOffer()"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('dama.drawBtn') + '</button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
-          '<button class="dama-mini" onclick="damaResign()"><i class="fa-solid fa-flag" aria-hidden="true"></i> ' + T('dama.resignBtn') + '</button>' +
+          '<button class="dama-mini dama-round" id="damaDrawBtn" onclick="damaDrawOffer()" title="' + T('dama.drawBtn') + '" aria-label="' + T('dama.drawBtn') + '"><i class="fa-solid fa-handshake" aria-hidden="true"></i></button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
+          '<button class="dama-mini dama-round" onclick="damaResign()" title="' + T('dama.resignBtn') + '" aria-label="' + T('dama.resignBtn') + '"><i class="fa-solid fa-flag" aria-hidden="true"></i></button>' +
         '</div>' +
         '<div class="dama-drawbar" id="damaDrawBar" hidden>' +   /* [B10] شريط مصادقة التعادل الوارد من الخصم */
           '<span id="damaDrawTxt"></span>' +
@@ -1356,6 +1356,8 @@ function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
   /* [Persist] استهلاك علم إعادة الانضمام (الرهان يُدار خادمياً في ضاما — لا خصم محلي) */
   if (typeof Rooms !== 'undefined' && Rooms && Rooms._rejoinLive) Rooms._rejoinLive = false;
   DAMA = DAMA || {};
+  /* [RS-GameOpts] مؤقت الدور من إعدادات الغرفة (اختيار المالك) */
+  if (typeof window !== 'undefined' && window.DM_ROOM_TIMER != null) DAMA.timeLimit = window.DM_ROOM_TIMER || 0;
   DAMA.eng = new DamaEngine();
   DAMA.state = damaNewState();
   DAMA.human = myColor;                 /* لوني (null للمتفرج) */
