@@ -105,6 +105,8 @@
       }
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
+        /* [RS-GameOpts] إعدادات اللعبة المخزنة في الغرفة تُطبق عند كل العملاء قبل البدء */
+        if (room.game_opts) { try { Rooms._applyGameOpts(room.game_id, room.game_opts); } catch (e) {} }
         Rooms.closeModal();
         /* [إصلاح] اللاعب خارج صفحة اللعبة عند البدء (مثلاً في الرئيسية) — افتحها أولاً
            ثم أطلق المعالج بعد أن تسجّله اللعبة أثناء فتحها */
@@ -454,6 +456,19 @@
         { key: 'target', label: T('rami.target') || 'الهدف', opts: [['single', T('rami.singleRound') || 'جولة واحدة'], ['301', '301'], ['501', '501'], ['701', '701']], def: 'single' },
         timer90
       ];
+      if (gid === 'rn') return [
+        { key: 'mode', label: T('rn.mode') || 'نمط التخمين', opts: [['number_only', (T('rn.modeNum') || 'الرقم فقط') + ' ×2'], ['number_symbol', (T('rn.modeSym') || 'الرقم والرمز') + ' ×3']], def: 'number_only' }
+      ];
+      if (gid === 'pr') return [
+        { key: 'mode', label: T('parchisi.mode') || 'نمط اللعب', opts: [['classic', T('parchisi.modeClassic') || 'كلاسيك'], ['rapido', T('parchisi.modeRapido') || 'رابيدو'], ['spanish', T('parchisi.modeSpanish') || 'إسباني']], def: 'classic' },
+        timer
+      ];
+      if (gid === 'rp') return [
+        { key: 'rounds', label: T('rp.rounds') || 'عدد الجولات', opts: [[3, '3'], [5, '5'], [7, '7']], def: 3 }
+      ];
+      if (gid === 'pn') return [
+        { key: 'rounds', label: T('pn.rounds') || 'عدد الركلات', opts: [[5, '5'], [7, '7'], [9, '9']], def: 5 }
+      ];
       if (gid === 'dm' || gid === 'ch') return [timer];
       if (gid === 'blca') return [
         { key: 'disc', label: T('bl.caDisc') || 'الاختصاص', opts: [['FREE', T('bl.caFree') || 'حرة'], ['ONE', T('bl.caOne') || 'وسادة'], ['THREE', T('bl.caThree') || '3 وسائد']], def: 'THREE' },
@@ -471,7 +486,14 @@
     _renderGameOpts: function (gid) {
       var box = document.getElementById('rsGameOpts');
       if (!box) return;
-      var defs = Rooms._gameOptsDefs(gid);
+      var defs = Rooms._gameOptsDefs(gid).slice();
+      /* [RS-GameOpts] الألعاب الجماعية (سعة > 2): خانة تحديد عدد اللاعبين */
+      var cap = Rooms.maxFor(gid);
+      if (cap > 2) {
+        var po = [];
+        for (var n = 2; n <= cap; n++) po.push([n, String(n)]);
+        defs.unshift({ key: 'maxp', label: T('rm.playersCount') || 'عدد اللاعبين', opts: po, def: cap });
+      }
       if (!defs.length) { box.innerHTML = ''; return; }
       var html = '';
       for (var i = 0; i < defs.length; i++) {
@@ -497,13 +519,17 @@
     _applyGameOpts: function (gid, o) {
       if (!o) return;
       try {
-        if (gid === 'rm') {
+        if (gid === 'rn') { window.RN_ROOM_CFG = o; }
+        else if (gid === 'pr') { window.PR_ROOM_CFG = o; }
+        else if (gid === 'rp' || gid === 'pn') { window.HTH_ROUNDS = window.HTH_ROUNDS || {}; window.HTH_ROUNDS[gid] = o.rounds || 0; }
+        else if (gid === 'rm') {
           window.RAMI_ROOM_CFG = o;   /* يقرؤها _netConfig عند بدء جولة الغرفة */
           if (o.mode) {
             window.RAMI_SETUP_MODE = (o.mode === 'simple') ? 'simple' : 'talaj';
             if (typeof ramiSetMode === 'function') { try { ramiSetMode(window.RAMI_SETUP_MODE); } catch (e) {} }
           }
-        } else if (gid === 'dm') {
+        }
+        else if (gid === 'dm') {
           window.DM_ROOM_TIMER = o.timer || 0;
           if (typeof DAMA !== 'undefined' && DAMA) DAMA.timeLimit = o.timer || 0;
         } else if (gid === 'ch') {
@@ -586,9 +612,12 @@
       }
       if (rt) rt.classList.remove('err');
       if (bet) bet.classList.remove('err');
-      /* [RS-GameOpts] تطبيق إعدادات اللعبة على حالة المالك قبل إنشاء الغرفة */
-      Rooms._applyGameOpts(gid, Rooms._collectGameOpts(gid));
-      Rooms.createRoom(gid, { room_type: roomType, bet: betVal, visibility: visVal }).then(function () {
+      /* [RS-GameOpts] إعدادات اللعبة تُخزَّن في الغرفة على الخادم وتُبث لكل المنضمين */
+      var gOpts = Rooms._collectGameOpts(gid);
+      var mEl = document.getElementById('rsOpt_maxp');
+      var maxp = mEl ? (parseInt(mEl.value, 10) || 0) : 0;
+      Rooms._applyGameOpts(gid, gOpts);
+      Rooms.createRoom(gid, { room_type: roomType, bet: betVal, visibility: visVal, game_opts: gOpts, max_players: maxp }).then(function () {
         var sm = document.getElementById('roomSettingsModal');
         if (sm) sm.style.display = 'none';
       });
@@ -642,14 +671,19 @@
       var bet = 0;
       var roomType = 'hour';
       var visibility = 'public';
+      var gOpts = null;
       if (typeof opts === 'number') {
         bet = opts;
       } else if (opts && typeof opts === 'object') {
         bet = (typeof opts.bet === 'number') ? opts.bet : 0;
         if (opts.room_type) roomType = opts.room_type;
         if (opts.visibility === 'private') visibility = 'private';
+        if (opts.game_opts) gOpts = opts.game_opts;
+        /* [RS-GameOpts] عدد اللاعبين المختار (ضمن سعة اللعبة) */
+        if (opts.max_players && opts.max_players >= 2 && opts.max_players <= max) max = opts.max_players;
       }
       var payload = { game_id: gameId, max_players: max, bet: bet, room_type: roomType, visibility: visibility };
+      if (gOpts) payload.game_opts = gOpts;
       return API.post('/api/rooms', payload).then(function (r) {
         if (!r.ok) {
           var msg = (r.data && r.data.message) || T('ui.roomError');
@@ -676,15 +710,23 @@
           Rooms.render();
           return;
         }
-        Rooms.state = r.data.room;
-        Rooms._persistRoom(r.data.room);   /* [Persist] */
-        /* [Persist] عائد لجولة جارية: لا خصم رهان مكرر عند إعادة تهيئة اللعبة */
+        /* [Persist] عائد/منضم لجولة جارية: لا خصم رهان مكرر عند إعادة تهيئة اللعبة */
         Rooms._rejoinLive = (r.data.room.status === 'playing');
-        /* فتح اللعبة إن لم تكن مفتوحة */
-        var gid = r.data.room.game_id;
-        if (typeof openGame === 'function' && window._currentGameId !== gid) openGame(gid);
-        Rooms.render();
-        Rooms.openModal();
+        if (r.data.room.status === 'playing') {
+          /* [RoomFlow] غرفة جارية (لاعب عائد أو متفرج جديد): مسار البدء الكامل —
+             فتح اللعبة، إطلاق startHandler، وإعادة بناء الجولة من سجل الخادم (room:replay) */
+          Rooms.state = null;   /* يضمن prevStatus ≠ playing داخل _onUpdate */
+          Rooms._onUpdate(r.data.room);
+          setTimeout(function () { Rooms.requestReplay(); }, 700);
+        } else {
+          Rooms.state = r.data.room;
+          Rooms._persistRoom(r.data.room);   /* [Persist] */
+          /* فتح اللعبة إن لم تكن مفتوحة */
+          var gid = r.data.room.game_id;
+          if (typeof openGame === 'function' && window._currentGameId !== gid) openGame(gid);
+          Rooms.render();
+          Rooms.openModal();
+        }
       });
     },
     /* [MP-AI] المضيف يضيف لاعباً آلياً لملء مقعد */
@@ -703,13 +745,7 @@
     },
     leaveRoom: function () {
       if (!Rooms.state) return;
-      /* [Req6] المُنشئ لا يغلق الغرفة حتى ينتهي الرهان الجاري */
-      var u = me();
-      var isOwner = Rooms.state.owner_id === (u && u.id);
-      if (isOwner && Rooms.state.status === 'playing') {
-        toast('لا يمكن إغلاق الغرفة حتى انتهاء الرهان الجاري — انتظر نهاية المباراة', 'warn');
-        return;
-      }
+      /* [RoomFlow] الخروج سلس في أي وقت — الخادم ينقل الملكية ويُبقي الغرفة حية ما بقي لاعبون */
       var id = Rooms.state.id;
       Rooms.state = null;
       return API.post('/api/rooms/leave', { room_id: id }).then(function () {
@@ -754,12 +790,18 @@
     },
     setReady: function (ready) {
       if (!Rooms.state) return;
-      API.post('/api/rooms/ready', { room_id: Rooms.state.id, ready: !!ready }).then(function () {});
+      API.post('/api/rooms/ready', { room_id: Rooms.state.id, ready: !!ready }).then(function (r) {
+        /* [RoomFix] تحديث فوري من الاستجابة — لا انتظار للبث */
+        if (r && r.ok && r.data && r.data.room) Rooms._onUpdate(r.data.room);
+        else if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
+      });
     },
     startGame: function () {
       if (!Rooms.state) return;
       API.post('/api/rooms/start', { room_id: Rooms.state.id }).then(function (r) {
-        if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
+        if (!r.ok) { toast((r.data && r.data.message) || T('ui.roomError'), 'err'); return; }
+        /* [RoomFix] إطلاق فوري عند المالك من الاستجابة (البث يغطي الآخرين) */
+        if (r.data && r.data.room) Rooms._onUpdate(r.data.room);
       });
     },
     sendMove: function (action, data, state) {
@@ -796,6 +838,7 @@
       var target = !(mine && mine.spectate);
       API.post('/api/rooms/spectate', { room_id: Rooms.state.id, spectate: target }).then(function (r) {
         if (!r.ok) toast((r.data && r.data.message) || T('ui.roomError'), 'err');
+        else if (r.data && r.data.room) Rooms._onUpdate(r.data.room);   /* [RoomFix] */
       });
     },
     /* [Spectator] طلب الانضمام كمشغل عند تفرّغ مقعد */
@@ -954,6 +997,14 @@
         }
       } else {
         btns += '<div class="ctext" style="padding:8px 0;text-align:center">▶ ' + T('ui.roomPlaying') + '</div>';
+        /* [RoomFlow] عودة سريعة لطاولة اللعب */
+        btns += '<button class="btn half gold" onclick="Rooms.closeModal(); if (typeof openGame === \'function\' && Rooms.state) openGame(Rooms.state.game_id);">🎮 ' + (T('ui.roomBackToGame') || 'العودة للعبة') + '</button>';
+        /* [RoomFlow] متفرج أثناء اللعب: طلب مقعد — يُرقّى تلقائياً حين يفرغ */
+        if (mySpect) {
+          btns += Rooms.myJoinPending()
+            ? '<div class="ctext2" style="padding:6px 0;text-align:center">⏳ ' + (T('ui.roomSeatPending') || 'في انتظار مقعد شاغر…') + '</div>'
+            : '<button class="btn half" onclick="Rooms.requestJoin()">🎮 ' + (T('ui.roomRequestSeat') || 'اطلب مقعداً للعب') + '</button>';
+        }
       }
       btns += '<button class="btn ghost full" onclick="Rooms.leaveRoom()">' + T('ui.roomLeave') + '</button>';
 

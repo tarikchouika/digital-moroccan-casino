@@ -50,12 +50,27 @@
       self._ws.onmessage = function (ev) {
         var m;
         try { m = JSON.parse(ev.data); } catch (e) { return; }
-        var evObj = { data: JSON.stringify(m.data) };
-        /* توزيع واحد: كل مستمع مسجَّل على أي واجهة يُستدعى مرة واحدة فقط */
-        for (var i = 0; i < self.facades.length; i++) {
-          var ls = self.facades[i]._listeners[m.event];
-          if (!ls) continue;
-          for (var j = 0; j < ls.length; j++) try { ls[j](evObj); } catch (e) { }
+        /* [RoomFix] أحداث غرفة اللعب تصل على قناة الغرفة الخاصة، لكن مستمعي rooms.js
+           مسجلون على واجهة global (EventSource '/api/live') — وزّع على الواجهتين معاً.
+           هذه كانت العلة الجذرية: «جاهز/بدء» لا يصلان أحداً حتى تجديد الصفحة. */
+        var targets = self.facades.slice();
+        if (self.rid !== 'global' && globalChannel && !globalChannel.closed) {
+          for (var t = 0; t < globalChannel.facades.length; t++) {
+            if (targets.indexOf(globalChannel.facades[t]) === -1) targets.push(globalChannel.facades[t]);
+          }
+        }
+        var msgs = [m];
+        /* [RoomFix] hello من غرفة لعب يحمل آخر حالة — ترجمة إلى room:update لمزامنة فورية عند الاتصال/العودة */
+        if (self.rid !== 'global' && m.event === 'hello' && m.data && m.data.room !== undefined) {
+          msgs.push({ event: 'room:update', data: m.data.room });
+        }
+        for (var k = 0; k < msgs.length; k++) {
+          var evObj = { data: JSON.stringify(msgs[k].data) };
+          for (var i = 0; i < targets.length; i++) {
+            var ls = targets[i]._listeners[msgs[k].event];
+            if (!ls) continue;
+            for (var j = 0; j < ls.length; j++) try { ls[j](evObj); } catch (e) { }
+          }
         }
       };
     },

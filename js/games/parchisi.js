@@ -1139,6 +1139,10 @@ const ParchisiApp = {
     if (roomMode) {
       /* غرفة: خريطة المقاعد تُجمَّد عند البدء (room_state يوثّقها لمن يعود لاحقاً) */
       const room = Rooms.state;
+      /* [RS-GameOpts] نمط اللعب المختار في إعدادات الغرفة (يصل للجميع عبر game_opts) */
+      const prCfg = (room && room.game_opts) || (typeof window !== 'undefined' && window.PR_ROOM_CFG) || null;
+      if (prCfg && prCfg.mode && PR_MODES[prCfg.mode]) { this.mode = prCfg.mode; modeKey = prCfg.mode; }
+      if (prCfg && typeof prCfg.timer === 'number') this.turnTimer = prCfg.timer;
       const byId = {};
       (room.players || []).forEach(p => { byId[String(p.id)] = p; });
       const rs = (room && room.room_state) || {};

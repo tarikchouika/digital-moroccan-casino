@@ -161,7 +161,8 @@ function renderTourney() {
 function renderRooms() {
   const el = document.getElementById('roomsList');
   if (!el) return;
-  el.innerHTML = '<div class="note">…</div>';
+  /* [RoomFlow] لا مسح قبل الجلب — التحديث الدوري كان يجعل الغرف تومض وتختفي كل 5 ثوانٍ */
+  if (!el.childElementCount) el.innerHTML = '<div class="note">…</div>';
   API.get('/api/rooms').then(function (r) {
     const rooms = (r.ok && r.data && r.data.rooms) ? r.data.rooms : [];
     if (!rooms.length) {
@@ -176,12 +177,11 @@ function renderRooms() {
         ? '<span class="spill bad">🔴 ' + T('rooms.playing') + '</span>'
         : '<span class="spill ok">⏳ ' + T('rooms.waiting') + '</span>';
       let action = '';
+      /* [RoomFlow] كل غرفة قابلة للدخول: مقعد إن وُجد، وإلا فرجة (حتى أثناء اللعب) */
       if (rm.status === 'waiting' && rm.players_count < rm.max_players) {
         action = '<button class="btn" onclick="joinOpenRoom(\'' + esc(rm.code) + '\')">' + T('rooms.join') + '</button>';
-      } else if (rm.status === 'waiting') {
-        action = '<span class="spill bad">' + T('rooms.full') + '</span>';
       } else {
-        action = '<span class="spill bad">🔴 ' + T('rooms.playing') + '</span>';
+        action = '<button class="btn ghost" onclick="joinOpenRoom(\'' + esc(rm.code) + '\')">👁️ ' + (T('rooms.spectate') || 'مشاهدة') + '</button>';
       }
       return '<div class="card">' +
         '<div style="font-size:1.6rem;text-align:center">' + g.em + '</div>' +

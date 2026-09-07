@@ -1181,6 +1181,11 @@ class RondaPlatformAdapter {
 
     this.core = new RondaGame({ rng: new LocalRandomProvider(), multiplayer: true });
     this.core.myRole = myRole;
+    /* [RS-GameOpts] نمط التخمين من إعدادات الغرفة — يغني عن اختيار يدوي عند البدء */
+    try {
+      var rnCfg = (room && room.game_opts) || window.RN_ROOM_CFG || null;
+      if (rnCfg && rnCfg.mode && !((room.room_state || {}).mode)) this._presetMode = rnCfg.mode;
+    } catch (e) {}
     this.renderer = new RondaRenderer(this.core);
     this.renderer.mount('rnContainer');
     this.room = {
@@ -1232,6 +1237,8 @@ class RondaPlatformAdapter {
     }
     /* المالك قبل أول جولة — يختار الوضع عبر أزرار الشريط السفلي */
     if (isOwner && !rs.mode) {
+      /* [RS-GameOpts] نمط محدد مسبقاً في إعدادات الغرفة → تطبيق مباشر بلا اختيار يدوي */
+      if (this._presetMode) { var pm = this._presetMode; this._presetMode = null; this.chooseMode(pm); return; }
       this.renderer._renderRound();
     } else {
       this.renderer._showOwnerRoundStart();

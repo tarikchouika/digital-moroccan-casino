@@ -1435,7 +1435,8 @@ function rpsRoomSettle() {
   else if (oppWin) txt += '\n😅 ' + T('rp.loseRound');
   else txt += '\n🤝 ' + T('rp.tieRound');
   if (el) el.textContent = txt;
-  if (rpRoom.round >= 3) {
+  var rpMax = (window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3;   /* [RS-GameOpts] */
+  if (rpRoom.round >= rpMax) {
     var finalTxt = '';
     if (rpRoom.myWins > rpRoom.oppWins) finalTxt = '\n🏆 ' + T('rp.matchWin') + ' ' + rpRoom.myWins + ':' + rpRoom.oppWins + '!';
     else if (rpRoom.oppWins > rpRoom.myWins) finalTxt = '\n' + T('rp.matchLose') + ' ' + rpRoom.myWins + ':' + rpRoom.oppWins;
@@ -1466,9 +1467,9 @@ function rpsRoomUi() {
     return;
   }
   if (rpRoom.waiting) {
-    el.textContent = '⏳ ' + T('rp.roomWaiting') + (rpRoom.oppPicked ? ' — ' + T('rp.oppPicked') : '') + ' (' + T('rp.round') + ' ' + rpRoom.round + '/3 — ' + (rpRoom.oppName || T('rp.opp')) + ')';
+    el.textContent = '⏳ ' + T('rp.roomWaiting') + (rpRoom.oppPicked ? ' — ' + T('rp.oppPicked') : '') + ' (' + T('rp.round') + ' ' + rpRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3) + ' — ' + (rpRoom.oppName || T('rp.opp')) + ')';
   } else {
-    el.textContent = '🎮 ' + T('rp.roomGo') + '  (' + T('rp.round') + ' ' + rpRoom.round + '/3 — ' + T('rp.you') + ' ' + rpRoom.myWins + ' : ' + rpRoom.oppWins + ')';
+    el.textContent = '🎮 ' + T('rp.roomGo') + '  (' + T('rp.round') + ' ' + rpRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3) + ' — ' + T('rp.you') + ' ' + rpRoom.myWins + ' : ' + rpRoom.oppWins + ')';
   }
 }
 
@@ -1653,7 +1654,8 @@ function pnRoomSettle() {
     f.res.textContent = T('pn.shot') + ': ' + pnLabel(pnRoom.shootD) + '  —  ' + T('pn.keep') + ': ' + pnLabel(pnRoom.saveD) +
       (goal ? '\n🥅 ' + T('pn.goal') : '\n🙌 ' + T('pn.save'));
   }
-  if (pnRoom.round >= 5) {
+  var pnMax = (window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5;   /* [RS-GameOpts] */
+  if (pnRoom.round >= pnMax) {
     var finalTxt = '';
     if (pnRoom.myScore > pnRoom.oppScore) finalTxt = '\n🏆 ' + T('pn.matchWin') + ' ' + pnRoom.myScore + ':' + pnRoom.oppScore + '!';
     else if (pnRoom.oppScore > pnRoom.myScore) finalTxt = '\n' + T('pn.matchLose') + ' ' + pnRoom.myScore + ':' + pnRoom.oppScore;
@@ -1686,10 +1688,10 @@ function pnRoomUi() {
   var score = '(' + T('pn.you') + ' ' + pnRoom.myScore + ' : ' + pnRoom.oppScore + ')';
   if (pnRoom.waiting) {
     if (role) role.textContent = attacker ? '⚽ ' + T('pn.shotSent') : '🧤 ' + T('pn.saveSent');
-    el.textContent = '⏳ ' + T('pn.roomWaiting') + (pnRoom.oppPicked ? ' — ' + T('pn.oppPicked') : '') + ' (' + T('pn.round') + ' ' + pnRoom.round + '/5) ' + score;
+    el.textContent = '⏳ ' + T('pn.roomWaiting') + (pnRoom.oppPicked ? ' — ' + T('pn.oppPicked') : '') + ' (' + T('pn.round') + ' ' + pnRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5) + ') ' + score;
   } else {
     if (role) role.textContent = attacker ? '⚽ ' + T('pn.youShoot') : '🧤 ' + T('pn.youSave');
-    el.textContent = (attacker ? '🎮 ' + T('pn.roomGo') : '🎮 ' + T('pn.roomGoSave')) + ' (' + T('pn.round') + ' ' + pnRoom.round + '/5) ' + score;
+    el.textContent = (attacker ? '🎮 ' + T('pn.roomGo') : '🎮 ' + T('pn.roomGoSave')) + ' (' + T('pn.round') + ' ' + pnRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5) + ') ' + score;
   }
 }
 
