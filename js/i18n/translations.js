@@ -17,6 +17,7 @@ const TR = {
   'rd.ronda': [ 'روندا', 'Ronda', 'Ronda', 'روندا' ],
   'rd.trenda': [ 'تريندا', 'Trenda', 'Trenda', 'تريندا' ],
   'rd.quadra': [ 'كوادرا', 'Quadra', 'Quadra', 'كوادرا' ],
+  'rd.declWin': [ 'يفوز بالإعلانات', 'gagne les déclarations', 'wins the declarations', 'ربح الإعلانات' ],
   'rd.redeal': [ 'توزيعة جديدة', 'Nouvelle donne', 'New deal', 'تفريقة جديدة' ],
   'rd.newRound': [ 'جولة جديدة', 'Nouvelle manche', 'New round', 'جولة جديدة' ],
   'rd.win': [ 'فزت بالمباراة!', 'Vous avez gagné !', 'You won the match!', 'ربحتي الماتش!' ],

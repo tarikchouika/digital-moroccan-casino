@@ -159,15 +159,24 @@ class RondaCardEngine {
     this.phase = 'Playing';
     this.emit('redeal', {});
   }
-  /* الإعلانات في التوزيعة الأولى فقط (كما في RondaGame.Start) —
-     تُحتسب نقاطها فوراً لفريق المُعلن (تفسير موثّق للغموض المذكور في README) */
+  /* [قواعد الوثيقة] الإعلانات عند بداية توزيع الجولة: روندا(زوج)=1، تريندا(3)=3.
+     «الكبيرة تفوز على الجميع»: صاحب الإعلان الأقوى (النوع ثم الرتبة) وحده يسجّل،
+     ويفوز بمجموع نقاط كل الإعلانات المتشابهة عند جميع اللاعبين. */
   _evalDeclarations() {
+    const all = [];
     for (const p of this.players) {
       for (const d of rdEvaluateDeclarations(p, this.rules.allowQuadra)) {
-        this.addTeamScore(p.teamId, d.points, d.type);
+        all.push({ player: p, d });
         this.emit('declaration', { playerId: p.id, rank: d.rank, declType: d.type, points: d.points });
       }
     }
+    if (!all.length) return;
+    const strength = (x) => x.d.points * 100 + x.d.rank;   /* النوع أولاً ثم الرتبة الأعلى */
+    all.sort((a, b) => strength(b) - strength(a));
+    const winner = all[0];
+    const total = all.reduce((s, x) => s + x.d.points, 0);
+    this.addTeamScore(winner.player.teamId, total, 'declWin');
+    this.emit('declWin', { playerId: winner.player.id, rank: winner.d.rank, declType: winner.d.type, total });
   }
   legalCards(playerId) {
     const p = this.getPlayer(playerId);
@@ -475,6 +484,12 @@ function rdConsumeEvents() {
         const who = ev.playerId === 0 ? (T('rd.you') || 'أنت') : '🤖';
         const nm = ev.declType === 'quadra' ? (T('rd.quadra') || 'كوادرا') : ev.declType === 'trenda' ? (T('rd.trenda') || 'تريندا') : (T('rd.ronda') || 'روندا');
         rdSay('📣 ' + who + ': ' + nm + ' +' + ev.points);
+        if (SND.coin) { try { SND.coin(); } catch (er) {} }
+        break;
+      }
+      case 'declWin': {
+        const who = ev.playerId === 0 ? (T('rd.you') || 'أنت') : '🤖';
+        rdSay('👑 ' + who + ' ' + (T('rd.declWin') || 'يفوز بالإعلانات') + ' +' + ev.total);
         if (SND.coin) { try { SND.coin(); } catch (er) {} }
         break;
       }
