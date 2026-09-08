@@ -103,6 +103,12 @@
       if (room && room.room_type === 'hour' && room.expires_at && !Rooms._cdTi) {
         Rooms._cdTi = setInterval(function () { Rooms._renderCountdown(); }, 1000);
       }
+      /* [SYNC-FIX] انتهت الجولة (playing → waiting): تُعلَم اللعبة كي تعطّل
+         محركها القديم — بدء الجولة التالية يعيد البناء نظيفاً عند كل الأطراف.
+         (كانت لوحة الجولة السابقة تبقى حية عند طرف وتبدأ نظيفة عند آخر = فقدان مزامنة) */
+      if (room && prevStatus === 'playing' && room.status !== 'playing') {
+        try { if (typeof window !== 'undefined' && typeof window.onRoomRoundEnded === 'function') window.onRoomRoundEnded(room); } catch (e) {}
+      }
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
         /* [RS-GameOpts] إعدادات اللعبة المخزنة في الغرفة تُطبق عند كل العملاء قبل البدء */

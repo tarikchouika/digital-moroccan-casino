@@ -916,6 +916,32 @@ const ParchisiApp = {
       }
     }
     if (typeof window !== 'undefined') window.applyRoomReplay = (d) => ParchisiApp.applyRoomReplay(d);
+    /* [SYNC-FIX] العودة من الخلفية: rAF كان متوقفاً والمشي متكدس — قفز فوري للمواضع النهائية */
+    if (typeof document !== 'undefined' && !window.__prVisBound) {
+      window.__prVisBound = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden || !ParchisiApp.engine || !ParchisiApp.gameActive) return;
+        try {
+          ParchisiApp._walkFifo = [];
+          const layout = ParchisiApp.pieceLayout();
+          if (ParchisiApp._animXY) for (const [pc, ap] of ParchisiApp._animXY) {
+            const L = layout.get(pc);
+            if (L) { ap.x = L.x; ap.y = L.y; }
+            ap.q = []; ap._hl = null;
+          }
+          ParchisiApp.draw();
+        } catch (e) {}
+      });
+    }
+    /* [SYNC-FIX] نهاية جولة الغرفة: تعطيل المحرك القديم كي يبدأ التالي نظيفاً */
+    if (typeof window !== 'undefined') window.onRoomRoundEnded = () => {
+      if (ParchisiApp.roomMode && ParchisiApp.gameActive) {
+        ParchisiApp.gameActive = false;
+        ParchisiApp._autoTurn = false;
+        clearTimeout(ParchisiApp._aiT);
+        ParchisiApp.stopTimer();
+      }
+    };
     /* تصفير حالة فتح سابق */
     this.engine = null;
     this.gameActive = false;

@@ -814,6 +814,7 @@ function blDrawSinks(ctx, R) {
     var sx = sk.x + (sk.tx - sk.x) * p;
     var sy = sk.y + (sk.ty - sk.y) * p;
     var rr = R * (1 - 0.62 * e);                         /* تقلّص الغوص */
+    if (!isFinite(rr) || rr <= 0.1) continue;            /* [SYNC-FIX] حارس: نصف قطر شاذ يكسر حلقة الرسم كلها */
     ctx.save();
     ctx.globalAlpha = 1 - 0.9 * e * e;                   /* تعتيم متأخر داخل الفوهة */
     var col = sk.col;
@@ -883,8 +884,8 @@ function blTick(now) {
   }
   blMaybeAI();
   blTimerTick(now);
-  blDraw();
-  blUpdateHud();
+  /* [SYNC-FIX] استثناء في الرسم يجب ألا يقتل الحلقة — موتها = تجمد كامل وفقدان مزامنة */
+  try { blDraw(); blUpdateHud(); } catch (e) { if (!B._drawErrOnce) { B._drawErrOnce = true; console.error('[bl] draw', e && e.message); } }
   B.raf = requestAnimationFrame(blTick);
 }
 
@@ -1612,6 +1613,7 @@ function blDrawBall(ctx, b, R, S) {
   /* بلاكبول: البيضاء 47.6مم مقابل 50.8مم لكرات الهدف (رسمياً) */
   if (b.type === 'CUE' && S && S.table && S.table.cueScale) R = R * S.table.cueScale;
   var x = b.x, y = b.y;
+  if (!isFinite(x) || !isFinite(y) || !isFinite(R) || R <= 0) return;   /* [SYNC-FIX] كرة بموضع شاذ تكسر الرسم كله */
   ctx.beginPath(); ctx.ellipse(x + R * 0.16, y + R * 0.24, R * 1.02, R * 0.9, 0, 0, 7);
   ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill();
   var col = (b.type === 'CUE' || b.group === 'WHITE') ? null : (BL_SNCOLORS[b.group] || BL_BBCOLORS[b.type] || BL_COLORS[b.value] || '#c0392b');
@@ -1706,13 +1708,42 @@ function blRoomMove(d) {
   }
   blApplyIncoming(d);
 }
-/* [BL-Anim] تطبيق وصف وارد: الوضع place فوري، والضربة تُعرض متحركة كما عند الرامي */
+/* [BL-Anim] تطبيق وصف وارد: الوضع place فوري، والضربة تُعرض متحركة كما عند الرامي.
+   [SYNC-FIX] صفحة مخفية (هاتف بالخلفية): rAF متوقف — أنيميشن SHOT لن يُحسم أبداً
+   فتتجمد اللعبة؛ يُحسم فوراً بنفس الحتمية (shootAndResolve) بلا عرض */
 function blApplyIncoming(d) {
   if (!BILLIARDS || !BILLIARDS.G || !d) return;
+  var hidden = (typeof document !== 'undefined' && document.hidden);
   if (d.t === 'place') { BILLIARDS.G.applyPayload(d); }
-  else if (d.t === 'shot') { BILLIARDS.G.shoot(d.a, d.p, d.s); }
+  else if (d.t === 'shot') {
+    if (hidden) BILLIARDS.G.applyPayload(d);          /* حسم فوري حتمي */
+    else BILLIARDS.G.shoot(d.a, d.p, d.s);            /* عرض متحرك */
+  }
   else { BILLIARDS.G.applyPayload(d); }
   blUpdateHud(); blTray();
+}
+/* [SYNC-FIX] العودة من الخلفية: حسم الضربة العالقة وصرف الطابور المتكدس فوراً */
+if (typeof document !== 'undefined' && !window.__blVisBound) {
+  window.__blVisBound = true;
+  document.addEventListener('visibilitychange', function () {
+    var B = BILLIARDS;
+    if (!B || !B.G || document.hidden) return;
+    try {
+      var guard = 0;
+      if (B.G.S.phase === 'SHOT') {
+        while (B.G.shotRunning() && guard++ < 60000) B.G.stepPhysics();
+        B.G.resolve();
+        B.acc = 0;
+      }
+      while (B._pendQ && B._pendQ.length && B.G.S.phase !== 'SHOT' && !B.G.S.frameOver) {
+        blApplyIncoming(B._pendQ.shift());
+        guard = 0;
+        while (B.G.shotRunning() && guard++ < 60000) B.G.stepPhysics();
+        if (B.G.S.phase === 'SHOT') B.G.resolve();
+      }
+      blUpdateHud(); blTray(); blDraw();
+    } catch (e) {}
+  });
 }
 
 function blMeId() {

@@ -354,8 +354,12 @@ const RamiExpertAI = {
   keepScore(game, player, card, inMeldIds) {
     const rules = game.rules, rm = game.roundManager;
     if (rules.isWildCard(card)) {
-      /* الجوكر لا يُرمى أبداً — إلا فائضاً ثالثاً فأكثر في نهاية ميتة */
+      /* الجوكر لا يُرمى أبداً — إلا فائضاً ثالثاً فأكثر في نهاية ميتة.
+         [Anti-Stall] جولة ماراثونية ويد شبه فارغة محشوة جوكرات = جمود أبدي
+         (لا شيء يُرمى ولا شيء يكتمل) — يُسمح برمي الجوكر لكسر الجمود */
       const jc = player.hand.filter(c => rules.isWildCard(c)).length;
+      const trn = (rm && rm.turnCount) || 0;
+      if (trn > game.players.length * 90 && player.hand.length <= 3 && jc >= player.hand.length - 1) return 2500;
       return jc <= 2 ? 1e9 : 2500;
     }
     let s = 0;
@@ -389,10 +393,24 @@ const RamiExpertAI = {
       s -= card.baseValue * 8;
       if (rm.tableMelds.length > 0 && game.doesCardFitAnyTableMeld(card)) s += 400;
     }
-    /* خطر الإطعام: خصم مفتوح سيلتقطها وينزلها فوراً */
+    /* [AI-FIX] خطر الإطعام: خصم مفتوح سيلتقطها وينهي بها — درجة الإبقاء تعلو
+       (كانت الإشارة معكوسة: −8000 جعلت الورقة الخطرة أول مرشحة للرمي!)
+       الوزن 2600 < قداسة مجموعة اليد (5000): لا يكسر البوت مجموعاته لتفادي الإطعام،
+       لكنه يفضّل رمي أي ورقة حرة أخرى على إطعام خصم مفتوح */
     const openOpps = game.players.filter(p => p.id !== player.id && p.hasOpened);
-    if (openOpps.length > 0 && game.doesCardFitAnyTableMeld(card)) s -= 8000;
-    if (openOpps.some(o => o.meldCount() >= 12) && game.doesCardFitAnyTableMeld(card)) s -= 1e8; /* قانون الـ12 */
+    if (!inMeldIds.has(card.id) && openOpps.length > 0 && game.doesCardFitAnyTableMeld(card)) {
+      /* التدرج حسب الخطر الفعلي: خصم مفتوح بيد صغيرة قد ينهي بهذه الورقة فوراً.
+         [Anti-Stall] الحذر يتلاشى مع طول الجولة (بعد ~40 دورة كاملة) —
+         حذر مطلق متبادل بين خبيرين = جولة لا تنتهي أبداً */
+      const minHand = Math.min.apply(null, openOpps.map(o => o.hand.length));
+      const turns = (rm && rm.turnCount) || 0;
+      const decay = Math.max(0, 1 - Math.max(0, turns - game.players.length * 40) / (game.players.length * 40));
+      s += (minHand <= 3 ? 4000 : (minHand <= 6 ? 2200 : 700)) * decay;
+      /* [Anti-Stall] جولة ماراثونية (حذر متبادل مطلق): كسر الجمود بترجيح
+         رمي المطابقة — أحد الطرفين سينهي وتُحسم الجولة بدل دوران أبدي */
+      if (turns > game.players.length * 90) s -= 3000;
+    }
+    if (openOpps.some(o => o.meldCount() >= 12) && game.doesCardFitAnyTableMeld(card)) s += 1e8; /* قانون الـ12 */
     return s;
   },
 
@@ -479,7 +497,15 @@ const RamiExpertAI = {
     const total = player.hand.length;
     const covered = melds.reduce((sm, m) => sm + m.cards.length, 0);
     let chosen = melds;
-    if (total - covered === 2) {
+    /* [R15-FIX] بقايا 0 = يد كاملة القسمة: الإنهاء القانوني هو اقتطاع ورقة
+       من مجموعة 4+ (تبقى صالحة) فتصير 14 منزلة + ورقة إنهاء تُرمى = فوز فوري */
+    if (total - covered === 0) {
+      const shrink = this._shrinkForFinish(melds, rules, player, rm);
+      if (shrink) return shrink;
+    }
+    /* بقايا 2 = حصار دائم؛ بقايا 0 بلا مجموعة قابلة للتقليص — كلاهما
+       يُحل بإسقاط أصغر مجموعة أو تأجيل الافتتاح */
+    if (total - covered === 2 || total - covered === 0) {
       const bySize = melds.slice().sort((a, b) => a.cards.length - b.cards.length);
       let ok = false;
       for (let i = 0; i < bySize.length && !ok; i++) {
@@ -497,6 +523,34 @@ const RamiExpertAI = {
       if (!ok) return null; /* تأجيل الافتتاح */
     }
     return { type: 'open', playerId: player.id, cardIds: chosen.flatMap(m => m.cards.map(c => c.id)), meldGroups: chosen.map(m => m.cards.map(c => c.id)) };
+  },
+
+  /* [R15-FIX] يد كاملة القسمة: جرّب اقتطاع ورقة واحدة من مجموعة 4+ بحيث تبقى
+     المجموعات صالحة وشروط الافتتاح مستوفاة — النتيجة افتتاح 14 ورقة + ورقة إنهاء */
+  _shrinkForFinish(melds, rules, player, rm) {
+    for (let mi = 0; mi < melds.length; mi++) {
+      const m = melds[mi];
+      if (!m.cards || m.cards.length < 4) continue;
+      /* مرشّحو الاقتطاع: أي ورقة في المتماثلة؛ طرفا المتتالية (تبقى متصلة) */
+      let candidates;
+      if (m.type === MELD_TYPE.SET) candidates = m.cards.slice();
+      else {
+        const ordered = ramiOrderSequenceCards(m.cards.slice(), c => rules.isWildCard(c));
+        candidates = [ordered[0], ordered[ordered.length - 1]];
+      }
+      for (const drop of candidates) {
+        if (!drop) continue;
+        const kept = m.cards.filter(c => c.id !== drop.id);
+        const okMeld = (m.type === MELD_TYPE.SET) ? rules.isValidSet(kept, true) : rules.isValidSequence(kept, true);
+        if (!okMeld) continue;
+        const cand = melds.map((x, xi) => xi === mi ? new RamiMeld(m.type, (m.type === MELD_TYPE.SEQUENCE) ? ramiOrderSequenceCards(kept.slice(), c => rules.isWildCard(c)) : kept.slice()) : x);
+        const chk = rules.validateOpening(cand, player.drawnDiscardCard, rm.jokerIndicator, rm.highestOpeningScore || 0, !!player.tookLaTour);
+        if (chk.valid) {
+          return { type: 'open', playerId: player.id, cardIds: cand.flatMap(x => x.cards.map(c => c.id)), meldGroups: cand.map(x => x.cards.map(c => c.id)) };
+        }
+      }
+    }
+    return null;
   },
 
   /* النقاط الحرة لمجموعات التقسيم (بدون جوكر — كما في عتبة الافتتاح)
@@ -518,6 +572,16 @@ const RamiExpertAI = {
     const melds = partitionSelectedCards(hand, rules, 'opening');
     const F0 = this._freeScore(melds, rules);
     const C0 = melds ? melds.reduce((sm, m) => sm + m.cards.length, 0) : 0;
+    /* [AI-FIX] خطر الإطعام قبل الافتتاح أيضاً: لا ترمِ ورقة تدخل مجموعة ظاهرة لخصم مفتوح */
+    const openOpps = game.players.filter(p => p.id !== player.id && p.hasOpened);
+    const feedRisk = (c) => {
+      if (!openOpps.length || !game.doesCardFitAnyTableMeld(c)) return 0;
+      if (openOpps.some(o => o.meldCount() >= 12)) return 1e8;
+      const minHand = Math.min.apply(null, openOpps.map(o => o.hand.length));
+      const turns = (game.roundManager && game.roundManager.turnCount) || 0;
+      const decay = Math.max(0, 1 - Math.max(0, turns - game.players.length * 40) / (game.players.length * 40));
+      return (minHand <= 3 ? 4000 : (minHand <= 6 ? 2200 : 700)) * decay;
+    };
     /* الجوكرات قبل الافتتاح: قيّمة للإكمال لكنها لا تساهم في الـ71 الحرة */
     const jokerCount = hand.filter(c => rules.isWildCard(c)).length;
     let best = null, bestScore = Infinity;
@@ -547,7 +611,7 @@ const RamiExpertAI = {
           }
         }
         if (dup) syn -= 60;                                 /* النسخة المكررة شبه ميتة */
-        keep = loss + syn;
+        keep = loss + syn + feedRisk(c);                    /* [AI-FIX] */
       }
       /* الأدنى قيمةً في الإبقاء هي المرشّحة للرمي */
       if (keep < bestScore) { bestScore = keep; best = c; }
@@ -1779,6 +1843,10 @@ class RamiGame {
     // إذا كان اللاعب قد افتتح بالفعل في دور سابق، يمكنه إنزال أي مجموعات جديدة صالحة
     if (player.hasOpened) {
       const allIds = new Set(meldObjects.flatMap(m => m.cards.map(c => c.id)));
+      /* [R15-FIX] الإنزال الذي يفرغ اليد تماماً (بلا ورقة إنهاء تُرمى) غير قانوني */
+      if (player.hand.filter(c => !allIds.has(c.id)).length === 0) {
+        return { success: false, error: 'لا يجوز إنزال كل الأوراق — يجب الاحتفاظ بورقة الإنهاء' };
+      }
       player.hand = player.hand.filter(c => !allIds.has(c.id));
       /* الأوراق المنزلة تبقى في خاناتها (تُحاط بحلقة ذهبية) — لا تُحذف من العرض */
 
@@ -1839,6 +1907,15 @@ class RamiGame {
       };
     }
 
+    /* [R15-FIX] قانون الإنهاء: تبقى ورقة الإنهاء دائماً — لا يجوز إنزال اليد كاملة
+       (15 ورقة في 5 مجموعات = غير قانوني؛ الصحيح 14 في مجموعات + ورقة تُرمى) */
+    {
+      const openIds = new Set(meldObjects.flatMap(m => m.cards.map(c => c.id)));
+      const leftAfter = player.hand.filter(c => !openIds.has(c.id)).length;
+      if (leftAfter === 0) {
+        return { success: false, error: 'لا يجوز إنزال كل الأوراق — يجب الاحتفاظ بورقة الإنهاء (14 ورقة في مجموعات + ورقة تُرمى)' };
+      }
+    }
     // الافتتاح الأولي ناجح!
     player.pendingOpenError = null;   /* [OPEN-DEFER] إظهار صالح يمحو أي خطأ معلق */
     player.drawnDiscardCard = null;
@@ -3090,12 +3167,29 @@ class RamiUIAdapter {
           }
           const handMelds = partitionSelectedCards(bot.hand.slice(), this.game.rules);
           if (handMelds && handMelds.length > 0) {
-            const dumpIds = handMelds.flatMap(m => m.cards.map(c => c.id));
+            let dumpIds = handMelds.flatMap(m => m.cards.map(c => c.id));
+            /* [R15-FIX] يد كاملة القسمة: استثناء ورقة من مجموعة 4+ يترك ورقة
+               الإنهاء = إنزال 14 وفوز قانوني فوري */
+            if (bot.hand.length - dumpIds.length === 0) {
+              let dropId = null;
+              for (const m of handMelds) {
+                if (m.cards.length < 4) continue;
+                if (m.type === MELD_TYPE.SET) { dropId = m.cards[m.cards.length - 1].id; break; }
+                const ordSeq = ramiOrderSequenceCards(m.cards.slice(), c => this.game.rules.isWildCard(c));
+                const keptSeq = ordSeq.slice(0, -1);
+                if (this.game.rules.isValidSequence(keptSeq, true)) { dropId = ordSeq[ordSeq.length - 1].id; break; }
+                const keptSeq2 = ordSeq.slice(1);
+                if (this.game.rules.isValidSequence(keptSeq2, true)) { dropId = ordSeq[0].id; break; }
+              }
+              if (dropId != null) dumpIds = dumpIds.filter(id => id !== dropId);
+            }
             /* [EXPERT-AI] حارس الحصار: بعد الإنزال تتبقى 0/1 = فوز فوري،
                3+ = آمن، أما ورقتان فقط فتعني حصاراً دائماً (يد من ورقة
                لا يمكنها الفوز) — نؤجّل الإنزال دوراً آخر */
             const leftovers = bot.hand.length - dumpIds.length;
-            if (dumpIds.length >= 3 && leftovers !== 2) {
+            /* [R15-FIX] بقايا 1 = فوز قانوني (تُرمى ورقة الإنهاء)، بقايا ≥3 آمنة؛
+               بقايا 0 (يد كاملة بلا رمية) أو 2 (حصار) ممنوعة */
+            if (dumpIds.length >= 3 && (leftovers === 1 || leftovers >= 3)) {
               const dres = this.game.executeMove({ type: 'open', playerId: bot.id, cardIds: dumpIds });
               if (dres && (dres.success || dres.penaltyApplied)) {
                 this._botEmit('open', { playerId: bot.id, cardIds: dumpIds });
@@ -3112,12 +3206,24 @@ class RamiUIAdapter {
           }
         }
 
-        /* توسيع المجموعات: في اللعب الفردي فقط (محلي بلا بثّ)؛ في الجماعي يُتخطّى
-           لضمان تطابق تامّ بين الأطراف (ترتيب المجموعات قد يتباين عبر البثّ). */
-        if (!this.multiplayer && bot.hasOpened && rm.tableMelds.length > 0) {
+        /* [AI-FIX] توسيع المجموعات محلياً وجماعياً: في الجماعي يُبث كل إدراج
+           كحركة addToMeld حتمية (playerId/meldIndex/cardId) فيتطابق كل الأطراف —
+           كان الإدراج معطلاً في الغرف فيرمي البوت أوراق الإنهاء بدل إدراجها */
+        if (bot.hasOpened && rm.tableMelds.length > 0) {
           /* [V19.2] الحرة تبقى حرة في دور إنزالها فقط: البوت لا يُدرج جوكراً
              أو مرموق الدور في مجموعة حرة أُنزلت هذا الدور؛ بعده يجوز */
           const botDrawn = bot.drawnDiscardCard || bot.drawnLaTourCard || null;
+          /* [AI-FIX] بث الإدراج في الجماعي: تحديد صاحب المجموعة وفهرسها الحتميين */
+          const emitLayOff = (meld, card) => {
+            if (!this.multiplayer) return;
+            for (const pOwner of this.game.players) {
+              const mi = (pOwner.melds || []).indexOf(meld);
+              if (mi !== -1) {
+                this._botEmit('addToMeld', { playerId: bot.id, targetPlayerId: pOwner.id, meldIndex: mi, cardIdx: null, cardId: card.id });
+                return;
+              }
+            }
+          };
           const fitsMeld = (card) => {
             for (let mIdx = 0; mIdx < rm.tableMelds.length; mIdx++) {
               const meld = rm.tableMelds[mIdx];
@@ -3131,6 +3237,7 @@ class RamiUIAdapter {
           if (drawnCard) {
             const meld = fitsMeld(drawnCard);
             if (meld) {
+              emitLayOff(meld, drawnCard);   /* [AI-FIX] البث قبل التطبيق المحلي */
               bot.removeCard(drawnCard.id);
               meld.cards.push(drawnCard);
             }
@@ -3141,8 +3248,21 @@ class RamiUIAdapter {
             if (bot.hand.length <= 3) break;
             const meld = fitsMeld(card);
             if (meld) {
+              emitLayOff(meld, card);   /* [AI-FIX] */
               bot.removeCard(card.id);
               meld.cards.push(card);
+            }
+          }
+          /* [AI-FIX] إنقاذ من 3 أوراق: إن كانت ورقتان تدخلان الطاولة، إدراجهما
+             يترك ورقة الإنهاء وحدها = فوز فوري (كان البوت يفوّت هذا الإنهاء) */
+          if (bot.hand.length === 3) {
+            const fitting = bot.hand.filter(c => fitsMeld(c));
+            if (fitting.length >= 2) {
+              for (let fi = 0; fi < fitting.length && bot.hand.length > 1; fi++) {
+                const card = fitting[fi];
+                const meld3 = fitsMeld(card);
+                if (meld3) { emitLayOff(meld3, card); bot.removeCard(card.id); meld3.cards.push(card); }   /* [AI-FIX] */
+              }
             }
           }
           /* [EXPERT-AI] إنقاذ من ورقتين: إدراج إحداهما في الطاولة ثم رمي
@@ -3152,7 +3272,7 @@ class RamiUIAdapter {
               const card = bot.hand[ci];
               if (!card) break;
               const meld2 = fitsMeld(card);
-              if (meld2) { bot.removeCard(card.id); meld2.cards.push(card); }
+              if (meld2) { emitLayOff(meld2, card); bot.removeCard(card.id); meld2.cards.push(card); }   /* [AI-FIX] */
             }
           }
         }
