@@ -2090,6 +2090,9 @@ class RamiGame {
       let laidOffAny = false;
       const handCopy = player.hand.slice();
       for (const card of handCopy) {
+        /* [R15-FIX] قانون ورقة الإنهاء: الدمج يقف عند ورقة واحدة — تُرمى ولا تُدمج
+           (تفريغ اليد كلياً بالدمج = إنهاء بلا ورقة إنهاء = مخالف للقواعد) */
+        if (player.hand.length <= 1) break;
         for (const meld of this.roundManager.tableMelds) {
           /* [V19.2] الدمج التلقائي لا يُدخل جوكراً/مرموق الدور في مجموعة حرة
              أُنزلت هذا الدور — الحرة تبقى حرة في دور إنزالها فقط */
@@ -2469,6 +2472,20 @@ function eRami(g) {
 }
 
 function initRami() {
+  /* [FREEZE-FIX] العودة من خلفية الهاتف: المؤقتات كانت مجمدة — إيقاظ دور البوت فوراً */
+  if (typeof document !== 'undefined' && typeof window !== 'undefined' && !window.__rmVisBound) {
+    window.__rmVisBound = true;
+    document.addEventListener('visibilitychange', function () {
+      try {
+        if (document.hidden) return;
+        const ad = window.RamiAdapter;
+        if (!ad || !ad.game || ad.game.gamePhase !== 'PLAYING') return;
+        RAMI_BUSY = false;   /* أي busy قديمة صارت لاغية بعد الغياب */
+        const cur = ad.game.roundManager.getCurrentPlayer();
+        if (cur && cur.isBot) ad._runBotTurn(cur);
+      } catch (e) {}
+    });
+  }
   if (typeof window !== 'undefined' && window.RamiAdapter && typeof window.RamiAdapter.destroy === 'function') {
     try { window.RamiAdapter.destroy(); } catch (e) {}
   }
@@ -2864,7 +2881,9 @@ class RamiUIAdapter {
     if (!rm) return;
     const curP = rm.getCurrentPlayer();
     const started = rm._turnStartedAt || Date.now();
-    if (curP && curP.isBot && !RAMI_BUSY && (Date.now() - started) > 6000) {
+    /* [FREEZE-FIX] checkRamiBusy() يعالج busy العالقة (مؤقّت مؤجل في خلفية الهاتف) —
+       RAMI_BUSY الخام كان يعطّل الحارس نهائياً فتتجمد اللعبة عند البوت */
+    if (curP && curP.isBot && !checkRamiBusy() && (Date.now() - started) > 6000) {
       console.warn('[Rami] watchdog: forcing stuck bot turn for', curP.name);
       rm._turnStartedAt = Date.now();
       this._runBotTurn(curP);
@@ -2883,7 +2902,7 @@ class RamiUIAdapter {
 
     // Bot Watchdog: إذا كان دور البوت ولم يقم بحركة خلال ثانيتين، استدعاء حركته فوراً
     const curP = rm.getCurrentPlayer();
-    if (curP && curP.isBot && !RAMI_BUSY && rm.turnSecondsRemaining < (this.game.rules.turnSeconds - 2)) {
+    if (curP && curP.isBot && !checkRamiBusy() && rm.turnSecondsRemaining < (this.game.rules.turnSeconds - 2)) {   /* [FREEZE-FIX] */
       this._runBotTurn(curP);
     }
 
@@ -3906,9 +3925,10 @@ class RamiUIAdapter {
       const bet = window.RAMI_BET || 50;
       const pot = bet * this.game.playerCount;
       try {
-        window.GB = bet; /* ضبط قيمة الرهان لتُسجَّل بدقة في السجل */
+        /* [TicketFix] betOverride صريح: window.GB لا يغيّر رابطة let GB في engines.js —
+           كانت التذكرة تسجّل رهان 10 الافتراضي بدل رهان الجولة الفعلي */
         if (typeof recordRound === 'function') {
-          recordRound(humanWon, humanWon ? pot : 0, 'رامي');
+          recordRound(humanWon, humanWon ? pot : 0, 'رامي', bet);
         }
       } catch (e) { /* تجاهل */ }
     }
