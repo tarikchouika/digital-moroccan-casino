@@ -6477,3 +6477,39 @@ body.rami-game-open { overflow: hidden; }
   box-shadow: 0 0 12px rgba(245, 197, 24, 0.5);
 }
 .dama-mini.dama-round:active { transform: scale(0.88); }
+
+/* ═══ [RD] روندا الكلاسيكية — طاولة الأسر ═══ */
+.rd-board { display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 8px 0; width: 100%; }
+.rd-oppo, .rd-me { display: flex; align-items: center; gap: 10px; justify-content: center; width: 100%; }
+.rd-oppo-hand, .rd-hand { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.rd-card {
+  width: clamp(44px, 8vw, 66px); aspect-ratio: 58/84; border-radius: 7px;
+  background-size: cover; background-position: center;
+  border: 1px solid rgba(217, 169, 78, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.rd-card.back { background-image: url('../assets/cards/back.webp'); }
+.rd-card.live { cursor: pointer; }
+.rd-card.live:hover { transform: translateY(-8px); box-shadow: 0 6px 14px rgba(245, 197, 24, 0.35); }
+.rd-table {
+  display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;
+  min-height: clamp(80px, 16vh, 120px); width: min(92%, 560px);
+  border: 2px dashed rgba(217, 169, 78, 0.35); border-radius: 14px; padding: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.rd-card.tbl { width: clamp(38px, 7vw, 56px); }
+.rd-empty { color: var(--t3); font-size: 0.85rem; }
+.rd-score { display: flex; gap: 14px; align-items: center; justify-content: center; color: var(--gold); font-size: 1rem; }
+.rd-score .rd-on { text-shadow: 0 0 10px rgba(245, 197, 24, 0.8); }
+.rd-target { color: var(--t2); font-size: 0.82rem; }
+.rd-pile {
+  min-width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(217, 169, 78, 0.5); color: var(--gold); font-weight: 800; background: rgba(0, 0, 0, 0.3);
+}
+.rd-msg { min-height: 22px; color: #ffe08a; font-weight: 700; opacity: 0; transition: opacity 0.2s; text-align: center; }
+.rd-msg.show { opacity: 1; }
+@media (max-width: 540px) and (orientation: portrait) {
+  .rd-card { width: clamp(38px, 11vw, 54px); }
+  .rd-card.tbl { width: clamp(32px, 9vw, 46px); }
+}

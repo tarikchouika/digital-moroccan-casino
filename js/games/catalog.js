@@ -41,6 +41,18 @@ const GAMES = [
     d: ['لعبة الطاولة الهندية', 'Jeu de société', 'Classic board game', 'لعبة الطاولة الهندية']
   },
   {
+    id: 'rd',
+    eng: 'rondacard',
+    em: '🂡',
+    art: 'rn',
+    cat: 'traditional',
+    tag: 'NEW',
+    rtp: 95,
+    pl: 0,
+    n: ['روندا الكلاسيكية', 'Ronda Classique', 'Classic Ronda', 'روندا الكلاسيكية'],
+    d: ['أسر الأوراق بالسلسلة — ميسة وضربة وحبل', 'Capture en chaîne — Mesa, Frappe, Corde', 'Chain capture — Mesa, Strike, Rope', 'شد الكارطة بالسلسلة — ميسة وضربة وحبل']
+  },
+  {
     id: 'ch',
     eng: 'chess',
     em: '♞',

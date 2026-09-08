@@ -3357,6 +3357,7 @@ function swGo() {
 /* ═══════════ سجل المحركات ═══════════ */
 const ENG = {
   ronda: eRonda,
+  get rondacard() { return (typeof window.eRondaCard === 'function') ? window.eRondaCard : null; },
   chess: eChess,
   dama: eDama,
   /* [Billiards] المحرك يُعرَّف في billiards.js (يُحمَّل قبل engines.js) —

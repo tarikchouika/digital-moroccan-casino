@@ -4,6 +4,23 @@
    ═══════════════════════════════════════════ */
 "use strict";
 const TR = {
+  /* ── [RD] روندا الكلاسيكية ── */
+  'rd.title': [ 'روندا الكلاسيكية', 'Ronda Classique', 'Classic Ronda', 'روندا الكلاسيكية' ],
+  'rd.target': [ 'نقاط الفوز', 'Score cible', 'Target score', 'النقط ديال الربح' ],
+  'rd.you': [ 'أنت', 'Vous', 'You', 'نتا' ],
+  'rd.dealerYou': [ 'أنت الموزّع', 'Vous distribuez', 'You deal', 'نتا اللي كتفرّق' ],
+  'rd.emptyTable': [ 'الطاولة فارغة', 'Table vide', 'Table empty', 'الطابلة خاوية' ],
+  'rd.mesa': [ 'ميسة!', 'Mesa !', 'Mesa!', 'ميسة!' ],
+  'rd.strike': [ 'ضربة!', 'Frappe !', 'Strike!', 'ضربة!' ],
+  'rd.rope': [ 'حبل!', 'Corde !', 'Rope!', 'حبل!' ],
+  'rd.doubleRope': [ 'حبل مزدوج!', 'Double corde !', 'Double rope!', 'حبل مضاعف!' ],
+  'rd.ronda': [ 'روندا', 'Ronda', 'Ronda', 'روندا' ],
+  'rd.trenda': [ 'تريندا', 'Trenda', 'Trenda', 'تريندا' ],
+  'rd.quadra': [ 'كوادرا', 'Quadra', 'Quadra', 'كوادرا' ],
+  'rd.redeal': [ 'توزيعة جديدة', 'Nouvelle donne', 'New deal', 'تفريقة جديدة' ],
+  'rd.newRound': [ 'جولة جديدة', 'Nouvelle manche', 'New round', 'جولة جديدة' ],
+  'rd.win': [ 'فزت بالمباراة!', 'Vous avez gagné !', 'You won the match!', 'ربحتي الماتش!' ],
+  'rd.lose': [ 'خسرت المباراة', 'Vous avez perdu', 'You lost the match', 'خسرتي الماتش' ],
   /* ── [v23] مفاتيح الغرف وإعدادات اللعبة ── */
   'ui.roomBackToGame': [ 'العودة للعبة', 'Retour au jeu', 'Back to game', 'الرجوع للعبة' ],
   'ui.roomRequestSeat': [ 'اطلب مقعداً للعب', 'Demander une place', 'Request a seat', 'طلب بلاصة تلعب' ],

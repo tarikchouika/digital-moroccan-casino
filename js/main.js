@@ -473,6 +473,7 @@ function renderAccountLog() {
 function initFor(eng) {
   const map = {
     ronda: (typeof initRonda === 'function') ? initRonda : null,
+    rondacard: (typeof initRondaCard === 'function') ? initRondaCard : null,
     dama: (typeof initDama === 'function') ? initDama : null,
     chess: (typeof initChess === 'function') ? initChess : null,
     billiards: (typeof initBilliards === 'function') ? initBilliards : null,
