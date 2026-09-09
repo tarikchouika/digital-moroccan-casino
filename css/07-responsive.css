@@ -111,6 +111,10 @@
   .g4 {
     grid-template-columns: repeat(3, 1fr);
   }
+  /* [Home] «ألعاب مميزة» 4 بطاقات: 2×2 بلا خانة فارغة */
+  #rowFeatured {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .hero h1 {
     font-size: 1.7rem;
   }
@@ -235,6 +239,13 @@
     min-width: 44px;
     min-height: 44px;
   }
+  /* [ص3] كينو: 44px صلبة × 10 أعمدة تفيض عن الشبكة فتقص الخلايا بعضها —
+     اسمح بالانكماش مع الحفاظ على الدائرة (تنطبق داخل وخارج ملء الشاشة) */
+  .kgrid .kc {
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+  }
   .ronda-num-btn {
     padding: 10px 0;
   }
@@ -258,20 +269,20 @@
     animation: none;
   }
 }
-/* ── هاتف (≤ 640px): توب بار صفّين مرتبين + فوتر مضغوط ── */
+/* ── هاتف (≤ 640px): توب بار مرن يلتف عند الحاجة + فوتر مضغوط ── */
 @media (max-width: 640px) {
   .topbar {
-    flex-wrap: nowrap;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
     padding: calc(8px + var(--safe-top)) 12px 8px;
   }
   .top-actions {
     order: 3;
-    flex: 1;
+    flex: 0 1 auto;
     width: auto;
     min-width: 0;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 6px;
     margin-inline-start: 0;
     flex-wrap: wrap;
@@ -288,11 +299,21 @@
     flex-direction: column;
     gap: 10px;
   }
-  .foot-badges {
+  .foot-badges,
+  .foot-legal,
+  .foot-brand {
     justify-content: center;
   }
 }
-/* ── طباعة ── */
+/* ── محتوى الصفحات القانونية على الموبايل ── */
+@media (max-width: 640px) {
+  .legal-content {
+    padding: 20px;
+  }
+  .legal-content h1 {
+    font-size: 1.3rem;
+  }
+}
 @media print {
   .sidebar,
   .topbar,
@@ -305,5 +326,18 @@
   }
   .content {
     padding: 0;
+  }
+}
+
+/* ── إظهار شريط التنقل السفلي على الشاشات الصغيرة وتوسيع المساحة السفلية ── */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  .content {
+    padding-bottom: 84px !important;
+  }
+  footer.watermark {
+    margin-bottom: 64px;
   }
 }

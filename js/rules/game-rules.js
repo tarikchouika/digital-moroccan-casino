@@ -4,8 +4,446 @@
 "use strict";
 /* ── قاعدة بيانات القواعد الكاملة ── */
 var FULL_RULES = {
+  /* ═══ روندا الكلاسيكية — الطاولة (rd) ═══ */
+  rd: {
+    name: {
+      ar: 'روندا الكلاسيكية — الطاولة 🎴',
+      da: 'الروندا الكلاسيكية — الطبلة 🎴',
+      fr: 'Ronda Classique — La table 🎴',
+      en: 'Classic Ronda — The Table 🎴'
+    },
+    goal: {
+      ar: 'التقط أوراق الطاولة بالورقة المطابقة (مع السلسلة الصاعدة)، واجمع الأوراق والنقاط الخاصة (ضربة/حبل/جوج حبال/ميسا/قاعا راي/قاعا أص) حتى تبلغ الهدف المتفق عليه (41/51/61 أو نهاية توزيعة كاملة).',
+      da: 'جبد كوط الطبلة بالكطة المطابقة (مع السلسلة)، وجمع النقط الخاصة (ضربة/حبل/جوج حبال/ميسا/قاعا راي/قاعا أص) حتى توصل للهدف المتفق عليه.',
+      fr: 'Capturez les cartes de la table avec la carte correspondante (et la chaîne montante) et cumulez cartes et points spéciaux (Frappe/Corde/Double Corde/Mesa/Qaâa Raï/Qaâa As) jusqu’à l’objectif convenu (41/51/61 ou une donne complète).',
+      en: 'Capture table cards by matching rank (plus the rising chain), and accumulate cards and special points (Strike/Rope/Double-Rope/Mesa/Qaâa Raï/Qaâa As) until the agreed target (41/51/61 or one full deal).'
+    },
+    steps: {
+      ar: [
+        'الجلوس والاتجاه: كل لاعب في زاوية؛ الدور ينتقل عكس اتجاه عقارب الساعة (بعدك يلعب الجالس على يسارك).',
+        'التوزيع: 3 أوراق لكل لاعب و4 أوراق مكشوفة على الطاولة؛ الهدف 41/51/61 نقطة أو «جولة» (توزيع الـ40 ورقة).',
+        'في دورك العب ورقة من يدك: إن وُجدت على الطاولة ورقة بنفس رقمها تلتقطها هي وكل ما يليها في السلسلة (6←7←10←11←12) وكل النسخ من نفس الرقم.',
+        'إن لم يوجد مثلها تستقر ورقتك على الطاولة ليلتقطها غيرك لاحقاً.',
+        'أوراق فوق 20 (10/11/12) كل واحدة = نقطة عند نهاية الجولة؛ والجولة الأخيرة لآخر لاعب التقط.'
+      ],
+      da: [
+        'الجلوس والاتجاه: كل لعاب فزاوية؛ الدور كيمشي ضد عقارب الساعة.',
+        'التوزيع: 3 كوط لكل لعاب و4 كوط مكشوفة فالطبلة؛ الهدف 41/51/61 ولا «جولة».',
+        'فدورك العب ورقة: إلا كان كاين فالطبلة ورقة بنفس الرقم كتشدها هي وكل اللي من موراها فالسلسلة (6←7←10←11←12) وكل النسخ.',
+        'إلا ما كان كاين مثلها كتستقر ورقتك فالطبلة.',
+        'الكوط اللي فوق 20 (10/11/12) كل وحدة بنقطة فالأخير.'
+      ],
+      fr: [
+        'Placement : chaque joueur dans un coin ; le tour progresse dans le sens inverse des aiguilles d’une montre.',
+        'Donne : 3 cartes par joueur et 4 cartes ouvertes sur la table ; objectif 41/51/61 points ou « manche » (les 40 cartes).',
+        'À votre tour jouez une carte : si une carte de même rang est sur la table, capturez-la avec toute la chaîne montante (6←7←10←11←12) et tous les doubles du rang.',
+        'Sinon votre carte reste sur la table.',
+        'En fin de manche chaque carte au-dessus de 20 (10/11/12) vaut 1 point ; le dernier preneur reçoit les cartes restantes.'
+      ],
+      en: [
+        'Seating: each player in a corner; turns move counter-clockwise (the player on your left plays after you).',
+        'Deal: 3 cards per player and 4 face-up table cards; target 41/51/61 points or “round” (all 40 cards).',
+        'On your turn play a card: if the same rank is on the table you capture it plus the rising chain (6←7←10←11←12) and all copies of the rank.',
+        'Otherwise your card rests on the table.',
+        'At round end every card above 20 (10/11/12) scores 1 point; the last capturer takes remaining table cards.'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'الالتقاط بالسلسلة', items: [
+          'الورقة المرمية تلتقط كل أوراق نفس الرقم فوق الطاولة (مهما كان عددها) ثم كل رتبة تالية موجودة بالترتيب 6 ثم 7 ثم 10 ثم 11 ثم 12 — تقف عند أول رتبة غائبة. لا توجد 8 ولا 9 في المجموعة.',
+          'الورقة المرمية نفسها تُضم للملتقَط (مع الورقة/الأوراق الملتقطة).',
+          'مثال: رميت 6 وهناك 6 و7 على الطاولة → تلتقط 6 و6 و7 (وتتوقف لأن 10 غائبة).'
+        ] },
+        { h: 'الضربة والحبل وجوج حبال (استرجاع الأوراق)', items: [
+          'الضربة (+1): تلعب رقماً مطابقاً لآخر ورقة لعبها الخصم مباشرة وما زالت ظاهرة على الطاولة — تلتقطها مع سلسلتها، وتصبح أوراق السلسلة في كيسك.',
+          'الحبل (+5): يعيد صاحب الورقة الأصلية نفس الرقم بعد الضربة — يسترد من كيس الضارب ورقتي الضربة + ورقة الحبل + السلسلة (لا تستقر ورقة الحبل على الطاولة).',
+          'جوج حبال (+10): يلعب صاحب الضربة الرقم الرابع — يسترد كل الأوراق: ورقتي الضربة + ورقة الحبل + ورقة الحبلين + السلسلة. صاحب آخر ورقة مطابقة يلتقط الأوراق المعنية جميعها.',
+          'سلسلة الضربة تنكسر بأي رتبة مختلفة ولا تُحتسب ضربةً إن كانت ورقة الخصم قد التُقطت قبل الرد.'
+        ] },
+        { h: 'الميسا والنهايات', items: [
+          'ميسا (+1): التقاط آخر أوراق الطاولة دفعة واحدة (تصبح الطاولة فارغة).',
+          'نهاية التوزيعة: من نفدت أوراق يده والرزمة فارغة تنتهي الجولة؛ الأوراق الباقية لآخر ملتقط، وكل ورقة فوق 20 = نقطة.',
+          'قاعا راي (+5): الموزع يلتقط 12 برميتة الأخيرة. قاعا أص (+5 للخصم): الموزع يلتقط 1 — أو لا يلتقط شيئاً — برميتة الأخيرة.',
+          'الفوز الفوري: من بلغ الهدف (41/51/61) وسط الجولة يُعلن فائزاً فوراً.'
+        ] },
+        { h: 'اتجاه اللعب', items: [
+          'الدور يدور عكس اتجاه عقارب الساعة: بعد اللاعب الأسفل-يسار يلعب الأعلى-يسار ثم الأعلى-يمين ثم الأسفل-يمين، وهكذا، والموزع يتناوب بنفس الاتجاه.'
+        ] }
+      ],
+      da: [
+        { h: 'الالتقاط بالسلسلة', items: [
+          'الكطة كتشد كل الكوط ديال نفس الرقم ف الطبلة ومن بعد كل رتبة متابعين بالترتيب 6→7→10→11→12 حتى أول رتبة غايبة. ما كاين لا 8 لا 9.',
+          'الكطة اللي ترميها كتدخل للملتقط (مع اللي التقطاتي).'
+        ] },
+        { h: 'الضربة والحبل وجوج حبال', items: [
+          'ضربة +1: تلعب نفس رقم آخر ورقة لعبها الخصم وما زالت ظاهرة → كتشديها مع السلسلة.',
+          'حبل +5: صاحب الورقة الأصلية كيرجع بنفس الرقم → كيسترجع ورقتي الضربة + ورقة الحبل + السلسلة.',
+          'جوج حبال +10: الرقم الرابع لصاحب الضربة → كيسترجع جميع الأوراق. صاحب آخر ورقة مطابقة كياخذ كلشي.'
+        ] }
+      ],
+      fr: [
+        { h: 'Capture en chaîne', items: [
+          'La carte jouée capture toutes les cartes de même rang puis chaque rang suivant présent dans l’ordre 6→7→10→11→12, en s’arrêtant au premier rang absent (pas de 8 ni de 9).'
+        ] },
+        { h: 'Frappe, Corde, Double Corde (cartes récupérées)', items: [
+          'Frappe +1 : jouer le même rang que la dernière carte adverse encore visible — capture + chaîne.',
+          'Corde +5 : le propriétaire de la carte d’origine répond du même rang — il récupère les deux cartes de la frappe + la corde + la chaîne.',
+          'Double Corde +10 : le quatrième même rang — récupération totale (le dernier à poser le rang prend toutes les cartes concernées).'
+        ] }
+      ],
+      en: [
+        { h: 'Chain capture', items: [
+          'A played card captures every same-rank card on the table, then each following rank present in the order 6→7→10→11→12, stopping at the first missing rank (no 8 or 9 exist).'
+        ] },
+        { h: 'Strike, Rope, Double-Rope (card recovery)', items: [
+          'Strike +1: play the same rank as the opponent’s last card still resting on the table — capture it and its chain.',
+          'Rope +5: the owner of the original card answers with the same rank — he retrieves the two strike cards + the rope card + the chain.',
+          'Double-Rope +10: the striker plays the fourth rank — full recovery. The player of the last matching card takes all the cards involved.'
+        ] }
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>كل ورقة فوق 20 عند النهاية</td><td>1 نقطة</td></tr><tr><td>ضربة</td><td>+1</td></tr><tr><td>ميسا</td><td>+1</td></tr><tr><td>حبل</td><td>+5</td></tr><tr><td>جوج حبال</td><td>+10</td></tr><tr><td>قاعا راي (الموزع يلتقط 12)</td><td>+5</td></tr><tr><td>قاعا أص (الموزع يلتقط 1 أو لا شيء)</td><td>+5 للخصم</td></tr>',
+      da: '<tr><td>كل ورقة فوق 20 فالأخير</td><td>1 نقطة</td></tr><tr><td>ضربة</td><td>+1</td></tr><tr><td>ميسا</td><td>+1</td></tr><tr><td>حبل</td><td>+5</td></tr><tr><td>جوج حبال</td><td>+10</td></tr><tr><td>قاعا راي / قاعا أص</td><td>+5</td></tr>',
+      fr: '<tr><td>Chaque carte au-dessus de 20 en fin de manche</td><td>1 point</td></tr><tr><td>Frappe</td><td>+1</td></tr><tr><td>Mesa</td><td>+1</td></tr><tr><td>Corde</td><td>+5</td></tr><tr><td>Double Corde</td><td>+10</td></tr><tr><td>Qaâa Raï / Qaâa As</td><td>+5</td></tr>',
+      en: '<tr><td>Each card above 20 at round end</td><td>1 point</td></tr><tr><td>Strike</td><td>+1</td></tr><tr><td>Mesa</td><td>+1</td></tr><tr><td>Rope</td><td>+5</td></tr><tr><td>Double-Rope</td><td>+10</td></tr><tr><td>Qaâa Raï / Qaâa As</td><td>+5</td></tr>'
+    },
+    tips: {
+      ar: [
+        'لا ترمِ ورقة فوق 20 (10/11/12) بلا داعٍ — كل واحدة تساوي نقطة في النهاية.',
+        'وفّر أوراقك الصغيرة لالتقاط الكبيرة: ورقة فوق 20 تلتقط نفسها وكل ما فوقها في السلسلة.',
+        'راقب ما يلتقطه خصمك: ضربة (ورقة على ورقة معكوسة) أو حبل (3 على التوالي) تنهيان الجولة فوراً.',
+        'في الجولة الأخيرة كل بطاقة في يدك تُحسب لصالح من يلتقطها — لا تترك شيئاً للخصم.'
+      ],
+      da: [
+        'ما ترميش ورقة فوق 20 (10/11/12) بلا سبب — كل وحدة بنقطة.',
+        'جبد الأوراق الكبار بصغارك: 10/11/12 كتشد نفسها وسلسلتها.',
+        'عاين لخصمك: ضربة/حبل كيساليو الجولة.',
+        'فالجولة الأخيرة كل ورقة فليدك تتباع — ما تخلي حتى ورقة لخصمك.'
+      ],
+      fr: [
+        'Ne jetez pas une carte au-dessus de 20 (10/11/12) sans raison — chacune vaut un point.',
+        'Réservez vos petites cartes pour capturer les fortes : un 10/11/12 capture son rang et sa chaîne.',
+        'Surveillez l’adversaire : une Frappe ou une Corde termine la manche immédiatement.',
+        'Au dernier tour toute carte en main compte pour celui qui la capture — ne laissez rien à l’adversaire.'
+      ],
+      en: [
+        'Don’t toss a card above 20 (10/11/12) without reason — each is worth a point at round end.',
+        'Save small cards to capture big ones: a 10/11/12 captures its own rank plus its chain.',
+        'Watch your opponent: a Strike or a Rope ends the round immediately.',
+        'On the final round every card in hand counts toward whoever captures it — leave nothing for the opponent.'
+      ]
+    }
+  },
   /* ═══ Moroccan Ronda ♦️♠️ ═══ */
-  rn: {
+    /* ═══ Moroccan Rami (Talaj & Simple) ═══ */
+  rm: {
+    name: {
+      ar: 'الرامي المغربي (طلاح + سامبل) 🃏',
+      da: 'الرامي المغربي (طالاج وسامبل) 🃏',
+      fr: 'Rami Marocain (Talaj + Sample) 🃏',
+      en: 'Moroccan Rami (Talaj + Sample) 🃏'
+    },
+    goal: {
+      ar: 'كوّن مجموعات (متماثلات ومتتاليات) وأنزلها في الطاولة، وأنهِ الشوط بأقل مجموع نقاط، وتجنّب تجاوز هدف الجولة (501–1001) لتبقى الفائز.',
+      da: 'جمع المجموعات (متشابهات وتسلسلات) ونزلها فالطبلة، وسالي الشوط بأقل مجموع نقاط، وتجنب تفوت هدف الجولة (501–1001) باش تبقى رابح.',
+      fr: 'Formez des combinaisons (brelans et suites), posez-les sur la table et finissez la manche avec le moins de points possible, sans dépasser l\'objectif de la partie (501–1001).',
+      en: 'Form melds (sets and sequences), lay them on the table, and finish each round with the lowest score, avoiding exceeding the match target (501–1001) to remain the winner.'
+    },
+    steps: {
+      ar: [
+        'اختر الوضع: طلاح (108 أوراق + 4 جوكر) أو سامبل (104 أوراق بجوكر معكوس اللون)',
+        'التوزيع: 14 ورقة لكل لاعب و15 للموزع في الطلاح (13 لكل لاعب في السامبل)؛ أول موزع = صاحب أصغر ورقة',
+        'في دورك (مؤقت 90 ثانية): اسحب ورقة واحدة بالضبط من المجرف أو خذ ورقة المرموق، ثم ارمِ ورقة واحدة بالضبط (اليد 14 بين الأدوار و15 أثناء الدور)',
+        'الافتتاح: متماثلة ≥3 + متتالية ≥3 ومجموع ≥ 71 نقطة في الطلاح (≥ 51 في السامبل) بدون جوكر في الحساب',
+        'بعد الافتتاح: أضف الأوراق الصالحة لأي مجموعة ظاهرة (له أو لغيره) أو استبدل الجوكر بورقة من يدك',
+        'الإنهاء: 14 ورقة كلها مجموعات صالحة + الورقة الـ15 تُقلب ظهراً على الطاولة (في السامبل: 13 مجموعة + الـ14 ظهراً)'
+      ],
+      da: [
+        'عزل الوضع: طالاج (108 ورقة + 4 جوكير) ولا سامبل (104 ورقة بجوكر معكوس)',
+        'التوزيع: 14 ورقة لكل لعاب و15 للموزع فالطالاج (13 لكل واحد فالسامبل)',
+        'فدورك (90 ثانية): جبد ورقة وحدة بالضبط من الباكي ولا خود المرموق، وارمي ورقة وحدة بالضبط',
+        'الافتتاح: مجموعة متشابهة ≥3 + تسلسل ≥3 والمجموع ≥ 71 فالطالاج (≥ 51 فالسامبل) بلا جوكر فالحساب',
+        'من بعد الافتتاح: زيد الأوراق الصالحة لأي مجموعة ظاهرة ولا بدل الجوكر بورقة من يدك',
+        'الإنهاء: 14 ورقة كلها مجموعات صالحة + الورقة 15 تنقلب على ضهرها'
+      ],
+      fr: [
+        'Choisissez le mode : Talaj (108 cartes + 4 jokers) ou Sample (104 cartes avec joker de couleur inversée)',
+        'Distribution : 14 cartes par joueur et 15 au donneur en Talaj (13 chacun en Sample) ; le premier donneur est celui qui détient la plus petite carte',
+        'À votre tour (90 s) : piochez exactement une carte (talon ou défausse) puis défaussez exactement une carte (14 cartes entre les tours, 15 pendant le tour)',
+        'Ouverture : brelan ≥3 + suite ≥3 et total strictement supérieur à 71 en Talaj (51 en Sample), sans joker dans le compte',
+        'Après l\'ouverture : ajoutez les cartes valides à toute combinaison exposée (la vôtre ou celle d\'un adversaire) ou remplacez un joker par une carte de votre main',
+        'Fin de manche : 14 cartes toutes en combinaisons valides + la 15e posée face cachée (en Sample : 13 combinaisons + la 14e face cachée)'
+      ],
+      en: [
+        'Choose the mode: Talaj (108 cards + 4 Jokers) or Sample (104 cards with a colour-reversed Joker)',
+        'Deal: 14 cards per player and 15 to the dealer in Talaj (13 each in Sample); the first dealer is the holder of the lowest card',
+        'On your turn (90s timer): draw exactly one card (stock or discard) then discard exactly one (14 cards between turns, 15 during the turn)',
+        'Opening: Set ≥3 + Sequence ≥3 and a total ≥ 71 in Talaj (≥ 51 in Sample), excluding Jokers from the count',
+        'After opening: add valid cards to any exposed meld (yours or an opponent\'s) or replace a Joker with one card from your hand',
+        'Finish: all 14 cards form valid melds + the 15th card placed face-down (in Sample: 13 melds + the 14th face-down)'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'تعريفات عامة', items: [
+          'الرموز: قلب/مربع (أحمر)، سيف/عنب (أسود). قيم الافتتاح: الرقم = قيمته؛ J/Q/K/A = 10.',
+          'متماثلة (Set): 3 أوراق أو أكثر بنفس العدد وبرموز مختلفة، بلا تكرار رمز داخل المجموعة.',
+          'متتالية (Sequence): 3 أوراق أو أكثر متتابعة بنفس الرمز.',
+          'المجرف = أوراق السحب؛ المرموق = أوراق الرمي.'
+        ]},
+        { h: 'قانون الطلاح — التوزيع والدور', items: [
+          '2–5 لاعبين؛ 108 أوراق (8 لكل رقم + 4 جوكر). أول موزع = صاحب أصغر ورقة، والتعاقب يميناً كل شوط.',
+          '14 ورقة لكل لاعب و15 للموزع؛ يرمي الموزع أول ورقة لبدء المرموق.',
+          'الدور: سحب واحد (مجرف أو مرموق) ثم رمي واحد بالضبط؛ اليد 14 بين الأدوار و15 أثناء الدور — مستحيل 13 أو 16.',
+          'مؤقت 90 ثانية؛ عند انتهائه لعب أوتوماتيكي وتمرير الدور.'
+        ]},
+        { h: 'قانون الطلاح — الافتتاح (الإظهار)', items: [
+          'شرطان معاً: متماثلة ≥3 + متتالية ≥3، ومجموع الأوراق المُظهرة ≥ 71 (بالحساب الوجهي) دون جوكر في الحساب.',
+          'إن وُجد افتتاح سابق: يجب تجاوز مجموع آخر مُظهِر.',
+          'ورقة الموزع الأولى تُؤخذ فقط في حالتين: إكمال افتتاحٍ مستوفٍ، أو إنهاء الشوط كاملاً.',
+          'إظهار بدون شروط = +71، تُجمع الأوراق ويُرمى ورقة ويستمر الشوط.',
+          'أخذ ورقة (مرموق/سابقة) دون شروط = +71 مع إرجاع الورقة.'
+        ]},
+        { h: 'قانون الطلاح — الإضافة واستبدال الجوكر', items: [
+          'بعد تحقق الشروط يجوز إنقاص ورقة من اليد بإضافتها لأي مجموعة ظاهرة (له أو لغيره) بشرط التجانس وعدم التكرار: متتالية ← نفس الرمز وتمدد التسلسل؛ متماثلة ← نفس العدد برمز غير موجود.',
+          'استبدال الجوكر: ورقة واحدة من اليد تُضاف للمجموعة أو يُستبدل بها الجوكر فيها.',
+          'كل ورقة صالحة تُقبل، وغير الصالحة تُرفض فقط، برسالة واحدة غير مكررة.'
+        ]},
+        { h: 'قانون الطلاح — إنهاء الشوط', items: [
+          'حالة أ (أساسية): 14 ورقة كلها مجموعات صالحة (الجوكر مسموح للتكملة) + الورقة الـ15 تُقلب ظهراً → إنهاء بدون أي شرط نقاط.',
+          'حالة ب: سحب المرموق ثم الإنهاء كحالة أ → بدون شرط افتتاح.',
+          'حالة ج: سحب المرموق + الإنهاء مع إضافة ورقة لمجموعة لاعبٍ منزِلٍ قبله → يلزم الافتتاح وتجاوز مجموع آخر منزِل.',
+          'يمنع ظهور خطأ «شروط الافتتاح» في الحالتين أ/ب.',
+          'شوط مضاعف: إن أنهى الفائز بجوكر حر معزول كالورقة الـ15 (جوكر مسحوب من ورق التوزيع، لا من المرموق أو لا تور) تُضاعف نقاط الأوراق المتبقية/اليد الكاملة على الخاسرين، دون مضاعفة جزاء الخطأ.'
+        ]},
+        { h: 'قانون الطلاح — قاعدة الـ12 ورقة', items: [
+          'من أنزل 12 ورقة: يلزمه في دوره التالي أخذ ورقة السابق إن انتمت لأي مجموعة ظاهرة؛ غفل وسحب من المجرف = +71 نهاية الشوط (ويُعفى الرامي).',
+          'من بيده كاملة: يمنع أن يرمي ورقة منتمية لمجموعة ظاهرة والتالي صاحب 12 ورقة؛ فعلها وأخذها التالي = +71 على الرامي.'
+        ]},
+        { h: 'قانون الطلاح — النفاد والحساب والنهاية', items: [
+          'نفاد المجرف: يُخلط المرموق فقط (لا تُمس مجموعات اللاعبين) ويُستأنف عند من توقف عنده الدور.',
+          'حساب نهاية الشوط: يد كاملة دون إنزال = +100؛ أنزل بعضاً = كل ورقة متبقية 10 نقاط ثابتة بغضّ النظر عن رقمها.',
+          'الجزاءات تُضاف للمجموع التراكمي وتُعرض بسببها مرة واحدة.',
+          'نهاية الجولة: الهدف (501–1001)؛ يخسر من يتجاوز مجموعه التراكمي الهدف، والفائز من بقي دونه؛ لا تُعلن النهاية قبل التجاوز.'
+        ]},
+        { h: 'قانون السامبل (104 أوراق)', items: [
+          'بلا جوكر مطبوع؛ بعد توزيع 13 ورقة لكل لاعب تُقلب أول ورقة من ورق التوزيع = «الفوجوك»، واللون المعاكس لها بنفس الرقم هو جوكر الجولة.',
+          'اللاعب الذي يلي الموزع صاحب أول دور.',
+          'الفوجوك: يحق لأي لاعب سحبها في دوره الأول فقط؛ إن لم تُسحب في الدورة الأولى سقط الحق فيها نهائياً، وتُخلط مع أوراق المرموق عند نفاد ورق التوزيع لتصبح ضمن السحب العادي.',
+          'المرموق: اللاعب حر في سحب ورقة المرموق والتخلص من ورقة أخرى بدون شروط الافتتاح أو الإنهاء وبلا أي جزاء؛ لكنها لا تُعتبر حرة في نفس الدور — بعد رمي ورقة التخلص تصبح من أوراقه الحرة في الأدوار الموالية.',
+          'رمي المسحوبة في نفس الدور: من سحب ورقة المرموق أو الفوجوك ورماها في نفس الدور يعتبر مخطئاً ويقيد عليه جزاء +51 نقطة يضاف لمجموع نقاط الجولة في نهاية الشوط.',
+          'الفوجوك المرمية: إن سحب لاعب الفوجوك ورماها في نفس الدور تتحول لورقة مرموق عادية — لا يحق للاعبين الآخرين سحبها كفوجوك، وإنما لصاحب الدور التالي أخذها كمرموق عادي.',
+          'الافتتاح: متتالية حرة + متماثلة حرة (خاليتان من الجوكر ومن ورقة مرموق نفس الدور) ومجموع الافتتاح ≥ 51؛ يجوز إدخال ورقة المرموق المسحوبة في مجموعة إضافية صالحة وتُحتسب ضمن الـ51 بشكل قانوني — بشرط ألا تكون جوكراً وألا تكون في المتتالية أو المتماثلة الحرتين الأساسيتين؛ مجموعات الجوكر لا تدخل العتبة لكنها تصلح لتجاوز حساب المفتتح السابق؛ وإن سبق لأحد اللاعبين الافتتاح وجب أن يكون مجموع افتتاحك أكبر تماماً من أعلى افتتاح سابق في الشوط (التساوي مرفوض).',
+          'الحرة تبقى حرة في دور الافتتاح فقط: لا يُدرج جوكر أو مرموق نفس الدور في مجموعة حرة أُنزلت في نفس الدور؛ وفي الأدوار الموالية يجوز إدراج الجوكر وورقة المرموق في مجموعات الافتتاح الحرة.',
+          'الإنهاء: متتالية حرة + متماثلة حرة + 13 ورقة مرتبة في مجموعات صالحة (مع أو بدون الورقة المعينة كجوكر) + ورقة الإنهاء الـ14 تُرمى ظهراً.',
+          'عند الإنهاء يكشف الجميع: من لم يفتتح = +51؛ ومن افتتح تُحسب أوراقه المتبقية بقيمتها الوجهية (J/Q/K/A وورقة الجوكر = 10)؛ إن تجاوزت 51 = +51.',
+          'خطأ الإظهار (افتتاح بلا شروط) = +51 واستمرار الشوط.'
+        ]}
+      ],
+      en: [
+        { h: 'General Definitions', items: [
+          'Suits: Hearts/Diamonds (Red), Spades/Clubs (Black). Opening values: number cards = face value; J/Q/K/A = 10.',
+          'Set: 3 or more cards of the same rank with different suits; no duplicate suits within the set.',
+          'Sequence: 3 or more consecutive cards of the same suit.',
+          'Stock = draw pile; Discard pile = discard pile.'
+        ]},
+        { h: 'Talaj — Dealing and Turn', items: [
+          '2–5 players; 108 cards (8 per rank + 4 Jokers). First dealer = player holding the lowest card; deal rotates to the right each round.',
+          '14 cards per player, 15 for the dealer; the dealer discards first to start the discard pile.',
+          'Turn: draw exactly one card (stock or discard) then discard exactly one; hand size is 14 between turns and 15 during the turn — 13 or 16 is impossible.',
+          '90-second timer; on timeout, auto-play executes and the turn passes.'
+        ]},
+        { h: 'Talaj — Opening (Melding)', items: [
+          'Both conditions required: Set ≥3 + Sequence ≥3, and the total face value of melded cards is ≥ 71, excluding Jokers from the calculation.',
+          'If a prior opening exists: you must exceed the last opener\'s total.',
+          'The dealer\'s first discarded card may only be taken to complete a valid opening or to end the round entirely.',
+          'Showing without conditions = +71: cards are collected, one is discarded, and the round continues.',
+          'Taking a card (discard/previous) without conditions = +71 with the card returned.'
+        ]},
+        { h: 'Talaj — Adding to Melds & Joker Replacement', items: [
+          'After meeting conditions, you may reduce your hand by adding a card to any exposed meld (yours or an opponent\'s) provided it fits legally without duplication: Sequence ← same suit extending the run; Set ← same rank with a suit not already present.',
+          'Joker replacement: one card from hand is either added to the meld OR used to replace a Joker within it.',
+          'All valid cards must be accepted; only invalid cards rejected — with a single, non-repeating message.'
+        ]},
+        { h: 'Talaj — Ending the Round', items: [
+          'Case A (Standard): all 14 cards form valid melds (Jokers allowed as wildcards) + the 15th card placed face-down → ends the round with no point requirement.',
+          'Case B: draw from the discard pile then end as in Case A → no opening requirement.',
+          'Case C: draw from the discard pile + end by adding a card to a previous player\'s meld → must meet opening conditions AND exceed the last opener\'s total.',
+          'The "opening conditions" error must NOT trigger in Cases A/B.',
+          'Doubled round: if the winner ends with a free isolated Joker as the 15th card (a Joker drawn from the draw pile, not from the discard pile or La Tour), the losers\' remaining-card / full-hand points are doubled, while violation penalties are NOT doubled.'
+        ]},
+        { h: 'Talaj — 12-Card Rule', items: [
+          'A player who has laid down 12 cards MUST take the previous player\'s discard on their next turn if it belongs to any exposed meld; failure (drawing from stock instead) = +71 at round end (the thrower is exempt).',
+          'A player with a full hand MAY NOT discard a card belonging to an exposed meld when the next player holds 12 cards; violation + next player takes it = +71 on the thrower.'
+        ]},
+        { h: 'Talaj — Exhaustion, Scoring and Match End', items: [
+          'Stock exhaustion: reshuffle the discard pile ONLY (players\' melds untouched); resume from the current turn position.',
+          'End-of-round scoring: full hand without laying down = +100; partial lay-down = each remaining card is a flat 10 points, regardless of rank.',
+          'Penalties are added to the cumulative score and displayed once with reason.',
+          'Match end: target (501–1001); a player loses upon exceeding the target cumulative score; the winner stays below it; the game does NOT end before the threshold breach.'
+        ]},
+        { h: 'Sample Rules (104 Cards)', items: [
+          'No printed Jokers; after dealing 13 cards each, the first stock card is flipped = the "Fojok"; its opposite-colour counterpart of the same rank is the round\'s Joker.',
+          'The player after the dealer takes the first turn.',
+          'Fojok: any player may draw it only on their own first turn; if nobody takes it during the first cycle the right lapses forever, and it is shuffled into the discard pile when the stock runs out, becoming drawable again.',
+          'Discard pile: a player may freely draw the top discard and throw away another card — no opening/finishing conditions and no penalty; however that card is NOT free the same turn — after discarding, it becomes one of the player\'s free cards on following turns.',
+          'Same-turn throwback: drawing the discard-pile card or the Fojok and throwing it back on the same turn is a mistake — a +51 penalty is added to the player\'s round score at the end of the round.',
+          'Thrown-back Fojok: if a player draws the Fojok and discards it the same turn, it becomes an ordinary discard-pile card — no other player may draw it as the Fojok; only the next player in turn may take it as a normal discard.',
+          'Opening: a free Sequence + a free Set (containing no Joker and no same-turn discard-pile card) with an opening total ≥ 51; the drawn discard-pile card may legally be placed in an additional valid meld that counts toward the 51 — provided it is not a Joker and not part of the two essential free opening melds; Joker melds do not count toward the threshold but do count toward beating the previous opener\'s total; if any player has already opened, your opening total must be strictly greater than the highest previous opening of the round (a tie is refused).',
+          'Free stays free only on the opening turn: no Joker or same-turn discard card may be laid onto a free meld during the turn it was laid down; on following turns Jokers and discard-pile cards may be added to free opening melds.',
+          'Finishing: free Sequence + free Set + all 13 cards arranged in valid melds (with or without the designated Joker) + the 14th finishing card thrown face-down.',
+          'At round end all hands are revealed: unopened players = +51; opened players count remaining cards at face value (J/Q/K/A & the Joker = 10); if the total exceeds 51 = +51.',
+          'Invalid opening attempt = +51 and the round continues.'
+        ]}
+      ],
+      fr: [
+        { h: 'Définitions générales', items: [
+          'Symboles : Cœur/Carreau (rouge), Épée/Trèfle (noir). Valeurs d\'ouverture : chiffre = valeur ; V/D/R/As = 10.',
+          'Brelan (Set) : 3 cartes ou plus de même rang avec des symboles différents, sans doublon de symbole.',
+          'Suite (Sequence) : 3 cartes consécutives ou plus de même symbole.',
+          'Talon = pioche ; Défausse = pile de défausse.'
+        ]},
+        { h: 'Talaj — Distribution et tour', items: [
+          '2–5 joueurs ; 108 cartes (8 par rang + 4 jokers). Premier donneur = plus petite carte ; rotation à droite chaque manche.',
+          '14 cartes par joueur, 15 au donneur ; le donneur défausse en premier.',
+          'Tour : piocher exactement une carte puis défausser exactement une carte ; 14 cartes entre les tours, 15 pendant le tour — 13 ou 16 impossible.',
+          'Minuteur 90 s ; à expiration, jeu automatique et passage du tour.'
+        ]},
+        { h: 'Talaj — Ouverture', items: [
+          'Deux conditions : brelan ≥3 + suite ≥3, et total ≥ 71 (sans joker dans le compte).',
+          'Si une ouverture existe : dépasser le total du dernier ouvreur.',
+          'La première défausse du donneur ne se prend que pour compléter une ouverture valide ou pour finir la manche.',
+          'Montrer sans conditions = +71 (cartes reprises, une défaussée, la manche continue).',
+          'Prendre une carte sans conditions = +71 avec la carte rendue.'
+        ]},
+        { h: 'Talaj — Ajouts et joker', items: [
+          'Après conditions : ajouter une carte à toute combinaison exposée si elle convient sans doublon (suite ← même symbole ; brelan ← même rang, symbole absent).',
+          'Joker : une carte de la main est ajoutée OU remplace un joker.',
+          'Toute carte valide est acceptée ; seule l\'invalide est rejetée, avec un message unique.'
+        ]},
+        { h: 'Talaj — Fin de manche', items: [
+          'Cas A : 14 cartes en combinaisons valides (jokers permis) + la 15e face cachée → fin sans condition de points.',
+          'Cas B : prise de la défausse puis fin comme Cas A → sans condition d\'ouverture.',
+          'Cas C : prise de la défausse + fin en ajoutant à la combinaison d\'un joueur précédent → conditions d\'ouverture + dépasser le total du dernier ouvreur.',
+          'L\'erreur « conditions d\'ouverture » ne doit PAS apparaître dans les cas A/B.'
+        ]},
+        { h: 'Talaj — Règle des 12 cartes', items: [
+          'Un joueur ayant posé 12 cartes DOIT prendre la défausse du précédent si elle appartient à une combinaison exposée ; sinon +71 (le lanceur est exempté).',
+          'Un joueur à main pleine ne PEUT PAS défausser une carte appartenant à une combinaison exposée si le suivant a 12 cartes ; violation + prise = +71 au lanceur.'
+        ]},
+        { h: 'Talaj — Épuisement, score et fin', items: [
+          'Épuisement du talon : mélanger la défausse SEULEMENT (les combinaisons restent intactes).',
+          'Score de fin : main pleine sans pose = +100 ; pose partielle = 10 points fixes par carte restante.',
+          'Les pénalités s\'ajoutent au cumul et s\'affichent une fois avec leur raison.',
+          'Fin de partie : objectif (501–1001) ; on perd en dépassant le cumul ; le gagnant reste en dessous ; pas de fin avant dépassement.'
+        ]},
+        { h: 'Sample (104 cartes)', items: [
+          'Sans joker imprimé ; après la donne de 13 cartes, la première carte de la pioche est retournée = le « Fojok » ; sa contrepartie de couleur opposée et de même rang est le joker de la manche.',
+          'Le joueur suivant le donneur commence.',
+          'Fojok : chaque joueur peut le prendre uniquement à son premier tour ; non pris au premier cycle, le droit est perdu et il est mélangé à la défausse quand la pioche s\'épuise.',
+          'Défausse : le joueur peut librement prendre la carte du dessus et se défausser d\'une autre — sans conditions d\'ouverture/de fin et sans pénalité ; cette carte n\'est PAS libre le même tour, elle le devient aux tours suivants.',
+          'Rejet le même tour : prendre la carte de défausse ou le Fojok puis le rejeter le même tour est une faute — pénalité de +51 points ajoutée au score de la manche en fin de manche.',
+          'Fojok rejeté : si un joueur prend le Fojok et le rejette le même tour, il devient une carte de défausse ordinaire — aucun autre joueur ne peut le prendre comme Fojok ; seul le joueur suivant peut le prendre comme défausse normale.',
+          'Ouverture : suite libre + brelan libre (sans joker ni carte de défausse du même tour), total d\'ouverture ≥ 51 ; la carte de défausse prise peut légalement entrer dans une combinaison supplémentaire valide comptée dans les 51 — à condition qu\'elle ne soit pas un joker et ne figure pas dans les deux combinaisons libres essentielles ; les combinaisons avec joker ne comptent pas dans le seuil mais servent à dépasser le total de l\'ouvreur précédent ; si un joueur a déjà ouvert, votre total d\'ouverture doit être strictement supérieur à la plus haute ouverture précédente de la manche (l\'égalité est refusée).',
+          'Le libre reste libre au tour d\'ouverture seulement : aucun joker ni carte de défausse du même tour ne peut être ajouté à une combinaison libre posée ce tour-là ; aux tours suivants, jokers et cartes de défausse peuvent rejoindre les combinaisons libres de l\'ouverture.',
+          'Fin : suite libre + brelan libre + 13 cartes en combinaisons valides (avec ou sans le joker désigné) + la 14e carte de fin face cachée.',
+          'À la fin, révélation : non-ouvreur = +51 ; ouvreur : cartes restantes à leur valeur faciale (V/D/R/As et joker = 10) ; si > 51 = +51.',
+          'Ouverture invalide = +51, la manche continue.'
+        ]}
+      ],
+      da: [
+        { h: 'تعريفات عامة', items: [
+          'الرموز: قلب/مربع حمر، سيف/عنب كحل. قيم الافتتاح: الرقم بقيمتو؛ J/Q/K/A = 10.',
+          'مجموعة متشابهة: 3 أوراق ولا كتر بنفس العدد وبرموز مختلفة بلا تكرار.',
+          'تسلسل: 3 أوراق ولا كتر متتابعين بنفس الرمز.',
+          'الباكي = أوراق السحب؛ المرموق = أوراق الرمي.'
+        ]},
+        { h: 'الطلاح — التوزيع والدور', items: [
+          '2–5 لعابا؛ 108 ورقة. أول موزع = صاحب أصغر ورقة؛ الدور يمشي لليمين.',
+          '14 ورقة لكل لعاب و15 للموزع؛ الموزع يرمي اللولة.',
+          'الدور: جبد ورقة وحدة (باكي ولا مرموق) وارمي ورقة وحدة بالضبط؛ اليد 14 بين الأدوار و15 فالدور.',
+          '90 ثانية؛ ملي يسالي الوقت كيلعب الأوتوماتيك.'
+        ]},
+        { h: 'الطلاح — الافتتاح', items: [
+          'جوج شروط: متشابهة ≥3 + تسلسل ≥3 والمجموع ≥ 71 بلا جوكر فالحساب.',
+          'إلا كان افتتاح قبل: خاصك تفوت مجموع آخر مظهر.',
+          'ورقة الموزع اللولة كتاخذ غير باش تكمل افتتاح ولا تسالي الشوط.',
+          'إظهار بلا شروط = +71.',
+          'أخذ ورقة بلا شروط = +71 وترجع الورقة.'
+        ]},
+        { h: 'الطلاح — الإضافة والجوكر', items: [
+          'من بعد الشروط: زيد ورقة لأي مجموعة ظاهرة إلا جات قانونية بلا تكرار.',
+          'الجوكر: ورقة وحدة من اليد كتزاد ولا كتتبدل بيه الجوكر.',
+          'كل ورقة صالحة كتقبل وغير الصالحة كترفض برسالة وحدة.'
+        ]},
+        { h: 'الطلاح — إنهاء الشوط', items: [
+          'حالة أ: 14 ورقة كلها مجموعات صالحة + الورقة 15 على ضهرها = ساليتي بلا شرط نقاط.',
+          'حالة ب: جبدتي المرموق وساليتي = بلا شرط افتتاح.',
+          'حالة ج: جبدتي المرموق وساليتي بزيادة ورقة لمجموعة لعاب آخر = خاصك الافتتاح وتفوت مجموع آخر منزل.',
+          'ما كيبانش خطأ الافتتاح فالحالتين أ/ب.'
+        ]},
+        { h: 'الطلاح — قاعدة الـ12', items: [
+          'لي نزل 12 ورقة خاصو ياخد ورقة السابق إلا كانت كتسالي مجموعة ظاهرة؛ غفل = +71.',
+          'لي عندو يد كاملة ممنوع يرمي ورقة كتسالي مجموعة والتالي عندو 12؛ دارها = +71 عليه.'
+        ]},
+        { h: 'الطلاح — النفاد والحساب والنهاية', items: [
+          'نفاد الباكي: تخبل المرموق غير، والمجموعات ما كتتمسش.',
+          'حساب نهاية الشوط: يد كاملة بلا إنزال = +100؛ نزل شوية = كل ورقة متبقية 10 نقاط ثابتة.',
+          'الجزاءات كتزيد للمجموع التراكمي وكتعرض مرة وحدة بالسبب.',
+          'نهاية الجولة: الهدف (501–1001)؛ لي فوت التراكمي ديالو الهدف خسر، والرابح لي بقى تحتو.'
+        ]},
+        { h: 'السامبل (104 ورقة)', items: [
+          'بلا جوكر مطبوع؛ من بعد ما يتوزعو 13 ورقة لكل واحد، كتنقلب اللولة من ورق التوزيع = «الفوجوك»، واللون المعكوس ديالها بنفس الرقم هو جوكر الدورة.',
+          'اللعاب لي مور الموزع هو اللول.',
+          'الفوجوك: أي لعاب يقدر ياخدها غير فالدور اللول ديالو؛ إلا ما تاخداتش فالدورة اللولة ضاع الحق فيها نهائياً، وكتخلط مع المرموق ملي يسالي ورق التوزيع وترجع تتسحب عادي.',
+          'المرموق: اللعاب حر ياخد ورقة المرموق ويرمي ورقة خرى — بلا شروط افتتاح ولا إنهاء وبلا جزاء؛ ولكن ماشي حرة فنفس الدور — من بعد ما يرمي، كتولي من الأوراق الحرة ديالو فالأدوار الجاية.',
+          'الرمية فنفس الدور: لي سحب ورقة المرموق ولا الفوجوك ورماها فنفس الدور راه غالط — كيتقيد عليه جزاء +51 نقطة كيتزاد على مجموع الدورة فآخر الشوط.',
+          'الفوجوك المرمية: إلا سحب شي لعاب الفوجوك ورماها فنفس الدور، كتولي ورقة مرموق عادية — ماعندهمش الحق اللعابة الآخرين ياخدوها كفوجوك، غير مول الدور الجاي ياخدها كمرموق عادي.',
+          'الافتتاح: تسلسل حر + متشابهة حرة (بلا جوكر وبلا ورقة مرموق ديال نفس الدور) ومجموع الافتتاح ≥ 51؛ يمكن دخل ورقة المرموق المسحوبة فمجموعة زايدة صالحة وكتحسب فالـ51 بشكل قانوني — بشرط ماتكونش جوكر وماتكونش فالتسلسل ولا المتشابهة الحرين الأساسيين؛ مجموعات الجوكر مادخلوش العتبة ولكن كيصلحو باش تفوت حساب المفتتح اللي قبل منك؛ وإلا سبق شي لاعب فتح، خاص مجموع الافتتاح ديالك يفوت أعلى افتتاح سبق فالشوط ولو بنقطة وحدة (التعادل مرفوض).',
+          'الحرة كتبقى حرة غير فدور الافتتاح: ما يتزادش جوكر ولا مرموق نفس الدور فمجموعة حرة نزلات فنفس الدور؛ وفالأدوار الجاية يقدر يتزاد الجوكر وورقة المرموق فمجموعات الافتتاح الحرة.',
+          'الإنهاء: تسلسل حر + متشابهة حرة + 13 ورقة كاملين فمجموعات صحيحة (بالجوكر المعين ولا بلاه) + ورقة الإنهاء 14 على ضهرها.',
+          'فالآخر كيكشفو الكل: لي ما فتحش = +51؛ لي فتح كيتحسبو أوراقو بقيمتهم (J/Q/K/A والجوكر = 10)؛ إلا فاتو 51 = +51.',
+          'خطأ الإظهار = +51 والشوط كيكمل.'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>إنهاء الشوط (Finish)</td><td>0 نقطة جزاء (الفوز بالشوط)</td></tr><tr><td>إظهار/افتتاح خاطئ — طلاح</td><td>+71 نقطة جزاء</td></tr><tr><td>إظهار/افتتاح خاطئ — سامبل</td><td>+51 نقطة جزاء</td></tr><tr><td>أخذ ورقة دون شروط — طلاح</td><td>+71 (مع إرجاع الورقة)</td></tr><tr><td>سحب المرموق — سامبل</td><td>حر بلا جزاء (غير حرة في نفس الدور)</td></tr><tr><td>رمي المرموق/الفوجوك المسحوبة في نفس الدور — سامبل</td><td>+51 تضاف لمجموع الجولة في نهاية الشوط</td></tr><tr><td>مخالفة قاعدة الـ12 ورقة</td><td>+71</td></tr><tr><td>يد كاملة دون إنزال — طلاح</td><td>+100</td></tr><tr><td>يد كاملة دون إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — طلاح</td><td>10 نقاط ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية بعد إنزال جزئي — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr><tr><td>شوط مضاعف (إنهاء بجوكر حر معزول)</td><td>نقاط الأوراق المتبقية/اليد الكاملة ×2 (الجزاءات لا تُضاعف)</td></tr>',
+      da: '<tr><td>إنهاء الشوط</td><td>0 نقطة جزاء (ربحتي الشوط)</td></tr><tr><td>إظهار خاطئ — طالاج</td><td>+71</td></tr><tr><td>إظهار خاطئ — سامبل</td><td>+51</td></tr><tr><td>أخذ ورقة بلا شروط — طالاج</td><td>+71 (وترجع الورقة)</td></tr><tr><td>سحب المرموق — سامبل</td><td>حر بلا جزاء (ماشي حرة فنفس الدور)</td></tr><tr><td>رمي المرموق/الفوجوك المسحوبة فنفس الدور — سامبل</td><td>+51 كتزاد على مجموع الدورة فآخر الشوط</td></tr><tr><td>قاعدة الـ12</td><td>+71</td></tr><tr><td>يد كاملة بلا إنزال — طالاج</td><td>+100</td></tr><tr><td>يد كاملة بلا إنزال — سامبل</td><td>+51</td></tr><tr><td>أوراق متبقية — طالاج</td><td>10 ثابتة لكل ورقة</td></tr><tr><td>أوراق متبقية — سامبل</td><td>قيمتها الوجهية (J/Q/K/A والجوكر = 10)</td></tr>',
+      fr: '<tr><td>Finir la manche</td><td>0 point de pénalité (victoire)</td></tr><tr><td>Ouverture invalide — Talaj</td><td>+71 points</td></tr><tr><td>Ouverture invalide — Sample</td><td>+51 points</td></tr><tr><td>Prise de carte sans conditions — Talaj</td><td>+71 (carte rendue)</td></tr><tr><td>Prise de la défausse — Sample</td><td>Libre, sans pénalité (non libre le même tour)</td></tr><tr><td>Rejet de la défausse/du Fojok le même tour — Sample</td><td>+51 ajoutés au score de la manche en fin de manche</td></tr><tr><td>Violation de la règle des 12 cartes</td><td>+71</td></tr><tr><td>Main pleine sans pose — Talaj</td><td>+100</td></tr><tr><td>Main pleine sans pose — Sample</td><td>+51</td></tr><tr><td>Cartes restantes après pose partielle — Talaj</td><td>10 fixes par carte</td></tr><tr><td>Cartes restantes après pose partielle — Sample</td><td>Valeur faciale (V/D/R/As et joker = 10)</td></tr>',
+      en: '<tr><td>Finish Round</td><td>0 penalty points (Round Win)</td></tr><tr><td>Invalid meld/opening — Talaj</td><td>+71 penalty points</td></tr><tr><td>Invalid meld/opening — Sample</td><td>+51 penalty points</td></tr><tr><td>Take card without conditions — Talaj</td><td>+71 (card returned)</td></tr><tr><td>Discard-pile draw — Sample</td><td>Free, no penalty (not free the same turn)</td></tr><tr><td>Same-turn throwback of drawn discard/Fojok — Sample</td><td>+51 added to the round score at round end</td></tr><tr><td>Violate 12-card rule</td><td>+71</td></tr><tr><td>Full hand without lay-down — Talaj</td><td>+100</td></tr><tr><td>Full hand without lay-down — Sample</td><td>+51</td></tr><tr><td>Remaining after partial lay-down — Talaj</td><td>Flat 10 per card</td></tr><tr><td>Remaining after partial lay-down — Sample</td><td>Face value (J/Q/K/A & Joker = 10)</td></tr><tr><td>Doubled round (free isolated Joker finish)</td><td>Remaining/full-hand points ×2 (penalties not doubled)</td></tr>'
+    },
+    tips: {
+      ar: [
+        'في الطلاح: لا تُحسب ورقة الجوكر ضمن نقاط الافتتاح (يجب تجاوز 71 بدونها).',
+        'في السامبل: راقب ورقة الفوجوك — نظيرتها المعاكسة اللون تصبح الجوكر (تُحسب 10 عند الكشف)، ولا تنسَ حقك في سحبها خلال دورك الأول فقط.',
+        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) لا يتطلب أي شرط افتتاح.',
+        'قاعدة الـ12 ورقة (طلاح فقط): إن أنزلت 12 ورقة فخذ ورقة المرموق المطابقة لمجموعات الطاولة، وإلا فالجزاء +71. في السامبل سحب المرموق حر دائماً.'
+      ],
+      da: [
+        'فالطالاج: الجوكر ما كيتحسبش فنقاط الافتتاح (خاصك تفوت 71 بلا بيه).',
+        'فالسامبل: رد البال للفوجوك — النظير المعكوس ديالها كيولي جوكر (كيتحسب 10)، وعندك الحق تسحبها غير فالدور اللول ديالك.',
+        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) ما كيحتاج حتى شرط افتتاح.',
+        'قاعدة الـ12 (طالاج غير): إلا نزلتي 12 ورقة خذ المرموق المطابق للمجموعات وإلا +71. فالسامبل السحب من المرموق حر ديما.'
+      ],
+      fr: [
+        'En Talaj : le joker ne compte pas dans l\'ouverture (il faut dépasser 71 sans lui).',
+        'En Sample : surveillez le Fojok — sa contrepartie de couleur inversée devient le joker (vaut 10 à la révélation) ; vous ne pouvez le prendre qu\'à votre premier tour.',
+        'La fin de manche standard (14 cartes + défausse de la 15e) n\'exige aucune condition d\'ouverture.',
+        'Règle des 12 cartes (Talaj uniquement) : si vous en posez 12, prenez la défausse qui complète une combinaison, sinon +71. En Sample la prise de la défausse est toujours libre.'
+      ],
+      en: [
+        'In Talaj: the Joker does not count toward the opening (you must exceed 71 without it).',
+        'In Sample: watch the Fojok — its colour-reversed counterpart becomes the Joker (counts 10 at reveal); you may only draw it on your first turn.',
+        'Standard round finish (14 cards + discarding the 15th) requires no opening condition.',
+        '12-card rule (Talaj only): if you have laid 12 cards, take the discard that fits a meld, otherwise +71. In Sample the discard draw is always free.'
+      ]
+    }
+  },
+
+rn: {
     name: { ar: 'روندا المغربية ♦️♠️', fr: 'Ronda Marocaine ♦️♠️', en: 'Moroccan Ronda ♦️♠️' },
     goal: {
       ar: 'خمّن البطاقة الصحيحة (رقم أو رقم + رمز) قبل الموزع للفوز بالجولة.',
@@ -1518,7 +1956,606 @@ var FULL_RULES = {
       fr: ['8 bonbons gagnants sur 12 — probabilité de gain 66,7 %', 'Total des multiplicateurs 11,4 sur 12 bonbons', 'RTP 95 % — avantage du casino 5 %'],
       en: ['8 winning candies out of 12 — win chance 66.7%', 'Multiplier total 11.4 across 12 candies', 'RTP 95% — house edge 5%']
     }
-  }
+  },
+  bl8: {
+    name: { ar: 'البلياردو — 8-بول (WPA) 🎱', da: 'البلياردو — 8-بول (WPA) 🎱', fr: 'Billard — 8-Ball (WPA) 🎱', en: 'Billiards — 8-Ball (WPA) 🎱' },
+    goal: {
+      ar: 'أدخل كل كرات مجموعتك (الممتلئة 1-7 أو المخططة 9-15) ثم أدخل الكرة 8 إدخالاً قانونياً لتفوز بالإطار.',
+      da: 'دخل كاع كورات مجموعة ديالك (الممتلئة 1-7 ولا المخططة 9-15) ومن بعد دخل كورة 8 بقانون باش تربح الشوط.',
+      fr: 'Empochez toutes les boules de votre groupe (pleines 1-7 ou rayées 9-15) puis la 8 légalement pour gagner la manche.',
+      en: 'Pot every ball of your group (solids 1-7 or stripes 9-15) then pot the 8 legally to win the frame.'
+    },
+    steps: {
+      ar: [
+        'اختر الصنف (8-بول متاح الآن؛ بلاك بول وسنوكر وكاروم قريباً) والرهان ومظهر الطاولة',
+        'اختر الوضع: وجه لوجه على جهاز واحد، أو ضد الحاسوب، أو غرفة أونلاين برهان',
+        'الكسر: البيضاء من خلف خط الكسر تضرب المثلث — كسر قانوني = دخول كرة أو ملامسة 4 كرات للوسائد',
+        'الطاولة مفتوحة بعد الكسر: أول كرة تُدخلها قانونياً تحدّد مجموعتك ومجموعة الخصم',
+        'وجّه بالسحب على الطاولة، اضبط القوة بالشرائط والدوران بالقرص الأبيض، ثم اضغط ✔️',
+        'نظّف مجموعتك ثم أدخل الكرة 8 — إدخالها مبكراً أو مع مخالفة يخسرك الإطار فوراً'
+      ],
+      da: [
+        'عزل الصنف (8-بول متاح دابا؛ بلاك بول وسنوكر وكاروم قريباً) والرهان ومظهر الطبلة',
+        'عزل الوضع: وجه لوجه على جهاز واحد، ولا ضد الحاسوب، ولا بيت أونلاين برهان',
+        'الكسر: البيضة من ورا خط الكسر كتضرب المثلث — كسر قانوني = كورة تدخل ولا 4 كورات يلمسو الباندة',
+        'الطبلة محلولة من بعد الكسر: أول كورة دخلتيها بقانون هي اللي كتحدد مجموعة ديالك وديال الخصم',
+        'وجّه بالجر على الطبلة، ضبط القوة بالشرائط والدوران بالقرص الأبيض، ومن بعد ضغط ✔️',
+        'نقّي مجموعة ديالك ومن بعد دخل كورة 8 — إلا دخلتيها بكري ولا مع مخالفة كتخسر الشوط دغيا'
+      ],
+      fr: [
+        'Choisissez la discipline (8-Ball disponible ; Blackball, Snooker et Carom bientôt), la mise et l\'apparence',
+        'Choisissez le mode : face à face sur un appareil, contre l\'IA, ou salle en ligne avec mise',
+        'La casse : la blanche derrière la ligne de casse frappe le triangle — casse légale = une empochée ou 4 bandes touchées',
+        'Table ouverte après la casse : la première boule empochée légalement définit votre groupe',
+        'Visez en glissant sur la table, réglez la puissance et l\'effet, puis appuyez sur ✔️',
+        'Nettoyez votre groupe puis empochez la 8 — trop tôt ou sur faute, vous perdez la manche'
+      ],
+      en: [
+        'Pick the discipline (8-Ball live; Blackball, Snooker and Carom soon), the stake and the table look',
+        'Pick the mode: hot-seat on one device, versus the AI, or an online room with a stake',
+        'The break: the cue ball behind the head string strikes the rack — legal break = a ball potted or 4 balls to a rail',
+        'The table is open after the break: the first ball you pot legally sets your group and your opponent\'s',
+        'Aim by dragging on the table, set power with the slider and spin with the white disc, then press ✔️',
+        'Clear your group then pot the 8 — potted early or on a foul, you lose the frame at once'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'المواصفات (WPA)', items: [
+          'سطح لعب 9 أقدام ≈ 100 × 50 بوصة (نسبة 2:1) و6 جيوب',
+          '16 كرة: بيضاء + 15 كرة مرقمة (1-7 ممتلئة، 9-15 مخططة، 8 سوداء)',
+          'الفيزياء بخطوة زمنية ثابتة 240Hz — نفس الضربة تعطي نفس النتيجة على كل الأجهزة'
+        ]},
+        { h: 'الأخطاء (كرة بيد للخصم)', items: [
+          'SCRATCH: سقوط الكرة البيضاء في جيب أو خروجها من الطاولة',
+          'NO_CONTACT: عدم ملامسة أي كرة',
+          'ILLEGAL_FIRST_CONTACT: ملامسة كرة ليست من مجموعتك أولاً (أو الكرة 8 والطاولة مفتوحة)',
+          'NO_RAIL: عدم وصول أي كرة إلى وسادة بعد التلامس وعدم دخول كرة',
+          'BALL_OFF_TABLE: إخراج كرة من الطاولة (تُعاد إلى نقطة القدم)',
+          'ILLEGAL_BREAK: كسر لا يُدخل كرة ولا يلمس 4 كرات الوسائد'
+        ]},
+        { h: 'الكرة 8', items: [
+          'دخولها في الكسر: تُعاد إلى نقطة القدم والإطار يستمر (بلا خسارة)',
+          'إدخالها قبل تنظيف مجموعتك: خسارة فورية',
+          'إدخالها مع أي مخالفة: خسارة فورية',
+          'إدخالها قانونياً بعد تنظيف المجموعة: فوز'
+        ]}
+      ],
+      da: [
+        { h: 'المواصفات (WPA)', items: [
+          'سطح اللعب 9 قدم ≈ 100 × 50 بوصة (2:1) و6 حفر',
+          '16 كورة: بيضة + 15 مرقمة (1-7 ممتلئة، 9-15 مخططة، 8 كحلة)',
+          'الفيزياء بخطوة ثابتة 240Hz — نفس الضربة كتعطي نفس النتيجة فكاع الأجهزة'
+        ]},
+        { h: 'المخالفات (كورة بيد للخصم)', items: [
+          'SCRATCH: البيضة طاحت فالحفرة ولا خرجات من الطبلة',
+          'NO_CONTACT: ما لمس حتى كورة',
+          'ILLEGAL_FIRST_CONTACT: لمس كورة ماشي من مجموعة ديالك أول (ولا 8 والطبلة محلولة)',
+          'NO_RAIL: حتى كورة ما وصلت للباند من بعد التلامس وما دخلات حتى كورة',
+          'BALL_OFF_TABLE: كورة خرجات من الطبلة (كترجع لنقطة الرجل)',
+          'ILLEGAL_BREAK: كسر ما دخل كورة وما لمس 4 كورات الباند'
+        ]},
+        { h: 'كورة 8', items: [
+          'إلا دخلات فالكسر: كترجع لنقطة الرجل والشوط كيكمل (بلا خسارة)',
+          'إلا دخلتيها قبل تنقّي مجموعة ديالك: خسارة ديال الوقت',
+          'إلا دخلتيها مع أي مخالفة: خسارة ديال الوقت',
+          'إلا دخلتيها بقانون من بعد ما نقّيتي مجموعة ديالك: ربح'
+        ]}
+      ],
+      fr: [
+        { h: 'Spécifications (WPA)', items: [
+          'Surface de 9 pieds ≈ 100 × 50 pouces (ratio 2:1) et 6 poches',
+          '16 boules : blanche + 15 numérotées (1-7 pleines, 9-15 rayées, 8 noire)',
+          'Physique à pas de temps fixe 240 Hz — le même coup donne le même résultat sur tous les appareils'
+        ]},
+        { h: 'Fautes (bille en main)', items: [
+          'SCRATCH : la blanche est empochée ou sort de la table',
+          'NO_CONTACT : aucune boule touchée',
+          'ILLEGAL_FIRST_CONTACT : première boule touchée hors de votre groupe (ou la 8 sur table ouverte)',
+          'NO_RAIL : aucune boule à la bande après contact et aucune empochée',
+          'BALL_OFF_TABLE : une boule quitte la table (elle est respotée)',
+          'ILLEGAL_BREAK : casse sans empochée et sans 4 bandes touchées'
+        ]},
+        { h: 'La boule 8', items: [
+          'Empochée à la casse : respotée, la manche continue (pas de perte)',
+          'Empochée avant d\'avoir nettoyé votre groupe : perte immédiate',
+          'Empochée sur une faute : perte immédiate',
+          'Empochée légalement après nettoyage du groupe : victoire'
+        ]}
+      ],
+      en: [
+        { h: 'Specifications (WPA)', items: [
+          '9-foot playing surface ≈ 100 × 50 inches (2:1 ratio) with 6 pockets',
+          '16 balls: cue ball + 15 numbered (1-7 solids, 9-15 stripes, black 8)',
+          'Physics on a fixed 240 Hz timestep — the same shot yields the same result on every device'
+        ]},
+        { h: 'Fouls (ball in hand)', items: [
+          'SCRATCH: the cue ball is pocketed or leaves the table',
+          'NO_CONTACT: no ball is struck',
+          'ILLEGAL_FIRST_CONTACT: first ball struck is outside your group (or the 8 on an open table)',
+          'NO_RAIL: no ball reaches a rail after contact and nothing is potted',
+          'BALL_OFF_TABLE: a ball leaves the table (it is re-spotted)',
+          'ILLEGAL_BREAK: a break with no pot and fewer than 4 balls to a rail'
+        ]},
+        { h: 'The 8 ball', items: [
+          'Potted on the break: re-spotted and the frame continues (no loss)',
+          'Potted before clearing your group: immediate loss',
+          'Potted along with any foul: immediate loss',
+          'Potted legally after clearing your group: win'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>الفوز بالإطار في غرفة برهان</td><td>الرهان × 2</td></tr><tr><td>الوجه لوجه أو ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب أو إدخال 8 مخالفاً</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>الربح بالشوط فبيت برهان</td><td>الرهان × 2</td></tr><tr><td>وجه لوجه ولا ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب ولا إدخال 8 مخالف</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Aucun enjeu financier</td></tr><tr><td>Abandon ou 8 fautive</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Winning the frame in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No money recorded</td></tr><tr><td>Resigning or fouling the 8</td><td>Loss of the stake</td></tr>'
+    },
+    tips: {
+      ar: [
+        'في الكسر اضرب بقوة عالية (90+) على قمة المثلث لتفريق الكرات',
+        'القرص الأبيض يضبط الدوران: أعلى = متابعة، أسفل = ارتداد، جانب = انحراف',
+        'بعد أي خطأ تصبح الكرة بيدك — اختر موضعاً يفتح زاوية إدخال سهلة',
+        'لا تذهب إلى الكرة 8 قبل تنظيف مجموعتك: إدخالها المبكر خسارة فورية'
+      ],
+      da: [
+        'فالكسر ضرب بقوة عالية (90+) على راس المثلث باش تفرق الكورات',
+        'القرص الأبيض كيضبط الدوران: الفوق = متابعة، التحت = ارتداد، الجانب = انحراف',
+        'من بعد أي مخالفة كتولي الكورة بيدك — ختار بلاصة كتحل زاوية إدخال ساهلة',
+        'ما تمشيش لكورة 8 قبل ما تنقّي مجموعة ديالك: إدخالها بكري خسارة ديال الوقت'
+      ],
+      fr: [
+        'À la casse, frappez fort (90+) au sommet du triangle pour disperser les boules',
+        'Le disque blanc règle l\'effet : haut = suivi, bas = rétro, côté = effet latéral',
+        'Après une faute vous avez bille en main — choisissez une position qui ouvre un angle facile',
+        'N\'allez pas à la 8 avant d\'avoir nettoyé votre groupe : trop tôt, c\'est une perte immédiate'
+      ],
+      en: [
+        'On the break, strike hard (90+) at the apex of the rack to spread the balls',
+        'The white disc sets spin: top = follow, bottom = draw, side = english',
+        'After a foul you get ball in hand — pick a spot that opens an easy potting angle',
+        'Do not go for the 8 before clearing your group: too early is an instant loss'
+      ]
+    }
+  },
+  blbb: {
+    name: {
+      ar: 'البلياردو الإنجليزي — Blackball (EPA) 🔴',
+      da: 'البلياردو الإنجليزي — Blackball (EPA) 🔴',
+      fr: 'Blackball — Billard Anglais (EPA) 🔴',
+      en: 'Blackball — English Pool (EPA) 🔴'
+    },
+    goal: {
+      ar: 'نظّف مجموعتك (7 كرات حمراء أو صفراء) ثم أدخل السوداء إدخالاً قانونياً. الخطأ يعطي الخصم كرة يد في أي مكان، لكن الإطار لا يُخسر إلا بالسوداء.',
+      da: 'نقّي مجموعة ديالك (7 كورات حمر ولا صفر) ومن بعد دخل الكحلاء بقانون. الخطأ كيعطي للخصم كورة يد فأي بلاصة، ولكن الشوط كيتخسر غير بالكحلاء.',
+      fr: 'Nettoyez votre groupe (7 rouges ou jaunes) puis empochez la noire légalement. Une faute donne bille en main partout, mais la manche ne se perd que sur la noire.',
+      en: 'Clear your group (7 reds or yellows) then pot the black legally. A foul gives the opponent ball in hand anywhere, but the frame is only lost on the black.'
+    },
+    steps: {
+      ar: [
+        'الكسر من الباولك (خلف خط خُمس الطاولة): كسر قانوني = 3 نقاط على الأقل — نقطة لكل كرة دخلت (بما فيها السوداء) أو تجاوزت خط الوسط كاملة',
+        'كسر غير قانوني: إعادة الرفّ إلزامية والخصم يختار أن يكسر أو يعيد الكسر لك',
+        'لا تعيين للمجموعات في الكسر أبداً: كرات الكسر لا تُحتسب، وتسقط السوداء من الكسر فتُعاد إلى نقطة الرفّ',
+        'الطاولة مفتوحة بعد الكسر: أول إدخال قانوني يحدد مجموعتك — وإن دخل لونان معاً فالمجموعة هي لون أول كرة لُمست',
+        'الخطأ القياسي (سقوط البيضاء، عدم لمس كرة، لمس كرة الخصم أولاً، ضربة بلا إدخال ولا وسادة...) = كرة يد للخصم في أي مكان بزيارة واحدة',
+        'إدخال كرة الخصم وحدها بعد لمس كرّتك أولاً = خسارة دور فقط (بلا خطأ) والبيضاء من حيث وقفت',
+        'خسارة الإطار: السوداء مع مخالفة، أو السوداء وكرات مجموعتك باقية (وإن دخلت آخر كرة معها بنفس الضربة)',
+        'حالات خاصة: جمود = إعادة رفّ ويكسر من كسر أصلاً، تدخل خارجي = إرجاع الكرات بلا عقوبة، كرة ملتصقة = لعب بعيداً عنها 90 درجة على الأقل'
+      ],
+      da: [
+        'الكسر من الباولك (ورا خط خُمس الطبلة): كسر قانوني = 3 نقاط ولا كتر — نقطة لكل كورة دخلت (حتى الكحلاء) ولا فاتت خط الوسط كاملة',
+        'كسر ماشي قانوني: الرف كيرجع غصبا والخصم كيختار يكسر ولا يعاود ليك الكسر',
+        'ماكاينش تعيين للمجموعات فالكسر أبدا: كورات الكسر ماكتحسبش، والكحلاء إلا طاحت فالكسر كترجع لنقطة الرف',
+        'الطبلة محلولة من بعد الكسر: أول كورة دخلتيها بقانون كتحدد مجموعة ديالك — إلا دخلو جوج ألوان المجموعة هي لون أول كورة تلمسات',
+        'الخطأ العادي (البيضة طاحت، ماتلمساتش كورة، كورة الخصم تلمسات الأول، ضربة بلا إدخال ولا باندة...) = كورة يد للخصم فأي بلاصة بزيارة وحدة',
+        'كورة الخصم دخلت بوحدها من بعد ما لمستي كورتك الأول = غير خسارة دور (بلا خطأ) والبيضة منين وقفات',
+        'خسارة الشوط: الكحلاء مع مخالفة، ولا الكحلاء وكورات مجموعة ديالك مازالين (حتى إلا دخلت آخر كورة معها فنفس الضربة)',
+        'حالات خاصة: الجمود = إعادة رف وكيسبق اللي كسر الأول، تدخل خارجي = الكرات كيرجعو بلا عقوبة، كورة لازقة = لعب بعيد منها 90 درجة ولا كتر'
+      ],
+      fr: [
+        'Casse depuis la zone de casse (derrière la ligne du cinquième) : casse légale = 3 points minimum — 1 point par boule empochée (noire comprise) ou ayant entièrement dépassé la ligne médiane',
+        'Casse illégale : remise du triangle obligatoire, l\'adversaire choisit de casser ou de vous rendre la casse',
+        'Aucune attribution de groupe sur la casse : les boules de la casse ne comptent pas, et la noire empochée à la casse est remise sur sa mouche',
+        'Table ouverte après la casse : la première boule empochée légalement définit le groupe — si deux couleurs tombent, le groupe est celui de la première boule touchée',
+        'Faute standard (blanche empochée, aucun contact, boule adverse touchée d\'abord, coup sans empochée ni bande...) = bille en main partout pour l\'adversaire, une seule visite',
+        'Empocher seule une boule adverse après avoir touché la vôtre = simple perte de main (sans faute), la blanche reste où elle est',
+        'Manche perdue : la noire avec une faute, ou la noire alors que votre groupe n\'est pas fini (même si la dernière tombe avec elle au même coup)',
+        'Cas spéciaux : impasse = remise du triangle par le premier casseur ; intervention extérieure = boules replacées sans pénalité ; bille collée = jouer en s\'en éloignant d\'au moins 90°'
+      ],
+      en: [
+        'Break from baulk (behind the one-fifth line): legal break = at least 3 points — 1 point per ball potted (black included) or wholly past the centre line',
+        'Illegal break: mandatory re-rack; the opponent chooses to break or hand the break back',
+        'Groups are never assigned on the break: break pots are disregarded, and the black potted on the break is re-spotted',
+        'The table is open after the break: the first legal pot sets the group — if both colours drop, the group is that of the first ball contacted',
+        'Standard foul (cue potted, no contact, opponent\'s ball first, no pot and no cushion...) = ball in hand anywhere for the opponent, one visit',
+        'Potting only an opponent\'s ball after striking your own first = loss of turn only (no foul), cue ball as it lies',
+        'Loss of frame: the black with a foul, or the black while your group remains (even if the last group ball drops in the same shot)',
+        'Special states: stalemate = re-rack by the original breaker; outside interference = balls replaced, no penalty; touching ball = play away at 90° or more'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'المواصفات (EPA v2d)', items: [
+          '16 كرة: بيضاء + 7 حمراء + 7 صفراء + سوداء',
+          'خط الكسر عند خُمس طول الطاولة — المنطقة خلفه هي الباولك',
+          'الفيزياء بخطوة ثابتة 240Hz — الضربة نفسها تعطي النتيجة نفسها على كل الأجهزة'
+        ]},
+        { h: 'الفرق الجوهري عن 8-Ball', items: [
+          'الخطأ لا يخسرك الإطار — كرة يد للخصم فقط',
+          'إدخال كرة الخصم وحدها ليس خطأً بل خسارة دور',
+          'الكسر بالنقاط (3+) وليس بالكرة/الوسائد',
+          'المجموعة لا تُحدد في الكسر مطلقاً'
+        ]},
+        { h: 'خسارة الإطار (6f)', items: [
+          'السوداء مع مخالفة في نفس الضربة',
+          'السوداء وكرات مجموعتك ما زالت على الطاولة',
+          'آخر كرة من مجموعتك مع السوداء بنفس الضربة'
+        ]}
+      ],
+      da: [
+        { h: 'المواصفات (EPA v2d)', items: [
+          '16 كورة: بيضة + 7 حمر + 7 صفر + كحلاء',
+          'خط الكسر فخُمس طول الطبلة — البلاصة وراه هي الباولك',
+          'الفيزياء بخطوة ثابتة 240Hz — نفس الضربة كتعطي نفس النتيجة فكل الأجهزة'
+        ]},
+        { h: 'الفرق الكبير مع 8-Ball', items: [
+          'الخطأ ماكيخسرش الشوط — غير كورة يد للخصم',
+          'كورة الخصم بوحدها ماشي خطأ، غير خسارة دور',
+          'الكسر بالنقاط (3+) وماشي بالكورة/الباندات',
+          'المجموعة ماكتحددش فالكسر أبدا'
+        ]},
+        { h: 'خسارة الشوط (6f)', items: [
+          'الكحلاء مع مخالفة فنفس الضربة',
+          'الكحلاء وكورات مجموعة ديالك مازال فالطبلة',
+          'آخر كورة ديالك مع الكحلاء فنفس الضربة'
+        ]}
+      ],
+      fr: [
+        { h: 'Spécifications (EPA v2d)', items: [
+          '16 boules : blanche + 7 rouges + 7 jaunes + noire',
+          'Ligne de casse au cinquième de la table — la zone derrière est le baulk',
+          'Physique à pas fixe 240 Hz — le même coup donne le même résultat sur tous les appareils'
+        ]},
+        { h: 'Différences clés avec le 8-Ball', items: [
+          'Une faute ne perd pas la manche — seulement bille en main',
+          'Empocher seul une boule adverse n\'est pas une faute, juste une perte de main',
+          'Casse aux points (3+) et non à la boule/bande',
+          'Le groupe n\'est jamais défini à la casse'
+        ]},
+        { h: 'Manche perdue (6f)', items: [
+          'La noire avec une faute au même coup',
+          'La noire alors que votre groupe reste sur la table',
+          'La dernière boule du groupe avec la noire au même coup'
+        ]}
+      ],
+      en: [
+        { h: 'Specifications (EPA v2d)', items: [
+          '16 balls: cue + 7 reds + 7 yellows + black',
+          'Break line at one fifth of the table — the area behind it is baulk',
+          'Fixed-step 240 Hz physics — the same shot gives the same result on every device'
+        ]},
+        { h: 'Key differences from 8-Ball', items: [
+          'A foul does not lose the frame — only ball in hand',
+          'Potting only an opponent\'s ball is no foul, just loss of turn',
+          'Points break (3+) rather than ball/rail requirement',
+          'The group is never set on the break'
+        ]},
+        { h: 'Loss of frame (6f)', items: [
+          'The black with a foul in the same shot',
+          'The black while your group balls remain on the table',
+          'Your last group ball with the black in the same shot'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>الفوز بالإطار في غرفة برهان</td><td>الرهان × 2</td></tr><tr><td>الوجه لوجه أو ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب أو إدخال السوداء مخالفاً</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>الربح بالشوط فبيت برهان</td><td>الرهان × 2</td></tr><tr><td>وجه لوجه ولا ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب ولا الكحلاء مخالفة</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon ou noire fautive</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Frame win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign or black on a foul</td><td>Stake lost</td></tr>'
+    },
+    tips: {
+      ar: [
+        'الكسر القوي من جانب المثلث يرفع نقاطك: كل كرة تعبر خط الوسط تحتسب',
+        'لا تستعجل السوداء: أدخلها فقط بعد تنظيف مجموعتك وبزاوية مضمونة',
+        'الكرة الملتصقة بالوسادة تحتاج ضرباً يبعدها عن وسادتها أو يلمس وسادة أخرى',
+        'الجمود يعيد الرفّ لمصلحة من كسر أولاً — لا تعلنه إلا حين يستحيل اللعب'
+      ],
+      da: [
+        'الكسر القوي من جانب المثلث كيرفع نقاطك: كل كورة كتفوت خط الوسط كتحتسب',
+        'ماتسرعش للكحلاء: دخلها غير من بعد ما تنقّي مجموعة ديالك وبزاوية مضمونة',
+        'الكورة اللازقة فالباندة خاصها ضربة تبعدها على الباندة ديالها ولا تلمس باندة أخرى',
+        'الجمود كيرجع الرف لمصلحة اللي كسر الأول — ماتعلنوش حتى يولي اللعب مستحيل'
+      ],
+      fr: [
+        'Une casse puissante côté triangle augmente vos points : chaque boule dépassant la ligne médiane compte',
+        'N\'allez pas trop vite sur la noire : ne la jouez qu\'après avoir nettoyé votre groupe, avec un angle sûr',
+        'Une bille collée à la bande doit être jouée vers une autre bande ou empochée',
+        'L\'impasse remet le triangle au premier casseur — ne la déclarez que si le jeu est vraiment impossible'
+      ],
+      en: [
+        'A powerful break at the triangle\'s side raises your points: every ball past the centre line counts',
+        'Do not rush the black: pot it only after clearing your group, with a safe angle',
+        'A ball frozen to a cushion must be played to a different cushion or potted',
+        'Stalemate re-racks in favour of the original breaker — declare it only when play is truly impossible'
+      ]
+    }
+  },
+  blsn: {
+    name: {
+      ar: 'السنوكر — Snooker (WPBSA) 🟥',
+      da: 'السنوكر — Snooker (WPBSA) 🟥',
+      fr: 'Snooker — Règles WPBSA 🟥',
+      en: 'Snooker — WPBSA Rules 🟥'
+    },
+    goal: {
+      ar: 'اجمع نقاطاً أكثر من خصمك: أدخل حمراء (نقطة) ثم لوناً مرشَّحاً (2-7) بالتناوب، وبعد آخر حمراء نظّف الألوان تصاعدياً حتى السوداء. الأخطاء تمنح الخصم نقاطاً — لا كرة يد حرة كما في البولينغ الأمريكي.',
+      da: 'جمع نقاط كتر من الخصم ديالك: دخل حمرة (نقطة) من بعد لون مرشّح (2-7) بالتناوب، ومن بعد آخر حمرة نقّي الألوان بالتصاعد حتى الكحلاء. الأخطاء كيعطيو نقاط للخصم — ماشي كورة يد حرة بحال فالبلياردو الأمريكي.',
+      fr: 'Marquez plus de points que votre adversaire : empochez une rouge (1 point) puis une couleur nommée (2-7) en alternance, puis après la dernière rouge, nettoyez les couleurs en ordre croissant jusqu\'à la noire. Les fautes donnent des points à l\'adversaire — pas de bille en main libre.',
+      en: 'Outscore your opponent: pot a red (1 point) then a nominated colour (2-7) alternately; after the last red, clear the colours in ascending order up to the black. Fouls award points to the opponent — no free ball-in-hand.'
+    },
+    steps: {
+      ar: [
+        '22 كرة على طاولة 12 قدماً: بيضاء + 15 حمراء (نقطة لكل منها) + 6 ألوان على بقعها: صفراء 2، خضراء 3، بنية 4، زرقاء 5، وردية 6، سوداء 7',
+        'البداية من داخل قوس D خلف خط الباولك — وأي سقوط للبيضاء يعيدها إلى D',
+        'ما دامت الحُمر على الطاولة: أدخل حمراء (أو أكثر بنفس الضربة — نقطة لكل منها) ثم رشّح لوناً بالأزرار وأدخله — اللون المُدخل يعود إلى بقعته',
+        'بعد آخر حمراء ولونها: مرحلة التنظيف — الألوان تُدخل تصاعدياً صفراء→خضراء→بنية→زرقاء→وردية→سوداء وتبقى في الجيوب',
+        'الأخطاء = نقاط للخصم (4 على الأقل، وحتى 7): عدم لمس أي كرة، لمس/إدخال كرة غير القانونية أولاً، سقوط البيضاء، إخراج كرة، التماس المزدوج (إلا حمراوان)',
+        'في ضربة الخطأ لا يُسجَّل شيء وتعود الألوان المُدخلة إلى بقعها — والأخطاء المتعددة تُحتسب بأعلاها فقط',
+        'السوداء الأخيرة تحسم الإطار؛ والتعادل يعيد السوداء إلى بقعتها لموتٍ مفاجئ: أول نقطة أو خطأ ينهي الإطار',
+        'تبسيطات رقمية موثقة: بلا قاعدة «مِس»، بلا طلب إعادة الضربة من الخصم، بلا كرة حرة بعد الخطأ'
+      ],
+      da: [
+        '22 كورة فطبلة 12 قدم: بيضة + 15 حمرة (نقطة لكل وحدة) + 6 ألوان فبلايصهم: صفرة 2، خضرة 3، بنية 4، زرقا 5، وردية 6، كحلاء 7',
+        'البداية من داخل قوس D ورا خط الباولك — وأي طيحة للبيضة كترجعها لـ D',
+        'مادام الحمر فالطبلة: دخل حمرة (ولا كتر فنفس الضربة — نقطة لكل وحدة) من بعد رشّح لون بالأزرار ودخلو — اللون اللي دخل كيرجع لبلاصتو',
+        'من بعد آخر حمرة ولونها: مرحلة التنقية — الألوان كيدخلو بالتصاعد صفرة→خضرة→بنية→زرقا→وردية→كحلاء وكيبقاو فالجيوب',
+        'الأخطاء = نقاط للخصم (4 ولا كتر، حتى 7): ماتلمساتش كورة، تلمس/تدخل كورة ماشي قانونية الأول، البيضة طاحت، كورة خرجات، تماس مزدوج (إلا جوج حمر)',
+        'فضربة الخطأ ماكيحتسب والو والألوان اللي دخلو كيرجعو لبلايصهم — والأخطاء المتعددة كيتحسب غير أعلاها',
+        'الكحلاء الأخيرة كتحدد الشوط؛ والتعادل كيرجع الكحلاء لبلاصتها لموت مفاجئ: أول نقطة ولا خطأ كيسالي الشوط',
+        'تبسيطات رقمية موثقة: بلا قاعدة «مِس»، بلا طلب إعادة الضربة، بلا كورة حرة من بعد الخطأ'
+      ],
+      fr: [
+        '22 boules sur table 12 pieds : blanche + 15 rouges (1 point) + 6 couleurs sur leurs mouches : jaune 2, verte 3, marron 4, bleue 5, rose 6, noire 7',
+        'Ouverture depuis le demi-cercle D derrière la ligne de casse — toute blanche empochée revient dans le D',
+        'Tant qu\'il reste des rouges : empochez une rouge (ou plusieurs au même coup — 1 point chacune) puis nommez une couleur avec les boutons et empochez-la — la couleur est remise sur sa mouche',
+        'Après la dernière rouge et sa couleur : phase de nettoyage — couleurs en ordre croissant jaune→verte→marron→bleue→rose→noire, elles restent empochées',
+        'Fautes = points pour l\'adversaire (4 minimum, jusqu\'à 7) : aucun contact, mauvaise boule touchée/empochée d\'abord, blanche empochée, boule hors table, double contact simultané (sauf deux rouges)',
+        'Aucun point sur un coup fautif et les couleurs empochées sont remises — plusieurs fautes au même coup : seule la plus lourde compte',
+        'La noire finale décide de la manche ; à égalité elle est remise sur sa mouche pour une mort subite : premier point ou première faute termine la manche',
+        'Simplifications numériques documentées : pas de règle du « miss », pas de rejeu demandé, pas de bille libre après faute'
+      ],
+      en: [
+        '22 balls on a 12ft table: cue + 15 reds (1 point each) + 6 colours on their spots: yellow 2, green 3, brown 4, blue 5, pink 6, black 7',
+        'Opening from within the D behind the baulk line — any potted cue ball returns to the D',
+        'While reds remain: pot a red (or several in one stroke — 1 point each) then nominate a colour with the buttons and pot it — potted colours are re-spotted',
+        'After the last red and its colour: clearance phase — colours potted in ascending order yellow→green→brown→blue→pink→black and stay down',
+        'Fouls = points to the opponent (4 minimum, up to 7): no contact, wrong ball first hit/potted, cue potted, ball off table, simultaneous double contact (except two reds)',
+        'Nothing scores on a fouled stroke and potted colours are re-spotted — multiple fouls in one stroke: only the highest penalty counts',
+        'The final black decides the frame; if scores are level it is re-spotted for sudden death: the first score or foul ends the frame',
+        'Documented digital simplifications: no "miss" rule, no opponent-requested replay, no free ball after a foul'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'قيم الكرات والأخطاء (WPBSA 10)', items: [
+          'أساس العقوبة 4 نقاط؛ عدم لمس كرة أو سقوط البيضاء = قيمة الكرة القانونية (4 على الأقل)',
+          'لمس أو إدخال كرة غير القانونية = الأعلى بين قيمة الكرة القانونية والكرة المعنية (حتى 7)',
+          'التماس المزدوج المتزامن = الأعلى بين القيمتين (تماس حمراوين معاً قانوني)',
+          'ضرب الحُمر في ضربتين متتاليتين أو ضربة بلون غير مرشَّح = 7 نقاط'
+        ]},
+        { h: 'إعادة الألوان (WPBSA 3.7)', items: [
+          'كل لون يُعاد إلى بقعته؛ فإن شُغلت فإلى أعلى بقعة شاغرة قيمةً',
+          'وإن شُغلت كل البقع: بين البقعة والوسادة العليا، والوردية/السوداء نحو الأسفل عند الحاجة',
+          'الحُمر لا تعود أبداً — ومن يخرج كرة من الطاولة يعاقَب وتبقى الحمراء خارجاً'
+        ]}
+      ],
+      da: [
+        { h: 'قيم الكورات والأخطاء (WPBSA 10)', items: [
+          'أساس العقوبة 4 نقاط؛ ماتلمساتش كورة ولا البيضة طاحت = قيمة الكورة القانونية (4 ولا كتر)',
+          'تلمس ولا تدخل كورة ماشي قانونية = الأعلى بين قيمة الكورة القانونية والكورة المعنية (حتى 7)',
+          'التماس المزدوج فنفس الوقت = الأعلى بين الجوج قيم (تماس جوج حمر مع بعض قانوني)',
+          'تضرب الحمر فجوج ضربات ورا بعض ولا لون مرشّح = 7 نقاط'
+        ]},
+        { h: 'إرجاع الألوان (WPBSA 3.7)', items: [
+          'كل لون كيرجع لبلاصتو؛ إلا كانت معمرة كيمشي لأعلى بلاصة خاوية قيمةً',
+          'إلا عمرو كامل البلايص: بين البلاصة والباندة الفوقية، والوردية/الكحلاء للتحت منين خاص',
+          'الحمر ماكيرجعوش أبدا — واللي كيخرج كورة من الطبلة كيتعاقب والحمرة كتبقى برا'
+        ]}
+      ],
+      fr: [
+        { h: 'Valeurs et fautes (WPBSA 10)', items: [
+          'Pénalité de base 4 points ; aucun contact ou blanche empochée = valeur de la boule « on » (4 minimum)',
+          'Boule non autorisée touchée ou empochée = le plus élevé entre la boule « on » et la boule concernée (jusqu\'à 7)',
+          'Double contact simultané = la plus haute des deux valeurs (deux rouges ensemble : légal)',
+          'Jouer les rouges deux coups de suite ou une couleur non nommée = 7 points'
+        ]},
+        { h: 'Remise des couleurs (WPBSA 3.7)', items: [
+          'Chaque couleur revient sur sa mouche ; si elle est occupée, sur la mouche libre de plus haute valeur',
+          'Si toutes sont occupées : entre la mouche et la bande du haut ; rose/noire vers le bas si besoin',
+          'Les rouges ne reviennent jamais — une boule sortie de la table est une faute et la rouge reste dehors'
+        ]}
+      ],
+      en: [
+        { h: 'Values & fouls (WPBSA 10)', items: [
+          'Base penalty 4 points; no contact or cue potted = value of the ball on (4 minimum)',
+          'Wrong ball first hit or potted = the higher of ball on / ball concerned (up to 7)',
+          'Simultaneous double contact = the higher of the two values (two reds together is legal)',
+          'Playing reds in successive strokes, or a colour without nomination = 7 points'
+        ]},
+        { h: 'Re-spotting colours (WPBSA 3.7)', items: [
+          'Each colour returns to its own spot; if occupied, to the highest-value spot available',
+          'If all spots are taken: between its spot and the top cushion; pink/black towards the bottom if needed',
+          'Reds are never re-spotted — forcing a ball off the table is a foul and a red stays off'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>الفوز بالإطار في غرفة برهان</td><td>الرهان × 2</td></tr><tr><td>الوجه لوجه أو ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>الربح بالشوط فبيت برهان</td><td>الرهان × 2</td></tr><tr><td>وجه لوجه ولا ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Frame win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign</td><td>Stake lost</td></tr>'
+    },
+    tips: {
+      ar: [
+        'بعد كل حمراء رشّح السوداء (7) ما دام وضعها سهلاً — أكبر مردود في الإطار',
+        'لا تدخل لوناً صعباً يترك البيضاء محجوبة خلف الألوان — الخطأ 4 نقاط على الأقل',
+        'في التنظيف ابدأ بموقع جيد للصفراء — الترتيب تصاعدي ولا رجعة',
+        'على التعادل تُعاد السوداء: ضربة واحدة تحسم — اختر زاوية آمنة للبيضاء من D'
+      ],
+      da: [
+        'من بعد كل حمرة رشّح الكحلاء (7) مادام وضعها ساهل — أكبر ربح فالشوط',
+        'ماتدخلش لون صعيب كيخلي البيضة محجوبة ورا الألوان — الخطأ 4 نقاط ولا كتر',
+        'فالتنقية بدا بموقع مزيان للصفرة — الترتيب تصاعدي وماكاينش رجوع',
+        'فالتعادل كترجع الكحلاء: ضربة وحدة كتحدد — اختار زاوية آمنة للبيضة من D'
+      ],
+      fr: [
+        'Après chaque rouge, nommez la noire (7) tant que sa position est facile — le meilleur rendement de la manche',
+        'N\'empochez pas une couleur difficile qui laisse la blanche masquée — une faute coûte 4 points minimum',
+        'Au nettoyage, placez-vous bien pour la jaune — l\'ordre est croissant et sans retour',
+        'À égalité la noire est remise : un seul coup décide — choisissez un angle sûr depuis le D'
+      ],
+      en: [
+        'After each red, nominate the black (7) while its position is easy — the biggest scoring per frame',
+        'Don\'t pot a difficult colour that leaves the cue ball snookered — a foul costs at least 4 points',
+        'In clearance, get shape for the yellow — the order ascends with no going back',
+        'On a level score the black is re-spotted: one shot decides — pick a safe angle from the D'
+      ]
+    }
+  },
+  blca: {
+    name: {
+      ar: 'البلياردو الفرنسي — Carom (UMB) ⚪',
+      da: 'البلياردو الفرنسي — Carom (UMB) ⚪',
+      fr: 'Billard Français — Carom (UMB) ⚪',
+      en: 'Carom Billiards — French Billiards (UMB) ⚪'
+    },
+    goal: {
+      ar: 'لكل لاعب كرته (بيضاء أو صفراء) وحمراء مشتركة على طاولة بلا جيوب: اجعل كرته تلمس الكرتين في ضربة واحدة (كاروم) لتكسب نقطة وتستمر — وحسب الاختصاص قد تُشترط وسائد قبل الكرة الثانية.',
+      da: 'كل لاعب عندو الكورتو (بيضة ولا صفرة) وحمراء مشتركة فطبلة بلا جيوب: خلي الكورتك تلمس الكورتين فضربة وحدة (كاروم) باش تربح نقطة وتكمل — وحسب الاختصاص خاص وسائد قبل الكورة الثانية.',
+      fr: 'Chaque joueur a sa bille (blanche ou jaune) et une rouge commune sur une table sans poches : faites toucher votre bille les deux autres en un coup (carambole) pour marquer un point et continuer — selon la discipline, des bandes sont exigées avant la seconde boule.',
+      en: 'Each player has their own ball (white or yellow) plus a shared red on a pocketless table: make your ball contact both others in one stroke (a carom) to score a point and continue — depending on the discipline, cushions are required before the second ball.'
+    },
+    steps: {
+      ar: [
+        'ثلاث كرات فقط: بيضاء (اللاعب الأول)، صفراء (اللاعب الثاني)، حمراء مشتركة — والفيزياء بلا جيوب إطلاقاً',
+        'الكاروم الصحيح = كرته تلمس الكرتين الأخريين في نفس الضربة: +1 نقطة ويستمر اللاعب',
+        'الحرة (Libre): بلا شرط وسائد — التماسان يكفيان',
+        'وسادة (One-Cushion): وسادة واحدة على الأقل قبل لمس الكرة الثانية',
+        'ثلاث وسائد (Three-Cushion): 3 وسائد على الأقل قبل الكرة الثانية — يجوز قبل الأولى أو بعدها وبأي وسادة ولو مكررة',
+        'الإخفاق (بلا كاروم أو بلا تماس) ينقل الدور بلا عقوبة نقاط',
+        'المباراة حتى هدف النقاط المختار (5/10/25) — من يبلغه أولاً يفوز',
+        'تبسيطات رقمية موثقة: بلا حدود balkline/crotch وبلا أخطاء كرة باليد — الإخفاق ينهي الدور فقط'
+      ],
+      da: [
+        'غير 3 كورات: بيضة (اللاعب الأول)، صفرة (اللاعب الثاني)، حمراء مشتركة — والفيزياء بلا جيوب أصلاً',
+        'الكاروم الصحيح = الكورتو تلمس الكورتين الآخرين فنفس الضربة: +1 نقطة وكيكمل اللاعب',
+        'الحرة (Libre): بلا شرط وسائد — التماسان كيفيو',
+        'وسادة (One-Cushion): وسادة وحدة على الأقل قبل لمس الكورة الثانية',
+        'ثلاث وسائد (Three-Cushion): 3 وسائد على الأقل قبل الكورة الثانية — يجوز قبل الأولى ولا من بعدها وبأي وسادة ولو معودة',
+        'الإخفاق (بلا كاروم ولا بلا تماس) كينقل الدور بلا عقوبة',
+        'الماتش حتى الهدف اللي تخترتو (5/10/25) — اللي وصل ليه الأول كيربح',
+        'تبسيطات رقمية موثقة: بلا حدود balkline وبلا أخطاء كورة بيد — الإخفاق كيسالي الدور غير'
+      ],
+      fr: [
+        'Trois billes seulement : blanche (joueur 1), jaune (joueur 2), rouge commune — physique sans aucune poche',
+        'Carambole réussie = votre bille touche les deux autres dans le même coup : +1 point et vous continuez',
+        'Libre : aucune exigence de bande — les deux contacts suffisent',
+        'Une bande : au moins une bande avant de toucher la seconde boule',
+        'Trois bandes : au moins 3 bandes avant la seconde boule — avant ou après la première, même bande répétée admise',
+        'Un échec (sans carambole ou sans contact) passe la main sans pénalité',
+        'Partie au premier à l\'objectif choisi (5/10/25 points)',
+        'Simplifications numériques documentées : pas de limites balkline/crotch, pas de faute à bille en main — l\'échec termine seulement le tour'
+      ],
+      en: [
+        'Only three balls: white (player 1), yellow (player 2), shared red — the physics has no pockets at all',
+        'A valid carom = your ball contacts both others in the same stroke: +1 point and you shoot again',
+        'Libre: no cushion requirement — the two contacts suffice',
+        'One-cushion: at least one cushion before touching the second object ball',
+        'Three-cushion: at least 3 cushions before the second ball — before or after the first, same cushion may repeat',
+        'A miss (no carom or no contact) passes the turn with no penalty',
+        'The match runs to the chosen target (5/10/25) — first to reach it wins',
+        'Documented digital simplifications: no balkline/crotch limits, no ball-in-hand fouls — a miss only ends the turn'
+      ]
+    },
+    details: {
+      ar: [
+        { h: 'الاختصاصات (UMB)', items: [
+          'الحرة: الأسهل للمبتدئين — التماسان فقط',
+          'وسادة واحدة: جسر طبيعي بين الحرة والثلاث',
+          'ثلاث وسائد: الاختصاص المهيمن عالمياً — الوسائد تُحسب قبل الكرة الثانية بأي ترتيب'
+        ]},
+        { h: 'كرات اللاعبين', items: [
+          'الأبيض يبدأ والصفراء للخصم — وعند تبديل الدور تُعاد تسمية الكرة المضروبة تلقائياً',
+          'الحمراء هدف مشترك ولا تُدخل في أي مكان — لا جيوب في الطاولة أصلاً'
+        ]}
+      ],
+      da: [
+        { h: 'الاختصاصات (UMB)', items: [
+          'الحرة: الساهلة للمبتدئين — غير التماسين',
+          'وسادة وحدة: القنطرة الطبيعية بين الحرة والثلاث',
+          'ثلاث وسائد: الاختصاص العالمي المهيمن — الوسائد كيتحسبو قبل الكورة الثانية بأي ترتيب'
+        ]},
+        { h: 'كورات اللاعبين', items: [
+          'البيضة كتبدأ والصفرة للخصم — ومنين كيتبدل الدور كتتسمى الكورة المضروبة تلقائياً',
+          'الحمراء هدف مشترك وماكتدخلش حتى بلاصة — ماكاينش جيوب فالطبلة أصلاً'
+        ]}
+      ],
+      fr: [
+        { h: 'Disciplines (UMB)', items: [
+          'Libre : la plus simple — deux contacts seulement',
+          'Une bande : le pont naturel entre libre et trois bandes',
+          'Trois bandes : la discipline reine mondiale — les bandes comptent avant la seconde boule, dans tout ordre'
+        ]},
+        { h: 'Billes des joueurs', items: [
+          'Le blanc commence, le jaune pour l\'adversaire — au changement de main la bille frappée est renommée automatiquement',
+          'La rouge est un objectif commun et ne rentre nulle part — la table n\'a aucune poche'
+        ]}
+      ],
+      en: [
+        { h: 'Disciplines (UMB)', items: [
+          'Libre: the simplest — two contacts only',
+          'One-cushion: the natural bridge from libre to three-cushion',
+          'Three-cushion: the world\'s dominant discipline — cushions count before the second ball, in any order'
+        ]},
+        { h: 'Players\' balls', items: [
+          'White opens, yellow is the opponent\'s — on turn changes the struck ball is re-tagged automatically',
+          'The red is a shared object and never drops anywhere — the table has no pockets'
+        ]}
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>الفوز بالمباراة في غرفة برهان</td><td>الرهان × 2</td></tr><tr><td>الوجه لوجه أو ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>الربح بالماتش فبيت برهان</td><td>الرهان × 2</td></tr><tr><td>وجه لوجه ولا ضد الحاسوب</td><td>بلا تسجيل مالي</td></tr><tr><td>الانسحاب</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Victoire de partie en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Match win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign</td><td>Stake lost</td></tr>'
+    },
+    tips: {
+      ar: [
+        'في ثلاث وسائد فكّر بمسار البيضاء كله لا بالتماس الأول فقط',
+        'اترك الكرات متباعدة قرب الوسائد لتصعيب كاروم الخصم',
+        'في الحرة ابنِ سلسلة قرب الزاوية لكن لا تحشر الكرات',
+        'القوة المعتدلة أدق من القصوى: السيطرة على الارتدادات تكسب النقاط'
+      ],
+      da: [
+        'فثلاث وسائد فكر فمسار البيضة كامل ماشي غير فالتماس الأول',
+        'خلي الكورات متباعدين قرب الوسائد باش تصعب كاروم الخصم',
+        'فالحرة بني سلسلة قرب الزاوية ولا ماتحشرش الكورات',
+        'القوة المعتدلة أدق من القصوى: السيطرة على الارتدادات كتربح النقاط'
+      ],
+      fr: [
+        'À trois bandes, pensez tout le parcours de votre bille, pas seulement le premier contact',
+        'Laissez les boules écartées près des bandes pour compliquer la carambole adverse',
+        'En libre, construisez une série près d\'un coin sans y enfermer les billes',
+        'Une puissance modérée est plus précise : maîtriser les rebonds marque des points'
+      ],
+      en: [
+        'In three-cushion, plan your ball\'s whole route, not just the first contact',
+        'Keep the balls spread near the rails to complicate your opponent\'s carom',
+        'In libre, build a run near a corner without trapping the balls',
+        'Moderate power is more accurate: controlling rebounds wins points'
+      ]
+    }
+  },
 };
 /* ═══════════════════════════════════════════
    Tutorial System
@@ -1528,51 +2565,83 @@ var Tutorial = {
   showFullRules: function(gameId) {
     var rules = FULL_RULES[gameId];
     if (!rules) return;
-    var lang = ST.lang;
+    var lang = (ST.lang === 'fr' || ST.lang === 'en' || ST.lang === 'da') ? ST.lang : 'ar';
+    var fallbackLang = (lang === 'da') ? 'ar' : (lang === 'fr' ? 'fr' : (lang === 'en' ? 'en' : 'ar'));
+    
     var modal = document.getElementById('rulesModal');
     var title = document.getElementById('rulesTitle');
     var body = document.getElementById('rulesBody');
-    title.textContent = '📖 ' + rules.name[lang];
+    
+    var gName = rules.name[lang] || rules.name[fallbackLang] || rules.name['ar'] || rules.name['en'] || 'اللعبة';
+    if (title) title.textContent = '📖 ' + gName;
+    
     var html = '<div class="rules-full">';
+    
     /* الهدف */
+    var goalText = rules.goal[lang] || rules.goal[fallbackLang] || rules.goal['ar'] || rules.goal['en'] || '';
     html += '<div class="rules-section">';
-    html += '<h4>🎯 الهدف</h4>';
-    html += '<p>' + rules.goal[lang] + '</p>';
+    html += '<h4><i class="fa-solid fa-bullseye" aria-hidden="true"></i> ' + (T('ui.goal') || 'الهدف') + '</h4>';
+    html += '<p>' + goalText + '</p>';
     html += '</div>';
+    
     /* الخطوات */
-    html += '<div class="rules-section">';
-    html += '<h4>📋 خطوات اللعب</h4>';
-    html += '<ol class="rules-steps">';
-    rules.steps[lang].forEach(function(step) {
-      html += '<li>' + step + '</li>';
-    });
-    html += '</ol>';
-    html += '</div>';
-    /* جدول الدفع */
-    if (rules.payouts[lang]) {
+    var stepsList = rules.steps[lang] || rules.steps[fallbackLang] || rules.steps['ar'] || rules.steps['en'] || [];
+    if (stepsList.length > 0) {
       html += '<div class="rules-section">';
-      html += '<h4>💰 جدول الدفع</h4>';
+      html += '<h4><i class="fa-solid fa-list-ol" aria-hidden="true"></i> ' + (T('ui.steps') || 'طريقة اللعب') + '</h4>';
+      html += '<ol class="rules-steps">';
+      stepsList.forEach(function(step) {
+        html += '<li>' + step + '</li>';
+      });
+      html += '</ol>';
+      html += '</div>';
+    }
+    
+    /* القواعد الرسمية التفصيلية */
+    var detailsList = rules.details ? (rules.details[lang] || rules.details[fallbackLang] || rules.details['ar'] || rules.details['en']) : null;
+    if (detailsList && detailsList.length > 0) {
+      html += '<div class="rules-section">';
+      html += '<h4><i class="fa-solid fa-gavel" aria-hidden="true"></i> ' + (T('ui.officialRules') || 'القواعد الرسمية') + '</h4>';
+      detailsList.forEach(function(sec) {
+        html += '<h5 class="rules-sub">' + sec.h + '</h5>';
+        html += '<ul class="rules-details">';
+        sec.items.forEach(function(it) {
+          html += '<li>' + it + '</li>';
+        });
+        html += '</ul>';
+      });
+      html += '</div>';
+    }
+    
+    /* جدول الدفع */
+    var payoutContent = rules.payouts[lang] || rules.payouts[fallbackLang] || rules.payouts['ar'] || rules.payouts['en'];
+    if (payoutContent) {
+      html += '<div class="rules-section">';
+      html += '<h4><i class="fa-solid fa-table-list" aria-hidden="true"></i> ' + (T('ui.payouts') || 'جدول الأرباح والمضاعفات') + '</h4>';
       html += '<table class="atable">';
-      html += '<thead><tr><th>النتيجة</th><th>المكافأة</th></tr></thead>';
-      html += '<tbody>' + rules.payouts[lang] + '</tbody>';
+      html += '<thead><tr><th>' + (T('ui.outcome') || 'النتيجة') + '</th><th>' + (T('ui.reward') || 'المضاعف / المكسب') + '</th></tr></thead>';
+      html += '<tbody>' + payoutContent + '</tbody>';
       html += '</table>';
       html += '</div>';
     }
+    
     /* نصائح */
-    if (rules.tips[lang] && rules.tips[lang].length > 0) {
+    var tipsList = rules.tips[lang] || rules.tips[fallbackLang] || rules.tips['ar'] || rules.tips['en'] || [];
+    if (tipsList.length > 0) {
       html += '<div class="rules-section">';
-      html += '<h4>💡 نصائح</h4>';
+      html += '<h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> ' + (T('ui.tips') || 'نصائح وإرشادات') + '</h4>';
       html += '<ul class="rules-tips">';
-      rules.tips[lang].forEach(function(tip) {
+      tipsList.forEach(function(tip) {
         html += '<li>' + tip + '</li>';
       });
       html += '</ul>';
       html += '</div>';
     }
+    
     html += '</div>';
-    body.innerHTML = html;
-    modal.classList.add('show');
-    SND.click();
+    if (body) body.innerHTML = html;
+    if (modal) modal.classList.add('show');
+    if (typeof SND !== 'undefined' && SND.click) SND.click();
   },
   /* فحص أول مرة لعب */
   checkFirstPlay: function(gameId) {

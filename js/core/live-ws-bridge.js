@@ -1,0 +1,164 @@
+/* ═════════════════════════════════════════════════════════
+   Live WS Bridge — يحوّل EventSource('/api/live') إلى WebSocket
+   عبر Durable Objects (نفس أسماء الأحداث: room:update, room:move...)
+   الشبكة: wss://casino-api.../api/rooms/<roomId>/ws?uid=<uid>
+   غرفة الدردشة العامة: roomId = 'global'
+   [إصلاح التكرار] اتصال WS واحد مشترك لغرفة global مهما تعددت
+   نداءات EventSource — كل رسالة تُوزَّع على كل مستمع مرة واحدة فقط.
+   ═════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) ||
+    ((typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.hostname))
+      ? location.origin
+      : ((typeof location !== 'undefined' && /(^|\.)dmgames\.pages\.dev$/.test(location.hostname))
+        ? 'https://casino-api.dmgames-api.workers.dev'
+        : 'https://casino-api.tarikc.workers.dev'));
+  /* التطوير المحلي: origin http://localhost:3000 → ws://localhost:3000 (وليس wss) */
+  if (API_BASE.indexOf('http://') === 0) API_BASE = 'ws' + API_BASE.slice(4);
+  else if (API_BASE.indexOf('https://') === 0) API_BASE = 'wss' + API_BASE.slice(5);
+  function getUid() {
+    /* [PR-Sync] const AUTH لا يظهر على window — يقرأ كرابطة عالمية مباشرة.
+       كان uid يصل '0' فلا يتعرف الخادم على اللاعب ولا يرسل room:replay (لوحة مجمدة). */
+    try {
+      var a = (typeof AUTH !== 'undefined' && AUTH) || window.AUTH || null;
+      var s = (typeof ST !== 'undefined' && ST) || window.ST || null;
+      return String((a && a.user && a.user.id) || (window.RC_user && window.RC_user.id) || (s && s.user && s.user.id) || '0');
+    }
+    catch (e) { return '0'; }
+  }
+  function getCurrentRoomId() {
+    try { if (window.Rooms && window.Rooms.state && window.Rooms.state.id) return window.Rooms.state.id; } catch (e) { }
+    return window.RC_currentRoomId || 'global';
+  }
+
+  /* ── قناة مشتركة: WS واحد لكل roomId، وواجهات (facades) متعددة فوقه ── */
+  function Channel(rid) {
+    var self = this;
+    self.rid = rid;
+    self.facades = [];
+    self.closed = false;
+    self._connect();
+  }
+  Channel.prototype = {
+    _connect: function () {
+      var self = this;
+      if (self.closed) return;
+      self._ws = new WebSocket(API_BASE + '/api/rooms/' + encodeURIComponent(self.rid) + '/ws?uid=' + encodeURIComponent(getUid()));
+      self._ws.onopen = function () {
+        for (var i = 0; i < self.facades.length; i++) {
+          var f = self.facades[i];
+          f.readyState = 1;
+          if (f.onopen) try { f.onopen(); } catch (e) { }
+        }
+      };
+      self._ws.onclose = function () {
+        if (self.closed) return;
+        for (var i = 0; i < self.facades.length; i++) self.facades[i].readyState = 0;
+        setTimeout(function () { self._connect(); }, 3000);
+      };
+      self._ws.onerror = function () { };
+      self._ws.onmessage = function (ev) {
+        var m;
+        try { m = JSON.parse(ev.data); } catch (e) { return; }
+        /* [RoomFix] أحداث غرفة اللعب تصل على قناة الغرفة الخاصة، لكن مستمعي rooms.js
+           مسجلون على واجهة global (EventSource '/api/live') — وزّع على الواجهتين معاً.
+           هذه كانت العلة الجذرية: «جاهز/بدء» لا يصلان أحداً حتى تجديد الصفحة. */
+        var targets = self.facades.slice();
+        if (self.rid !== 'global' && globalChannel && !globalChannel.closed) {
+          for (var t = 0; t < globalChannel.facades.length; t++) {
+            if (targets.indexOf(globalChannel.facades[t]) === -1) targets.push(globalChannel.facades[t]);
+          }
+        }
+        var msgs = [m];
+        /* [RoomFix] hello من غرفة لعب يحمل آخر حالة — ترجمة إلى room:update لمزامنة فورية عند الاتصال/العودة */
+        if (self.rid !== 'global' && m.event === 'hello' && m.data && m.data.room !== undefined) {
+          msgs.push({ event: 'room:update', data: m.data.room });
+        }
+        for (var k = 0; k < msgs.length; k++) {
+          var evObj = { data: JSON.stringify(msgs[k].data) };
+          for (var i = 0; i < targets.length; i++) {
+            var ls = targets[i]._listeners[msgs[k].event];
+            if (!ls) continue;
+            for (var j = 0; j < ls.length; j++) try { ls[j](evObj); } catch (e) { }
+          }
+        }
+      };
+    },
+    send: function (o) { try { this._ws.send(JSON.stringify(o)); } catch (e) { } },
+    close: function () { this.closed = true; try { this._ws.close(); } catch (e) { } }
+  };
+
+  var globalChannel = null;
+  function getGlobalChannel() {
+    if (!globalChannel || globalChannel.closed) globalChannel = new Channel('global');
+    return globalChannel;
+  }
+
+  /* واجهة بمظهر EventSource فوق القناة المشتركة */
+  function LiveWS(roomId) {
+    var self = this;
+    self._listeners = {};
+    var rid = (typeof roomId === 'string' && roomId) ? roomId : getCurrentRoomId();
+    if (rid === 'global') {
+      self._ch = getGlobalChannel();
+    } else {
+      self._ch = new Channel(rid);
+      self._own = true; /* قناة خاصة بغرفة لعب — تُغلق مع الواجهة */
+    }
+    self._ch.facades.push(self);
+    self.readyState = (self._ch._ws && self._ch._ws.readyState === 1) ? 1 : 0;
+    if (self.readyState === 1 && self.onopen) { setTimeout(function () { try { self.onopen(); } catch (e) { } }, 0); }
+  }
+  LiveWS.prototype = {
+    addEventListener: function (type, fn) {
+      (this._listeners[type] = this._listeners[type] || []).push(fn);
+    },
+    send: function (o) { this._ch.send(o); },
+    close: function () {
+      var idx = this._ch.facades.indexOf(this);
+      if (idx !== -1) this._ch.facades.splice(idx, 1);
+      /* قناة غرفة لعب خاصة: أغلق WS؛ قناة global تبقى حية للواجهات الأخرى */
+      if (this._own && !this._ch.facades.length) this._ch.close();
+      this.readyState = 3;
+    }
+  };
+
+  /* polyfill: استبدال EventSource للـ '/api/live' فقط */
+  var OrigES = window.EventSource;
+  window.EventSource = function (url) {
+    if (url === '/api/live' || url === (API_BASE + '/api/live')) {
+      return new LiveWS('global');
+    }
+    return new OrigES(url);
+  };
+  window.EventSource.prototype = OrigES ? OrigES.prototype : {};
+  window.LiveWS = LiveWS;
+
+  /* مراقبة الغرفة الحالية: عند فتح غرفة لعب → اتصال إضافي بها */
+  var gameConn = null;
+  function watchRoom(force) {
+    var rid = getCurrentRoomId();
+    if (rid && rid !== 'global' && (force || !gameConn || gameConn._rid !== rid)) {
+      if (gameConn) { try { gameConn.close(); } catch (e) { } }
+      gameConn = new LiveWS(rid);
+      gameConn._rid = rid;
+    } else if ((!rid || rid === 'global') && gameConn) {
+      try { gameConn.close(); } catch (e) { }
+      gameConn = null;
+    }
+  }
+  /* هوك على تحديث Rooms.state + إعادة الاتصال إذا تغيّر uid (دخول متأخر) */
+  var lastUid = getUid();
+  setInterval(function () {
+    try {
+      var st = window.Rooms && window.Rooms.state;
+      var u = getUid();
+      var uidChanged = (u !== lastUid);
+      lastUid = u;
+      if (st && st.id && (st.id !== window.__liveLastRoom || uidChanged)) { window.__liveLastRoom = st.id; watchRoom(true); }
+      else if (!st && window.__liveLastRoom) { window.__liveLastRoom = null; watchRoom(); }
+    } catch (e) { }
+  }, 800);
+  window.__liveWatchRoom = watchRoom;
+})();
