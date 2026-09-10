@@ -2,10 +2,13 @@
  * ============================================================================
  *  RondaRenderer — طبقة العرض للروندا (v2.9 — الطاولة المعتمدة)
  *  • الأوراق إسبانية حقيقية: assets/cards/es/{rank}-{suit}.webp + back.webp.
- *  • أنا أسفل-يسار (bl) ويدّي مكشوفة؛ الدور والاتجاه عكس عقارب الساعة
- *    (التسلسل المرئي bl → br → tr → tl). الخصم أسفل-يمين (br) بصفّ ورق
- *    مقلوب في نفس صف اليد، والخصمان العلويان (tl/tr) بصفّي ورق بحجم
+ *  • بورتريه: أنا أسفل-يسار (bl) ويدّي مكشوفة؛ الدور والاتجاه عكس عقارب
+ *    الساعة (التسلسل المرئي bl → br → tr → tl). الخصم أسفل-يمين (br) بصفّ
+ *    ورق مقلوب في نفس صف اليد، والخصمان العلويان (tl/tr) بصفّي ورق بحجم
  *    كامل ولوحتاهما تحتهما — لا كشف لأي يد قبل رميها.
+ *  • لاندسكيب: أنا أسفل-يمين (br) ويدّي المكشوفة على يمين الصف السفلي،
+ *    والخصوم tr ثم tl ثم bl (بصفّ ظهره في نفس صف اليد).
+ *  • الموزع (view.dealerSeat) يتوّج بشارة 👑 ذهبية على لوحته تتحدث كل جولة.
  *  • القواعد كاملة من كتاب هيدر المنصة؛ الصوت من زر السماعة في الهيدر —
  *    لا زر «؟» على الطاولة ولا مفتاح صوت في الإعدادات.
  * ============================================================================
@@ -141,20 +144,37 @@
 
   /**
    * أي زاوية لكل لاعب (v2.8 — الدوران عكس عقارب الساعة):
-   *   المحرّك يتناقص المقعد (d → d-1) أي أن الدور ينتقل عكس عقارب الساعة،
-   *   والزوايا تُرسم فيزيائياً بحيث يكون التسلسل bl → br → tr → tl (عكس
-   *   عقارب الساعة كما يراها العارض).
-   *   4 لاعبين: أنا «bl»، d1 «tl»، d2 «tr»، d3 «br» (تسلسل الدوران:
-   *   tr → tl → bl → br — كله عكس عقارب الساعة؛ وشريكتي في «tr» قطرياً).
-   *   3 لاعبين (FFA): «tl» شاغرة — d1 «tr» و d2 «br» (الدور tr → bl → br عكس
-   *   عقارب الساعة مع تخطّي الزاوية الشاغرة).
+   *   المحرّك يتناقص المقعد (d → d-1) أي أن الدور ينتقل عكس عقارب الساعة.
+   *   ── بورتريه (الوضع التاريخي) ──
+   *   4 لاعبين: أنا «bl»، d1 «tl»، d2 «tr»، d3 «br».
+   *   3 لاعبين (FFA): «tl» شاغرة — d1 «tr» و d2 «br».
    *   1ضد1: أنا «bl» والخصم «br» (الصفان السفليان فقط).
-   *   المتفرج (viewer<0): توزيع ثابت — المقعد 0 «bl» ثم حسب الحالة.
+   *   ── لاندسكيب ── (اليد المكشوفة أسفل-يمين، الخصوم يصعدون من اليمين):
+   *   4 لاعبين: أنا «br»، d1 «tr»، d2 «tl»، d3 «bl».
+   *   3 لاعبين: «bl» شاغرة — d1 «tr» و d2 «tl».
+   *   1ضد1: أنا «br» والخصم «tr».
+   *   المتفرج (viewer<0): توزيع ثابت — المقعد 0 مركز التوزيع ثم حسب الحالة.
    */
+  function isLandscape() {
+    try {
+      if (window.matchMedia && window.matchMedia('(orientation: landscape)').matches) return true;
+    } catch (e) { /* تجاهل */ }
+    return (typeof window !== 'undefined') && window.innerWidth > window.innerHeight;
+  }
+
   function cornerForPlayer(view, player, viewerId) {
     const n = view.players.length;
     const anchor = (viewerId != null && viewerId >= 0) ? Number(viewerId) : 0;
     const d = (Number(player.id) - anchor + n) % n;
+    if (isLandscape()) {
+      if (d === 0) return 'br';                    /* اللاعب الرئيسي أسفل-يمين */
+      if (n === 2) return 'tr';                     /* الخصم الوحيد أعلى-يمين */
+      if (n === 3) return (d === 1) ? 'tr' : 'tl';  /* أسفل-يسار شاغرة */
+      /* n === 4: tr ثم tl ثم bl */
+      if (d === 1) return 'tr';
+      if (d === 2) return 'tl';
+      return 'bl';
+    }
     if (d === 0) return 'bl';
     if (n === 2) return 'br';          /* الخصم الوحيد أسفل-يمين */
     if (n === 3) return (d === 1) ? 'tr' : 'br';  /* أعلى-يسار شاغرة */
@@ -164,12 +184,45 @@
     return 'br';
   }
 
-  /** هل يشغّل هذا المقعد صف ورق مقلوب؟ (أعلى: كل الخصوم؛ الأسفل: غير العارض) */
+  /** هل يشغّل هذا المقعد صف ورق مقلوب؟ كل خصم يعرض صف ظهره في زاويته،
+      أياً كانت — باستثناء الزاوية التي تجلس فيها اليد المكشوفة
+      (بورتريه: bl — اليد أسفل-يسار؛ لاندسكيب: br — اليد أسفل-يمين). */
   function backrowCorner(corner, isMe) {
-    return !isMe && (corner === 'tl' || corner === 'tr' || corner === 'br');
+    if (isMe) return false;
+    const handCorner = isLandscape() ? 'br' : 'bl';
+    return corner !== handCorner;
   }
 
   /* ============================ مقاعد الزوايا ============================ */
+
+  /* إعادة رسم الزوايا عند تبديل الاتجاه (بورتريه ↔ لاندسكيب): الزوايا
+     تُحسب لحظة الرسم فقط (cornerForPlayer)، فبدون هذا تظل المقاعد في
+     زوايا الاتجاه القديم بعد تدوير الهاتف حتى الحدث التالي في اللعبة */
+  let _seatsArgs = null;
+  let _orientWatched = false;
+  let _orientWasLandscape = null;
+  let _orientTimer = null;
+
+  function watchOrientationForSeats() {
+    if (_orientWatched) return;
+    _orientWatched = true;
+    if (typeof window === 'undefined' || !window.addEventListener) return;
+    _orientWasLandscape = isLandscape();
+    const check = function () {
+      const now = isLandscape();
+      if (now === _orientWasLandscape || !_seatsArgs) return;
+      _orientWasLandscape = now;
+      if (_orientTimer) clearTimeout(_orientTimer);
+      _orientTimer = setTimeout(function () {
+        _orientTimer = null;
+        const stage = document.getElementById('rdStage');
+        if (!stage || !stage.isConnected) return;   /* المسرح القديم بعد الخروج */
+        try { renderSeats(_seatsArgs[0], _seatsArgs[1]); } catch (e) { /* تجاهل */ }
+      }, 120);
+    };
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+  }
 
   /**
    * opts: { viewerId, aiMode, roomMode, spectator }
@@ -189,6 +242,9 @@
     };
     const any = Object.keys(slots).some(function (k) { return slots[k]; });
     if (!any) return;
+    /* آخر لقطة + خيارات — لإعادة رسم الزوايا عند تدوير الشاشة */
+    _seatsArgs = [view, o];
+    watchOrientationForSeats();
     /* لقطة نظيفة */
     Object.keys(slots).forEach(function (k) { if (slots[k]) slots[k].innerHTML = ''; });
 
@@ -232,9 +288,14 @@
       seat.dataset.corner = corner;
       if (team) seat.dataset.team = p.teamId;
       seat.title = p.name;
+      /* تاج الموزع — شارة ذهبية صغيرة على لوحة صاحب المقعد الموزع
+         (view.dealerSeat) تُحدَّث تلقائياً كل جولة (renderSeats من refreshView) */
+      const isDealer = (p.seat != null) && (view.dealerSeat != null) &&
+        Number(p.seat) === Number(view.dealerSeat);
       seat.innerHTML =
         '<div class="rd-av-wrap">' +
           '<div class="rd-av ' + tCls + '">' + esc(twoLetters(p.name)) + '</div>' +
+          (isDealer ? '<span class="rd-dealer-crown" title="Dealer">👑</span>' : '') +
           (active ? '<span class="rd-turn-timer" data-player-id="' + p.id + '">⏱</span>' : '') +
         '</div>' +
         '<div class="rd-seat-stats">' +

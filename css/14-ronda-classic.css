@@ -7,8 +7,9 @@
    • أربع زوايا: العارض أسفل-يسار ولوحته فوق يده المكشوفة، الخصوم
      العلويان (tl/tr) بصفوف ورق مقلوب ولوحتاهما تحتهما، والخصم أسفل-يمين
      بصفّه في نفس صف اليد — الدور والاتجاه عكس عقارب الساعة.
-   • 6 أوراق سفلية تتقاسمان عرض الشاشة؛ الأوراق المرمية داخل البيضاوية
-     والرزمة أسفل وسطها بظهر موحّد وعداد؛ سجل الأحداث مخفي بمقبض أصفر.
+   • 6 أوراق سفلية تتقاسمان عرض الشاشة؛ الأوراق المرمية داخل القاعة
+     الوسطى (بلا سجادة بيضاوية — v2.10) والرزمة أسفل وسطها بظهر موحّد
+     وعداد؛ سجل الأحداث مخفي بمقبض أصفر.
    • الأوراق إسبانية حقيقية assets/cards/es/؛ لا كشف لأي يد قبل رميها.
    • كل القيم الكبيرة cqh/cqw نسبة إلى صندوق المسرح فتتلاءم مع أي شاشة.
    كل القواعد محصورة داخل #rdStage فلا تمسّ بقية المنصة.
@@ -124,7 +125,7 @@ body.app-fs-on #rdStage,
 #rdStage .rd-logo-card {
   position: absolute; left: 50%; top: 6px; width: 50px; height: 72px;
   border-radius: 7px;
-  background-image: url('assets/cards/back.webp');
+  background-image: url('../assets/cards/back.webp');
   background-size: cover; background-position: center;
   border: 1px solid rgba(226,184,87,.7);
   box-shadow: 0 8px 18px rgba(0,0,0,.5);
@@ -356,6 +357,18 @@ body.app-fs-on #rdStage,
   animation: rdTimerBlink 1s steps(2) infinite;
 }
 @keyframes rdTimerBlink { 50% { opacity: .85; } }
+/* تاج الموزع — شارة ذهبية دائرية صغيرة متوهجة على لوحة صاحب المقعد
+   الموزع (view.dealerSeat)؛ في الجهة المقابلة لمؤقت ⏱ كي لا يتزاحما */
+#rdStage .rd-dealer-crown {
+  position: absolute; top: -7px; inset-inline-start: -9px;
+  width: 20px; height: 20px; display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: .6rem; line-height: 1; letter-spacing: 0;
+  background: linear-gradient(160deg, var(--rd-gold-hi), var(--rd-gold));
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 9px rgba(226,184,87,.85), 0 0 18px rgba(226,184,87,.35), 0 2px 5px rgba(0,0,0,.5);
+  z-index: 4;
+}
 /* إحصائيات المقعد: النقاط + الملتقطة */
 #rdStage .rd-seat-stats {
   display: flex; gap: 6px; justify-content: center; align-items: center;
@@ -392,14 +405,15 @@ body.app-fs-on #rdStage,
   width: var(--cw); height: var(--ch);
   flex-shrink: 0;
   border-radius: clamp(6px, .9vw, 11px);
-  background-image: url('assets/cards/back.webp');
+  background-image: url('../assets/cards/back.webp');
   background-size: cover; background-position: center;
   border: 1px solid rgba(226,184,87,.8);
   box-shadow: 0 4px 10px rgba(0,0,0,.45);
   margin-inline-start: calc(var(--cw) * -.6);
 }
-/* صف الخصم السفلي-يمين: بحجم اليد المكشوفة (يتقاسمان عرض الشاشة) */
-#rdStage .rd-corner-br .rd-back-card { width: var(--cwB); height: var(--chB); margin-inline-start: 0; border-radius: clamp(5px, .8vw, 9px); }
+/* صف الخصم السفلي-يمين: أصغر من يدي (×0.78) كي لا يغطي أوراقي ولا يزاحمها
+   في نفس الصف — اليد المكشوفة هي العنصر الأكبر دائماً (z-index أعلى أيضاً) */
+#rdStage .rd-corner-br .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; border-radius: clamp(5px, .8vw, 9px); }
 #rdStage .rd-corner-br .rd-backrow { gap: clamp(2px, .4vw, 6px); align-items: flex-end; }
 #rdStage .rd-backrow .rd-back-card:first-child { margin-inline-start: 0; }
 /* عند خصمين علويين: تصغير عام لتوفير مساحة للوسط (قاعة اللعب والرزمة) */
@@ -410,7 +424,7 @@ body.app-fs-on #rdStage,
   --ctBot: calc(var(--chB) + var(--bdH) + 24px);
 }
 #rdStage.rd-uppers .rd-back-card { width: calc(var(--cw) * .82); height: var(--ch); margin-inline-start: calc(var(--cw) * -.52); }
-#rdStage.rd-uppers .rd-corner-br .rd-back-card { width: var(--cwB); height: var(--chB); margin-inline-start: 0; }
+#rdStage.rd-uppers .rd-corner-br .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; }
 #rdStage .rd-back-count {
   margin-inline-start: 4px; font-size: .62rem; font-weight: 800;
   color: var(--rd-gold-hi); text-shadow: 0 1px 2px rgba(0,0,0,.8);
@@ -473,16 +487,9 @@ body.app-fs-on #rdStage,
   z-index: 5;
 }
 #rdStage.rd-uppers .rd-court { top: var(--ctTopUp); }
-#rdStage .rd-court-rug {
-  position: absolute;
-  top: 14px; bottom: 12px;
-  inset-inline-start: 18px; inset-inline-end: 18px;
-  border-radius: 44% / 50%;
-  background: radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.085), rgba(0,0,0,.07) 78%);
-  border: 1.5px dashed rgba(226,184,87,.36);
-  box-shadow: inset 0 0 70px rgba(0,0,0,.28);
-  pointer-events: none;
-}
+/* v2.10: السجادة البيضاوية الذهبية حُذفت بطلب المستخدم — القاعة تبقى حاضنة
+   ورق الوسط والرزمة بلا أي إطار بيضاوي مرئي في كل الأوضاع */
+#rdStage .rd-court-rug { display: none; }
 #rdStage .rd-table-cards {
   position: absolute;
   top: 10px; bottom: calc(var(--deckS) * 1.28 + 8px);
@@ -507,7 +514,7 @@ body.app-fs-on #rdStage,
 #rdStage .rd-deck .rd-dk-card {
   position: absolute; width: calc(var(--deckS) * .96); height: calc(var(--deckS) * 1.34);
   border-radius: clamp(6px, .9vw, 10px);
-  background-image: url('assets/cards/back.webp');
+  background-image: url('../assets/cards/back.webp');
   background-size: cover; background-position: center;
   border: 1px solid rgba(226,184,87,.95);
   box-shadow: 0 6px 14px rgba(0,0,0,.6);
@@ -534,8 +541,10 @@ body.app-fs-on #rdStage,
 #rdStage.rd-spectating .rd-hand { display: none !important; }
 
 /* ═══════════════ الصف السفلي — يد اللاعب (يسار، أكبر، مكشوفة بلا حجب) ═══════════════ */
+/* v2.10: z-index 30 فوق الزوايا (22) — يدي المكشوفة يجب أن تبقى قابلة للنقر
+   فوق أي صف ورق خصم يزاحمها (خاصة صف الخصم br في البورتريه واللاندسكيب) */
 #rdStage .rd-botrail {
-  position: absolute; left: 10px; right: 10px; bottom: 6px; z-index: 12;
+  position: absolute; left: 10px; right: 10px; bottom: 6px; z-index: 30;
   display: flex; align-items: flex-end; justify-content: flex-start;
   direction: ltr;   /* يدي فيزيائياً يسار الشاشة (لا تنعكس في RTL) */
   pointer-events: none;
@@ -619,9 +628,16 @@ body.app-fs-on #rdStage,
   box-shadow: 0 5px 12px rgba(0,0,0,.4);
   transition: transform .16s ease, box-shadow .16s ease;
 }
+/* ظهر الورقة المقلوبة — أصل المنصة الموحّد + تدرجات ذهبية وحَدّ (نمط 05-ronda.css) */
 #rdStage .rd-card.rd-back {
-  border: 1px solid rgba(226,184,87,.85);
-  box-shadow: 0 5px 12px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.1);
+  background:
+    url('../assets/cards/back.webp') center / cover no-repeat,
+    repeating-linear-gradient(45deg, rgba(226,184,87,.07) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(-45deg, rgba(226,184,87,.05) 0 2px, transparent 2px 11px),
+    radial-gradient(circle at 50% 40%, #1c3f5a 0%, #0b1f30 60%, #06121c 100%);
+  background-color: #0b1f30;
+  border: 1.5px solid rgba(226,184,87,.85);
+  box-shadow: inset 0 0 12px rgba(0,0,0,.5), 0 5px 12px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.1);
 }
 #rdStage #hand .rd-card.rd-live { cursor: pointer; }
 #rdStage #hand .rd-card.rd-live:hover { transform: translateY(-10px) scale(1.03); box-shadow: 0 16px 28px rgba(0,0,0,.5), 0 0 0 2px var(--rd-gold); z-index: 30; }
@@ -652,15 +668,17 @@ body.app-fs-on #rdStage,
 #rdStage .rd-fly-card, body > .rd-fly-card { pointer-events: none; margin: 0; z-index: 4000; }
 
 /* ═══════════════ سجل الأحداث — مخفي افتراضياً + مقبض نصف دائري أصفر ═══════════════ */
+/* v2.10.1: المقبض كان بقاع منتصف الشاشة (z 70) فوق أوراق يدي (z 30) فيغطي
+   زاويتها اليمنى فلا تُنقر — رُفع فوق مستوى صف اليد في كل الأوضاع */
 #rdStage .rd-log-panel {
   position: absolute; z-index: 70;
-  bottom: 0; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--chB) + 14px); left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center;
   pointer-events: none;
 }
 #rdStage .rd-log-handle {
   pointer-events: auto; cursor: pointer;
-  width: clamp(88px, 11.8vw, 152px); height: clamp(12px, 1.5vh, 17px);
+  width: clamp(64px, 9vw, 120px); height: clamp(12px, 1.5vh, 17px);
   padding: 0; flex-shrink: 0;
   display: block;
   border: 1px solid #f7e3a4;
@@ -832,7 +850,6 @@ body.app-fs-on #rdStage,
   #rdStage .rd-corner-br { right: 6px; bottom: 6px; }
   #rdStage .rd-back-card { border-radius: 5px; }
   #rdStage .rd-card { border-radius: 6px; }
-  #rdStage .rd-court-rug { top: 8px; bottom: 8px; inset-inline-start: 12px; inset-inline-end: 12px; }
   #rdStage .rd-table-cards { top: 8px; inset-inline-start: 12px; inset-inline-end: 12px; }
   #rdStage .rd-deck-count { min-width: 30px; height: 30px; font-size: .85rem; top: -8px; right: -8px; }
   #rdStage .rd-log-handle { width: min(120px, 30vw); height: 12px; }
@@ -859,7 +876,6 @@ body.app-fs-on #rdStage,
   #rdStage.rd-uppers { --chB: 132px; --ctTopUp: calc(var(--ch) + var(--bdH) + 2px); }
   #rdStage .rd-tophead { top: 3px; }
   #rdStage.rd-uppers .rd-tophead { top: calc(var(--ch) + 3px); }
-  #rdStage .rd-roundline { display: none; }
   #rdStage .rd-bigtitle { font-size: clamp(.9rem, 4vh, 1.4rem); letter-spacing: 1px; margin: 0; }
   #rdStage .rd-infline { min-height: 0; }
   #rdStage .rd-inf-seg { font-size: clamp(.55rem, 1.9vh, .8rem); gap: 3px; }
@@ -868,7 +884,6 @@ body.app-fs-on #rdStage,
   #rdStage .rd-botrail { bottom: 4px; }
   #rdStage .rd-seat { min-width: 0; padding: 2px 5px; gap: 2px; border-radius: 11px; }
   #rdStage .rd-seat-stats { font-size: .6rem; gap: 3px; }
-  #rdStage .rd-court-rug { top: 8px; bottom: 6px; inset-inline-start: 12px; inset-inline-end: 12px; }
   #rdStage .rd-table-cards { top: 8px; inset-inline-start: 12px; inset-inline-end: 12px; }
   #rdStage .rd-deck-count { min-width: 28px; height: 28px; font-size: .78rem; top: -7px; right: -7px; }
   #rdStage .rd-log-handle { width: min(120px, 22vw); height: 11px; }
@@ -891,8 +906,9 @@ body.app-fs-on #rdStage,
     --ctTopUp: calc(var(--ch) + var(--bdH) + 2px);
     --ctBot: calc(var(--chB) + var(--bdH) + 16px);
   }
-  #rdStage .rd-bigtitle { display: none; }
-  #rdStage .rd-infline { display: none; }
+  #rdStage .rd-bigtitle { font-size: clamp(.78rem, 3.2vh, 1rem); letter-spacing: .5px; margin: 0; }
+  #rdStage .rd-infline { min-height: 0; }
+  #rdStage .rd-infline .rd-inf-seg { font-size: clamp(.5rem, 1.7vh, .7rem); }
   #rdStage .rd-tophead { top: 0; pointer-events: none; }
   #rdStage .rd-corner-br { bottom: 3px; right: 4px; gap: 3px; }
   #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 6px); left: 6px; }
@@ -921,12 +937,14 @@ body.app-fs-on #rdStage,
   container-type: size;
   --cw: 14cqh; --ch: 20cqh;            /* أساس أوراق الظهر العلوية */
   --tcw: 15.2cqh; --tch: 21cqh;        /* ورق الوسط المرمي (نسبة ~5/7) — بلا خصمين علويين */
-  --chB: 25cqh;                        /* ارتفاع الورقتين السفليتين (يدي + صف الخصم) */
-  --cwB: calc(var(--chB) * .72);
-  --deckS: 8.2cqw;                     /* الرزمة داخل البيضاوية (أصغر كي تتسع 1ضد1) */
+  /* v2.10: يد أكبر (25→28cqh) لكن بسقف عرضي كي لا يفيض صف الستة على
+     الأجهزة الوسيطة (لابتوب): 6 أوراق × 20cqh-عرض + فراغات ≈ عرض المسرح */
+  --chB: min(28cqh, 30cqw);
+  --cwB: min(calc(var(--chB) * .72), 15cqw);
+  --deckS: 8.2cqw;                     /* الرزمة داخل القاعة (أصغر كي تتسع 1ضد1) */
   --deckH: calc(var(--deckS) * .92);
   --avS: 6.6cqh; --bdH: 11.5cqh; --bdHt: 11.5cqh; --sideIn: 1.2cqw;
-  --ctTop: 18.5cqh;                    /* علو البيضاوية بلا خصمين علويين */
+  --ctTop: 18.5cqh;                    /* علو القاعة بلا خصمين علويين */
   --ctTopUp: calc(var(--ch) + var(--bdHt) + .8cqh);
   --ctBot: calc(var(--chB) + var(--bdH) + 3cqh);
 }
@@ -938,8 +956,8 @@ body.app-fs-on #rdStage,
 #rdStage.rd-uppers {
   --cw: 9.6cqh; --ch: 13.5cqh;
   --tcw: 15.8cqh; --tch: 22cqh;
-  --chB: 20.5cqh;
-  --cwB: calc(var(--chB) * .72);
+  --chB: min(24cqh, 26cqw);
+  --cwB: min(calc(var(--chB) * .72), 13cqw);
   --deckS: 9.6cqw;
   --bdHt: 7.8cqh;
   --ctTopUp: calc(var(--ch) + var(--bdHt) + .8cqh);
@@ -950,7 +968,7 @@ body.app-fs-on #rdStage,
   margin-inline-start: calc(var(--cw) * -.46);
   border-radius: clamp(5px, .8vw, 9px);
 }
-#rdStage.rd-uppers .rd-corner-br .rd-back-card { width: var(--cwB); height: var(--chB); margin-inline-start: 0; }
+#rdStage.rd-uppers .rd-corner-br .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; }
 /* اللوحات العلوية النحيفة (فوق الظهر) */
 #rdStage.rd-uppers .rd-corner-tl .rd-seat,
 #rdStage.rd-uppers .rd-corner-tr .rd-seat {
@@ -987,14 +1005,17 @@ body.app-fs-on #rdStage,
 }
 #rdStage .rd-deck-count { top: -9px; right: -9px; }
 
-/* ── هاتف عمودي (بيضاوية أطول → ورق وسط أكبر) ── */
+/* ── هاتف عمودي (قاعة أطول → ورق وسط أكبر) ── */
 @media (max-width: 760px) {
   #rdStage {
     --cw: 22vw; --ch: 31vw;
     --tcw: clamp(112px, 31vw, 168px);
     --tch: calc(var(--tcw) * 1.38);
-    --cwB: clamp(46px, 13.5vw, 92px);
-    --chB: calc(var(--cwB) * 1.42);
+    /* v2.10: اليد نسبة لارتفاع الشاشة (لا vw) — حساب الصف السفلي كاملاً:
+       يدي (3 أوراق) + صف الخصم (3×0.78) ≈ 5.3×cwB + فراغات ≤ عرض الهاتف
+       (360px: يدي 195px + خصم 153px = يتجاوران بلا تغطية تقريباً) */
+    --chB: clamp(84px, 12vh, 104px);
+    --cwB: calc(var(--chB) / 1.42);
     --deckS: clamp(58px, 15.5vw, 86px);
     --avS: 40px; --bdH: 76px; --bdHt: 76px; --sideIn: 6px;
     --ctTop: 112px;
@@ -1005,7 +1026,7 @@ body.app-fs-on #rdStage,
     --ch: 92px; --cw: 66px;
     --tcw: clamp(82px, 21.5vw, 122px);
     --tch: calc(var(--tcw) * 1.34);
-    --chB: clamp(120px, 17vh, 168px);
+    --chB: clamp(84px, 12vh, 104px);
     --cwB: calc(var(--chB) / 1.42);
     --deckS: clamp(54px, 14vw, 78px);
     --bdHt: 54px;
@@ -1013,13 +1034,14 @@ body.app-fs-on #rdStage,
   }
 }
 
-/* ── لاندسكيب قصير ── */
+/* ── لاندسكيب قصير ── v2.10: العنوان/الجولة/المعلومات تبقى ظاهرة بأحجام
+   clamp صغيرة بدل الإخفاء، والأوراق السفلية والوسطى أكبر بلا تداخل ── */
 @media (orientation: landscape) and (max-height: 620px) {
   #rdStage {
     --cw: 13cqh; --ch: 18cqh;
-    --tcw: clamp(64px, 18vh, 100px);
+    --tcw: clamp(68px, 20vh, 106px);
     --tch: calc(var(--tcw) * 1.36);
-    --chB: 18cqh;
+    --chB: 21cqh;
     --cwB: calc(var(--chB) * .74);
     --deckS: 7.6cqw;
     --avS: 30px; --bdH: 9cqh; --bdHt: 9cqh; --sideIn: 8px;
@@ -1029,24 +1051,25 @@ body.app-fs-on #rdStage,
   }
   #rdStage.rd-uppers {
     --ch: 15cqh; --cw: 10.6cqh;
-    --tcw: clamp(60px, 17vh, 92px);
+    --tcw: clamp(62px, 18.5vh, 96px);
     --tch: calc(var(--tcw) * 1.36);
-    --chB: 17cqh;
+    --chB: 19cqh;
     --cwB: calc(var(--chB) * .74);
     --deckS: 7cqw;
     --bdHt: 7.6cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .5cqh);
   }
-  #rdStage .rd-roundline { display: none; }
+  #rdStage .rd-roundline { display: flex; margin-top: 0; }
+  #rdStage .rd-roundline .rd-inf-seg { font-size: clamp(.72rem, 2.6vh, 1rem); }
 }
 
 /* ── لاندسكيب قصير جداً ── */
 @media (orientation: landscape) and (max-height: 430px) {
   #rdStage {
     --cw: 11cqh; --ch: 15cqh;
-    --tcw: clamp(56px, 17vh, 88px);
+    --tcw: clamp(60px, 18.5vh, 92px);
     --tch: calc(var(--tcw) * 1.34);
-    --chB: 16.5cqh;
+    --chB: 19cqh;
     --cwB: calc(var(--chB) * .75);
     --deckS: 7cqw;
     --avS: 26px; --bdH: 7.4cqh; --bdHt: 7.4cqh;
@@ -1056,14 +1079,64 @@ body.app-fs-on #rdStage,
   }
   #rdStage.rd-uppers {
     --ch: 12cqh; --cw: 8.6cqh;
-    --tcw: clamp(48px, 14.4vh, 74px);
+    --tcw: clamp(50px, 16vh, 78px);
     --tch: calc(var(--tcw) * 1.34);
-    --chB: 15.5cqh;
+    --chB: 17.5cqh;
     --cwB: calc(var(--chB) * .75);
     --deckS: 6.4cqw;
     --bdHt: 6.2cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
   }
-  #rdStage .rd-bigtitle { display: none; }
-  #rdStage .rd-infline { display: none; }
+  #rdStage .rd-bigtitle { font-size: clamp(.8rem, 3.4vh, 1.05rem); letter-spacing: .5px; margin: 0; }
+  #rdStage .rd-infline { min-height: 0; }
+  #rdStage .rd-infline .rd-inf-seg { font-size: clamp(.5rem, 1.7vh, .72rem); }
+}
+
+/* ═══════════════ v2.10 — اللاندسكيب: اتجاه المقاعد المعكوس ═══════════════
+   في اللاندسكيب يجلس اللاعب الرئيسي أسفل-يمين (br) — cornerForPlayer في
+   rd-renderer.js تعكس الخصوم حول الطاولة — لذلك تنتقل يده المكشوفة إلى
+   يمين الصف السفلي (بورتريه: تبقى يساراً كما هي):
+     • d0 «br» اليد المكشوفة (botrail إلى اليمين)
+     • d1 «tr»، d2 «tl»، d3 «bl» — صفوف الظهر في زواياها الجديدة.
+   الزاوية bl في اللاندسكيب يشغلها خصم بصفّ ظهره في نفس صف اليد (كما br
+   في البورتريه): لوحته فوق صفه والمجموعة مثبتة بقاع الشاشة (column-reverse)،
+   والزاوية br تصير لوحة العارض فوق يده (كما bl في البورتريه). اليد تبقى
+   فوق أي صف خصم في التراكب (z-index 24 > 22 للزوايا). */
+@media (orientation: landscape) {
+  #rdStage .rd-botrail { justify-content: flex-end; z-index: 30; }
+  /* bl في اللاندسكيب = خصم بصف ظهر في نفس صف اليد (كما br بورتريه) */
+  #rdStage .rd-corner-bl {
+    bottom: 8px; left: 10px;
+    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 6px;
+  }
+  #rdStage .rd-corner-bl .rd-backrow { gap: clamp(2px, .4vw, 6px); align-items: flex-end; }
+  /* v2.10: أوراق صف ظهر خصم bl أصغر (×0.78) كصف br البورتريه — بحجم
+     اليد الكامل تتضخم وتزاحم اليد/القاعة في نفس الصف السفلي */
+  #rdStage .rd-corner-bl .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; border-radius: clamp(5px, .8vw, 9px); }
+  /* br في اللاندسكيب = لوحة العارض فوق يده المكشوفة (كما bl بورتريه):
+     مرتفعة فوق الصف السفلي كي لا تختفي تحت قاع القاعة */
+  #rdStage .rd-corner-br {
+    bottom: calc(var(--chB) + 10px);
+    display: flex; flex-direction: column; align-items: flex-end;
+  }
+  /* لا صفّ ظهر في زاوية اليد (br لاندسكيب) — backrowCorner في العارض
+     يضمن ذلك؛ هذه قاعدة حماية إن رسم الصف يبقى خلف اليد */
+  #rdStage .rd-corner-br .rd-backrow { display: none; }
+}
+/* ═══════════════ v2.10.1 — البورتريه: صف الخصم br فوق مستوى اليد ═══════════════
+   في البورتريه تتقاسم يدي (يسار) وصف الخصم br (يمين) الصف السفلي نفسه:
+   3 أوراق ليدي (~198px) + 3×0.78 للخصم (~150px) = 348px من عرض الهاتف
+   (360px) → يتلامسان عند البطاقة الأخيرة ويغطي الخصم زاوية ورقتي رغم
+   z-index (التراكب المرئي يمنع رؤية الورقة). الحل الهندسي: رفع مجموعة
+   الخصم br فوق مستوى يدي — صفه يطفو فوق قاع القاعة بجوار لوحته، فلا
+   يبقى أي تداخل أفقي مع أوراقي، وتظل يدي العنصر الوحيد في صفها. */
+@media (orientation: portrait) and (max-width: 760px) {
+  #rdStage .rd-corner-br { bottom: calc(var(--chB) + 12px); }
+  #rdStage .rd-corner-br .rd-backrow { align-items: flex-end; }
+}
+/* لاندسكيب قصير جداً: تاج أصغر يوازن الأيقونات المصغرة (26px) */
+@media (orientation: landscape) and (max-height: 430px) {
+  #rdStage .rd-dealer-crown {
+    width: 16px; height: 16px; top: -5px; inset-inline-start: -6px; font-size: .48rem;
+  }
 }

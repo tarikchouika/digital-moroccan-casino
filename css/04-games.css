@@ -2307,6 +2307,13 @@ body.rami-game-open { overflow: hidden; }
   min-height: 300px;
   overflow: hidden;
 }
+/* [Landscape-short] في اللاندسكيب القصير المساحة الفعلية قد تقل عن 300px
+   (360px شاشة − شريط 54px − إزاحة 32px = 274px) — فرض min-height هناك
+   كان يفيض الحاوية تحت حافة الشاشة ويقصّ قاع كل لعبة (اليد السفلية).
+   الحل: السماح بالتقلّص للمساحة المتاحة في اللاندسكيب فقط */
+@media (orientation: landscape) and (max-height: 480px) {
+  #pg-game.active #gamePageBody { min-height: 0; }
+}
 
 #gamePageBody .stage,
 #gamePageBody .bjt,

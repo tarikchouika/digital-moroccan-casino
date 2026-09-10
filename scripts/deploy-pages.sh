@@ -32,10 +32,12 @@ mkdir -p "$OUT"
 cd "$REPO"
 
 # الملفات والمجلدات العامة فقط (نفس قاعدة deploy-clean.sh المعتمدة)
-cp -r js css assets "$OUT/"
+# ronda-game: محرك روندا الكلاسيكية (index.html يحمل سكربتاته من ronda-game/js/*)
+cp -r js css assets ronda-game "$OUT/"
 
 for f in index.html admins.html about.html contact.html 2fa.html \
-         provably-fair.html fairness.html _headers _redirects; do
+         provably-fair.html fairness.html privacy.html terms.html \
+         _headers _redirects; do
   [ -e "$f" ] && cp "$f" "$OUT/"
 done
 
@@ -48,6 +50,7 @@ done
 
 # لا اختبارات ولا وثائق ولا قواعد بيانات ولا configs في النشر
 rm -rf "$OUT"/data 2>/dev/null || true
+rm -rf "$OUT"/ronda-game/tests "$OUT"/ronda-game/README.md 2>/dev/null || true
 find "$OUT" -name "*.db*" -delete 2>/dev/null || true
 
 N_FILES="$(find "$OUT" -type f | wc -l)"
