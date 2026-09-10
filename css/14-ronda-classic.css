@@ -1034,57 +1034,58 @@ body.app-fs-on #rdStage,
   }
 }
 
-/* ── لاندسكيب قصير ── v2.10: العنوان/الجولة/المعلومات تبقى ظاهرة بأحجام
-   clamp صغيرة بدل الإخفاء، والأوراق السفلية والوسطى أكبر بلا تداخل ── */
+/* ── لاندسكيب قصير ── v2.11: أوراق ×2 (اليد 42cqh، الوسط أكبر) — العرض
+   وفير في اللاندسكيب فالتكبير يأخذ من العرض لا القاع: كل تبعيات
+   القاعة (ctTop/ctBot) تتبع المتغيرات تلقائياً فلا تداخل ── */
 @media (orientation: landscape) and (max-height: 620px) {
   #rdStage {
-    --cw: 13cqh; --ch: 18cqh;
-    --tcw: clamp(68px, 20vh, 106px);
+    --cw: 20cqh; --ch: 28cqh;
+    --tcw: clamp(96px, 15cqw, 150px);
     --tch: calc(var(--tcw) * 1.36);
-    --chB: 21cqh;
+    --chB: 42cqh;
     --cwB: calc(var(--chB) * .74);
-    --deckS: 7.6cqw;
-    --avS: 30px; --bdH: 9cqh; --bdHt: 9cqh; --sideIn: 8px;
-    --ctTop: 13cqh;
+    --deckS: 10cqw;
+    --avS: 42px; --bdH: 13cqh; --bdHt: 13cqh; --sideIn: 10px;
+    --ctTop: 15cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .6cqh);
     --ctBot: calc(var(--chB) + var(--bdH) + 2.4cqh);
   }
   #rdStage.rd-uppers {
-    --ch: 15cqh; --cw: 10.6cqh;
-    --tcw: clamp(62px, 18.5vh, 96px);
+    --ch: 22cqh; --cw: 15.5cqh;
+    --tcw: clamp(88px, 14cqw, 138px);
     --tch: calc(var(--tcw) * 1.36);
-    --chB: 19cqh;
+    --chB: 38cqh;
     --cwB: calc(var(--chB) * .74);
-    --deckS: 7cqw;
-    --bdHt: 7.6cqh;
+    --deckS: 9.2cqw;
+    --bdHt: 11cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .5cqh);
   }
   #rdStage .rd-roundline { display: flex; margin-top: 0; }
   #rdStage .rd-roundline .rd-inf-seg { font-size: clamp(.72rem, 2.6vh, 1rem); }
 }
 
-/* ── لاندسكيب قصير جداً ── */
+/* ── لاندسكيب قصير جداً ── v2.11: ×2 مع سقوف تحمي من التكدس */
 @media (orientation: landscape) and (max-height: 430px) {
   #rdStage {
-    --cw: 11cqh; --ch: 15cqh;
-    --tcw: clamp(60px, 18.5vh, 92px);
+    --cw: 17cqh; --ch: 24cqh;
+    --tcw: clamp(84px, 13cqw, 132px);
     --tch: calc(var(--tcw) * 1.34);
-    --chB: 19cqh;
+    --chB: 38cqh;
     --cwB: calc(var(--chB) * .75);
-    --deckS: 7cqw;
-    --avS: 26px; --bdH: 7.4cqh; --bdHt: 7.4cqh;
-    --ctTop: 11cqh;
+    --deckS: 9cqw;
+    --avS: 36px; --bdH: 11cqh; --bdHt: 11cqh;
+    --ctTop: 13cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
     --ctBot: calc(var(--chB) + var(--bdH) + 2cqh);
   }
   #rdStage.rd-uppers {
-    --ch: 12cqh; --cw: 8.6cqh;
-    --tcw: clamp(50px, 16vh, 78px);
+    --ch: 19cqh; --cw: 13.5cqh;
+    --tcw: clamp(76px, 12cqw, 118px);
     --tch: calc(var(--tcw) * 1.34);
-    --chB: 17.5cqh;
+    --chB: 35cqh;
     --cwB: calc(var(--chB) * .75);
-    --deckS: 6.4cqw;
-    --bdHt: 6.2cqh;
+    --deckS: 8.4cqw;
+    --bdHt: 9cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
   }
   #rdStage .rd-bigtitle { font-size: clamp(.8rem, 3.4vh, 1.05rem); letter-spacing: .5px; margin: 0; }
@@ -1126,17 +1127,103 @@ body.app-fs-on #rdStage,
 /* ═══════════════ v2.10.1 — البورتريه: صف الخصم br فوق مستوى اليد ═══════════════
    في البورتريه تتقاسم يدي (يسار) وصف الخصم br (يمين) الصف السفلي نفسه:
    3 أوراق ليدي (~198px) + 3×0.78 للخصم (~150px) = 348px من عرض الهاتف
-   (360px) → يتلامسان عند البطاقة الأخيرة ويغطي الخصم زاوية ورقتي رغم
-   z-index (التراكب المرئي يمنع رؤية الورقة). الحل الهندسي: رفع مجموعة
+   (360px) → يتلامسان عند البطاقة الأخيرة. الحل الهندسي: رفع مجموعة
    الخصم br فوق مستوى يدي — صفه يطفو فوق قاع القاعة بجوار لوحته، فلا
    يبقى أي تداخل أفقي مع أوراقي، وتظل يدي العنصر الوحيد في صفها. */
 @media (orientation: portrait) and (max-width: 760px) {
   #rdStage .rd-corner-br { bottom: calc(var(--chB) + 12px); }
   #rdStage .rd-corner-br .rd-backrow { align-items: flex-end; }
 }
+/* ═══════════════ v2.11 — ملء الشاشة 100% + دور عكس عقارب الساعة في الوضعين ═══════════════
+   • الطاولة تملأ صفحة اللعبة كاملة (بلا الفراغ الأسود المحيط): مسرح RDC
+     يُستثنى من حواف .stage العامة (خشب 11-game-theme + border-radius) ومن
+     حواف الحاوية (padding 14px) — جلد الطاولة نفسه هو المسرح كله.
+   • اللاندسكيب: الأوراق أكبر (~2×) والزوايا توزّع المساحة كاملة بلا حشو
+     ولا فراغ — كل مقعد في زاويته الفعلية والقاعة تتنفس في الوسط. */
+
+/* ── ملء الشاشة: مسرح الروندا الكلاسيكية يذوب في حاوية اللعبة ── */
+/* إلغاء حواف الحاوية حول #rdStage فقط (بقية الألعاب تُبقي إطارها الخشبي) */
+#pg-game.active:has(#rdStage) { padding: 0 !important; }
+#pg-game.active:has(#rdStage) #gamePageBody {
+  padding: 0 !important;
+  background: transparent !important;
+}
+/* المسرح (#rdStage نفسه يحمل .stage.rd-stage) بلا إطار/حواف/هامش —
+   جدول اللعب (جلد الطاولة) هو كل الشاشة */
+#gamePageBody:has(#rdStage) > .stage#rdStage {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100%;
+}
 /* لاندسكيب قصير جداً: تاج أصغر يوازن الأيقونات المصغرة (26px) */
 @media (orientation: landscape) and (max-height: 430px) {
   #rdStage .rd-dealer-crown {
     width: 16px; height: 16px; top: -5px; inset-inline-start: -6px; font-size: .48rem;
+  }
+}
+
+/* ═══════════════ v2.11 — الأحجام النهائية (آخر تعريف في الملف يغلب الكل) ═══════════════
+   تنظيم طبقات الأحجام المتراكمة (v2.7 px ثم v2.9 cq ثم ميديا متداخلة):
+   هذه الكتلة أخيرة فتفوز عند التساوي. الأرقام من الهندسة الفعلية:
+   لاندسكيب 800×360: المسرح ~274px — اليد 38cqh≈104px (×2 عن v2.10)،
+   ورق الوسط 15cqw≈120px، الرزمة 10cqw≈80px. البورتريه يبقى على قيم
+   v2.10.1 المدروسة (اليد clamp 84-104px) — فقط تنظيف التعارضات. */
+
+/* ── اللاندسكيب (أي ارتفاع ≤620px): الأوراق ×2 ── */
+@media (orientation: landscape) and (max-height: 620px) {
+  #rdStage {
+    --cw: 15cqw; --ch: 21cqw;
+    --tcw: 15cqw;
+    --tch: calc(var(--tcw) * 1.36);
+    --chB: 38cqh;
+    --cwB: calc(var(--chB) * .74);
+    --deckS: 10cqw;
+    --deckH: calc(var(--deckS) * .92);
+    --avS: 13cqh; --bdH: 13cqh; --bdHt: 13cqh; --sideIn: 10px;
+    --ctTop: 15cqh;
+    --ctTopUp: calc(var(--ch) + var(--bdHt) + .6cqh);
+    --ctBot: calc(var(--chB) + var(--bdH) + 2.4cqh);
+  }
+  #rdStage.rd-uppers {
+    --ch: 33cqh; --cw: 23cqh;
+    --tcw: 14cqw;
+    --tch: calc(var(--tcw) * 1.36);
+    --chB: 40cqh;
+    --cwB: calc(var(--chB) * .74);
+    --deckS: 9.2cqw;
+    --bdHt: 11cqh;
+    --ctTopUp: calc(var(--ch) + var(--bdHt) + .5cqh);
+  }
+}
+
+/* ── اللاندسكيب القصير جداً (≤430px — هواتف بالعرض): نفس ×2 بسقوف أضيق ── */
+@media (orientation: landscape) and (max-height: 430px) {
+  #rdStage {
+    --cw: 13cqw; --ch: 18cqw;
+    --tcw: 13cqw;
+    --tch: calc(var(--tcw) * 1.34);
+    --chB: 38cqh;
+    --cwB: calc(var(--chB) * .75);
+    --deckS: 9cqw;
+    --avS: 12cqh; --bdH: 11cqh; --bdHt: 11cqh;
+    --ctTop: 13cqh;
+    --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
+    --ctBot: calc(var(--chB) + var(--bdH) + 2cqh);
+  }
+  #rdStage.rd-uppers {
+    --ch: 30cqh; --cw: 21cqh;
+    --tcw: 12cqw;
+    --tch: calc(var(--tcw) * 1.34);
+    --chB: 42cqh;
+    --cwB: calc(var(--chB) * .75);
+    --deckS: 8.4cqw;
+    --bdHt: 9cqh;
+    --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
   }
 }
