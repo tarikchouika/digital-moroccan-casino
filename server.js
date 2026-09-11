@@ -507,7 +507,8 @@ function parseCookies(req) {
 function startSession(res, user) {
   const sid = crypto.randomBytes(18).toString('hex');
   sessions[sid] = user.id;
-  res.setHeader('Set-Cookie', 'sid=' + sid + '; Path=/; HttpOnly; SameSite=Lax');
+  /* SameSite=None مطلوب لكوكي الجلسة عبر النطاقات (pages.dev → workers.dev → النفق) */
+  res.setHeader('Set-Cookie', 'sid=' + sid + '; Path=/; HttpOnly; SameSite=None; Secure');
 }
 function getUser(req) {
   const sid = parseCookies(req).sid;
@@ -549,6 +550,7 @@ function serializeRoom(room) {
     }),
     order: nonspec.map(function (p) { return p.id; }),
     room_state: room.room_state || {},
+    game_opts: room.game_opts || null,   /* [RS-GameOpts] إعدادات اللعبة للجميع */
     /* [Spectator] ملخّص المقاعد وطابور طلبات الانضمام */
     seats: { players: nonspec.length, max: room.max_players, free: Math.max(0, room.max_players - nonspec.length) },
     joinQueue: (room.joinQueue || []).map(function (r) { return { id: r.id, username: r.username, ts: r.ts }; }),
@@ -698,7 +700,15 @@ const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  /* [CORS] عكس Origin الحقيقي بدل البدلاء * — المتصفح يرفض '*' مع credentials:include
+     (سبب تعطل الدخول من dmgames.pages.dev عبر النفق/الووركر الوسيط) */
+  const reqOrigin = req.headers.origin;
+  if (reqOrigin && reqOrigin !== 'null') {
+    res.setHeader('Access-Control-Allow-Origin', reqOrigin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -869,7 +879,7 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/logout') {
         const sid = parseCookies(req).sid;
         if (sid) delete sessions[sid];
-        res.setHeader('Set-Cookie', 'sid=; Path=/; Max-Age=0');
+        res.setHeader('Set-Cookie', 'sid=; Path=/; Max-Age=0; SameSite=None; Secure');
         json({ ok: true });
         return;
       }
@@ -1446,20 +1456,12 @@ const server = http.createServer((req, res) => {
         if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
         /* [Auth] المشرفون (admin/super) لا يفتحون غرفاً كلاعبين ولا يراهنون */
         if (me.role !== 'user') { json({ ok: false, message: 'المشرفون لا يمكنهم الدخول كلاعبين أو المراهنة' }, 403); return; }
-        const room_type = data.room_type;
-        if (room_type !== 'hour' && room_type !== 'percentage') { json({ ok: false, error: 'room_type_required' }, 400); return; }
+        /* [Rooms-unified] نوع واحد فقط: percentage — رسم 5% من رهان الرابح في كل جولة.
+           غرف الساعة أُلغيت بطلب المستخدم (2026-09-11). يُقبل الحقل للتوافق مع العملاء القدامى. */
+        const room_type = 'percentage';
         const bet = Number(data.bet);
         if (isNaN(bet) || bet <= 0) { json({ ok: false, error: 'bet_required' }, 400); return; }
         const visibility = (data.visibility === 'private') ? 'private' : 'public';   /* [B-rooms] عامة/خاصة */
-        /* [B-rooms] غرفة الساعة: رسم افتتاح ثابت يُقتطع من المضيف — لا غرفة بلا رسم */
-        if (room_type === 'hour') {
-          if ((me.gold || 0) < HOUR_ROOM_FEE) {
-            json({ ok: false, error: 'insufficient_funds', message: 'رصيد غير كافٍ لرسوم الغرفة (' + HOUR_ROOM_FEE + ')' }, 400);
-            return;
-          }
-          me.gold = (me.gold || 0) - HOUR_ROOM_FEE;
-          try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id); } catch (e) {}
-        }
         const gid = data.game_id || 'rm';
         const maxp = Math.max(2, Math.min(8, parseInt(data.max_players, 10) || 4));
         const rid = 'r' + (nextRoomId++);
@@ -1469,10 +1471,13 @@ const server = http.createServer((req, res) => {
           owner_id: me.id, owner_name: me.username,
           max_players: maxp, status: 'waiting', bet: bet, room_type: room_type,
           visibility: visibility,
-          expires_at: room_type === 'hour' ? Date.now() + HOUR_ROOM_MS : null,   /* [B-rooms] ساعة واحدة */
+          expires_at: null,   /* [Rooms-unified] لا حد زمني — الرسم 5% على كل جولة */
           players: [{ id: me.id, username: me.username, ready: false, spectate: false, seat: 0 }],
           moveHistory: [], dedupSeen: {}, driverId: me.id, online: {},
-          room_state: {}, chat: []
+          room_state: {}, chat: [],
+          /* [RS-GameOpts] إعدادات اللعبة (نمط 4 لاعبين، هدف، مؤقت...) تُبث للجميع
+             وتبقى عبر الانقطاع/الاستئناف */
+          game_opts: (data.game_opts && typeof data.game_opts === 'object') ? data.game_opts : null
         };
         rooms[rid] = room;
         markOnline(room, me.id);   /* [Resilience] المنشئ متصل */
@@ -1645,7 +1650,7 @@ const server = http.createServer((req, res) => {
         if (room.status !== 'playing') { json({ ok: false, message: 'لا جولة جارية للتسوية' }, 400); return; }
         if (room.settled) { json({ ok: false, message: 'تمت تسوية هذه الجولة مسبقاً' }, 400); return; }
         const result = data.result;
-        if (result !== 'w0' && result !== 'w1' && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
+        if (result !== 'w0' && result !== 'w1' && result !== 'w2' && result !== 'w3' && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
         const order = serializeRoom(room).order;   /* غير المتفرجين حسب المقعد (بشر + بوتّات) */
         const pot = Number(room.bet) || 0;   /* رهان كل لاعب — اقتُطع عند البدء */
         /* اللاعبون البشريون الحقيقيون (البوتّات بلا رصيد تُتجاهل في الحساب) */
@@ -1659,23 +1664,24 @@ const server = http.createServer((req, res) => {
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
           });
         } else {
-          const wIdx = (result === 'w0') ? 0 : 1;
+          /* [RDC-ffa] 'w0'/'w1'/'w2'/'w3' — فائز واحد مقابل الجميع (1ضد1/1ضد2/1ضد3) */
+          const wIdx = { w0: 0, w1: 1, w2: 2, w3: 3 }[result];
           const winner = order[wIdx] != null ? users[order[wIdx]] : null;
-          const loser = order[1 - wIdx] != null ? users[order[1 - wIdx]] : null;   /* بوت/غائب → null */
           if (!winner) { json({ ok: false, message: 'الرابح لاعب آلي أو غير موجود — لا تسوية' }, 400); return; }
           /* المال الفعلي على الطاولة: رهانات البشريين فقط (رهان الخصم البوتّي لا يُخلق من فراغ) */
           const stake = humans.length * pot;
-          /* الرسم: 5% في غرف percentage فقط — غرف الساعة مدفوعة مسبقاً */
-          fee = (room.room_type === 'percentage') ? Math.round(stake * BET_FEE_RATE) : 0;
+          /* الرسم: 5% من رهان الرابح في كل الجولات (نظام موحد — لا غرف ساعة بعد الآن) */
+          fee = Math.round(pot * BET_FEE_RATE);
           winner.gold = (winner.gold || 0) + (stake - fee);
           try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(winner.gold, winner.id); } catch (e) {}
         }
         room.settled = true;   /* منع تكرار التسوية للجولة نفسها */
         const shape = function (u) { return u ? { id: u.id, username: u.username, gold: u.gold } : null; };
-        const winnerOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 0 : 1]]);
-        const loserOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 1 : 0]]);
+        const wSeat = { w0: 0, w1: 1, w2: 2, w3: 3 }[result];
+        const winnerOut = (result === 'draw') ? null : shape(users[order[wSeat]]);
+        const loserOut = (result === 'draw') ? null : shape(users[order[(wSeat === 0) ? 1 : 0]]);
         const refunds = (result === 'draw') ? humans.map(function (u) { return shape(u); }) : [];
-        const payout = (result === 'draw') ? pot : ((room.room_type === 'percentage') ? (humans.length * pot) - Math.round(humans.length * pot * BET_FEE_RATE) : humans.length * pot);
+        const payout = (result === 'draw') ? pot : (humans.length * pot) - fee;
         const payload = {
           ok: true, result: result, pot: pot, fee: fee,
           winner: winnerOut, loser: loserOut, refunds: refunds,
@@ -1712,7 +1718,8 @@ const server = http.createServer((req, res) => {
         const humansAll = order.map(function (pid) { return humanOf(pid); }).filter(Boolean);
         /* المال الفعلي على الطاولة = رهانات البشريين فقط */
         const stake = humansAll.length * bet;
-        const fee = (room.room_type === 'percentage') ? Math.round(stake * BET_FEE_RATE) : 0;
+        /* الرسم: 5% من رهان كل رابح (نظام موحد) */
+        const fee = Math.round(bet * BET_FEE_RATE * winners.length);
         const net = stake - fee;
         const share = Math.floor(net / winners.length);
         let remainder = net - share * winners.length;
@@ -1747,8 +1754,8 @@ const server = http.createServer((req, res) => {
         const winner = Object.values(users).find(function (u) { return u.username === data.winner; });
         if (!loser || !winner) { json({ ok: false, message: 'لاعب غير موجود' }, 400); return; }
         if ((loser.gold || 0) < amt) { json({ ok: false, message: 'رصيد الخاسر غير كافٍ' }, 400); return; }
-        /* [B-rooms] غرف الساعة مدفوعة مسبقاً — لا رسم 5% عليها؛ البقية كالمعتاد */
-        const fee = (room.room_type === 'hour') ? 0 : Math.round(amt * BET_FEE_RATE);
+        /* الرسم الموحد: 5% من المبلغ المحوّل */
+        const fee = Math.round(amt * BET_FEE_RATE);
         loser.gold = (loser.gold || 0) - amt;
         winner.gold = (winner.gold || 0) + (amt - fee);
         transfersList.unshift({ id: Date.now(), from_id: loser.id, from_name: loser.username, to_name: winner.username, amount: amt, created_at: Math.floor(Date.now() / 1000) });

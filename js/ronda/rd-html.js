@@ -126,17 +126,19 @@ window.RD_HTML = (function () {
         '<div class="rd-corner rd-corner-br" id="rd-corner-br" data-corner="br"></div>' +
         '<div class="rd-corner rd-corner-bl" id="rd-corner-bl" data-corner="bl"></div>' +
 
-        /* القاعة المركزية: بيضاوية اللعب — الأوراق المرمية + الرزمة داخلها
-           (ورق التوزيع داخل المنطقة البيضاوية في أسفل وسطها) */
+        /* القاعة المركزية: بيضاوية اللعب — الأوراق المرمية داخلها.
+           [v2.13] الرزمة خرجت من القاعة إلى المسرح مباشرة (level المسرح)
+           كي يمكن تثبيتها في الهامش الأسفل للشاشة (طلب المستخدم) بلا معادلات
+           نسبية معقدة داخل حدود القاعة. */
         '<div class="rd-court" id="rd-court">' +
           '<div class="rd-court-rug" aria-hidden="true"></div>' +
           '<div class="rd-table-cards" id="table-cards"></div>' +
-          '<div class="rd-deck" id="rd-deck" title="الرزمة" data-i18n-title="rdc.hud.deckTitle">' +
-            '<div class="rd-dk-card rd-dk-1"></div>' +
-            '<div class="rd-dk-card rd-dk-2"></div>' +
-            '<div class="rd-dk-card rd-dk-3"></div>' +
-            '<span class="rd-deck-count" id="deck-count">40</span>' +
-          '</div>' +
+        '</div>' +
+        '<div class="rd-deck" id="rd-deck" title="الرزمة" data-i18n-title="rdc.hud.deckTitle">' +
+          '<div class="rd-dk-card rd-dk-1"></div>' +
+          '<div class="rd-dk-card rd-dk-2"></div>' +
+          '<div class="rd-dk-card rd-dk-3"></div>' +
+          '<span class="rd-deck-count" id="deck-count">40</span>' +
         '</div>' +
 
         /* الصف السفلي: يد اللاعب (مكشوفة بالكامل) + شريط المتفرج */

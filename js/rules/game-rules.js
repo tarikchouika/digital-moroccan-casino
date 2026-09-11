@@ -20,7 +20,7 @@ var FULL_RULES = {
     },
     steps: {
       ar: [
-        'الجلوس والاتجاه: كل لاعب في زاوية؛ الدور ينتقل عكس اتجاه عقارب الساعة (بعدك يلعب الجالس على يسارك).',
+        'الجلوس والاتجاه: كل لاعب في زاوية؛ الدور ينتقل عكس اتجاه عقارب الساعة (بعدك يلعب الجالس على يمينك).',
         'التوزيع: 3 أوراق لكل لاعب و4 أوراق مكشوفة على الطاولة؛ الهدف 41/51/61 نقطة أو «جولة» (توزيع الـ40 ورقة).',
         'في دورك العب ورقة من يدك: إن وُجدت على الطاولة ورقة بنفس رقمها تلتقطها هي وكل ما يليها في السلسلة (6←7←10←11←12) وكل النسخ من نفس الرقم.',
         'إن لم يوجد مثلها تستقر ورقتك على الطاولة ليلتقطها غيرك لاحقاً.',
@@ -41,7 +41,7 @@ var FULL_RULES = {
         'En fin de manche chaque carte au-dessus de 20 (10/11/12) vaut 1 point ; le dernier preneur reçoit les cartes restantes.'
       ],
       en: [
-        'Seating: each player in a corner; turns move counter-clockwise (the player on your left plays after you).',
+        'Seating: each player in a corner; turns move counter-clockwise (the player on your right plays after you).',
         'Deal: 3 cards per player and 4 face-up table cards; target 41/51/61 points or “round” (all 40 cards).',
         'On your turn play a card: if the same rank is on the table you capture it plus the rising chain (6←7←10←11←12) and all copies of the rank.',
         'Otherwise your card rests on the table.',
@@ -68,7 +68,7 @@ var FULL_RULES = {
           'الفوز الفوري: من بلغ الهدف (41/51/61) وسط الجولة يُعلن فائزاً فوراً.'
         ] },
         { h: 'اتجاه اللعب', items: [
-          'الدور يدور عكس اتجاه عقارب الساعة: بعد اللاعب الأسفل-يسار يلعب الأعلى-يسار ثم الأعلى-يمين ثم الأسفل-يمين، وهكذا، والموزع يتناوب بنفس الاتجاه.'
+          'الدور يدور عكس اتجاه عقارب الساعة: بعد اللاعب الأسفل-يمين يلعب الأعلى-يمين ثم الأعلى-يسار ثم الأسفل-يسار، وهكذا، والموزع يتناوب بنفس الاتجاه.'
         ] }
       ],
       da: [
@@ -108,32 +108,6 @@ var FULL_RULES = {
       da: '<tr><td>كل ورقة فوق 20 فالأخير</td><td>1 نقطة</td></tr><tr><td>ضربة</td><td>+1</td></tr><tr><td>ميسا</td><td>+1</td></tr><tr><td>حبل</td><td>+5</td></tr><tr><td>جوج حبال</td><td>+10</td></tr><tr><td>قاعا راي / قاعا أص</td><td>+5</td></tr>',
       fr: '<tr><td>Chaque carte au-dessus de 20 en fin de manche</td><td>1 point</td></tr><tr><td>Frappe</td><td>+1</td></tr><tr><td>Mesa</td><td>+1</td></tr><tr><td>Corde</td><td>+5</td></tr><tr><td>Double Corde</td><td>+10</td></tr><tr><td>Qaâa Raï / Qaâa As</td><td>+5</td></tr>',
       en: '<tr><td>Each card above 20 at round end</td><td>1 point</td></tr><tr><td>Strike</td><td>+1</td></tr><tr><td>Mesa</td><td>+1</td></tr><tr><td>Rope</td><td>+5</td></tr><tr><td>Double-Rope</td><td>+10</td></tr><tr><td>Qaâa Raï / Qaâa As</td><td>+5</td></tr>'
-    },
-    tips: {
-      ar: [
-        'لا ترمِ ورقة فوق 20 (10/11/12) بلا داعٍ — كل واحدة تساوي نقطة في النهاية.',
-        'وفّر أوراقك الصغيرة لالتقاط الكبيرة: ورقة فوق 20 تلتقط نفسها وكل ما فوقها في السلسلة.',
-        'راقب ما يلتقطه خصمك: ضربة (ورقة على ورقة معكوسة) أو حبل (3 على التوالي) تنهيان الجولة فوراً.',
-        'في الجولة الأخيرة كل بطاقة في يدك تُحسب لصالح من يلتقطها — لا تترك شيئاً للخصم.'
-      ],
-      da: [
-        'ما ترميش ورقة فوق 20 (10/11/12) بلا سبب — كل وحدة بنقطة.',
-        'جبد الأوراق الكبار بصغارك: 10/11/12 كتشد نفسها وسلسلتها.',
-        'عاين لخصمك: ضربة/حبل كيساليو الجولة.',
-        'فالجولة الأخيرة كل ورقة فليدك تتباع — ما تخلي حتى ورقة لخصمك.'
-      ],
-      fr: [
-        'Ne jetez pas une carte au-dessus de 20 (10/11/12) sans raison — chacune vaut un point.',
-        'Réservez vos petites cartes pour capturer les fortes : un 10/11/12 capture son rang et sa chaîne.',
-        'Surveillez l’adversaire : une Frappe ou une Corde termine la manche immédiatement.',
-        'Au dernier tour toute carte en main compte pour celui qui la capture — ne laissez rien à l’adversaire.'
-      ],
-      en: [
-        'Don’t toss a card above 20 (10/11/12) without reason — each is worth a point at round end.',
-        'Save small cards to capture big ones: a 10/11/12 captures its own rank plus its chain.',
-        'Watch your opponent: a Strike or a Rope ends the round immediately.',
-        'On the final round every card in hand counts toward whoever captures it — leave nothing for the opponent.'
-      ]
     }
   },
   /* ═══ Moroccan Ronda ♦️♠️ ═══ */
@@ -2625,8 +2599,8 @@ var Tutorial = {
       html += '</div>';
     }
     
-    /* نصائح */
-    var tipsList = rules.tips[lang] || rules.tips[fallbackLang] || rules.tips['ar'] || rules.tips['en'] || [];
+    /* نصائح — تُعرض فقط للألعاب التي فيها قسم tips معرّف (لم تُطلب روندا) */
+    var tipsList = (rules.tips && (rules.tips[lang] || rules.tips[fallbackLang] || rules.tips['ar'] || rules.tips['en'])) || [];
     if (tipsList.length > 0) {
       html += '<div class="rules-section">';
       html += '<h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> ' + (T('ui.tips') || 'نصائح وإرشادات') + '</h4>';

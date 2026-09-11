@@ -302,28 +302,27 @@ body.app-fs-on #rdStage,
 #rdStage .rd-corner-br { bottom: 8px; inset-inline-end: 12px; }
 #rdStage .rd-corner-bl { bottom: 8px; inset-inline-start: 12px; }
 
-/* مقعد اللاعب — أيقونة دائرية (حرفان) + إحصائيات صغيرة */
+/* مقعد اللاعب — أيقونة دائرية (حرفان) + إحصائيات صغيرة
+   [v2.13] بلا حاوية سوداء (طلب المستخدم): الأيقونة والإحصائيات مباشرة على الطاولة.
+   حلقة توهج الدور (rd-active-turn) تبقى لتحديد اللاعب النشط. */
 #rdStage .rd-seat {
   position: relative;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 5px 8px;
-  min-width: 92px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(6, 20, 13, .55), rgba(2, 12, 7, .42));
-  border: 1px solid rgba(255,255,255,.13);
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 2px 4px;
+  min-width: 0;
+  border-radius: 14px;
+  background: none;
+  border: none;
+  box-shadow: none;
   text-align: center;
   transition: border-color .2s, box-shadow .2s;
 }
-#rdStage .rd-seat.t0 { border-inline-start: 3px solid var(--rd-team-a); }
-#rdStage .rd-seat.t1 { border-inline-start: 3px solid var(--rd-team-b); }
 #rdStage .rd-seat.rd-active-turn {
-  border-color: var(--rd-gold);
+  border-radius: 14px;
+  border: 1px solid var(--rd-gold);
   box-shadow: 0 0 0 1px rgba(226,184,87,.45), 0 0 26px rgba(226,184,87,.45);
 }
-#rdStage .rd-seat.rd-me-seat { border-inline-start: 3px solid var(--rd-gold); }
+#rdStage .rd-seat.rd-me-seat .rd-av { background: linear-gradient(160deg, #fbeecb, var(--rd-gold) 62%, #c89a3a); }
 
 /* حلقة ذهبية حول أيقونة صاحب الدور + مؤقت بجانبها */
 #rdStage .rd-av-wrap { position: relative; }
@@ -338,7 +337,6 @@ body.app-fs-on #rdStage,
 }
 #rdStage .rd-seat .rd-av.t0 { background: linear-gradient(160deg, #f6c6a8, var(--rd-team-a) 72%); }
 #rdStage .rd-seat .rd-av.t1 { background: linear-gradient(160deg, #bcd2f2, var(--rd-team-b) 74%); }
-#rdStage .rd-seat.rd-me-seat .rd-av { background: linear-gradient(160deg, #fbeecb, var(--rd-gold) 62%, #c89a3a); }
 /* حلقة الدور (تلفّ ذهبياً حول أيقونة النشط) */
 #rdStage .rd-seat.rd-active-turn .rd-av {
   box-shadow: 0 0 0 4px rgba(226,184,87,.28), 0 0 0 7px rgba(226,184,87,.12), 0 6px 16px rgba(0,0,0,.5);
@@ -503,12 +501,13 @@ body.app-fs-on #rdStage,
 /* تكبير ورق الوسط المرمي (×1.9 تقريباً عن v2.5) */
 #rdStage .rd-table-cards .rd-card { width: calc(var(--cw) * 1.06); height: calc(var(--ch) * 1.06); border-radius: clamp(6px, .9vw, 10px); }
 
-/* الرزمة — داخل البيضاوية أسفل وسطها (منطقة الأوراق المرمية)، ظهر مزخرف + عداد */
+/* الرزمة — [v2.13] عنصر مستقل على المسرح (خرجت من القاعة): تثبيت في الهامش
+   الأسفل وسط الشاشة فوق الصف السفلي (يد + لوحات) في كل الأوضاع */
 #rdStage .rd-deck {
   position: absolute; bottom: calc(var(--deckBot) + 2px);
   left: 50%; transform: translateX(-50%);
   width: var(--deckS); height: calc(var(--deckS) * .92);
-  z-index: 6;
+  z-index: 8;
   display: flex; align-items: center; justify-content: center;
 }
 #rdStage .rd-deck .rd-dk-card {
@@ -844,7 +843,7 @@ body.app-fs-on #rdStage,
   #rdStage .rd-infline .rd-inf-seg { font-size: clamp(.6rem, 3vw, .85rem); }
   #rdStage .rd-seat { min-width: 0; padding: 3px 5px; border-radius: 12px; gap: 2px; }
   #rdStage .rd-seat-stats { font-size: .62rem; gap: 4px; }
-  #rdStage .rd-botrail { bottom: 6px; left: 6px; right: 6px; }
+  #rdStage .rd-botrail { bottom: 10px; left: 6px; right: 6px; }
   #rdStage .rd-hand { gap: 3px; }
   #rdStage .rd-corner-bl { left: 8px; bottom: calc(var(--chB) + 10px); }
   #rdStage .rd-corner-br { right: 6px; bottom: 6px; }
@@ -912,7 +911,8 @@ body.app-fs-on #rdStage,
   #rdStage .rd-tophead { top: 0; pointer-events: none; }
   #rdStage .rd-corner-br { bottom: 3px; right: 4px; gap: 3px; }
   #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 6px); left: 6px; }
-  #rdStage .rd-botrail { bottom: 3px; left: 6px; right: 6px; }
+  /* هامش سفلي مريح 8px (كان 3-4px — الورق يكاد يلمس الحافة) */
+  #rdStage .rd-botrail { bottom: 8px; left: 6px; right: 6px; }
   #rdStage .rd-seat-stats { font-size: .54rem; }
   #rdStage .rd-turn-timer { min-width: 30px; height: 17px; font-size: .58rem; top: -6px; inset-inline-end: -8px; }
   #rdStage .rd-av { font-size: .8rem; }
@@ -1124,15 +1124,17 @@ body.app-fs-on #rdStage,
      يضمن ذلك؛ هذه قاعدة حماية إن رسم الصف يبقى خلف اليد */
   #rdStage .rd-corner-br .rd-backrow { display: none; }
 }
-/* ═══════════════ v2.10.1 — البورتريه: صف الخصم br فوق مستوى اليد ═══════════════
-   في البورتريه تتقاسم يدي (يسار) وصف الخصم br (يمين) الصف السفلي نفسه:
-   3 أوراق ليدي (~198px) + 3×0.78 للخصم (~150px) = 348px من عرض الهاتف
-   (360px) → يتلامسان عند البطاقة الأخيرة. الحل الهندسي: رفع مجموعة
-   الخصم br فوق مستوى يدي — صفه يطفو فوق قاع القاعة بجوار لوحته، فلا
-   يبقى أي تداخل أفقي مع أوراقي، وتظل يدي العنصر الوحيد في صفها. */
+/* ═══════════════ v2.13 — البورتريه: أوراق الخصم br في نفس خط اليد ═══════════════
+   طلب المستخدم: أوراق اللاعبين في الأسفل مرصوصة في خط أفقي واحد مثل الأعلى.
+   كان v2.10.1 يرفع صف الخصم br فوق مستوى اليد — الآن يعود لنفس الصف.
+   منع التلامس: تصغير أوراق br إلى ×0.62 من حجم اليد (3×59 + 3×37 ≈ 290px من 360) */
 @media (orientation: portrait) and (max-width: 760px) {
-  #rdStage .rd-corner-br { bottom: calc(var(--chB) + 12px); }
+  #rdStage .rd-corner-br { bottom: 10px; inset-inline-end: 8px; gap: 5px; }
   #rdStage .rd-corner-br .rd-backrow { align-items: flex-end; }
+  #rdStage .rd-corner-br .rd-back-card { width: calc(var(--cwB) * .62); height: calc(var(--chB) * .62); }
+}
+@media (orientation: portrait) and (max-width: 460px) {
+  #rdStage .rd-corner-br .rd-back-card { width: calc(var(--cwB) * .56); height: calc(var(--chB) * .56); }
 }
 /* ═══════════════ v2.11 — ملء الشاشة 100% + دور عكس عقارب الساعة في الوضعين ═══════════════
    • الطاولة تملأ صفحة اللعبة كاملة (بلا الفراغ الأسود المحيط): مسرح RDC
@@ -1226,4 +1228,229 @@ body.app-fs-on #rdStage,
     --bdHt: 9cqh;
     --ctTopUp: calc(var(--ch) + var(--bdHt) + .4cqh);
   }
+}
+
+/* ═══════════════ v2.12 — طلبات المستخدم (بورتريه + لاندسكيب) ═══════════════ */
+
+/* ── بورتريه 1ضد1: الأوراق المرمية أصغر وأنيقة (كانت متضخمة بصرياً) ── */
+@media (orientation: portrait) {
+  /* 1ضد1: ورق الوسط 80% (طلب: تصغير ~20%) — يظهر واضحاً دون مبالغة */
+  #rdStage.rd-n2 {
+    --tcw: clamp(84px, 24vw, 128px);
+    --tch: calc(var(--tcw) * 1.38);
+  }
+  #rdStage.rd-n2.rd-uppers {
+    --tcw: clamp(66px, 17.5vw, 100px);
+    --tch: calc(var(--tcw) * 1.34);
+  }
+  /* توحيد أحجام أيقونات اللاعبين (كل المقاعد نفس القطر) */
+  #rdStage .rd-av { width: var(--avS); height: var(--avS); }
+  #rdStage.rd-uppers .rd-corner-tl .rd-av,
+  #rdStage.rd-uppers .rd-corner-tr .rd-av { width: var(--avS); height: var(--avS); }
+}
+
+/* ── لاندسكيب: إعادة توزيع كاملة حسب طلب المستخدم ──
+   العناوين (روندا + الجولة) أعلى الشاشة فوق ورق الوسط،
+   الهدف يمين-وسط بجانب ورق الوسط، التوزيعة يسار-وسط بجانب ورق الوسط،
+   ورق الوسط أصغر 20% واليد 15%، وأيقونات متساوية. */
+@media (orientation: landscape) {
+  /* العناوين: عمود مركزي أعلى الشاشة — فوق منطقة ورق الوسط الفارغة */
+  #rdStage .rd-tophead {
+    align-items: center;
+    top: 2px;
+    z-index: 24;
+    pointer-events: none;
+  }
+  #rdStage.rd-uppers .rd-tophead { top: 2px; }
+  #rdStage .rd-bigtitle { font-size: clamp(1rem, 3.2vh, 1.5rem); margin: 0; letter-spacing: 2px; }
+  #rdStage .rd-roundline { margin-top: 0; }
+  #rdStage .rd-roundline .rd-inf-seg { font-size: clamp(.78rem, 2.6vh, 1.05rem); }
+
+  /* سطر المعلومات: جانبيّاً بجانب ورق الوسط — لا فوقه، بحجم مقروء */
+  #rdStage .rd-infline {
+    position: absolute;
+    top: 26cqh;
+    width: 100%;
+    min-height: 0;
+    pointer-events: none;
+    direction: rtl;
+  }
+  #rdStage .rd-inf-seg { font-size: clamp(.72rem, 2.6vh, 1rem); gap: 4px; }
+  /* التوزيعة: يسار-وسط بجانب الورق المرمي (فوق منطقة الفراغ بين الخصوم اليساريين) */
+  #rdStage .rd-inf-deal { left: 13cqw; transform: translate(0, -50%); }
+  /* الهدف: يمين-وسط بجانب الورق المرمي (فوق اليد اليمنى بينها وبين الورق) */
+  #rdStage .rd-inf-target { left: auto; right: 13cqw; transform: translate(0, -50%); }
+
+  /* ورق الوسط: تصغير 20% (كان 15cqw/13cqw → 12cqw/10.4cqw) */
+  #rdStage {
+    --tcw: 12cqw;
+    --tch: calc(var(--tcw) * 1.36);
+  }
+  #rdStage.rd-uppers {
+    --tcw: 11cqw;
+    --tch: calc(var(--tcw) * 1.34);
+  }
+  /* اليد: تصغير 15% (كانت 38cqh → 32.3cqh) */
+  #rdStage { --chB: 32.3cqh; }
+  #rdStage.rd-uppers { --chB: 34cqh; }
+  #rdStage .rd-hand .rd-card { width: calc(var(--chB) * .72); height: var(--chB); }
+
+  /* أيقونات اللاعبين: حجم موحّد للجميع (كانت تختلف بين الزوايا) —
+     قيمة واحدة صريحة تُطبق على كل الأطباق في كل الأوضاع */
+  #rdStage { --avS: 32px; }
+  #rdStage .rd-seat .rd-av { width: 32px; height: 32px; font-size: .8rem; }
+  #rdStage.rd-uppers .rd-corner-tl .rd-av,
+  #rdStage.rd-uppers .rd-corner-tr .rd-av { width: 32px; height: 32px; }
+  /* القياسات الأصلية للبورتريه (40px) تبقى في البورتريه فقط */
+  @media (orientation: portrait) {
+    #rdStage { --avS: 40px; }
+    #rdStage .rd-seat .rd-av { width: 40px; height: 40px; }
+  }
+
+  /* المقاعد: لوحات متساوية العرض */
+  #rdStage .rd-seat { min-width: 0; }
+
+  /* ── نقل أيقونات اللاعبين بجانب أوراقها في المساحات الفارغة ──
+     (طلب المستخدم): اللاندسكيب يجلس اللاعب الرئيسي br (يمين) والخصوم
+     d1 bl، d2 tl، d3 tr — كل لوحة تنتقل للجهة الفارغة بجوار صف ورقها:
+       • اللاعب الرئيسي (br): أيقونته يسار أوراقه (المساحة الفارغة يمين الشاشة فوق اليد)
+       • خصم tr (أعلى-يمين): أيقونته يسار أوراقه
+       • خصم tl (أعلى-يسار): أيقونته يمين أوراقه
+       • خصم bl (أسفل-يسار): أيقونته يمين أوراقه
+     التنفيذ: الصف الأفقي (لوحة + ورق) بترتيب معكوس/عادي حسب الزاوية. */
+  /* خصم أعلى-يمين (tr): الورق يلتصق بالحافة اليمنى، اللوحة على يساره */
+  #rdStage .rd-corner-tr { flex-direction: row-reverse; align-items: center; gap: 8px; }
+  #rdStage .rd-corner-tr .rd-backrow { order: 1; }
+  #rdStage .rd-corner-tr .rd-seat { order: 2; }
+  /* خصم أعلى-يسار (tl): الورق يلتصق بالحافة اليسرى، اللوحة على يمينه */
+  #rdStage .rd-corner-tl { flex-direction: row; align-items: center; gap: 8px; }
+  #rdStage .rd-corner-tl .rd-backrow { order: 1; }
+  #rdStage .rd-corner-tl .rd-seat { order: 2; }
+  /* خصم أسفل-يسار (bl): الورق بالحافة اليسرى واللوحة يمينه */
+  #rdStage .rd-corner-bl { flex-direction: row; align-items: center; gap: 8px; }
+  #rdStage .rd-corner-bl .rd-backrow { order: 1; }
+  #rdStage .rd-corner-bl .rd-seat { order: 2; }
+  /* اللاعب الرئيسي (br): أيقونته في الصف السفلي على يسار أوراق يده —
+     بفجوة قصيرة عن أول ورقة (طلب المستخدم: بجانب أوراقه في المساحة الفارغة) */
+  #rdStage .rd-corner-br {
+    position: absolute;
+    bottom: 10px;
+    inset-inline-end: calc(var(--chB) * .72 * 3 + 46px);   /* عرض 3 أوراق يدي + فجوة 46px */
+    inset-inline-start: auto;
+    display: flex; flex-direction: row; align-items: flex-end; gap: 8px;
+    z-index: 32;
+  }
+  #rdStage .rd-corner-br .rd-seat { order: 1; }
+  #rdStage .rd-corner-br .rd-backrow { display: none; }
+  #rdStage.rd-spectating .rd-botrail { align-items: center; }
+}
+
+/* ═══════════════ v2.13 — لاندسكيب: هندسة المساحات (مبنية على قياس 800×360) ═══════════════
+   المسرح 274px عمودياً:
+   0-40   : tophead (روندا + الجولة) + مقاعد الأعلى عمودية تحت الهامش الأعلى
+   40-170 : ورق الوسط المرمي (قاعة عليا) — أضيق جانبياً
+   95-120 : الهدف (يمين) والتوزيعة (يسار) بجانب الورق بحجم كبير مقروء
+   170-274: هامش أسفل — الرزمة وسط + مقبض السجل يمين + مقاعد القاع + صف اليد أعلاها */
+@media (orientation: landscape) {
+  /* مقاعد الأعلى (tl/tr): عمود رأسي بمحاذاة الهامش الأعلى — لوحة ثم ورقها تحتها */
+  #rdStage .rd-corner-tl {
+    top: 2px; left: 8px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  }
+  #rdStage .rd-corner-tl .rd-seat { order: 1; }
+  #rdStage .rd-corner-tl .rd-backrow { order: 2; align-items: flex-start; }
+  #rdStage .rd-corner-tr {
+    top: 2px; right: 8px;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  }
+  #rdStage .rd-corner-tr .rd-seat { order: 1; }
+  #rdStage .rd-corner-tr .rd-backrow { order: 2; align-items: flex-end; }
+  #rdStage .rd-corner-tl .rd-seat-stats,
+  #rdStage .rd-corner-tr .rd-seat-stats { font-size: .56rem; gap: 2px; }
+  /* صف ورق المقاعد العلوية مضغوط عمودياً (×0.5) لتحرير عمق الطاولة
+     (صف tr يمتد على منطقة اليد اليمنى — يجب أن ينتهي قبل مستوى صف اليد) */
+  #rdStage .rd-corner-tl .rd-back-card,
+  #rdStage .rd-corner-tr .rd-back-card {
+    width: calc(var(--cwB) * .5); height: calc(var(--chB) * .5);
+    margin-inline-start: calc(var(--cwB) * -.3);
+  }
+
+  /* القاعة (ورق الوسط): الجزء العلوي فقط — من تحت tophead إلى بدء الهامش الأسفل */
+  #rdStage .rd-court {
+    top: 13cqh;
+    bottom: calc(var(--chB) + 78px);   /* فوق اليد + المقاعد القاعية (52+26) */
+  }
+  #rdStage.rd-uppers .rd-court { top: 16cqh; }
+  #rdStage .rd-table-cards {
+    inset-inline-start: 15cqw; inset-inline-end: 15cqw;
+    bottom: 2px;
+  }
+  /* الورق المرمي أصغر نسبياً كي تسع القاعة صفوفه */
+  #rdStage { --tcw: 10.5cqw; --tch: calc(var(--tcw) * 1.36); }
+  #rdStage.rd-uppers { --tcw: 9.6cqw; --tch: calc(var(--tcw) * 1.34); }
+
+  /* الهدف/التوزيعة: حجم كبير + منتصف عمودي لمنطقة الورق المرمي، على جانبيه */
+  #rdStage .rd-infline {
+    position: absolute;
+    top: 52cqh;               /* تحت القاعة: الهامش الأوسط الجانبي بجوار الرزمة */
+    width: 100%;
+    min-height: 0;
+    pointer-events: none;
+    direction: rtl;
+  }
+  #rdStage .rd-infline .rd-inf-seg,
+  #rdStage .rd-inf-seg { font-size: clamp(.95rem, 3.6vh, 1.3rem); gap: 6px; }
+  #rdStage .rd-infline .rd-inf-seg b,
+  #rdStage .rd-inf-seg b { font-size: 1.3em; }
+  #rdStage .rd-inf-deal { left: 16cqw; transform: translate(0, -50%); }
+  #rdStage .rd-inf-target { left: auto; right: 16cqw; transform: translate(0, -50%); }
+
+  /* الهامش الأسفل: مقاعد بمحاذاة القاع (bl عمود معكوس + br يمين القاع) */
+  #rdStage .rd-corner-bl {
+    left: 8px; bottom: calc(var(--chB) + 10px);
+    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 3px;
+  }
+  #rdStage .rd-corner-bl .rd-backrow { order: 2; align-items: flex-start; }
+  #rdStage .rd-corner-bl .rd-seat { order: 1; }
+  #rdStage .rd-corner-bl .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; }
+  #rdStage .rd-corner-br {
+    position: absolute;
+    bottom: calc(var(--chB) + 10px);
+    inset-inline-end: 8px;
+    inset-inline-start: auto;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+    z-index: 32;
+  }
+  #rdStage .rd-corner-br .rd-seat { order: 1; }
+  #rdStage .rd-corner-br .rd-backrow { display: none; }
+
+  /* صف اليد فوق الهامش الأسفل (فوق الرزمة والمقاعد) — تخصيص قوي يغلب ميديا
+     430/620 القديمة (كانت bottom 3-4px تؤدي لتداخل اليد مع صفوف الأعلى) */
+  @media (orientation: landscape) and (max-height: 620px) {
+    #rdStage .rd-botrail { bottom: 6px !important; }   /* اليد بالهامش الأسفل — تحت صفوف الأعلى بلا تراكب */
+    #rdStage .rd-corner-tl .rd-back-card,
+    #rdStage .rd-corner-tr .rd-back-card { margin-inline-start: calc(var(--cwB) * -.38); }
+  }
+
+  /* الرزمة: وسط الهامش الأسفل (المستقلة على المسرح) */
+  #rdStage .rd-deck {
+    bottom: calc(var(--chB) + 18px);
+    left: 50%; transform: translateX(-50%);
+    z-index: 8;
+  }
+
+  /* مقبض السجل: الهامش الأسفل يمين الشاشة بجوار لوحة br */
+  #rdStage .rd-log-panel {
+    bottom: calc(var(--chB) + 4px); left: auto; right: 110px;
+    transform: none;
+    align-items: flex-end;
+  }
+  #rdStage.rd-spectating .rd-log-panel { right: 50%; transform: translateX(50%); }
+  #rdStage.rd-spectating .rd-court { bottom: calc(var(--chB) + 70px); }
+  #rdStage.rd-spectating .rd-botrail { bottom: 8px; }
+}
+
+/* [v2.13-b] الرزمة (مستقلة على المسرح): فوق الصف السفلي في البورتريه أيضاً */
+@media (orientation: portrait) {
+  #rdStage .rd-deck { bottom: calc(var(--chB) + 26px); z-index: 8; }
 }
