@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="css/12-chess.css?v=unified13">
   <link rel="stylesheet" href="css/11-game-theme.css?v=unified13">
   <link rel="stylesheet" href="css/13-billiards.css?v=unified13">
-  <link rel="stylesheet" href="css/14-ronda-classic.css?v=rdc3">
+  <link rel="stylesheet" href="css/14-ronda-classic.css?v=rdc4">
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -357,7 +357,7 @@
               </div>
             </div>
             <div class="gp-head-right">
-              <button class="game-gold-chip" id="gameGoldChip" onclick="claimDaily()" title="الرصيد / المكافأة اليومية" aria-label="رصيد الكوينز">
+              <button class="game-gold-chip" id="gameGoldChip" type="button" title="الرصيد" aria-label="رصيد الكوينز">
                 <i class="fa-solid fa-coins g" aria-hidden="true"></i>
                 <span class="gold-val" id="goldD">1,000</span>
               </button>
@@ -505,7 +505,6 @@
       <div class="mhead room-topbar">
         <h3 id="roomTitle"><i class="fa-solid fa-users" aria-hidden="true"></i> اللعب مع صديق</h3>
         <div class="room-topbar-actions">
-          <span class="room-type-badge" id="roomTypeBadge" aria-live="polite"></span>
           <button class="mgear" id="roomGearBtn" aria-label="إعدادات الغرفة" title="إعدادات الغرفة"><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
           <button class="mclose" onclick="Rooms.closeModal()" aria-label="إغلاق">✕</button>
         </div>
@@ -522,11 +521,6 @@
         <button class="mclose" onclick="Rooms.closeRoomSettings()" aria-label="إغلاق">✕</button>
       </div>
       <div class="mbody">
-        <label class="aflabel" for="rsRoomType"><i class="fa-solid fa-clock" aria-hidden="true"></i> <span data-i18n="rs.type">نوع الغرفة</span></label>
-        <select class="afinput" id="rsRoomType">
-          <option value="hour" data-i18n="rs.hour">بالساعة</option>
-          <option value="percentage" data-i18n="rs.percentage">بالنسبة المئوية</option>
-        </select>
         <div id="rsTypeDesc" class="ctext2" style="font-size:.75rem;opacity:.85;margin:2px 0 8px"></div>
         <label class="aflabel" for="rsVisibility"><i class="fa-solid fa-user-lock" aria-hidden="true"></i> <span data-i18n="rs.visibility">خصوصية الغرفة</span></label>
         <select class="afinput" id="rsVisibility">
@@ -695,14 +689,14 @@
   <script src="js/games/blackjack.js?v=unified13"></script>
   <script src="js/games/ronda.js?v=unified13"></script>
   <!-- [RDC] روندا الكلاسيكية: المحرك الأصلي المستورد (ronda-game) حرفياً + الواجهة المنصّية -->
-  <script src="ronda-game/js/engine/ronda-core.js?v=rdc3"></script>
-  <script src="ronda-game/js/engine/ronda-game.js?v=rdc3"></script>
-  <script src="ronda-game/js/ui/audio.js?v=rdc3"></script>
-  <script src="js/ronda/rd-i18n.js?v=rdc3"></script>
-  <script src="js/ronda/rd-html.js?v=rdc3"></script>
-  <script src="js/ronda/rd-renderer.js?v=rdc3"></script>
-  <script src="js/ronda/rd-app.js?v=rdc3"></script>
-  <script src="js/games/rondacard.js?v=rdc3"></script>
+  <script src="ronda-game/js/engine/ronda-core.js?v=rdc4"></script>
+  <script src="ronda-game/js/engine/ronda-game.js?v=rdc4"></script>
+  <script src="ronda-game/js/ui/audio.js?v=rdc4"></script>
+  <script src="js/ronda/rd-i18n.js?v=rdc4"></script>
+  <script src="js/ronda/rd-html.js?v=rdc4"></script>
+  <script src="js/ronda/rd-renderer.js?v=rdc4"></script>
+  <script src="js/ronda/rd-app.js?v=rdc4"></script>
+  <script src="js/games/rondacard.js?v=rdc4"></script>
   <script src="js/games/parchisi.js?v=unified13"></script>
   <script src="js/games/rami.js?v=unified13"></script>
   <script src="js/games/dama.js?v=unified13"></script>
@@ -742,27 +736,6 @@
       <span data-i18n="ui.account">الحساب</span>
     </button>
   </nav>
-
-  <!-- ═══════════ Modal: Daily Lucky Wheel ═══════════ -->
-  <div class="mwrap" id="wheelModal" role="dialog" aria-modal="true" aria-labelledby="wheelTitle">
-    <div class="modal modal-sm" style="text-align:center;position:relative">
-      <button class="mclose" onclick="closeWheelModal()" aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-      <div class="mhead">
-        <h3 id="wheelTitle" data-i18n="wheel.title"><i class="fa-solid fa-dharmachakra g"></i> عجلة الحظ اليومية</h3>
-      </div>
-      <div class="mbody" style="display:flex;flex-direction:column;align-items:center;gap:14px">
-        <p class="ctext" data-i18n="wheel.desc">لِف العجلة اليومية للحصول على مكافأتك المجانية!</p>
-        <div class="lucky-wheel-container">
-          <canvas id="luckyWheelCanvas" width="280" height="280"></canvas>
-          <div class="lucky-wheel-pointer">▼</div>
-        </div>
-        <button class="big" id="spinWheelBtn" onclick="spinLuckyWheel()" style="width:100%;max-width:240px">
-          <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-i18n="wheel.spinBtn">تدوير العجلة</span>
-        </button>
-        <div id="wheelResult" class="authmsg ok" style="min-height:22px"></div>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>

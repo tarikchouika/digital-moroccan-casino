@@ -22,6 +22,17 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# [PhoneLink] تحديث من GitHub أولاً: يضمن أن أي نشر يحمل أحدث إصلاحات الفريق
+# (منع تكرار مشكلة «نشر نسخة قديمة»). BRANCH_SOURCE قابل للتغيير.
+BRANCH_SOURCE="${DMG_SOURCE_BRANCH:-origin/arena/01a081af-digital-moroccan-casino}"
+if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "── جلب أحدث التغييرات من GitHub ($BRANCH_SOURCE)"
+  git -C "$REPO" fetch origin --prune 2>/dev/null || echo "   تحذير: فشل الجلب — سأبني من النسخة المحلية"
+  # ملفات تكامل النفق معدلة محلياً فوق الفرع — تُستخدم كما هي بعد الجلب
+  # (api.js، live-ws-bridge.js، _headers، api-url2.json)
+  echo "── سأبني من شجرة العمل المحلية (المبنية على $BRANCH_SOURCE مع تعديلات النفق)"
+fi
 OUT="${DMG_DEPLOY_DIR:-/tmp/dmc-deploy}"
 PROJECT="dmgames"                 # يعطي النطاق https://dmgames.pages.dev
 BRANCH="main"                     # فرع الإنتاج في Pages (تعديل لإنتاج مباشر)
@@ -37,7 +48,7 @@ cp -r js css assets ronda-game "$OUT/"
 
 for f in index.html admins.html about.html contact.html 2fa.html \
          provably-fair.html fairness.html privacy.html terms.html \
-         _headers _redirects; do
+         _headers _redirects api-url2.json tunnel-live.json; do
   [ -e "$f" ] && cp "$f" "$OUT/"
 done
 

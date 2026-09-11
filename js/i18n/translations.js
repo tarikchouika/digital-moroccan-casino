@@ -1159,11 +1159,6 @@ const TR = {
   'wf.hint': [ 'عجلة موزونة: 6 قطاعات رابحة من 12 — المضاعفات الكبيرة نادرة (RTP 97.5%)', 'Roue pondérée : 6 secteurs gagnants sur 12 — les gros multiplicateurs sont rares (RTP 97,5 %)', 'Weighted wheel: 6 winning sectors out of 12 — big multipliers are rare (RTP 97.5%)', 'عجلة موزونة: 6 قطاعات رابحة من 12 — المضاعفات الكبيرة نادرة (RTP 97.5%)' ],
   'wf.refund': [ 'استرداد', 'Remboursé', 'Refund', 'استرداد' ],
   'wg.hint': [ 'اختر لوناً وطابق لون الكرة — أحمر ×1.9 / أخضر ×2.85 / أزرق ×5.7 (RTP 95%)', 'Choisissez une couleur et devinez la boule — rouge ×1,9 / vert ×2,85 / bleu ×5,7 (RTP 95 %)', 'Pick a color and match the ball — red ×1.9 / green ×2.85 / blue ×5.7 (RTP 95%)', 'اختر لوناً وطابق لون الكرة — أحمر ×1.9 / أخضر ×2.85 / أزرق ×5.7 (RTP 95%)' ],
-  'wheel.desc': [ 'لِف العجلة اليومية واربح حتى 1,000 كوينز مجانية كل يوم!', 'Tournez la roue quotidienne et gagnez jusqu\'à 1 000 pièces gratuites chaque jour !', 'Spin the daily wheel and win up to 1,000 free coins every single day!', 'دور عجلة الحظ اليومية وربح حتى لـ 1,000 كوينز فابور كل نهار!' ],
-  'wheel.spinBtn': [ 'تدوير العجلة الآن 🚀', 'Tourner la roue 🚀', 'Spin the Wheel Now 🚀', 'دور العجلة دابا 🚀' ],
-  'wheel.title': [ 'عجلة الحظ اليومية 🎡', 'Roue de la Fortune Quotidienne 🎡', 'Daily Lucky Fortune Wheel 🎡', 'عجلة الحظ اليومية 🎡' ],
-  'wheel.wait': [ 'المكافأة التالية بعد', 'Prochaine récompense dans', 'Next reward in', 'المكافأة الجاية من بعد' ],
-  'wheel.won': [ 'مبروك! فزت بـ', 'Félicitations ! Vous avez gagné', 'Congratulations! You won', 'مبروك عليك! ربحتي' ],
 
   'resume.title': [ 'جولة لم تكتمل', 'Partie inachevée', 'Unfinished round', 'جولة ما كملاتش' ],
   'resume.sub': [ 'استأنف جولتك قبل انتهاء الوقت', 'Reprenez votre partie avant la fin du délai', 'Resume your round before time runs out', 'كمّل جولتك قبل ما يسالي الوقت' ],

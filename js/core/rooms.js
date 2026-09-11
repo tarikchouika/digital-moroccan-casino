@@ -407,16 +407,11 @@
         document.addEventListener('webkitfullscreenchange', clampFn, { passive: true });
       }
     },
-    /* [B-migrate] شارة نوع الغرفة في الشريط العلوي للمودال (#roomTypeBadge) */
+    /* [Rooms-unified] شارة نوع الغرفة أُزيلت — لا اختيار نوع بعد الآن (5% موحد على الجولات).
+       الدالة تبقى (تستدعيها أماكن قديمة) لكنها لا تعرض شيئاً. */
     _renderBadge: function () {
       var badge = document.getElementById('roomTypeBadge');
-      if (!badge) return;
-      var st = Rooms.state;
-      if (!st || !st.room_type) { badge.textContent = ''; badge.style.display = 'none'; return; }
-      var txt = (st.room_type === 'percentage') ? T('rm.byPct')
-              : (st.room_type === 'hour' ? T('rm.byHour') : st.room_type);
-      badge.textContent = txt;
-      badge.style.display = txt ? '' : 'none';
+      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
     },
     /* [B-migrate] إعدادات الغرفة (نوع + رهان) — ربط عناصر المودال التي أنشأها index.html */
     _initSettings: function () {
@@ -437,12 +432,6 @@
       var cancel = document.getElementById('rsCancel');
       if (gear) gear.addEventListener('click', function () { Rooms._openSettings(false); });
       if (save) save.addEventListener('click', Rooms._saveSettings);
-      /* [B-rooms] تحديث وصف نوع الغرفة عند تغيير rsRoomType */
-      var rtSel = document.getElementById('rsRoomType');
-      if (rtSel && !rtSel._descBound) {
-        rtSel._descBound = true;
-        rtSel.addEventListener('change', function () { Rooms._typeDesc(); });
-      }
       if (cancel) cancel.addEventListener('click', function () {
         /* إن وُجدت غرفة نغلق الإعدادات (نعود للغرفة)؛ وإلا نبقيها مفتوحة (الإلغاء معطّل) */
         if (Rooms.state) {
@@ -470,8 +459,12 @@
         timer
       ];
       if (gid === 'rd') return [
-        /* عدد المقاعد يحدد نمط روندا: مقعدان = 1ضد1، أربعة = 2ضد2 (فرق). */
-        { key: 'maxp', label: T('rm.playersCount') || 'عدد اللاعبين', opts: [[2, '1 ضد 1 — 2'], [4, '2 ضد 2 — 4']], def: 2 },
+        /* عدد المقاعد يحدد نمط روندا: 2 = 1ضد1، 3 = 1ضد2 (فردي)،
+           4 = إما 1ضد3 (فردي) أو 2ضد2 (فرق) — يُميّز بينهما خيار "نمط 4 لاعبين". */
+        { key: 'maxp', label: T('rm.playersCount') || 'عدد اللاعبين',
+          opts: [[2, '1 ضد 1 — 2'], [3, '1 ضد 2 — 3'], [4, '4 لاعبين (راجع النمط التالي)']], def: 2 },
+        { key: 'mode4', label: T('rdc.mode4.label') || 'نمط 4 لاعبين',
+          opts: [['ffa', '1 ضد 3 — فردي'], ['tt', '2 ضد 2 — فرق']], def: 'ffa' },
         /* [rd-v25] الهدف: «جولة» (تنتهي المباراة بنهاية توزيع الـ40 ورقة) أو 41/51/61 */
         { key: 'target', label: T('rdc.targetLabel') || 'هدف الفوز',
           opts: [['round', (T('rdc.target.round') || 'جولة') + ' (40)'], [41, '41'], [51, '51'], [61, '61']], def: 51 },
@@ -566,7 +559,6 @@
     _openSettings: function (forceNoRoom) {
       var sm = document.getElementById('roomSettingsModal');
       if (!sm) return;
-      var rt = document.getElementById('rsRoomType');
       var bet = document.getElementById('rsBet');
       var game = document.getElementById('rsGame');
       var vis = document.getElementById('rsVisibility');
@@ -582,14 +574,13 @@
         }
       }
       if (Rooms.state) {
-        if (rt && Rooms.state.room_type) rt.value = Rooms.state.room_type;
         if (bet && typeof Rooms.state.bet === 'number') bet.value = Rooms.state.bet;
         /* [B-rooms] خصوصية الغرفة الحالية (عامة/خاصة) */
         if (vis) vis.value = (Rooms.state.visibility === 'private') ? 'private' : 'public';
       } else if (vis) {
         vis.value = 'public';
       }
-      /* [B-rooms] وصف نوع الغرفة الحالي (رسوم الساعة/النسبة المئوية) */
+      /* [Rooms-unified] وصف ثابت: رسم 5% من رهان الرابح في كل جولة (لا اختيار نوع بعد الآن) */
       Rooms._typeDesc();
       var cancel = document.getElementById('rsCancel');
       if (cancel) {
@@ -600,43 +591,33 @@
       }
       /* [F2] نعرض المظلّة كطبقة مرنة توسّط البطاقة (لا block) */
       sm.style.display = 'flex';
-      if (rt) rt.focus();
+      if (bet) bet.focus();
     },
-    /* [B-rooms] وصف نوع الغرفة: رسم الساعة الثابت مقابل النسبة المئوية على الجولات */
+    /* [Rooms-unified] وصف رسوم الغرفة الموحدة: 5% من رهان الرابح في كل جولة */
     _typeDesc: function () {
       var el = document.getElementById('rsTypeDesc');
-      if (!el) return;
-      var rt = document.getElementById('rsRoomType');
-      var t = rt ? rt.value : '';
-      el.textContent = (t === 'hour') ? T('rm.hourDesc') : (t === 'percentage' ? T('rm.pctDesc') : '');
+      if (el) el.textContent = T('rm.pctDesc') || 'بلا رسم على الفتح وبلا حد زمني — رسم 5% من رهان اللاعب الفائز في كل جولة.';
     },
     _saveSettings: function () {
-      var rt = document.getElementById('rsRoomType');
       var bet = document.getElementById('rsBet');
       var game = document.getElementById('rsGame');
       var vis = document.getElementById('rsVisibility');
       var gid = (game && game.value) || window._currentGameId || (Rooms.state && Rooms.state.game_id);
-      var roomType = rt ? rt.value : '';
       var betVal = bet ? (parseInt(bet.value, 10) || 0) : 0;
       var visVal = (vis && vis.value === 'private') ? 'private' : 'public';
-      if (!roomType) {
-        toast(T('rm.needType'), 'err');
-        if (rt) { rt.classList.add('err'); rt.focus(); }
-        return;
-      }
       if (!(betVal > 0)) {
         toast(T('rm.required'), 'err');
         if (bet) bet.classList.add('err');
         return;
       }
-      if (rt) rt.classList.remove('err');
       if (bet) bet.classList.remove('err');
       /* [RS-GameOpts] إعدادات اللعبة تُخزَّن في الغرفة على الخادم وتُبث لكل المنضمين */
       var gOpts = Rooms._collectGameOpts(gid);
       var mEl = document.getElementById('rsOpt_maxp');
       var maxp = mEl ? (parseInt(mEl.value, 10) || 0) : 0;
       Rooms._applyGameOpts(gid, gOpts);
-      Rooms.createRoom(gid, { room_type: roomType, bet: betVal, visibility: visVal, game_opts: gOpts, max_players: maxp }).then(function () {
+      /* [Rooms-unified] room_type ثابت 'percentage' — الرسم 5% على كل جولة (لا اختيار في الواجهة) */
+      Rooms.createRoom(gid, { room_type: 'percentage', bet: betVal, visibility: visVal, game_opts: gOpts, max_players: maxp }).then(function () {
         var sm = document.getElementById('roomSettingsModal');
         if (sm) sm.style.display = 'none';
       });
@@ -688,14 +669,14 @@
       if (u.role && u.role !== 'user') { toast(T('auth.adminNoPlay'), 'err'); return; }
       var max = Rooms.maxFor(gameId);
       var bet = 0;
-      var roomType = 'hour';
+      /* [Rooms-unified] النوع موحد دائماً: percentage (5% من رهان الرابح في كل جولة) */
+      var roomType = 'percentage';
       var visibility = 'public';
       var gOpts = null;
       if (typeof opts === 'number') {
         bet = opts;
       } else if (opts && typeof opts === 'object') {
         bet = (typeof opts.bet === 'number') ? opts.bet : 0;
-        if (opts.room_type) roomType = opts.room_type;
         if (opts.visibility === 'private') visibility = 'private';
         if (opts.game_opts) gOpts = opts.game_opts;
         /* [RS-GameOpts] عدد اللاعبين المختار (ضمن سعة اللعبة) */

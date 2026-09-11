@@ -1292,8 +1292,8 @@
 
     const order = this._roomOrder();
     const n = order.length;
-    if (n !== 2 && n !== 4) {
-      this._showWaiting(T.msg('rdc.room.badSeats', null) || 'تتطلب الروندا مقعدين (1ضد1) أو 4 مقاعد (2ضد2)…', '', true);
+    if (n < 2 || n > 4) {
+      this._showWaiting(T.msg('rdc.room.badSeats', null) || 'تتطلب الروندا من 2 إلى 4 مقاعد…', '', true);
       return;
     }
 
@@ -1329,17 +1329,20 @@
     const target = (rc && rc.target !== undefined && rc.target !== null && rc.target !== '')
       ? rc.target : 51;
     const timer = Math.max(30, Math.min(300, Math.round(Number((rc && rc.timer) || 60))));
-    return { target: (String(target) === 'round') ? 'round' : (Number(target) || 51), timer: timer };
+    /* [RDC-mode4] نمط 4 لاعبين من إعدادات الغرفة: 'ffa' (1ضد3 فردي) أو 'tt' (2ضد2 فرق) */
+    const mode4 = (rc && rc.mode4) ? String(rc.mode4) : 'tt';
+    return { target: (String(target) === 'round') ? 'round' : (Number(target) || 51), timer: timer, mode4: mode4 };
   };
 
   /** الموزع (السائق): بذرة موحّدة + بناء محلي + بثّ التهيئة */
   App._hostInitRoom = function (room, cfg) {
     const order = this._roomOrder();
     const n = order.length;
-    if (n !== 2 && n !== 4) return;
+    if (n < 2 || n > 4) return;
     const seed = ((Date.now() ^ ((Math.random() * 0xFFFFFFFF) >>> 0)) >>> 0) || 1;
+    /* [RDC-ffa] 2 = 1ضد1، 3 = 1ضد2 (فردي)، 4 = حسب mode4: ffa → 1ضد3 فردي / tt → 2ضد2 فرق */
     const payload = {
-      engine: (n === 4) ? 'tt' : 'ht',
+      engine: (n === 4 && cfg.mode4 !== 'ffa') ? 'tt' : 'ht',
       seed: seed,
       target: cfg.target,
       timer: cfg.timer,
@@ -1355,9 +1358,12 @@
     if (!data) return;
     const order = data.order || this._roomOrder();
     const n = order.length;
-    if (n !== 2 && n !== 4) return;
-    const engineMode = (data.engine === 'tt' || n === 4)
-      ? RC.GameMode.TEAM_VS_TEAM : RC.GameMode.HEAD_TO_HEAD;
+    if (n < 2 || n > 4) return;
+    /* [RDC-ffa] 3 لاعبين = 1ضد2 (فردي دائماً) — 4 لاعبين: 'tt' فرق 2ضد2 أو 'ht' فردي 1ضد3
+       (engine يرسله الموزع: n=4 مع mode4=ffa يبث 'ht' → 4 مقاعد FreeForAll) */
+    const engineMode = (n === 4 && (data.engine === 'tt' || (!data.engine && !this._roomCfg)))
+      ? RC.GameMode.TEAM_VS_TEAM
+      : ((n === 2) ? RC.GameMode.HEAD_TO_HEAD : RC.GameMode.FREE_FOR_ALL);
     const names = data.names || this._namesForRoom(order);
     const seed = (Number(data.seed) >>> 0) || 1;
     /* «الرهان على جولة» في الغرف: مباراة من جولة واحدة (تُحسم بعد الـ40 ورقة) */
@@ -1369,7 +1375,7 @@
 
     this._pipeSeq++;
     Pipeline.reset();
-    const game = new RC.RondaGame({ mode: engineMode, names: names, seed: seed, rules: rules });
+    const game = new RC.RondaGame({ mode: engineMode, names: names, seed: seed, rules: rules, playerCount: n });
     this.game = game;
     /* مهلة الدور في الغرفة = القيمة المختارة من الإعدادات (30–300 ثانية) */
     if (data.timer) {
@@ -1586,9 +1592,13 @@
         const isHost = String(rs.owner_id) === String(meId);
         const wTeam = (ev && ev.winnerTeamId != null) ? Number(ev.winnerTeamId) : 0;
         if (bet > 0 && !rs.settled && isHost) {
-          if (order.length === 2 && typeof Rooms.roomSettle === 'function') {
-            /* 1ضد1: تسوية خادمية كضامة/شطرنج (result سلسلة 'w0'/'w1') */
-            try { Rooms.roomSettle((wTeam === 0) ? 'w0' : 'w1'); } catch (e) {}
+          const cfg = App._roomCfg();
+          /* [RDC-ffa] فردي (2 أو 3 لاعبين، أو 4 بوضع ffa): الفائز يأخذ الكل — 'w0'/'w1'/'w2'/'w3'.
+             في FFA كل لاعب فريق مستقل → winnerTeamId = مقعد الفائز مباشرة */
+          const isFFA = (order.length === 3) || (order.length === 4 && cfg.mode4 === 'ffa');
+          if (typeof Rooms.roomSettle === 'function' && (order.length === 2 || isFFA)) {
+            const seat = Math.max(0, Math.min(order.length - 1, wTeam));
+            try { Rooms.roomSettle('w' + seat); } catch (e) {}
           } else if (order.length === 4 && typeof Rooms.settleTeam === 'function') {
             /* 2ضد2: تقسيم أرباح الرهان بين الفريق الفائز (خادمياً) — 't0'/'t1' */
             try { Rooms.settleTeam((wTeam === 0) ? 't0' : 't1'); } catch (e) {}

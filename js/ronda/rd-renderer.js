@@ -312,7 +312,14 @@
 
     /* وسم المسرح: وجود خصمين علويين يوسّع تباعد القاعة عن الحافة العلوية */
     const stage = document.getElementById('rdStage');
-    if (stage) stage.classList.toggle('rd-uppers', !!(occupied.tr || occupied.tl));
+    if (stage) {
+      stage.classList.toggle('rd-uppers', !!(occupied.tr || occupied.tl));
+      /* [v2.12] وسم عدد اللاعبين — تصغير ورق الطاولة في 1ضد1 (طلب المستخدم) */
+      const n = view.players.length;
+      stage.classList.toggle('rd-n2', n === 2);
+      stage.classList.toggle('rd-n3', n === 3);
+      stage.classList.toggle('rd-n4', n === 4);
+    }
   }
 
   /* توافق: أسماء قديمة */

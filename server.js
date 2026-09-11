@@ -79,6 +79,10 @@ CREATE TABLE IF NOT EXISTS admin_messages (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_admin_msg_created ON admin_messages(created_at);
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `);
 
 /* [Group] جداول الجولات الجماعية (كينو/كراش — السيرفر يحكم الجولة، Provably Fair) */
@@ -507,7 +511,7 @@ function parseCookies(req) {
 function startSession(res, user) {
   const sid = crypto.randomBytes(18).toString('hex');
   sessions[sid] = user.id;
-  res.setHeader('Set-Cookie', 'sid=' + sid + '; Path=/; HttpOnly; SameSite=Lax');
+  res.setHeader('Set-Cookie', 'sid=' + sid + '; Path=/; HttpOnly; SameSite=None; Secure');
 }
 function getUser(req) {
   const sid = parseCookies(req).sid;
@@ -755,6 +759,12 @@ const server = http.createServer((req, res) => {
   }
 
   /* ═══════ نقاط API ═══════ */
+  if (pathname === '/api/health') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true, service: 'dmgames-arena', ts: Date.now() }));
+    return;
+  }
   if (pathname.startsWith('/api/')) {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -869,7 +879,7 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/logout') {
         const sid = parseCookies(req).sid;
         if (sid) delete sessions[sid];
-        res.setHeader('Set-Cookie', 'sid=; Path=/; Max-Age=0');
+        res.setHeader('Set-Cookie', 'sid=; Path=/; Max-Age=0; SameSite=None; Secure');
         json({ ok: true });
         return;
       }
@@ -1433,6 +1443,41 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      /* إعدادات المكافأة اليومية (تبويب المكافآت) — تحفظ في settings وتقرأ من هناك */
+      if (pathname === '/api/admin/rewards' && req.method === 'GET') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        let cfg = { amount: 100, interval_hours: 24 };
+        try {
+          const row = db.prepare("SELECT value FROM settings WHERE key = 'rewards'").get();
+          if (row) cfg = Object.assign({}, cfg, JSON.parse(row.value));
+        } catch (e) {}
+        json({ ok: true, amount: cfg.amount, interval_hours: cfg.interval_hours });
+        return;
+      }
+      if (pathname === '/api/admin/rewards' && req.method === 'POST') {
+        if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+        const amount = Math.max(0, parseInt(data.amount, 10));
+        const interval_hours = Math.min(720, Math.max(1, parseInt(data.interval_hours, 10) || 24));
+        if (isNaN(amount)) { json({ ok: false, message: 'قيمة غير صالحة' }, 400); return; }
+        try {
+          db.prepare("INSERT INTO settings (key, value) VALUES ('rewards', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+            .run(JSON.stringify({ amount: amount, interval_hours: interval_hours }));
+        } catch (e) {}
+        json({ ok: true, amount: amount, interval_hours: interval_hours });
+        return;
+      }
+
+      /* إحصاءات مالية لكل لعبة (تبويب المالية) — من رهانات الجولات الجماعية */
+      if (pathname === '/api/admin/stats/games') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        let rows = [];
+        try {
+          rows = db.prepare('SELECT r.game_id AS game_id, COUNT(b.id) AS plays, SUM(CASE WHEN b.won = 1 THEN 1 ELSE 0 END) AS wins, COALESCE(SUM(CASE WHEN b.won = 1 THEN b.payout ELSE 0 END),0) AS coins_won FROM group_bets b JOIN group_rounds r ON r.id = b.round_id GROUP BY r.game_id').all();
+        } catch (e) {}
+        json({ ok: true, games: rows.map(function (g) { return { game_id: g.game_id, plays: g.plays || 0, wins: g.wins || 0, coins_won: g.coins_won || 0 }; }) });
+        return;
+      }
+
       /* ── الغرف ── */
       if (pathname === '/api/rooms' && req.method === 'GET') {
         const list = Object.values(rooms).filter(function (r) { return r.status === 'waiting' && r.visibility !== 'private'; }).map(function (r) {
@@ -1919,7 +1964,7 @@ const server = http.createServer((req, res) => {
       }
 
       // Default API fallback
-      json({ ok: true });
+      json({ ok: false, error: 'not_found', path: pathname }, 404);
     });
     return;
   }
