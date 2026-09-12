@@ -353,7 +353,7 @@
     }
 };
         var currentLang = 'ar';
-    try { currentLang = localStorage.getItem('rc_lang') || 'ar'; } catch (e) {}
+    try { currentLang = localStorage.getItem('rc_lang') || (window.detectInitialLang ? window.detectInitialLang() : 'ar'); } catch (e) {}
     if (currentLang !== 'fr' && currentLang !== 'en' && currentLang !== 'da') currentLang = 'ar';
 
     function applyLang(l) {

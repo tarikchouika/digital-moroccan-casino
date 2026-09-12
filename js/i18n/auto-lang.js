@@ -39,3 +39,35 @@
     }, 500);
   });
 })();
+
+/* [i18n-auto 2026-09-12] كشف لغة الزائر الجديد (متصفح/جغرافيا) — تفضيل المستخدم
+   المحفوظ (rc_lang) يغلب دائماً. تستهلكه الصفحات القانونية و state.js. */
+window.detectInitialLang = function () {
+  try {
+    var saved = localStorage.getItem('rc_lang');
+    if (saved === 'ar' || saved === 'fr' || saved === 'en' || saved === 'da') return saved;
+  } catch (e) { /* ignore */ }
+  try {
+    var p = new URLSearchParams(location.search).get('lang');
+    if (p === 'ar' || p === 'fr' || p === 'en' || p === 'da') return p;
+  } catch (e) { /* ignore */ }
+  try {
+    var langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'ar'];
+    for (var i = 0; i < langs.length; i++) {
+      var l = String(langs[i] || '').toLowerCase().slice(0, 2);
+      if (l === 'ar') return 'ar';
+      if (l === 'fr') return 'fr';
+      if (l === 'en') return 'en';
+    }
+    var tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e2) { tz = ''; }
+    if (/Africa\/Casablanca|Africa\/El_Aaiun/i.test(tz)) {
+      for (var j = 0; j < langs.length; j++) {
+        var lj = String(langs[j] || '').toLowerCase();
+        if (lj.indexOf('fr') === 0) return 'fr';
+      }
+      return 'ar';
+    }
+  } catch (e) { /* ignore */ }
+  return 'ar';
+};

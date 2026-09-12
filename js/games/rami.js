@@ -827,19 +827,29 @@ class RamiMeld {
   }
 
   findJokerSwapIndex(card, rules) {
-    /* استبدال الجوكر المطبوع فقط — لا الجوكرات البرية (السامبل) لأنها أوراق طبيعية في المجموعة */
-    if (!card || card.isJoker) return -1;
-    const jokerIdx = this.cards.findIndex(c => c.isJoker);
-    if (jokerIdx === -1) return -1;
-
-    const testCards = this.cards.slice();
-    testCards[jokerIdx] = card;
-
-    if (this.type === MELD_TYPE.SET && rules.isValidSet(testCards, true)) {
-      return jokerIdx;
-    }
-    if (this.type === MELD_TYPE.SEQUENCE && rules.isValidSequence(testCards, true)) {
-      return jokerIdx;
+    /* [2026-09-12] استبدال الجوكر المنزل: يشمل الجوكر المطبوع (الطالاج)
+       والجوكر البري (السامبل — الورقة المعكوسة). الورقة الحقيقية تحل محل
+       الجوكر ويستعيده اللاعب ليده. الجوكرات لا تُستبدل بجوكرات. */
+    if (!card || rules.isWildCard(card)) return -1;
+    /* مواضع كل الجوكرات في المجموعة (مطبوعة + برية) */
+    const jokerIdxs = [];
+    this.cards.forEach(function (c, i) { if (rules.isWildCard(c)) jokerIdxs.push(i); });
+    if (!jokerIdxs.length) return -1;
+    for (const jokerIdx of jokerIdxs) {
+      const testCards = this.cards.slice();
+      testCards[jokerIdx] = card;
+      /* المجموعة يجب أن تبقى صالحة بعد الاستبدال (ورقة واحدة لكل خانة) */
+      let ok = false;
+      if (this.type === MELD_TYPE.SET && rules.isValidSet(testCards, true)) ok = true;
+      else if (this.type === MELD_TYPE.SEQUENCE && rules.isValidSequence(testCards, true)) ok = true;
+      if (ok) {
+        /* المتتالية في السامبل لا تحوي برية أصلاً (قاعدة 09-12) — الاستبدال فيها
+           نظري فقط لطالاج؛ احرس أيضاً أن الورقة الحقيقية لا تكرر ورقة موجودة */
+        const dup = this.cards.some(function (c, i) {
+          return i !== jokerIdx && !rules.isWildCard(c) && c.rank === card.rank && c.suit === card.suit;
+        });
+        if (!dup) return jokerIdx;
+      }
     }
     return -1;
   }
@@ -2305,9 +2315,14 @@ class RamiGame {
   }
 
   /* إنهاء الشوط بجوكر حر معزول كالورقة الـ15 (مسحوب من ورق التوزيع، لا من المرموق/لا تور)
-     ⇒ تضاعف جزاء الشوط على اللاعبين الآخرين دون مضاعفة جزاء الخطأ */
+     ⇒ تضاعف نقاط الأوراق المتبقية/اليد الكاملة على الخاسرين، دون مضاعفة جزاء الخطأ.
+     [2026-09-12] «الجوكر» هنا = الجوكر المطبوع (طالاج) أو البرية المعكوسة (سامبل) —
+     المستخدم نصّ على العمل في الوضعين */
   _setJokerDoubleIfFree(isolatedCard) {
-    if (isolatedCard && isolatedCard.isJoker && !isolatedCard.fromDiscard && !isolatedCard.fromLaTour) {
+    if (!isolatedCard) return;
+    const isJokerish = isolatedCard.isJoker ||
+      (this.rules && typeof this.rules.isWildCard === 'function' && this.rules.isWildCard(isolatedCard));
+    if (isJokerish && !isolatedCard.fromDiscard && !isolatedCard.fromLaTour) {
       this.roundManager.jokerDouble = true;
     }
   }
@@ -5043,13 +5058,22 @@ function ramiAddCardToTableMeld(targetPlayerId, meldIndex, cardIdx) {
     if (isWild) {
       const hasWildInMeld = targetMeld.cards.some(c => game.rules.isWildCard(c));
       const naturals = targetMeld.cards.filter(c => !game.rules.isWildCard(c));
-      if (hasWildInMeld) {
+      const isSampeLWild = isWild && !card.isJoker;
+      if (isSampeLWild && targetMeld.type === MELD_TYPE.SEQUENCE) {
+        /* [SAMPEL-RULE] البرية (المعكوسة اللون) لا تدخل المتتاليات أصلاً — وظيفتها
+           إكمال المتماثلة فقط. (رسالة السبب الحقيقي بدل «مكتملة من 4» الخاطئة) */
+        _ramiToast('❌ قواعد السامبل: الورقة المعكوسة (الجوكر) تُكمل المتماثلة فقط — لا تُدرج في المتتاليات', 'err');
+      } else if (hasWildInMeld) {
         _ramiToast('❌ لا يمكن إضافة جوكر ثانٍ إلى مجموعة تحتوي جوكراً أصلاً', 'err');
-      } else if (naturals.length >= 4) {
-        _ramiToast('❌ لا يمكن إضافة جوكر إلى مجموعة مكتملة من 4 أوراق طبيعية', 'err');
+      } else if (targetMeld.type === MELD_TYPE.SET && naturals.length >= 4) {
+        /* حد الـ4 أوراق خاص بالمتماثلة فقط — المتتالية تمتد بلا حد أقصى */
+        _ramiToast('❌ لا يمكن إضافة جوكر إلى متماثلة مكتملة من 4 أوراق طبيعية', 'err');
       } else if (targetMeld._justOpened) {
         /* [V19.2] الحرة تبقى حرة في دور الإنزال فقط */
         _ramiToast('❌ المجموعة الحرة تبقى حرة في دور إنزالها — يمكن إدراج الجوكر فيها ابتداءً من الدور الموالي', 'err');
+      } else if (targetMeld.type === MELD_TYPE.SEQUENCE) {
+        /* متتالية طالاج: الجوكر المطبوع يقبلها الفاحص فقط لو سد فجوة حقيقية أو امتد السلسلة */
+        _ramiToast('❌ الجوكر لا يجلس في مكانه الصحيح من هذه المتتالية (لا فجوة يسدها ولا امتداد متصل)', 'err');
       } else {
         _ramiToast('❌ لا يمكن إضافة هذا الجوكر إلى المجموعة المحددة', 'err');
       }
