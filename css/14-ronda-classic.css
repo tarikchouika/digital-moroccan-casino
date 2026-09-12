@@ -1343,3 +1343,80 @@ body.app-fs-on #rdStage,
   #rdStage .rd-corner-br .rd-backrow { display: none; }
   #rdStage.rd-spectating .rd-botrail { align-items: center; }
 }
+
+/* ═══════════════ v2.13 — لاندسكيب: مقاعد بجانب الأوراق (كتلة أخيرة فتغلب الكل) ═══════════════
+   إصلاحات لقطة 4 لاعبين باللاندسكيب:
+   (أ) توحيد حجم ورق صفوف الظهر: كانت tl/tr بحجم --cw وbl بـ 0.78×cwB
+       فتظهر بأحجام مختلفة — قيمة واحدة من --chB للجميع.
+   (ب) أيقونة كل لاعب بجانب أوراقه أفقياً: اليميني tr أيقونته يسار أوراقه،
+       واليساريان tl/bl أيقونتهما يمين أوراقهما، والرئيسي br أيقونته على
+       نفس خط يده يسار أول ورقة.
+   (ج) صف bl مرفوع فوق مستوى الصف السفلي فلا يزاحم أوراق الرئيسي.
+   (د) مقبض سجل الأحداث أعلى الشاشة فوق عنوان الروندا. */
+@media (orientation: landscape) {
+
+  /* (أ) توحيد حجم ورق الظهر — القاعدة العامة */
+  #rdStage .rd-back-card {
+    width: calc(var(--chB) * 0.62);
+    height: calc(var(--chB) * 0.82);
+    margin-inline-start: calc(var(--chB) * -0.30);
+    border-radius: clamp(5px, .8vw, 9px);
+  }
+  /* تجاوز صريح للمحددات القديمة الأعلى خصوصية (rd-uppers وbl وbr)
+     بنفس القيم — قاعدة واحدة تساوي ثلاثة محددات */
+  #rdStage.rd-uppers .rd-back-card,
+  #rdStage .rd-corner-bl .rd-back-card,
+  #rdStage.rd-uppers .rd-corner-br .rd-back-card {
+    width: calc(var(--chB) * 0.62);
+    height: calc(var(--chB) * 0.82);
+    margin-inline-start: calc(var(--chB) * -0.30);
+  }
+  /* أول ورقة بلا هامش سالب — قاعدة :first-child الموجودة (سطر 418)
+     خصوصيتها أعلى فتسبق هذه الكتلة تلقائياً، لا حاجة لإعادة صياغتها */
+  /* فجوة موحدة بين أوراق الصف (كانت bl/br بفجوة والعلويان بلا) */
+  #rdStage .rd-corner-bl .rd-backrow { gap: 0; }
+
+  /* (ب) المقاعد صفوف أفقية — DOM: backrow أولاً ثم seat، والزوايا ltr
+     فيزيائياً: row يجعل الأوراق يساراً والأيقونة يمينها (tl/bl)،
+     وrow-reverse يجعل الأوراق أقصى اليمين والأيقونة يسارها (tr) */
+  #rdStage .rd-corner-tl,
+  #rdStage .rd-corner-tr,
+  #rdStage .rd-corner-bl {
+    display: flex; flex-direction: row; align-items: center; gap: 8px;
+  }
+  /* خصم tr (يمين الشاشة): الأوراق ملاصقة للحافة اليمنى والأيقونة يسارها */
+  #rdStage .rd-corner-tr { flex-direction: row-reverse; }
+  /* (ج) خصم bl (يسار الشاشة): مثل tl لكن مرفوعاً فوق مستوى اليد
+     (أوراقه وأيقونته بعيدان عن أوراق الرئيسي) */
+  #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 14px); left: 8px; flex-direction: row; }
+
+  /* الرئيسي br: لوحة فقط (صف الظهر مخفي). اليد داخل botrail تلتصق
+     بأقصى اليمين (justify-content: flex-end، قاع 4-8px) وأوراقها عرضها
+     chB×0.72 — لذا اخترنا الصف الأفقي على نفس خط اليد بدل العمودي فوقها
+     (العمودي يغطي القاعة). الإزاحة من اليمين = عرض 3 أوراق + 34px:
+     أقصى امتداد فعلي لليد من اليمين = botrail(6-10) + padding(2+2) +
+     فجوتان(3+3 على الهاتف حتى 8+8 على الشاشات العريضة) + 3 أوراق
+     = 2.16chB + 30px — فتجلس الأيقونة بجانب (يسار) أول ورقة بفجوة
+     4px على أقصى عرض، وتبتعد أماناً كلما نقصت أوراق اليد */
+  #rdStage .rd-corner-br {
+    position: absolute;
+    bottom: 10px;
+    inset-inline-end: calc(var(--chB) * .72 * 3 + 34px);
+    inset-inline-start: auto;
+    display: flex; flex-direction: row; align-items: flex-end; gap: 8px;
+    z-index: 32;
+  }
+  #rdStage .rd-corner-br .rd-backrow { display: none; }
+
+  /* (د) مقبض السجل أعلى الشاشة فوق العنوان — لوحة أعلى الوسط */
+  #rdStage .rd-log-panel {
+    top: 0; bottom: auto;
+    left: 50%; transform: translateX(-50%);
+    z-index: 90;
+  }
+  /* عند فتح السجل يبقى أعلى الشاشة متمركزاً أفقياً */
+  #rdStage .rd-log-panel.rd-log-open { top: 2px; bottom: auto; }
+  /* العنوان ينزل قليلاً فيظهر المقبض (9-17px) فوقه تماماً */
+  #rdStage .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
+  #rdStage.rd-uppers .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
+}

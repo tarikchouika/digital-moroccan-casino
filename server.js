@@ -1695,7 +1695,10 @@ const server = http.createServer((req, res) => {
           me.gold = (me.gold || 0) - HOUR_ROOM_FEE;
           try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id); } catch (e) {}
         }
+        /* [BJMP] قائمة الألعاب المسموح بها في الغرف (مطابقة لـ Rooms.roomGameIds في الواجهة) */
+        const ROOM_GAMES_ALLOWED = { rp: 1, pn: 1, pr: 1, rn: 1, rm: 1, rd: 1, bj: 1, dm: 1, ch: 1, bl8: 1, blbb: 1, blgv: 1, blsn: 1, blca: 1 };
         const gid = data.game_id || 'rm';
+        if (!ROOM_GAMES_ALLOWED[gid]) { json({ ok: false, message: 'لعبة غير مدعومة في الغرف' }, 400); return; }
         const maxp = Math.max(2, Math.min(8, parseInt(data.max_players, 10) || 4));
         const rid = 'r' + (nextRoomId++);
         const code = crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -1870,9 +1873,10 @@ const server = http.createServer((req, res) => {
       /* [Settle] تسوية رهان فلات دوچ بين لاعبَين: يُقتطع من الخاسر ويُضاف للرابح
          بعد اقتطاع رسم الرهان (BET_FEE_RATE). للمالك فقط (نتيجة حتمية). */
       /* [B-settle] تسوية رهان المباريات الحتمية (ضاما/شطرنج — العميل يعرف الفائز): للمضيف فقط.
-         result: 'w0' فاز صاحب order[0] | 'w1' فاز صاحب order[1] | 'draw' تعادل.
+         result: 'w0'..'w3' فاز صاحب order[seat] (وسّعناها من w0/w1 — كانت ترفض مقاعد
+         2-3 فتكسر تسوية الروندا FFA بثلاثة لاعبين) | 'draw' تعادل.
          الرهانات اقتُطعت عند /api/rooms/start — هنا تُوزَّع فقط:
-         draw → استرجاع كامل بلا رسوم؛ w0/w1 → الرابح يأخذ pot كاملاً بعد رسم 5% (غرف percentage فقط) */
+         draw → استرجاع كامل بلا رسوم؛ wN → الرابح يأخذ pot كاملاً بعد رسم 5% (غرف percentage فقط) */
       if (pathname === '/api/rooms/settleRound') {
         const room = rooms[data.room_id];
         if (!room) { json({ ok: false, message: 'الغرفة غير موجودة' }, 404); return; }
@@ -1880,8 +1884,11 @@ const server = http.createServer((req, res) => {
         if (room.status !== 'playing') { json({ ok: false, message: 'لا جولة جارية للتسوية' }, 400); return; }
         if (room.settled) { json({ ok: false, message: 'تمت تسوية هذه الجولة مسبقاً' }, 400); return; }
         const result = data.result;
-        if (result !== 'w0' && result !== 'w1' && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
+        /* [BJMP] w0-w3: مقاعد 0-3 (غرف 2-4 لاعبين) + draw */
+        const seatMatch = /^w([0-3])$/.exec(result);
+        if (!seatMatch && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
         const order = serializeRoom(room).order;   /* غير المتفرجين حسب المقعد (بشر + بوتّات) */
+        if (seatMatch && Number(seatMatch[1]) >= order.length) { json({ ok: false, message: 'مقعد غير موجود' }, 400); return; }
         const pot = Number(room.bet) || 0;   /* رهان كل لاعب — اقتُطع عند البدء */
         /* اللاعبون البشريون الحقيقيون (البوتّات بلا رصيد تُتجاهل في الحساب) */
         const humans = order.filter(function (pid) { return users[pid]; })
@@ -1894,9 +1901,8 @@ const server = http.createServer((req, res) => {
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
           });
         } else {
-          const wIdx = (result === 'w0') ? 0 : 1;
+          const wIdx = Number(seatMatch[1]);
           const winner = order[wIdx] != null ? users[order[wIdx]] : null;
-          const loser = order[1 - wIdx] != null ? users[order[1 - wIdx]] : null;   /* بوت/غائب → null */
           if (!winner) { json({ ok: false, message: 'الرابح لاعب آلي أو غير موجود — لا تسوية' }, 400); return; }
           /* المال الفعلي على الطاولة: رهانات البشريين فقط (رهان الخصم البوتّي لا يُخلق من فراغ) */
           const stake = humans.length * pot;
@@ -1907,8 +1913,9 @@ const server = http.createServer((req, res) => {
         }
         room.settled = true;   /* منع تكرار التسوية للجولة نفسها */
         const shape = function (u) { return u ? { id: u.id, username: u.username, gold: u.gold } : null; };
-        const winnerOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 0 : 1]]);
-        const loserOut = (result === 'draw') ? null : shape(users[order[(result === 'w0') ? 1 : 0]]);
+        const wSeat = seatMatch ? Number(seatMatch[1]) : -1;
+        const winnerOut = (wSeat >= 0) ? shape(users[order[wSeat]]) : null;
+        const loserOut = (wSeat === 0) ? shape(users[order[1]]) : (wSeat === 1 ? shape(users[order[0]]) : null);   /* بلا خاسر محدد في FFA متعدد المقاعد */
         const refunds = (result === 'draw') ? humans.map(function (u) { return shape(u); }) : [];
         const payout = (result === 'draw') ? pot : ((room.room_type === 'percentage') ? (humans.length * pot) - Math.round(humans.length * pot * BET_FEE_RATE) : humans.length * pot);
         const payload = {

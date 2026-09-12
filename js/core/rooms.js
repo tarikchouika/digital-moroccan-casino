@@ -28,7 +28,7 @@
   var Rooms = {
     state: null,
     /* الألعاب المدعومة للغرف: id -> أقصى عدد لاعبين */
-    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, rd: 4, dm: 2, ch: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً */
+    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, rd: 4, bj: 4, dm: 2, ch: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً + [BJMP] بلاك جاك جماعي 2-4 بلا بانكر */
 
     isGameSupported: function (id) { return !!Rooms.roomGameIds[id]; },
     /* [Persist] طلب إعادة بناء الجولة: إعادة فتح قناة WS للغرفة — الخادم يعيد
@@ -474,6 +474,10 @@
       ];
       if (gid === 'rp') return [
         { key: 'rounds', label: T('rp.rounds') || 'عدد الجولات', opts: [[3, '3'], [5, '5'], [7, '7']], def: 3 }
+      ];
+      /* [BJMP] بلاك جاك جماعي: عدد المقاعد 2-4 (نتحكم بالخيارات بأنفسنا — لا تُضاف maxp تلقائياً) */
+      if (gid === 'bj') return [
+        { key: 'maxp', label: T('rm.playersCount') || 'عدد اللاعبين', opts: [[2, '2 لاعبين — 2'], [3, '3 لاعبين — 3'], [4, '4 لاعبين — 4']], def: 4 }
       ];
       if (gid === 'pn') return [
         { key: 'rounds', label: T('pn.rounds') || 'عدد الركلات', opts: [[5, '5'], [7, '7'], [9, '9']], def: 5 }

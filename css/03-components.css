@@ -929,9 +929,6 @@
   max-width: calc(100vw - 24px);
   pointer-events: none;
 }
-  max-width: calc(100vw - 24px);
-  pointer-events: none;
-}
 .toast {
   background: var(--gc);
   border: 1px solid var(--bd);

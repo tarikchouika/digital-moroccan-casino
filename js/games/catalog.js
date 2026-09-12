@@ -318,7 +318,7 @@ const GAMES = [
     rtp: 98,
     pl: 256,
     n: ['بلاك جاك 21', 'Blackjack 21', 'Blackjack 21', 'بلاك جاك 21'],
-    d: ['ضد الموزع', 'vs croupier', 'vs dealer', 'ضد الموزع']
+    d: ['بلاك جاك فردي ضد الموزع أو جماعي 2-4 لاعبين بلا بانكر', 'Blackjack solo contre le croupier ou multijoueur 2-4 sans croupier', 'Solo blackjack vs dealer or multiplayer 2-4 without banker', 'بلاك جاك فردي ولا جماعي 2-4 بلا بانكر']
   },
   {
     id: 'bc',

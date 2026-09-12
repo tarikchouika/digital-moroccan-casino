@@ -22,4 +22,20 @@
       }
     } catch (e) { /* ignore */ }
   });
+
+  /* [i18n] الصفحات القانونية تستدعي applyLang المحلية (لا setLang) —
+     نراقب جلوس authRestore: عند اكتمالها (renderAuthChip دالة + AUTH.user موجود)
+     نعيد بناء القائمة مرة أخيرة باللغة الحالية ثم نوقف المراقبة. */
+  document.addEventListener('DOMContentLoaded', function () {
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      if (typeof window.renderAuthChip === 'function' && window.AUTH && window.AUTH.user) {
+        try { window.renderAuthChip(); } catch (e) { /* ignore */ }
+        clearInterval(timer);
+        return;
+      }
+      if (tries >= 20) clearInterval(timer);   /* 10 ثوانٍ (20 × 500ms) ثم التوقف */
+    }, 500);
+  });
 })();

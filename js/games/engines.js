@@ -1474,13 +1474,22 @@ function rpsRoomUi() {
 }
 
 /* ═══════════ 11. Penalty ═══════════ */
-/* solo: تسديدة ضد حارس — جهة مختلفة = هدف ×1.45 (P=2/3) → RTP 96.7% (هامش كازينو 3.3%)
+/* solo: تسديدة ضد حارس — 9 جهات (يمين/وسط/يسار × أعلى/وسط/أسفل) — جهة مختلفة = هدف
+   P(goal)=8/9 → ×1.08 → RTP = 8/9 × 1.08 = 0.96 (هامش كازينو 4%)
    غرفة (2 لاعبين وجهاً لوجه): 5 جولات متناوبة — seat 0 يهاجم 1/3/5، seat 1 في 2/4 —
    اختيار أعمى متزامن (sendBlind): الخادم يكشف الزوج معاً فلا يرى من يختار ثانياً حركة الأول */
 var pnRoom = null;
 var pnBusy = false;
-const PN_DIRS = ['⬅️', '⬆️', '➡️'];
-const PN_KEYS = { '⬅️': 'pn.left', '⬆️': 'pn.center', '➡️': 'pn.right' };
+/* ترتيب الجهات: أعلى-يسار، أعلى، أعلى-يمين، يسار-وسط، وسط، يمين-وسط، أسفل-يسار، أسفل، أسفل-يمين */
+const PN_DIRS = ['↖️', '⬆️', '↗️', '⬅️', '🎯', '➡️', '↙️', '⬇️', '↘️'];
+const PN_KEYS = { '↖️': 'pn.tl', '⬆️': 'pn.tc', '↗️': 'pn.tr', '⬅️': 'pn.ml', '🎯': 'pn.mc', '➡️': 'pn.mr', '↙️': 'pn.bl', '⬇️': 'pn.bc', '↘️': 'pn.br' };
+/* إحداثيات الشبكة 3×3: x نسبة مئوية للعرض (translateX%) و y بالبكسل (translateY) —
+   القيم العلوية سالبة (الكرة/الحارس فوق المنتصف) والسفلية موجبة */
+const PN_POS = {
+  '↖️': { x: -112, y: -36 }, '⬆️': { x: 0, y: -46 }, '↗️': { x: 112, y: -36 },
+  '⬅️': { x: -112, y: 0 }, '🎯': { x: 0, y: 0 }, '➡️': { x: 112, y: 0 },
+  '↙️': { x: -112, y: 30 }, '⬇️': { x: 0, y: 38 }, '↘️': { x: 112, y: 30 }
+};
 function pnLabel(d) {
   return T(PN_KEYS[d] || '');
 }
@@ -1507,19 +1516,22 @@ function penField() {
 function penMoveBall(d) {
   const f = penField();
   if (!f.ball) return;
-  const x = d === '⬅️' ? -112 : d === '➡️' ? 112 : 0;
-  f.ball.style.transform = 'translateX(' + x + '%) translateY(-38px)';
+  /* شبكة 3×3: x كنسبة من عرض المرمى (translateX%) و y بالبكسل */
+  const p = PN_POS[d] || PN_POS['🎯'];
+  f.ball.style.transform = 'translateX(' + p.x + '%) translateY(' + p.y + 'px)';
 }
 function penMoveKeeper(d) {
   const f = penField();
   if (!f.keeper) return;
-  const x = d === '⬅️' ? -92 : d === '➡️' ? 92 : 0;
-  f.keeper.style.transform = 'translateX(' + x + '%) rotate(' + (d === '⬅️' ? -14 : d === '➡️' ? 14 : 0) + 'deg)';
+  /* نفس إحداثيات الكرة مع دوران خفيف حسب العمود: يسار → -12deg، يمين → 12deg */
+  const p = PN_POS[d] || PN_POS['🎯'];
+  const rot = p.x < 0 ? -12 : p.x > 0 ? 12 : 0;
+  f.keeper.style.transform = 'translateX(' + p.x + '%) translateY(' + p.y + 'px) rotate(' + rot + 'deg)';
 }
 function penResetField() {
   const f = penField();
   if (f.ball) f.ball.style.transform = 'translateX(0) translateY(0)';
-  if (f.keeper) f.keeper.style.transform = 'translateX(0) rotate(0deg)';
+  if (f.keeper) f.keeper.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
   if (f.arena) f.arena.classList.remove('pn-goal', 'pn-saved');
 }
 function ePenalty(g) {
@@ -1550,7 +1562,8 @@ function ePenalty(g) {
       '</div>' +
     '</div>' +
     '<div class="pn-role" id="pnRole">⚽ ' + T('pn.youShoot') + '</div>' +
-    '<div class="pn-picks">' +
+    /* تسعة أزرار 3×3 — نمط .nine في CSS (شبكة بدل الصف الواحد القديم) */
+    '<div class="pn-picks nine">' +
       PN_DIRS.map(function (d) {
         return '<button class="pnBtn" data-d="' + d + '" onclick="penShoot(\'' + d + '\')">' +
           '<span class="pn-arrow">' + d + '</span>' +
@@ -1577,18 +1590,19 @@ function penShoot(d) {
   if (f.role) f.role.textContent = '🧤 ' + T('pn.saving');
   if (f.res) f.res.textContent = '';
   penMoveBall(d);
-  /* كشف حتمي باستدعاء Math.random واحد — جهة الحارس */
-  const gk = PN_DIRS[Math.floor(Math.random() * 3)];
+  /* كشف حتمي باستدعاء Math.random واحد — جهة الحارس من 9 جهات (P(تصدي)=1/9) */
+  const gk = PN_DIRS[Math.floor(Math.random() * 9)];
   setTimeout(function () {
     penMoveKeeper(gk);
     const win = gk !== d;
-    const w = win ? Math.floor(GB * 1.45) : 0;
+    /* P(goal)=8/9 → ×1.08 → RTP = 8/9 × 1.08 ≈ 96% (هامش كازينو 4%) */
+    const w = win ? Math.floor(GB * 1.08) : 0;
     if (win) {
       give(w);
       SND.coin();
       if (f.arena) f.arena.classList.add('pn-goal');
       if (f.res) f.res.textContent = T('pn.shot') + ': ' + pnLabel(d) + '  —  ' + T('pn.keep') + ': ' + pnLabel(gk) + '\n🥅 ' + T('pn.goal');
-      gres('×1.45 +' + fmt(w) + ' 🪙', w);
+      gres('×1.08 +' + fmt(w) + ' 🪙', w);
       winFX(w);
     } else {
       SND.lose();

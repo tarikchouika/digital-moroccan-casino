@@ -170,6 +170,8 @@ function setLang(lang) {
   sSet('rc_lang', lang);
   applyI18n();
   translateStatic();
+  /* [i18n] إعادة بناء قائمة المستخدم المنسدلة باللغة الجديدة (نصوصها كانت تُبنى بـ T() وقت الإنشاء) */
+  if (typeof renderAuthChip === 'function') renderAuthChip();
   syncLangDrop();
   if (typeof renderAll === 'function') renderAll();
   updateCopyright();
