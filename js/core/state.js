@@ -95,10 +95,6 @@ function newSeeds() {
   renderFair();
   toast('تم تحديث البذور', 'info');
 }
-/* ── Daily Reward ── */
-function claimDaily() {
-  toast('المكافآت اليومية مُعطّلة', 'warn');
-}
 /* ── تهيئة الحالة عند التحميل ── */
 function initState() {
   loadState();
@@ -118,7 +114,6 @@ window.giveWin = giveWin;
 window.fairTick = fairTick;
 window.generateServerSeed = generateServerSeed;
 window.newSeeds = newSeeds;
-window.claimDaily = claimDaily;
 window.initState = initState;
 window.sGet = sGet;
 window.sSet = sSet;

@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS users (
   gold INTEGER NOT NULL DEFAULT 1000,
   lang TEXT NOT NULL DEFAULT 'ar',
   banned INTEGER NOT NULL DEFAULT 0,
-  last_claim INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
   last_seen INTEGER NOT NULL DEFAULT 0,
   totp_secret TEXT,
@@ -236,7 +235,7 @@ const HOUR_ROOM_MS = 3600000;   /* ساعة واحدة */
 
 /* تحميل المستخدمين من قاعدة البيانات إلى الذاكرة */
 function loadUsersFromDB() {
-  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled, ref_code, admin_id, referred_by, muted_until, first_topup_done, last_claim FROM users').all();
+  const rows = db.prepare('SELECT id, username, pass_hash, pass_salt, role, gold, lang, banned, totp_secret, twofa_enabled, ref_code, admin_id, referred_by, muted_until, first_topup_done FROM users').all();
   rows.forEach(function (r) {
     users[r.id] = {
       id: r.id, username: r.username,
@@ -246,7 +245,6 @@ function loadUsersFromDB() {
       ref_code: r.ref_code || null, admin_id: r.admin_id || null,
       referred_by: r.referred_by || null,
       muted_until: r.muted_until || 0, first_topup_done: !!r.first_topup_done,
-      last_claim: r.last_claim || 0
     };
     if (r.id >= nextUserId) nextUserId = r.id + 1;
   });
@@ -837,8 +835,8 @@ const server = http.createServer((req, res) => {
 
       /* ── المصادقة ── */
       if (pathname === '/api/me') {
-        const _claimReady = !me || (Date.now() - (me.last_claim || 0) * 1000) >= 2 * 60 * 60 * 1000;
-        json({ ok: true, user: publicUser(me), claim: { ready: _claimReady, interval_hours: 2, next_in_ms: (me && !_claimReady) ? (2 * 60 * 60 * 1000 - (Date.now() - me.last_claim * 1000)) : 0 } });
+        /* [أزيلت نهائياً] لا حقول مكافأة بعد الآن — عجلة الحظ محذوفة من المنصة */
+        json({ ok: true, user: publicUser(me) });
         return;
       }
       if (pathname === '/api/login') {
@@ -1185,23 +1183,9 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/claim') {
-        /* [أمان] مكافأة كل ساعتين — كانت بلا أي فحص = ذهب لا نهائي بالنقر المتكرر.
-           الخادم يختار الجائزة (عجلة الحظ) ويفرض المهلة ويحفظها في القاعدة. */
-        if (!me) { json({ ok: false, error: 'unauthorized', message: 'غير مسجّل' }, 401); return; }
-        const CLAIM_MS = 2 * 60 * 60 * 1000;
-        const nowMs = Date.now();
-        const last = (me.last_claim || 0) * 1000;
-        if (nowMs - last < CLAIM_MS) {
-          json({ ok: false, error: 'not_ready', next_in_ms: CLAIM_MS - (nowMs - last), gold: me.gold }, 429);
-          return;
-        }
-        const WHEEL = [50, 100, 200, 500, 100, 300, 1000, 250];
-        const idx = crypto.randomInt(WHEEL.length);
-        me.last_claim = Math.floor(nowMs / 1000);
-        me.gold = (me.gold || 0) + WHEEL[idx];
-        try { db.prepare('UPDATE users SET gold = ?, last_claim = ? WHERE id = ?').run(me.gold, me.last_claim, me.id); } catch (e) {}
-        logTx(me, 'claim', WHEEL[idx], { balance_after: me.gold });
-        json({ ok: true, amount: WHEEL[idx], prize_index: idx, gold: me.gold });
+        /* [أزيلت نهائياً] عجلة الحظ اليومية وال مكافأة المجانية — بقرار المستخدم.
+           المسار يرد 410 Gone حتى لا تظهر رسالة خطأ مبهمة لأي عميل قديم. */
+        json({ ok: false, error: 'removed', message: 'المكافأة اليومية أُزيلت نهائياً' }, 410);
         return;
       }
       if (pathname === '/api/chat') {

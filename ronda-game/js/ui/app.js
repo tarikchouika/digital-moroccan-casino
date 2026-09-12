@@ -357,6 +357,21 @@
           break;
         }
 
+        case 'FirstDealerDrawn': {
+          /* [FirstDealer] قرعة الموزع الأول — أصغر ورقة توزع (واجهة ronda-game المنفصلة) */
+          if (App.game && ev.dealerSeat != null) {
+            const dealer = App.game.state.getPlayerBySeat(ev.dealerSeat);
+            const nm = dealer ? App.playerName(dealer.id) : '?';
+            const cardsTxt = (ev.cards || []).map(function (c) {
+              const p = App.game ? App.game.state.getPlayerBySeat(c.seat) : null;
+              return (p ? App.playerName(p.id) : ('seat ' + c.seat)) + ': ' + c.rank + ' ' + c.suit;
+            }).join(' · ');
+            R.addLog('🎲 قرعة الموزع الأول — أصغر ورقة توزع: ' + nm + ' 👑');
+            R.addLog('🃏 ' + cardsTxt);
+          }
+          break;
+        }
+
         case 'CardsDealt': {
           if (ev.isRedeal) {
             R.showBanner(I18N.banners.redeal, '', 'b-declare', 1.1);

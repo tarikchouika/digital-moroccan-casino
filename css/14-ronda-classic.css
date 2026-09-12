@@ -630,12 +630,8 @@ body.app-fs-on #rdStage,
 }
 /* ظهر الورقة المقلوبة — أصل المنصة الموحّد + تدرجات ذهبية وحَدّ (نمط 05-ronda.css) */
 #rdStage .rd-card.rd-back {
-  background:
-    url('../assets/cards/back.webp') center / cover no-repeat,
-    repeating-linear-gradient(45deg, rgba(226,184,87,.07) 0 2px, transparent 2px 11px),
-    repeating-linear-gradient(-45deg, rgba(226,184,87,.05) 0 2px, transparent 2px 11px),
-    radial-gradient(circle at 50% 40%, #1c3f5a 0%, #0b1f30 60%, #06121c 100%);
-  background-color: #0b1f30;
+  /* [BackImg] صورة الظهر الجديدة شفافة الخلفية — لا تدرجات داكنة تحتها */
+  background: url('../assets/cards/back.webp') center / cover no-repeat;
   border: 1.5px solid rgba(226,184,87,.85);
   box-shadow: inset 0 0 12px rgba(0,0,0,.5), 0 5px 12px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.1);
 }

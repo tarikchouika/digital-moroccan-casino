@@ -61,11 +61,59 @@
 
       this._setupPlayers(opts.mode, opts.names);
 
-      this.state.dealerSeat = (opts.dealerSeat !== undefined)
-        ? opts.dealerSeat
-        : this.state.players.length - 1;
+      /* [FirstDealer] قرعة الموزع الأول (قاعدة «بينيا»): ورقة واحدة لكل لاعب —
+         صاحب أصغر ورقة يوزع. عند غياب dealerSeat صريح تُجرى القرعة في start().
+         حتمية بالكامل من نفس seed → كل عميل بنفس البذرة يلتقي على نفس الموزع. */
+      this._dealerDrawn = false;
+      if (opts.dealerSeat !== undefined) {
+        this.state.dealerSeat = opts.dealerSeat;
+        this._dealerDrawn = true;             /* صريح → لا قرعة */
+      } else {
+        this.state.dealerSeat = this.state.players.length - 1;   /* مؤقت حتى start() */
+      }
 
       this._validateSetup();
+    }
+
+    /* ---------------- قرعة الموزع الأول ---------------- */
+
+    /** ورقة واحدة لكل لاعب حسب ترتيب المقاعد — أصغر رتبة (RANK_SEQUENCE) توزع.
+        التعادل → إعادة سحب للمتعادلين فقط حتى يتفرد الأصغر. حتمي عبر this.rng. */
+    _drawFirstDealer() {
+      const st = this.state;
+      const n = st.players.length;
+      let draw = RC.RondaDeckFactory.create();
+      RC.shuffle(draw, this.rng);
+      let seats = [];
+      for (let s = 0; s < n; s++) seats.push(s);
+      let cards = [];
+      const drawOne = function (seat) {
+        const card = draw.pop();
+        if (!card) throw new Error('dealer-draw: empty deck');
+        return card;
+      };
+      seats.forEach(function (s) { cards.push({ seat: s, card: drawOne(s) }); });
+      /* إعادة سحب للمتعادلين على أصغر رتبة (ورقة لكل متعادل من المجموعة نفسها) */
+      for (let guard = 0; guard < 40; guard++) {
+        const minIdx = Math.min.apply(null, cards.map(function (c) {
+          return RC.rankSequenceIndex(c.card.rank);
+        }));
+        const tied = cards.filter(function (c) { return RC.rankSequenceIndex(c.card.rank) === minIdx; });
+        if (tied.length === 1) break;
+        cards = tied.map(function (c) {
+          return { seat: c.seat, card: drawOne(c.seat) };
+        });
+      }
+      const minIdx2 = Math.min.apply(null, cards.map(function (c) {
+        return RC.rankSequenceIndex(c.card.rank);
+      }));
+      const winner = cards.find(function (c) { return RC.rankSequenceIndex(c.card.rank) === minIdx2; });
+      st.dealerSeat = winner.seat;
+      this._dealerDrawn = true;
+      this._emit('FirstDealerDrawn', {
+        dealerSeat: winner.seat,
+        cards: cards.map(function (c) { return { seat: c.seat, rank: c.card.rank, suit: c.card.suit }; })
+      });
     }
 
     /* ---------------- إعداد اللاعبين والفرق ---------------- */
@@ -157,6 +205,8 @@
         targetScore: this.rules.targetScore,
         dealerSeat: this.state.dealerSeat
       });
+      /* [FirstDealer] قبل أول توزيع: قرعة الموزع إن لم يُحدد صراحةً */
+      if (!this._dealerDrawn) this._drawFirstDealer();
       this._startRound();
       return this._takeBatch();
     }

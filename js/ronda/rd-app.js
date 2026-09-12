@@ -879,6 +879,22 @@
           break;
         }
 
+        case 'FirstDealerDrawn': {
+          /* [FirstDealer] قرعة الموزع الأول: ورقة لكل لاعب — أصغرها توزع (بينيا) */
+          if (App.game && ev.dealerSeat != null) {
+            const dealer = App.game.state.getPlayerBySeat(ev.dealerSeat);
+            const nm = dealer ? App.playerName(dealer.id) : '?';
+            const cardsTxt = (ev.cards || []).map(function (c) {
+              const p = App.game ? App.game.state.getPlayerBySeat(c.seat) : null;
+              return (p ? App.playerName(p.id) : ('seat ' + c.seat)) + ': ' + c.rank + ' ' + c.suit;
+            }).join(' · ');
+            R.addLog(T.msg('rdc.log.firstDealer', { name: nm }));
+            R.addLog('🃏 ' + cardsTxt);
+            R.showBanner(T.msg('rdc.ban.firstDealer', { name: nm }), '', 'rd-b-declare', 1.4);
+          }
+          break;
+        }
+
         case 'CardsDealt': {
           /* بعد الترقية وسط توزيعة: التوزيعة الجديدة تكشف اليد المشروعة */
           if (App._handDefer) {
