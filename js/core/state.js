@@ -62,8 +62,12 @@ function _detectInitialLang() {
   } catch (e) { /* ignore */ }
   return 'ar';
 }
+var __initialLang = sGet('rc_lang', null) || _detectInitialLang();
+/* ثبّت اختيار الكشف الأول في التخزين كي لا يتذبذب بين الأجهزة/الجلسات
+   (اختيار المستخدم اللاحق عبر setLang يظل الغالب دائماً) */
+try { sSet('rc_lang', __initialLang); } catch (e) { /* ignore */ }
 const ST = {
-  lang: sGet('rc_lang', null) || _detectInitialLang(),
+  lang: __initialLang,
   gold: parseInt(sGet('rc_gold', '1000'), 10) || 1000,
   streak: 3,
   lastClaim: 0,

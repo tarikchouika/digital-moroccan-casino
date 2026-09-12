@@ -71,3 +71,9 @@ window.detectInitialLang = function () {
   } catch (e) { /* ignore */ }
   return 'ar';
 };
+/* الصفحات القانونية: ثبّت اللغة المكتشفة أول مرة (المستخدم يظل حراً في تغييرها) */
+try {
+  if (!localStorage.getItem('rc_lang') && window.detectInitialLang) {
+    localStorage.setItem('rc_lang', window.detectInitialLang());
+  }
+} catch (e) { /* ignore */ }
