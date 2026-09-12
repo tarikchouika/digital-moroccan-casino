@@ -340,11 +340,15 @@ function loadTrHistory() {
     if (!trs.length) { list.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
     const meId = AUTH.user ? AUTH.user.id : null;
     list.innerHTML = trs.map(function (tr) {
-      const outgoing = tr.from_id === meId;
-      const who = outgoing ? tr.to_name : tr.from_name;
-      const sign = outgoing ? '−' : '+';
-      return '<div class="trow"><span>' + (outgoing ? '→' : '←') + ' ' + esc(who) + '</span>' +
-        '<b class="' + (outgoing ? '' : 'gold-text') + '">' + sign + ' 🪙 ' + fmt(tr.amount) + '</b></div>';
+      const ty = tr.type || (tr.from_id === meId ? 'transfer_out' : 'transfer_in');
+      const outgoing = ty === 'transfer_out' || (ty === 'transfer' && tr.from_id === meId);
+      const inflow = ty === 'charge' || ty === 'referral_bonus' || ty === 'claim' || ty === 'transfer_in';
+      const who = (ty === 'charge' || ty === 'set_balance') ? (tr.note || tr.from_name || '—')
+        : (ty === 'deduct') ? (tr.to_name || '—')
+        : (outgoing ? tr.to_name : tr.from_name);
+      const sign = inflow ? '+' : '−';
+      return '<div class="trow"><span>' + (inflow ? '←' : '→') + ' ' + esc(who) + '</span>' +
+        '<b class="' + (inflow ? 'gold-text' : '') + '">' + sign + ' 🪙 ' + fmt(tr.amount) + '</b></div>';
     }).join('');
   }).catch(function () {
     list.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
@@ -368,12 +372,25 @@ function renderTransactions() {
     txRounds.innerHTML = '<div class="note">' + T('tr.needLogin') + '</div>';
     return;
   }
-  /* التحويلات بين اللاعبين */
+  /* التحويلات والمعاملات متعددة الأنواع (transfer_out/in, charge, deduct, set_balance, referral_bonus, claim) */
   txTransfers.innerHTML = '<div class="note">…</div>';
   API.get('/api/transfers').then(function (r) {
     const trs = (r.ok && r.data && r.data.transfers) ? r.data.transfers : [];
     if (!trs.length) { txTransfers.innerHTML = '<div class="note">' + T('tr.noHistory') + '</div>'; return; }
     const meId = AUTH.user.id;
+    /* شارة النوع: ok للواردات والشحن، bad للصادرات والسحب، عادية لضبط الرصيد */
+    const badgeFor = function (ty, outgoing) {
+      switch (ty) {
+        case 'charge': return { cls: 'ok', label: T('tr.charge') };
+        case 'deduct': return { cls: 'bad', label: T('tr.deduct') };
+        case 'set_balance': return { cls: '', label: T('tr.setBalance') };
+        case 'referral_bonus': return { cls: 'ok', label: T('tr.refBonus') };
+        case 'claim': return { cls: 'ok', label: T('tr.claimBadge') };
+        case 'transfer_out': return { cls: 'bad', label: '→ ' + T('tr.sent') };
+        case 'transfer_in': return { cls: 'ok', label: '← ' + T('tr.received') };
+        default: return { cls: outgoing ? 'bad' : 'ok', label: (outgoing ? '→ ' : '← ') + (outgoing ? T('tr.sent') : T('tr.received')) };
+      }
+    };
     txTransfers.innerHTML =
       '<table class="atable tr-t">' +
       '<thead><tr>' +
@@ -384,16 +401,35 @@ function renderTransactions() {
         '<th>' + T('tr.time') + '</th>' +
       '</tr></thead><tbody>' +
       trs.map(function (tr) {
-        const outgoing = tr.from_id === meId;
-        const who = outgoing ? tr.to_name : tr.from_name;
+        const ty = tr.type || (tr.from_id === meId ? 'transfer_out' : 'transfer_in');
+        const outgoing = ty === 'transfer_out' || (ty === 'transfer' && tr.from_id === meId);
+        const badge = badgeFor(ty, outgoing);
         const t = tr.created_at ? new Date(tr.created_at * 1000).toLocaleString() : '—';
-        const sentCell = outgoing ? '<td>− 🪙 ' + fmt(tr.amount) + '</td>' : '<td>—</td>';
-        const recvCell = outgoing ? '<td>—</td>' : '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
-        const spillClass = outgoing ? 'bad' : 'ok';
-        const dirLabel = outgoing ? '→ ' + T('tr.sent') : '← ' + T('tr.received');
+        let who = outgoing ? tr.to_name : tr.from_name;
+        let sentCell = '<td>—</td>';
+        let recvCell = '<td>—</td>';
+        if (ty === 'charge') {
+          /* شحن من مشرف: المرسل '—' والمستلم '+amount' والطرف = from_name */
+          who = tr.from_name;
+          recvCell = '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
+        } else if (ty === 'deduct') {
+          /* سحب: المرسل '−amount' والمستلم '—' والطرف = to_name */
+          who = tr.to_name;
+          sentCell = '<td>− 🪙 ' + fmt(tr.amount) + '</td>';
+        } else if (ty === 'set_balance') {
+          /* ضبط رصيد: المبلغ في ملاحظة إن وُجدت وإلا علامة تساوي */
+          who = tr.note || '= 🪙 ' + fmt(tr.amount);
+        } else if (ty === 'referral_bonus' || ty === 'claim') {
+          /* هدية إحالة / مكافأة: المبلغ في عمود المستلم */
+          recvCell = '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
+        } else {
+          /* تحويل صادر/وارد كما هو */
+          sentCell = outgoing ? '<td>− 🪙 ' + fmt(tr.amount) + '</td>' : '<td>—</td>';
+          recvCell = outgoing ? '<td>—</td>' : '<td class="gold-text">+ 🪙 ' + fmt(tr.amount) + '</td>';
+        }
         return '<tr>' +
-          '<td><span class="spill ' + spillClass + '">' + dirLabel + '</span></td>' +
-          '<td>' + esc(who) + '</td>' +
+          '<td><span class="spill ' + badge.cls + '">' + badge.label + '</span></td>' +
+          '<td>' + esc(who || '—') + '</td>' +
           sentCell + recvCell +
           '<td>' + t + '</td>' +
         '</tr>';
@@ -994,13 +1030,53 @@ function fetchHistory() {
 function renderGameHistory() {
   const el = document.getElementById('gameHistory');
   if (!el) return;
-  const rows = _localRounds.concat(_serverRounds);
+  /* [Tickets-dedup] حلقة التكرار: تذاكر الخادم أولاً (محفوظة في القاعدة) ثم
+     المحلية الأحدث فقط من أحدث صف خادم (created_at أكبر) — أو كلها إن كان السجل الخادمي فارغاً */
+  const maxServerAt = _serverRounds.length
+    ? Math.max.apply(null, _serverRounds.map(function (r) { return r.created_at || 0; }))
+    : 0;
+  const freshLocal = _serverRounds.length
+    ? _localRounds.filter(function (r) { return (r.created_at || 0) > maxServerAt; })
+    : _localRounds.slice();
+  const rows = _serverRounds.concat(freshLocal);
   if (!rows.length) {
     el.innerHTML = '<div class="ght-empty">' + (T('ghist.empty') || 'لا توجد جولات بعد') + '</div>';
     return;
   }
-  /* [Tickets v2] تذاكر مفصلة: لعبة/لاعب/رهان/مكسب/صافي/مضاعف/نتيجة/تاريخ ووقت */
-  el.innerHTML = rows.slice(0, 25).map(function (r) {
+  /* [Tickets-search] بحث نصي غير حساس لحالة: اسم اللعبة، username، result_txt، المبالغ */
+  const sInp = document.getElementById('ticketsSearch');
+  const q = sInp ? (sInp.value || '').trim().toLowerCase() : '';
+  const gameLabel = function (r) {
+    try {
+      const gid = r.game_id || window._currentGameId;
+      if (gid && typeof GAMES !== 'undefined') {
+        const g = GAMES.find(function (x) { return x.id === gid; });
+        if (g && g.n) return (typeof langIndex === 'function' ? (g.n[langIndex()] || g.n[0]) : g.n[0]) + (g.em ? ' ' + g.em : '');
+      }
+      return gid || '';
+    } catch (e) { return ''; }
+  };
+  const shown = q
+    ? rows.filter(function (r) {
+        const hay = [
+          gameLabel(r), r.username || '', r.result_txt || '',
+          String(r.bet || 0), String(r.payout || 0)
+        ].join(' ').toLowerCase();
+        return hay.indexOf(q) !== -1;
+      })
+    : rows;
+  /* [Tickets-search] ربط حدث input مرة واحدة فقط (بحد _searchBound) */
+  if (sInp && !sInp._searchBound) {
+    sInp._searchBound = true;
+    sInp.addEventListener('input', function () { renderGameHistory(); });
+  }
+  if (!shown.length) {
+    el.innerHTML = '<div class="ght-empty">' + (T('ghist.empty') || 'لا توجد جولات بعد') + '</div>';
+    return;
+  }
+  /* [Tickets v2] تذاكر مفصلة: لعبة/لاعب/رهان/مكسب/صافي/مضاعف/نتيجة/تاريخ ووقت.
+     حد العرض: 50 عند وجود بحث، 25 بدونه */
+  el.innerHTML = shown.slice(0, q ? 50 : 25).map(function (r) {
     const d = r.created_at ? new Date(r.created_at * 1000) : null;
     const tTime = d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
     const tDate = d ? d.toLocaleDateString() : '';
@@ -1008,16 +1084,7 @@ function renderGameHistory() {
     const bet = r.bet || 0;
     const pay = (won && r.payout > 0) ? r.payout : 0;
     const net = pay - bet;
-    const gname = (function () {
-      try {
-        const gid = r.game_id || window._currentGameId;
-        if (gid && typeof GAMES !== 'undefined') {
-          const g = GAMES.find(function (x) { return x.id === gid; });
-          if (g && g.n) return (typeof langIndex === 'function' ? (g.n[langIndex()] || g.n[0]) : g.n[0]) + (g.em ? ' ' + g.em : '');
-        }
-        return gid || '';
-      } catch (e) { return ''; }
-    })();
+    const gname = gameLabel(r);
     const mult = (pay > 0 && bet > 0) ? (Math.round((pay / bet) * 100) / 100) : 0;
     const who = r.local
       ? '<b class="gold-text">' + esc(r.username) + '</b>'
@@ -1190,7 +1257,8 @@ function renderAdmin() {
       '<button class="atab' + (ADMIN_TAB === 'tourneys' ? ' active' : '') + '" role="tab" onclick="adminTab(\'tourneys\')">🏆 ' + T('ui.tourney') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'games' ? ' active' : '') + '" role="tab" onclick="adminTab(\'games\')">' + T('admin.gamesTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'rewards' ? ' active' : '') + '" role="tab" onclick="adminTab(\'rewards\')">' + T('admin.rewardsTab') + '</button>' +
-      '<button class="atab' + (ADMIN_TAB === 'fin' ? ' active' : '') + '" role="tab" onclick="adminTab(\'fin\')">' + T('admin.finTab') + '</button>'
+      '<button class="atab' + (ADMIN_TAB === 'fin' ? ' active' : '') + '" role="tab" onclick="adminTab(\'fin\')">' + T('admin.finTab') + '</button>' +
+      '<button class="atab' + (ADMIN_TAB === 'logs' ? ' active' : '') + '" role="tab" id="logs" onclick="adminTab(\'logs\')"><i class="fa-solid fa-receipt" aria-hidden="true"></i> ' + T('admin.logsTab') + '</button>'
     : '<button class="atab' + (ADMIN_TAB === 'users' ? ' active' : '') + '" role="tab" onclick="adminTab(\'users\')">👥 ' + T('admin.myPlayers') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'coord' ? ' active' : '') + '" role="tab" onclick="adminTab(\'coord\')">💬 ' + T('admin.coordTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'tourneys' ? ' active' : '') + '" role="tab" onclick="adminTab(\'tourneys\')">🏆 ' + T('ui.tourney') + '</button>';
@@ -1202,6 +1270,7 @@ function renderAdmin() {
   else if (ADMIN_TAB === 'tourneys') adminLoadTourneys();
   else if (ADMIN_TAB === 'games') adminLoadGames();
   else if (ADMIN_TAB === 'rewards') adminLoadRewards();
+  else if (ADMIN_TAB === 'logs') adminLoadTransactions();
   else adminLoadFinance();
 }
 
@@ -1292,8 +1361,10 @@ function adminLoadUsers() {
             (isSuper ? ' <button class="abtn ok" onclick="adminMute(' + u.id + ',0)">' + T('admin.unmute') + '</button>' : '')
           : '<input class="ainp" id="mt-' + u.id + '" type="number" value="24" min="24" max="720" aria-label="' + esc(T('admin.muteHours')) + '" style="width:60px" title="' + esc(T('admin.muteHours')) + '">' +
             '<button class="abtn bad" onclick="adminMute(' + u.id + ',1)">🔇 ' + T('admin.mute') + '</button>';
+        /* [Logs] زر «سجل»: فتح تبويب السجلات مُصفّى على هذا المستخدم (سوبر فقط) */
         const delCell = isSuper
-          ? '<td><button class="abtn bad" onclick="adminDeleteUser(' + u.id + ',\'' + esc(u.username).replace(/'/g, '') + '\')">🗑 ' + T('admin.deleteUser') + '</button></td>'
+          ? '<td style="white-space:nowrap"><button class="abtn" onclick="adminViewUserTx(' + u.id + ')" title="سجل المعاملات">🧾 سجل</button> ' +
+            '<button class="abtn bad" onclick="adminDeleteUser(' + u.id + ',\'' + esc(u.username).replace(/'/g, '') + '\')">🗑 ' + T('admin.deleteUser') + '</button></td>'
           : '';
         const banCell = isSuper
           ? '<td>' + (u.banned
@@ -1476,6 +1547,134 @@ function adminSetRole(id) {
     }
   });
 }
+
+/* ── تبويب السجلات (سوبر فقط): كل معاملات المنصة مع تصفية ── */
+/* أسماء الأنواع بالعربية للعرض */
+function txTypeLabel(ty) {
+  const map = {
+    bet: 'رهان',
+    win: 'فوز',
+    transfer_out: 'تحويل صادر',
+    transfer_in: 'تحويل وارد',
+    charge: 'شحن',
+    deduct: 'سحب',
+    set_balance: 'ضبط رصيد',
+    referral_bonus: 'هدية إحالة',
+    claim: 'مكافأة'
+  };
+  return map[ty] || ty || '—';
+}
+/* إشارة المبلغ: + للفوز/الوارد/الشحن/الهدية/المكافأة، − للرهان/الصادر/السحب، = لضبط الرصيد */
+function txAmountSign(ty, amount) {
+  const pos = { win: 1, transfer_in: 1, charge: 1, referral_bonus: 1, claim: 1 };
+  const neg = { bet: 1, transfer_out: 1, deduct: 1 };
+  const a = fmt(amount);
+  if (pos[ty]) return '<b class="gold-text">+ 🪙 ' + a + '</b>';
+  if (neg[ty]) return '<b>− 🪙 ' + a + '</b>';
+  if (ty === 'set_balance') return '<b>= 🪙 ' + a + '</b>';
+  return '🪙 ' + a;
+}
+function adminLoadTransactions() {
+  const c = document.getElementById('adminContent');
+  if (!c) return;
+  if (!AUTH.user || AUTH.user.role !== 'super') {
+    c.innerHTML = '<div class="note">' + T('admin.notAuthorized') + '</div>';
+    return;
+  }
+  /* القيم الحالية للتصفية تُقرأ قبل إعادة البناء حتى لا تضيع عند onchange */
+  const curS = document.getElementById('txUser');
+  const curTy = document.getElementById('txType');
+  const curUid = curS ? curS.value : '';
+  const curType = curTy ? curTy.value : '';
+  c.innerHTML = '<div class="note">…</div>';
+  /* بناء واجهة التصفية مع جدول المستخدمين (أول خيار «الكل») */
+  const typeOpts = ['', 'bet', 'win', 'transfer_out', 'transfer_in', 'charge', 'deduct', 'set_balance', 'referral_bonus', 'claim'];
+  const buildFilters = function (users) {
+    return '<div class="reg-row" style="flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">' +
+      '<select class="ainp" id="txUser" onchange="adminLoadTransactions()" aria-label="تصفية بالمستخدم" style="width:180px">' +
+        '<option value="">' + T('admin.users') + ': ' + 'الكل' + '</option>' +
+        users.map(function (u) {
+          return '<option value="' + u.id + '"' + (String(u.id) === String(curUid) ? ' selected' : '') + '>' + esc(u.username) + ' (#' + u.id + ')</option>';
+        }).join('') +
+      '</select>' +
+      '<select class="ainp" id="txType" onchange="adminLoadTransactions()" aria-label="تصفية بالنوع" style="width:150px">' +
+        typeOpts.map(function (ty) {
+          return '<option value="' + ty + '"' + (ty === curType ? ' selected' : '') + '>' + (ty === '' ? 'الكل' : txTypeLabel(ty)) + '</option>';
+        }).join('') +
+      '</select>' +
+      '<button class="abtn" onclick="adminLoadTransactions()">🔄 ' + T('ui.refresh') + '</button>' +
+      '</div>';
+  };
+  API.get('/api/admin/users').then(function (ru) {
+    const users = (ru.ok && ru.data && ru.data.users) ? ru.data.users : [];
+    c.innerHTML = buildFilters(users) + '<div id="txTableBox"><div class="note">…</div></div>';
+    const s = document.getElementById('txUser');
+    const ty = document.getElementById('txType');
+    const uid = s ? s.value : curUid;
+    const type = ty ? ty.value : curType;
+    API.get('/api/admin/transactions?user_id=' + uid + '&type=' + type + '&limit=200').then(function (r) {
+      const box = document.getElementById('txTableBox');
+      if (!box) return;
+      if (!r.ok) {
+        box.innerHTML = '<div class="note">' + ((r.data && r.data.message) || T('auth.error')) + '</div>';
+        return;
+      }
+      const txs = r.data.transactions || [];
+      const total = r.data.total || 0;
+      /* عرض total في عنوان فرعي صغير */
+      const sub = '<div class="note" style="font-size:.78rem;margin-bottom:8px">' + total + ' معاملة</div>';
+      if (!txs.length) {
+        box.innerHTML = sub + '<div class="note">' + T('admin.txEmpty') + '</div>';
+        return;
+      }
+      box.innerHTML = sub +
+        '<div class="atable-wrap"><table class="atable">' +
+        '<thead><tr>' +
+          '<th>الوقت</th><th>المستخدم</th><th>النوع</th><th>المبلغ</th><th>الرصيد بعدها</th>' +
+          '<th>الطرف الآخر</th><th>اللعبة</th><th>المنفذ</th><th>ملاحظة</th>' +
+        '</tr></thead><tbody>' +
+        txs.map(function (tx) {
+          const t = tx.created_at ? new Date(tx.created_at * 1000).toLocaleString() : '—';
+          const note = tx.note ? esc(String(tx.note).slice(0, 40)) : '—';
+          return '<tr>' +
+            '<td style="white-space:nowrap">' + t + '</td>' +
+            '<td>' + (tx.username ? '<b>' + esc(tx.username) + '</b>' : '—') + '</td>' +
+            '<td><span class="spill ' + (tx.type === 'bet' || tx.type === 'transfer_out' || tx.type === 'deduct' ? 'bad' : (tx.type === 'set_balance' ? '' : 'ok')) + '">' + txTypeLabel(tx.type) + '</span></td>' +
+            '<td>' + txAmountSign(tx.type, tx.amount) + '</td>' +
+            '<td>🪙 ' + fmt(tx.balance_after) + '</td>' +
+            '<td>' + (tx.counterparty_name ? esc(tx.counterparty_name) : '—') + '</td>' +
+            '<td>' + (tx.game_id ? esc(tx.game_id) : '—') + '</td>' +
+            '<td>' + (tx.actor_name ? esc(tx.actor_name) : '—') + '</td>' +
+            '<td>' + note + '</td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }).catch(function () {
+      const box = document.getElementById('txTableBox');
+      if (box) box.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+    });
+  }).catch(function () {
+    c.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+  });
+}
+/* فتح تبويب السجلات مع تصفية مستخدم بعينه (زر «سجل» في جدول المستخدمين) */
+function adminViewUserTx(id) {
+  ADMIN_TAB = 'logs';
+  renderAdmin();
+  /* [Logs] renderAdmin يبني الـ select بشكل غير متزامن (بعد جلب المستخدمين) —
+     نعيد المحاولة حتى يظهر العنصر (بحد 20 محاولة × 50ms) قبل ضبط القيمة والجلب */
+  var tries = 0;
+  (function apply() {
+    var s = document.getElementById('txUser');
+    if (s) {
+      s.value = String(id);
+      adminLoadTransactions();
+      return;
+    }
+    if (tries++ < 20) setTimeout(apply, 50);
+  })();
+}
+window.adminViewUserTx = adminViewUserTx;
 
 /* ── تبويب البطولات (الأدمن: موافقة/بدء/إنهاء) ── */
 function adminLoadTourneys() {
