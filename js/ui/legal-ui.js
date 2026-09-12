@@ -56,20 +56,12 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-users"></i></span>' +
 '<span data-i18n="ui.rooms">غرف اللعب</span>' +
 '</a>' +
-'<a class="nav-item" data-nav="tx" href="transactions.html">' +
-'<span class="ic" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>' +
-'<span data-i18n="ui.transactions">سجل المعاملات</span>' +
-'</a>' +
 '<div class="side-title" data-i18n="ui.tools">الأدوات</div>' +
 '<a class="nav-item" data-nav="fair" href="index.html#fair" onclick="nav(\'fair\', this); return false;">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>' +
 '<span data-i18n="ui.fair">Provably Fair</span>' +
 '</a>' +
-'<a class="nav-item" data-nav="fairness" href="fairness.html">' +
-'<span class="ic" aria-hidden="true"><i class="fa-solid fa-scale-balanced"></i></span>' +
-'<span data-i18n="ui.fairness">العدالة والشفافية</span>' +
-'</a>' +
-'<a class="nav-item" data-nav="admin" id="navAdmin" href="index.html#admin">' +
+'<a class="nav-item" data-nav="admin" id="navAdmin" href="index.html#admin" style="display:none">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>' +
 '<span data-i18n="ui.admin">الإدارة</span>' +
 '</a>' +

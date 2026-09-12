@@ -1383,9 +1383,10 @@ body.app-fs-on #rdStage,
   }
   /* خصم tr (يمين الشاشة): الأوراق ملاصقة للحافة اليمنى والأيقونة يسارها */
   #rdStage .rd-corner-tr { flex-direction: row-reverse; }
-  /* (ج) خصم bl (يسار الشاشة): مثل tl لكن مرفوعاً فوق مستوى اليد
-     (أوراقه وأيقونته بعيدان عن أوراق الرئيسي) */
-  #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 14px); left: 8px; flex-direction: row; }
+  /* (ج) خصم bl (يسار الشاشة): زاويته أسفل-يسار على نفس صف اليد —
+     [v2.17] فجوة مضغوطة فوق اليد (كانت chB+14 مرتفعة كثيراً فتزاحم
+     القاعة والتوزيعة وتعلق مقعده وسط الشاشة) */
+  #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 6px); left: 8px; flex-direction: row; }
 
   /* الرئيسي br: لوحة فقط (صف الظهر مخفي). اليد داخل botrail تلتصق
      بأقصى اليمين (justify-content: flex-end، قاع 4-8px) وأوراقها عرضها
@@ -1419,25 +1420,44 @@ body.app-fs-on #rdStage,
 }
 
 /* ═══ [sam-merge-patch] تثبيت قرارات المستخدم فوق كتلة cat (آخر الملف يغلب) ═══
-   المستخدم نصّ حرفياً: ورق التوزيع (الرزمة) وزر سجل الحركات «إلى الهامش الأسفل
-   من الشاشة في المنطقة الفارغة» — لا أعلى الشاشة. والتسميات (الهدف/التوزيعة)
-   «تكبير حجمهما وإزاحتهم للأسفل نحو منتصف الشاشة في المنطقة الخالية». */
+   لاندسكيب (v2.17 — بلاغ المستخدم):
+   • الرزمة: الهامش الأسفل مباشرة — أقصى أسفل وسط الشاشة (طلب صريح).
+   • مقبض السجل: أعلى الشاشة فوق عنوان «روندا» (قرار cat v2.15 المعاد
+     بطلبه — كانت دمجتُه v2.16 أزاحته للأسفل خطأً). العنوان ينزل قليلاً
+     فيظهر المقبض فوقه تماماً.
+   • خصم bl: زاويته أسفل-يسار ملتفّاً كالباقين (نفس صف اليد) — كان
+     معلقاً بمنتصف الشاشة فوق التوزيعة فيزاحم القاعة والتسميات.
+   • القاعة: نطاق صريح بين صفوف الخصوم العلوية ومنطقة التسميات/الهامش
+     الأسفل — كانت تنهار إلى 0-15px بالحسابات المتقاطعة القديمة.
+   بورتريه: الرزمة فوق مقبض سجل الأحداث (سلوكها المرئوي القديم) بلا
+   تداخل مع أوراق اليد — القاعدة أسفل هذا الملف. */
 @media (orientation: landscape) {
-  /* مقبض السجل: الهامش الأسفل يمين الشاشة فوق صف اليد (لا أعلى الشاشة) */
+  /* مقبض السجل: أقصى الهامش الأعلى وسطاً — فوق العنوان */
   #rdStage .rd-log-panel {
-    top: auto; bottom: calc(var(--chB) + 6px);
-    left: auto; right: 108px;
-    transform: none;
-    align-items: flex-end;
+    top: 0; bottom: auto;
+    left: 50%; transform: translateX(-50%);
     z-index: 90;
   }
-  #rdStage .rd-log-panel.rd-log-open { top: auto; bottom: calc(var(--chB) + 6px); }
-  /* العنوان يعود لأعلى المنتصف الطبيعي */
-  #rdStage .rd-tophead { top: 2px; }
-  #rdStage.rd-uppers .rd-tophead { top: 2px; }
+  #rdStage .rd-log-panel.rd-log-open { top: 2px; bottom: auto; }
+  /* العنوان ينزل قليلاً فيظهر المقبض (9-17px) فوقه تماماً */
+  #rdStage .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
+  #rdStage.rd-uppers .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
 
-  /* الهدف/التوزيعة: حجم كبير، منتصف الشاشة في المنطقة الخالية تحت القاعة
-     (بجوار الرزمة) — بلا تداخل مع أوراق المقاعد (قياس: صفوف tl/tr تنتهي قبلها) */
+  /* الرزمة: الهامش الأسفل مباشرة — أقصى أسفل وسط الشاشة */
+  #rdStage .rd-deck {
+    position: absolute;
+    bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    left: 50%; transform: translateX(-50%);
+    z-index: 34;   /* فوق صف اليد (30) — اليد يمين الشاشة والرزمة وسطها */
+  }
+  #rdStage.rd-spectating .rd-deck { bottom: 4px; }
+
+  /* خصم bl: زاوية أسفل-يسار على نفس صف اليد — ملتفّ ككل اللاعبين
+     (أوراقه يسار الحافة وأيقونته يمينها — تخطيط row من كتلة v2.13) */
+  #rdStage .rd-corner-bl { bottom: 8px; left: 8px; }
+
+  /* الهدف/التوزيعة: حجم كبير، منتصف الشاشة في المنطقة الخالية
+     (بجوار ورق الوسط) — فوق مقعد bl الملتف بالزاوية */
   #rdStage .rd-infline {
     position: absolute;
     top: 54cqh;
@@ -1453,21 +1473,33 @@ body.app-fs-on #rdStage,
   #rdStage .rd-inf-deal { left: 16cqw; transform: translate(0, -50%); }
   #rdStage .rd-inf-target { left: auto; right: 16cqw; transform: translate(0, -50%); }
 
-  /* الرزمة (عنصر مستقل على المسرح منذ rd-html v2.13): وسط الهامش الأسفل فوق اليد */
-  #rdStage .rd-deck {
-    position: absolute;
-    bottom: calc(var(--chB) + 18px);
-    left: 50%; transform: translateX(-50%);
-    z-index: 8;
+  /* القاعة: نطاق صريح بين صفوف الخصوم العلوية (~30cqh) ومنطقة التسميات —
+     لا تنهار مهما تغيّرت أحجام اليد/اللوحات (ctTop/ctBot القديمة تقاطعت
+     فصارت 0px). ورق الوسط يتمركز داخلها بجوار التسميات. */
+  #rdStage .rd-court {
+    top: 31cqh;
+    bottom: 37cqh;
+    max-height: none;
   }
-  #rdStage.rd-spectating .rd-deck { bottom: 20px; }
-
-  /* القاعة تُسند فوق الهامش الأسفل (لا تبتلع منطقة التسميات/الرزمة) */
-  #rdStage .rd-court { bottom: calc(var(--chB) + 74px); }
-  #rdStage.rd-spectating .rd-court { bottom: calc(var(--chB) + 70px); }
+  #rdStage.rd-uppers .rd-court { top: 31cqh; }
+  #rdStage.rd-spectating .rd-court { bottom: 37cqh; }
 
   /* صف اليد بالهامش الأسفل */
   @media (orientation: landscape) and (max-height: 620px) {
     #rdStage .rd-botrail { bottom: 6px !important; }
   }
+}
+
+/* ── بورتريه: الرزمة فوق مقبض السجل — ظاهرة بلا تداخل مع أوراق اليد ──
+   القاعدة القديمة (سطر ~507) bottom: deckBot+2cqh ≈ 26px تضعها داخل نطاق
+   صف اليد (botrail قاع 6-10px + ارتفاع chB ≈ 100px) فتُغطى كلياً.
+   المقبض عند chB+14px؛ نرفع الرزمة فوقه: chB + ارتفاع المقبض + 10px. */
+@media (orientation: portrait) {
+  #rdStage .rd-deck {
+    bottom: calc(var(--chB) + 30px);
+    z-index: 8;   /* تحت صف اليد (30) — بورتريه اليد أسفل-يسار والرزمة وسطها فوق المقبض */
+  }
+  /* القاعة تُسند فوق الرزمة (لا تبتلعها) */
+  #rdStage .rd-court { bottom: calc(var(--chB) + var(--deckS) * 1.5 + 30px); }
+  #rdStage.rd-spectating .rd-court { bottom: calc(var(--deckS) + 150px); }
 }

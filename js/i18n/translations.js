@@ -1077,7 +1077,7 @@ const TR = {
   'ui.currentRound': [ 'الجولة الحالية', 'Tour en cours', 'Current round', 'الجولة الحالية' ],
   'ui.dailyClaim': [ 'مكافأة يومية', 'Bonus quotidien', 'Daily Bonus', 'كادوة يومي' ],
   'ui.exitFullscreen': [ 'إلغاء ملء الشاشة', 'Quitter plein écran', 'Exit Fullscreen', 'الخروج من الشاشة كاملة' ],
-  'ui.fair': [ 'العدالة والشفافية', 'Provably Fair', 'Provably Fair', 'العدالة والشفافية' ],
+  'ui.fair': [ 'Provably Fair', 'Provably Fair', 'Provably Fair', 'Provably Fair' ],
   'ui.fairSub': [ 'تحقق محليًا من عدالة كل جولة — دون اتصال بالخادم', 'Vérifiez localement l\'équité de chaque tour — sans connexion au serveur', 'Verify each round\'s fairness locally — no server connection needed', 'تحقق محليًا من عدالة كل جولة — بلا اتصال بالسيرفر' ],
   'ui.fairness': [ 'العدالة والشفافية', 'Équité et transparence', 'Fairness and Transparency', 'العدالة والشفافية' ],
   'ui.fb2fa': [ '2FA محمي', '2FA protégé', '2FA protected', '2FA محمي' ],
