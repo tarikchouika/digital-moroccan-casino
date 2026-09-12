@@ -843,8 +843,8 @@ class RamiMeld {
       if (this.type === MELD_TYPE.SET && rules.isValidSet(testCards, true)) ok = true;
       else if (this.type === MELD_TYPE.SEQUENCE && rules.isValidSequence(testCards, true)) ok = true;
       if (ok) {
-        /* المتتالية في السامبل لا تحوي برية أصلاً (قاعدة 09-12) — الاستبدال فيها
-           نظري فقط لطالاج؛ احرس أيضاً أن الورقة الحقيقية لا تكرر ورقة موجودة */
+        /* [SAMPEL-WILD] البرية قد تسد متتالية الآن (كجوكر) — الاستبدال وارد
+           في المجموعتين؛ احرس فقط أن الورقة الحقيقية لا تكرر ورقة موجودة */
         const dup = this.cards.some(function (c, i) {
           return i !== jokerIdx && !rules.isWildCard(c) && c.rank === card.rank && c.suit === card.suit;
         });
@@ -936,32 +936,38 @@ class MeldValidator {
     return this._checkSequence(cards, jokerAllowed, 'any');
   }
 
-  /* الفحص الداخلي للمتتالية — aceMode: 'any' (منخفض أو مرتفع) | 'high' (مرتفع فقط) */
+  /* الفحص الداخلي للمتتالية — aceMode: 'any' (منخفض أو مرتفع) | 'high' (مرتفع فقط)
+     [SAMPEL-WILD 2026-09-12 — توجيه المالك النهائي]:
+     الورقة البرية (المعكوسة اللون في السامبل) تُعامل داخل المتتالية
+     **كجوكر فقط** — ولو وُضعت في محل رقمها بالضبط (فهي تعمل جوكراً،
+     والمتتالية بذلك غير حرة وليست ممنوعة). لذلك:
+       • برية واحدة = جوكر واحد يسد فجوة (حد الجوكر الواحد يبقى محكماً).
+       • بريتان معاً = جوكران → مرفوض (هذه هي حالة المستخدم J♣-Q♣-Q♣:
+         برية عملت رقم Q ثم برية أخرى سدّت K — ورقة واحدة برقمها وجوكراً).
+       • برية + جوكر مطبوع = جوكران → مرفوض.
+       • أرقام البرية الطبيعية لا تُجرب أبداً في سلسلة الأرقام (ألغي
+         منطق الـ mask «طبيعية أو جوكر» الذي سمح بالخطأ J-Q-Q).
+     في الطالاج: الجوكر المطبوع (isJoker) وحده يسد الفجوات كالمعتاد. */
   _checkSequence(cards, jokerAllowed, aceMode) {
     if (!cards || cards.length < 3) return false;
 
     const naturals = cards.filter(c => !this._isWild(c));
     const wilds = cards.filter(c => this._isWild(c) && !c.isJoker);
     const physJokers = cards.filter(c => c.isJoker);
-    if (physJokers.length > 1) return false;
-    if (physJokers.length === 1 && !jokerAllowed) return false;
-    /* [SAMPEL-RULE 2026-09-12] تصحيح جوهري بقواعد الرامي السامبل (طلب المستخدم):
-       الورقة البرية (المعكوسة اللون، مثل Q♣ السوداء عند مؤشر Q♥) وظيفتها الوحيدة
-       إكمال المتماثلة — لا تصلح لمتتالية حرة إطلاقاً: لا كرقم بقيمتها ولا كسد فجوة.
-       خطأ اللاعب الآلي السابق: عدّ Q♣ رقماً عادياً وخصم جوكراً آخر ليسد K♣.
-       في الطالاج: الجوكر المطبوع (isJoker) يظل يعمل في المتتاليات كسد فجوة كالمعتاد. */
-    if (wilds.length > 0) return false;
+    /* جوكر واحد على الأكثر في المتتالية بأي نوع (مطبوع أو بري) */
+    if (physJokers.length + wilds.length > 1) return false;
+    if (physJokers.length + wilds.length === 1 && !jokerAllowed) return false;
 
-    if (naturals.length === 0 && wilds.length === 0) return false;
+    if (naturals.length === 0) return false;
 
     // جميع الأوراق الطبيعية يجب أن تكون من نفس الرمز وبرتب مختلفة
-    let suit = null;
-    if (naturals.length > 0) {
-      suit = naturals[0].suit;
-      if (naturals.some(c => c.suit !== suit)) return false;
-    }
+    const suit = naturals[0].suit;
+    if (naturals.some(c => c.suit !== suit)) return false;
     const natRanks = naturals.map(c => c.rank);
     if (new Set(natRanks).size !== natRanks.length) return false;
+    if (natRanks.length < 2) return false;   /* الجوكر يسد فجوة واحدة على الأكثر بين رقمين */
+
+    const jokers = physJokers.length + wilds.length;
 
     function testSequence(ranks, jokers) {
       ranks.sort((a, b) => a - b);
@@ -973,39 +979,13 @@ class MeldValidator {
       return needed <= jokers;
     }
 
-    // تجربة كل الاحتمالات: كل جوكر بري إمّا «طبيعي» (يركب بقيمته) أو «جوكر» يسد فجوة
-    const totalCombos = 1 << wilds.length;
-    for (let mask = 0; mask < totalCombos; mask++) {
-      const usedRanks = new Set(natRanks);
-      let seqSuit = suit;
-      let jokers = physJokers.length;
-      let ok = true;
+    // 1. فحص الآس كرتبة منخفضة (A, 2, 3) — يُتجاوز في وضع 'high'
+    if (aceMode !== 'high' && testSequence(natRanks.slice(), jokers)) return true;
 
-      for (let i = 0; i < wilds.length; i++) {
-        const wc = wilds[i];
-        if (mask & (1 << i)) {
-          // استخدامه كبطاقة طبيعية
-          if (seqSuit === null) seqSuit = wc.suit;
-          else if (wc.suit !== seqSuit) { ok = false; break; }
-          if (usedRanks.has(wc.rank)) { ok = false; break; }
-          usedRanks.add(wc.rank);
-        } else {
-          jokers++;
-        }
-      }
-      if (!ok) continue;
-      if (jokers > 1) continue;
-      if (jokers === 1 && !jokerAllowed) continue;
-      if (usedRanks.size === 0) continue;
-
-      // 1. فحص الآس كرتبة منخفضة (A, 2, 3) — يُتجاوز في وضع 'high'
-      if (aceMode !== 'high' && testSequence(Array.from(usedRanks), jokers)) return true;
-
-      // 2. فحص الآس كرتبة مرتفعة (10, J, Q, K, A)
-      if (usedRanks.has(1)) {
-        const ranksHigh = Array.from(usedRanks).map(r => (r === 1 ? 14 : r));
-        if (testSequence(ranksHigh, jokers)) return true;
-      }
+    // 2. فحص الآس كرتبة مرتفعة (10, J, Q, K, A)
+    if (natRanks.includes(1)) {
+      const ranksHigh = natRanks.map(r => (r === 1 ? 14 : r));
+      if (testSequence(ranksHigh, jokers)) return true;
     }
 
     return false;

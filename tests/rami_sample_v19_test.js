@@ -16,8 +16,8 @@ const ctx = {
   _ramiToast: () => {}, SND: {}
 };
 vm.createContext(ctx);
-vm.runInContext(code + '\n;globalThis.__X = { RamiGame, RamiRules, RamiCard: (typeof RamiCard!=="undefined"?RamiCard:null), MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, cardFitsMeld: (typeof cardFitsMeld!=="undefined"?cardFitsMeld:null) };', ctx);
-const { RamiGame, RamiRules, MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, cardFitsMeld } = ctx.__X;
+vm.runInContext(code + '\n;globalThis.__X = { RamiGame, RamiRules, RamiCard: (typeof RamiCard!=="undefined"?RamiCard:null), MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, RamiMeld, cardFitsMeld: (typeof cardFitsMeld!=="undefined"?cardFitsMeld:null) };', ctx);
+const { RamiGame, RamiRules, MELD_TYPE, verifyRamiDeckIntegrity, ramiDeckAccounting, RamiExpertAI, RamiMeld, cardFitsMeld } = ctx.__X;
 
 let pass = 0, fail = 0;
 function ok(cond, name) {
@@ -196,15 +196,22 @@ console.log('── 8) [v19.2] الحرة تبقى حرة في دور الافت
   ok(!r.valid, 'افتتاح بمتتاليتين بجوكر + متماثلة حرة فقط → مرفوض (لا متتالية حرة)');
 }
 {
-  /* الإدراج: جوكر لا يدخل مجموعة حرة أُنزلت هذا الدور — ويدخلها في الأدوار الموالية */
+  /* الإدراج [v19.2 + SAMPEL-WILD 2026-09-12 — التوجيه النهائي للمالك]:
+     «البرية ممنوعة في المتتالية الحرة فقط»: حين تُدرج البرية في متتالية فهي
+     تعمل جوكراً ولو في محل رقمها — فتصبح المتتالية غير حرة (وليست ممنوعة).
+     متتالية ببرية مسموحة عند الإدراج في جميع الأدوار (افتتاح/بعده/إنهاء)
+     بشرط: جوكر واحد على الأكثر بأي نوع — فبريتان معاً أو برية+مطبوع مرفوض
+     (جذر حالة المستخدم J♣-Q♣-Q♣). حماية الحرة الزمنية (v19.2) تبقى:
+     الجوكر/البرية وورقة المرموق المسحوبة لا تُدرجان في مجموعة حرة أُنزلت
+     هذا الدور فقط — وفي الأدوار الموالية يجوز إدراج الجوكر فيها. */
   const g = new RamiGame('simple', 2, 1, 77, 90);
   g.startMatch(2, 1);
   const rm = g.roundManager;
   rm.jokerIndicator = { id: 'IND2', rank: 6, suit: 'sword', isJoker: false };
   g.rules.jokerIndicator = rm.jokerIndicator;
-  const joker = C(6, 'heart');            /* برية */
+  const joker = C(6, 'heart');            /* برية: 6 أحمر عند مؤشر 6 أسود */
   const freeMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'sword'), C(10, 'sword'), C(11, 'sword')], _justOpened: true };
-  const wildMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'grape'), C(10, 'grape'), C(6, 'heart')], _justOpened: true }; /* فيها برية */
+  const wildMeld = { type: MELD_TYPE.SEQUENCE, cards: [C(9, 'grape'), C(10, 'grape'), C(6, 'heart')], _justOpened: true }; /* فيها برية تسد 11 */
   rm.tableMelds = [freeMeld];
   ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة أُنزلت هذا الدور → مرفوض');
   ok(cardFitsMeld ? !cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في متتالية حرة أُنزلت هذا الدور → مرفوض');
@@ -213,14 +220,94 @@ console.log('── 8) [v19.2] الحرة تبقى حرة في دور الافت
   const drawn = C(12, 'sword'); drawn.fromDiscard = true;
   ok(!RamiExpertAI.canLayOff(g.rules, freeMeld, drawn, drawn), 'canLayOff: مرموق نفس الدور في حرة نفس الدور → مرفوض');
   rm.tableMelds = [freeMeld, wildMeld];
-  ok(RamiExpertAI.canLayOff(g.rules, wildMeld, C(8, 'grape')), 'canLayOff: ورقة عادية في مجموعة بجوكر → مقبول');
+  /* ورقة عادية تكمّل فجوة متتالية ببرية (تسد 8) — مسموحة */
+  ok(RamiExpertAI.canLayOff(g.rules, wildMeld, C(8, 'grape')), 'canLayOff: ورقة عادية في متتالية ببرية → مقبول');
   ok(RamiExpertAI.canLayOff(g.rules, freeMeld, C(12, 'sword')), 'canLayOff: ورقة عادية في متتالية حرة → مقبول');
-  /* بانتهاء الدور تسقط الحماية: nextPlayer يمسح _justOpened ويصبح الجوكر مقبولاً */
+  /* بانتهاء الدور تسقط الحماية الزمنية: nextPlayer يمسح _justOpened
+     ويصبح الجوكر مقبولاً في الحرة (تصير غير حرة — وهذا جائز) */
   rm.nextPlayer();
   ok(!freeMeld._justOpened, 'nextPlayer يمسح وسم _justOpened');
   ok(RamiExpertAI.canLayOff(g.rules, freeMeld, joker), 'canLayOff: جوكر في متتالية حرة في دور موالٍ → مقبول');
   ok(g.doesCardFitAnyTableMeld(joker), 'doesCardFitAnyTableMeld: دور موالٍ → true للجوكر');
   ok(cardFitsMeld ? cardFitsMeld(joker, freeMeld, g.rules) : true, 'cardFitsMeld: جوكر في حرة دور موالٍ → مقبول');
+}
+
+console.log('── 8ح) [SAMPEL-WILD] البرية داخل المتتالية جوكرٌ فقط — التوجيه النهائي ──');
+{
+  /* [SAMPEL-WILD 2026-09-12] القاعدة الحاكمة بعد توضيح المالك:
+     البرية المدرجة في متتالية تعمل جوكراً ولو في محل رقمها → المتتالية
+     غير حرة لكنها ليست ممنوعة. الممنوع: بريتان معاً، أو برية+جوكر مطبوع
+     (جوكر واحد بأي نوع)، أو ورقة تعمل برقمها وجوكراً معاً (J♣-Q♣-Q♣). */
+  const rules = new RamiRules('simple', 90);
+  rules.jokerIndicator = { id: 'INDW', rank: 12, suit: 'heart', isJoker: false }; /* المؤشر Q♥ → البريتان Q♣ وQ♠ */
+
+  /* (أ) حالة المستخدم الأصلية: J♣-Q♣(برية)-Q♣(برية) — بريتان في متتالية = رفض */
+  const jC = C(11, 'club'), qC1 = C(12, 'club'), qC2 = C(12, 'club');
+  ok(!rules.isValidSequence([jC, qC1, qC2], true), 'J♣-Q♣-Q♣ (بريتان) → مرفوض (جوكران في متتالية)');
+  ok(!rules.isValidMeld([jC, qC1, qC2], true), 'J♣-Q♣-Q♣ كمجموعة عامة → مرفوض');
+
+  /* (ب) برية واحدة في محل رقمها: J♣-Q♣(برية)-K♣ → جوكر يسد Q — مسموحة وغير حرة */
+  const kC = C(13, 'club');
+  ok(rules.isValidSequence([jC, qC1, kC], true), 'J♣-Q♣(برية)-K♣ → مقبولة (برية واحدة = جوكر واحد)');
+  ok(!rules.isValidSequence([jC, qC1, kC], false), 'نفسها مع jokerAllowed=false → مرفوضة');
+
+  /* (ج) البرية كسد فجوة بعيد عن رقمها: 9♦-Q♦(برية عند مؤشر Q)-K♦؟ الفجوة 2 → جوكر واحد لا يسعها */
+  const n9 = C(9, 'diamond'), qD = C(12, 'diamond'), kD = C(13, 'diamond');
+  ok(!rules.isValidSequence([n9, qD, kD], true), '9♦-Q♦(برية)-K♦ فجوة 10-J من رقمين → مرفوض (فجوة واحدة فقط لجوكر واحد)');
+
+  /* (د) برية + جوكر مطبوع معاً في متتالية (فرضي السامبل) → رفض */
+  const printed = C(0, 'joker'); printed.isJoker = true;
+  ok(!rules.isValidSequence([jC, qC1, kC, printed], true), 'J♣-Q♣(برية)-K♣+جوكر مطبوع → مرفوض (جوكران بأي نوع)');
+
+  /* (هـ) المتتالية بالبرية غير حرة للافتتاح: validateOpening يتطلب متتالية نقية —
+     جماعات بمتتالية-برية + متماثلة نقية فقط → رفض؛ وبمتتالية نقية إضافية بمجموع حر كافٍ → قبول */
+  const wildSeq = { type: MELD_TYPE.SEQUENCE, cards: [jC, qC1, kC] };        /* J-Q-K ببرية (30 extra) */
+  const pureSet3 = { type: MELD_TYPE.SET, cards: [C(10, 'heart'), C(10, 'diamond'), C(10, 'sword')] }; /* 30 حرة — رتبة بعيدة عن المؤشر Q */
+  let r = rules.validateOpening([wildSeq, pureSet3], null, null, 0, false);
+  ok(!r.valid, 'افتتاح بمتتالية-برية + متماثلة نقية فقط → مرفوض (لا متتالية حرة)');
+  const pureSeq = { type: MELD_TYPE.SEQUENCE, cards: [C(2, 'sword'), C(3, 'sword'), C(4, 'sword'), C(5, 'sword'), C(6, 'sword'), C(7, 'sword')] }; /* 27 حرة → المجموع 57 ≥ 51 */
+  r = rules.validateOpening([wildSeq, pureSet3, pureSeq], null, null, 0, false);
+  ok(r.valid, 'نفس الافتتاح + متتالية نقية إضافية (30+27=57 حر) → مقبول والبرية مجموعة إضافية');
+
+  /* (و) الإنهاء كذلك: بنية إنهاء بمتتالية-برية بلا متتالية نقية → مرفوض */
+  let fin = rules.validateFinishStructure([wildSeq, pureSet3], null);
+  ok(!fin.valid, 'إنهاء بمتتالية-برية بلا نقية → مرفوض');
+  fin = rules.validateFinishStructure([wildSeq, pureSet3, pureSeq], null);
+  ok(fin.valid, 'إنهاء مع متتالية نقية + متماثلة نقية → مقبول');
+  /* (ز) الاستبدال: متتالية 9♦-10♦-برية(تسد J♦) — ورقة J♦ حقيقية تحل محل
+     البرية وتعود البرية لليد (في السامبل كل Q♣ برية حسب المؤشر، لذا
+     سيناريو الاستبدال يستعمل برية تسد فجوة وورقة حقيقية تسد مكانها) */
+  const s9 = C(9, 'diamond'), s10 = C(10, 'diamond'), jD = C(11, 'diamond');
+  const wildAsJack = C(12, 'club');   /* برية (معكوسة Q) تسد J♦ */
+  const meld = new RamiMeld(MELD_TYPE.SEQUENCE, [s9, s10, wildAsJack]);
+  ok(rules.isValidSequence(meld.cards, true), 'التجهيز: 9♦-10♦-برية(تسد J) متتالية صحيحة');
+  ok(meld.findJokerSwapIndex(jD, rules) === 2, 'J♦ الحقيقية تحل محل البرية → موضع 2 يُستبدل وتعود البرية لليد');
+  ok(meld.findJokerSwapIndex(C(13, 'diamond'), rules) === -1, 'K♦ لا تصلح للاستبدال (تفسد المتتالية) → -1');
+
+  /* (ح) الطالاج لم يتغير: الجوكر المطبوع يسد الفجوات كالمعتاد */
+  const tRules = new RamiRules('talaj', 90);
+  const tj = C(0, 'joker'); tj.isJoker = true;
+  ok(tRules.isValidSequence([C(10, 'heart'), tj, C(12, 'heart')], true), 'طالاج: 10♥-جوكر مطبوع-Q♥ → مقبولة');
+  ok(!tRules.isValidSequence([C(10, 'heart'), tj, C(12, 'heart')], false), 'طالاج: نفسها بلا سماح جوكر → مرفوضة');
+  const tj2 = C(0, 'joker'); tj2.isJoker = true;
+  ok(!tRules.isValidSequence([C(10, 'heart'), tj, tj2, C(13, 'heart')], true), 'طالاج: جوكران مطبوعان → مرفوضة');
+
+  /* (ط) [SAMPEL-WILD] المتماثلة بنفس المنطق حرفياً (توجيه المالك: نفس الشروط
+     والمنطق ينطبق على المتماثلة): البرية فيها جوكرٌ فقط — ولو في محل رقمها
+     (1)؛ برية تسد أي متماثلة (2)؛ بريتان (3) أو برية+مطبوع (4) مرفوضان —
+     جوكر واحد على الأكثر بأي نوع؛ ولا جوكر مع متماثلة كاملة (6). */
+  const sRules = new RamiRules('simple', 90);
+  sRules.jokerIndicator = { id: 'INDS', rank: 7, suit: 'heart', isJoker: false }; /* 7 أحمر مؤشر → 7♣/7♠ بريتان */
+  const w7c = C(7, 'club'), w7s = C(7, 'spade');
+  ok(sRules.isValidSet([w7c, C(7, 'heart'), C(7, 'diamond')], true), 'متماثلة: برية واحدة في محل رقمها → مقبولة (تعمل جوكراً)');
+  ok(sRules.isValidSet([C(5, 'spade'), C(5, 'heart'), w7c], true), 'متماثلة: برية تسد متماثلة 5ات → مقبولة');
+  ok(!sRules.isValidSet([w7c, w7s, C(5, 'heart')], true), 'متماثلة: بريتان معاً → مرفوضة (جوكران)');
+  const sPrinted = C(0, 'joker'); sPrinted.isJoker = true;
+  ok(!sRules.isValidSet([w7c, sPrinted, C(5, 'heart')], true), 'متماثلة: برية + جوكر مطبوع → مرفوضة (جوكران بأي نوع)');
+  ok(!sRules.isValidSet([w7c, w7s, C(7, 'heart'), C(7, 'diamond')], true), 'متماثلة: بريتان + 7♥ + 7♦ (4 أوراق) → مرفوضة');
+  ok(!sRules.isValidSet([C(5, 'spade'), C(5, 'heart'), C(5, 'diamond'), C(5, 'club'), w7c], true), 'متماثلة: كاملة 4 أوراق + برية → مرفوضة');
+  /* والمتماثلة التي تحوي برية غير حرة للافتتاح/الإنهاء (كالمتتالية) —
+     validateOpening يتطلب متماثلة نقية (اختبار (هـ) أعلاه غطاها بالمتماثلة النقية) */
 }
 
 console.log('── 8ب) [v19.3] مرموق الدور في مجموعة إضافية يُحتسب ضمن عتبة الـ51 ──');
