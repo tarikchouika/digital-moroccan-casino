@@ -74,3 +74,34 @@
 - **الحل المؤقت الموثق:** `/root/v213-full.patch` (كلا الـ commitين) + `/tmp/dmgames-v213.bundle` (bundle كامل). مساعد الكات يطبق الـ patch فوق `5b70b94` ويدفع.
 - **GITHUB_SYNC.md** — ملف تسليم كامل لمساعد الكات: ماذا يحتاج، كيف يطبق، وما تحذيرات النشر/KV.
 - **قبل أي نشر من أي هاتف:** تحقق من الحي أولاً: `rdc4=9`، `wheelModal=0`، `/api/health` عبر الووركر = `ok:true`. وحدّث هذا الملف بما تغير.
+
+## 9) v2.14: سجل معاملات دائم + تذاكر رهانات + تدقيق السوبر (2026-09-12، cat)
+
+**الفرع `arena/samsung-fixes-20260911` مدفوع إلى GitHub** — commits: `a3aef4a` (frontend-tx: الواجهة) + `2087a2c` (v2.14: server.js). الاعتمادات مهيأة على هذا الهاتف (token للمستخدم tarikchouika) والـ push يعمل مباشرة — انتهى عصر الـ patch/bundle.
+
+### الجداول الجديدة (تُخلق تلقائياً عند إقلاع server.js — CREATE TABLE IF NOT EXISTS، لا ترحيل يدوي):
+
+- **`transactions`**: `id, user_id, type, amount, balance_after, counterparty_id, counterparty_name, actor_id, actor_name, game_id, note, created_at` + فهارس `idx_tx_user_time(user_id, created_at)` و `idx_tx_type(type)`. الأنواع المسجلة: `transfer_out, transfer_in, charge, deduct, set_balance, referral_bonus, claim, win, bet`.
+- **`bet_tickets`**: `id, user_id, game_id, bet, won, payout, result_txt, created_at` + فهرس `idx_tk_user_time(user_id, created_at)`.
+- **`logTx(user, type, amount, extra)`**: دالة إدراج داخل try/catch — تُستدعى من: transfer (سطران: out/in)، claim، set_balance، charge (+ referral_bonus للمحيل)، deduct، ومسار settle للغرف (win للفائز / bet للخاسر). `transfersList` الذاكرية حُذفت نهائياً من الملف (0 إشارات).
+
+### النقاط الجديدة (عقد الواجهة/الخادم):
+
+- **POST /api/transfer**: يخصم من المرسل وقيّد فعلياً للمستلم (UPDATE gold للطرفين في DB) ويسجل transfer_out/transfer_in مع balance_after لكل طرف. المستلم يجب أن يكون مستخدماً حقيقياً وإلا 404.
+- **GET /api/transfers**: من جدول transactions للمستخدم الحالي فقط، limit 100 تنازلياً، الصف فيه type + from_id/from_name/to_name + amount + balance_after + note + created_at.
+- **POST /api/rounds**: يسجل تذكرة في bet_tickets (للضيف ok:true بلا تسجيل). **GET /api/rounds**: آخر 100 تذكرة للمستخدم من كل الألعاب. **GET /api/games/:gid/history**: تذاكر المستخدم للعبة المحددة فقط، limit 25.
+- **GET /api/admin/transactions** (سوبر فقط؛ الأدمن العادي 403): فلاتر user_id / type / limit (افتراضي 200، أقصى 1000) / offset، مع total. LEFT JOIN users لجلب username — صفوف المستخدمين المحذوفين تبقى ظاهرة (username فارغ، لا تسقط من التدقيق).
+- **الواجهة (a3aef4a)**: renderTransactions بشارات لكل نوع (spill ok/bad/عادي)، دمج تذاكر الخادم/المحلي بلا تكرار + حقل بحث في سجل التذاكر، تبويب «السجلات» في لوحة الأدمن (سوبر فقط) مع فلاتر مستخدم/نوع، زر «سجل» لكل مستخدم في جدول المستخدمين، مفاتيح ترجمة جديدة بالأربع لغات.
+
+### من ينشر: sam فقط
+
+هذا العمل **غير منشور على الحي** — cat دفع الفرع إلى GitHub فقط (قاعدة صارمة: لا نشر Pages، لا pm2 إنتاجي، لا KV). خطوات sam: `git fetch` + دمج/تطبيق الفرع → إعادة تشغيل خادمه (الجداول تُخلق عند الإقلاع تلقائياً) → نشر Pages من الشجرة المدمجة. تفاصيل التسليم في `GITHUB_SYNC.md`.
+
+### تحقق cat (E2E كامل على منفذ 3995 ضد data/royalcoin.db):
+
+- login player → POST /api/rounds (bl, bet 50) → ok:true، التاريخ يعرض الصف، /api/rounds يعرضه. ✓
+- POST /api/transfer من player إلى super بمبلغ 30 → ok:true، gold: 970 (1000−30)، super: 1093 (1063+30). الطرفان يريان transfer_out/transfer_in مع balance_after. ✓
+- حساب اختبار عبر /api/admin/register + شحن 100 عبر /api/admin/user/57/balance → الحساب يرى صف charge بمبلغ 100 وfrom_name=super. ✓
+- GET /api/admin/transactions بلا فلتر: rows فيها username (total=3)؛ ?user_id=57 يفلتر (total=1). ✓
+- أدمن عادي على /api/admin/transactions → 403 «سوبر أدمن فقط». ✓
+- الحساب الاختباري حُذف عبر /api/admin/user/57/delete، وصف charge اليتيم حُذف من transactions — بقي 42 مستخدماً. تذكرة player (bl/50) وتحويل الـ30 أُبقيا كوثيقة عمل حقيقية.
