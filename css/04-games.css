@@ -1985,6 +1985,27 @@ canvas.game {
   font-weight: 700;
   color: #ffd700;
 }
+/* ── 9 جهات (3×3): شبكة بدل الصف الواحد — نفس pnBtn مع تكيف الحشو والحجم.
+     direction:ltr يثبّت الشبكة بصرياً (↖ يسار الشاشة) حتى في الصفحة العربية RTL —
+     وإلا تنعكس الأعمدة ويظهر أعلى-اليسار في خانة اليمين البصرية ── */
+.pn-picks.nine {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  direction: ltr;
+  gap: 6px;
+  max-width: 330px;
+  margin: 0 auto;
+}
+.pn-picks.nine .pnBtn {
+  padding: 8px 4px;
+  font-size: 0.9rem;
+}
+.pn-picks.nine .pn-arrow {
+  font-size: 1.5rem;
+}
+.pn-picks.nine .pn-dir {
+  font-size: 0.62rem;
+}
 .pn-status {
   min-height: 40px;
   margin: 8px auto 2px;
@@ -5372,6 +5393,19 @@ body.rami-game-open { overflow: hidden; }
     min-width: clamp(64px, 18vw, 110px);
     padding: clamp(8px, 2vh, 14px) 6px;
     font-size: clamp(0.68rem, 1.9vh, 0.85rem);
+  }
+  /* 9 جهات (3×3): إلغاء min-width الكبير والالتزام بشبكة .nine دون فيضان —
+     الموضع (grid-column/row) يبقى لقواعد التخطيط أعلاه ولا يُلمس هنا */
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .pn-picks.nine {
+    width: min(100%, 300px);
+    gap: 5px;
+    padding: 6px;
+    margin: 0;
+  }
+  #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) .pn-picks.nine .pnBtn {
+    min-width: 0;
+    padding: clamp(6px, 1.6vh, 12px) 4px;
+    font-size: clamp(0.6rem, 1.7vh, 0.8rem);
   }
   #pg-game.app-fs #gamePageBody .stage:has(.pn-arena) > .pn-status {
     grid-column: 1;

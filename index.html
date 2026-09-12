@@ -357,7 +357,7 @@
               </div>
             </div>
             <div class="gp-head-right">
-              <button class="game-gold-chip" id="gameGoldChip" onclick="claimDaily()" title="الرصيد / المكافأة اليومية" aria-label="رصيد الكوينز">
+              <button class="game-gold-chip" id="gameGoldChip" type="button" title="الرصيد" aria-label="رصيد الكوينز">
                 <i class="fa-solid fa-coins g" aria-hidden="true"></i>
                 <span class="gold-val" id="goldD">1,000</span>
               </button>
@@ -377,6 +377,7 @@
               <div class="tickets-grip" id="ticketsGrip" aria-hidden="true"><span></span></div>
               <div class="ghist-head">
                 <div class="ghist-title" id="ticketsTitle"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="ui.ghistTitle">سجل تيكيتس الرهانات</span></div>
+                <input type="search" id="ticketsSearch" data-i18n-placeholder="ui.ticketsSearch" placeholder="بحث في التيكيتس…" aria-label="بحث في التيكيتس" autocomplete="off" style="width:46%;border:1px solid var(--line,#2a3142);border-radius:8px;padding:4px 8px;font-size:.8rem;background:transparent;color:inherit">
                 <div class="tickets-head-actions">
                   <span class="live-badge"><span class="dot" aria-hidden="true"></span> <span data-i18n="ui.liveBadge">حي</span></span>
                   <button type="button" class="btn icon-btn tickets-close" onclick="toggleTicketsPanel(false)" aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
@@ -736,27 +737,6 @@
       <span data-i18n="ui.account">الحساب</span>
     </button>
   </nav>
-
-  <!-- ═══════════ Modal: Daily Lucky Wheel ═══════════ -->
-  <div class="mwrap" id="wheelModal" role="dialog" aria-modal="true" aria-labelledby="wheelTitle">
-    <div class="modal modal-sm" style="text-align:center;position:relative">
-      <button class="mclose" onclick="closeWheelModal()" aria-label="إغلاق"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-      <div class="mhead">
-        <h3 id="wheelTitle" data-i18n="wheel.title"><i class="fa-solid fa-dharmachakra g"></i> عجلة الحظ اليومية</h3>
-      </div>
-      <div class="mbody" style="display:flex;flex-direction:column;align-items:center;gap:14px">
-        <p class="ctext" data-i18n="wheel.desc">لِف العجلة اليومية للحصول على مكافأتك المجانية!</p>
-        <div class="lucky-wheel-container">
-          <canvas id="luckyWheelCanvas" width="280" height="280"></canvas>
-          <div class="lucky-wheel-pointer">▼</div>
-        </div>
-        <button class="big" id="spinWheelBtn" onclick="spinLuckyWheel()" style="width:100%;max-width:240px">
-          <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-i18n="wheel.spinBtn">تدوير العجلة</span>
-        </button>
-        <div id="wheelResult" class="authmsg ok" style="min-height:22px"></div>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>

@@ -62,13 +62,14 @@ function renderAuthChip() {
           '<span class="acct-balance"><i class="fa-solid fa-coins g" aria-hidden="true"></i> <span id="acctGoldD">' + fmt(u.gold || 0) + '</span></span>' +
         '</div>' +
         '<div class="acct-sep" aria-hidden="true"></div>' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTrModal()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ' + T('auth.sendBalance') + '</button>' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openPwModal()"><i class="fa-solid fa-key" aria-hidden="true"></i> ' + T('auth.changePassword') + '</button>' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTransactionHistory()"><i class="fa-solid fa-receipt" aria-hidden="true"></i> ' + T('auth.transactionHistory') + '</button>' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openAccountLog()"><i class="fa-solid fa-user" aria-hidden="true"></i> ' + T('auth.accountLog') + '</button>' +
-        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openSecurity()"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> ' + T('sec.title') + '</button>' +
+        /* [i18n] نصوص أزرار القائمة داخل span مع data-i18n — تُعاد ترجمتها عند تغيير اللغة (translateStatic) */
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTrModal()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> <span data-i18n="auth.sendBalance">' + T('auth.sendBalance') + '</span></button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openPwModal()"><i class="fa-solid fa-key" aria-hidden="true"></i> <span data-i18n="auth.changePassword">' + T('auth.changePassword') + '</span></button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openTransactionHistory()"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="auth.transactionHistory">' + T('auth.transactionHistory') + '</span></button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openAccountLog()"><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-i18n="auth.accountLog">' + T('auth.accountLog') + '</span></button>' +
+        '<button class="acct-item" role="menuitem" onclick="closeAcctMenu();openSecurity()"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> <span data-i18n="sec.title">' + T('sec.title') + '</span></button>' +
         '<div class="acct-sep" aria-hidden="true"></div>' +
-        '<button class="acct-item danger" role="menuitem" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> ' + T('auth.logout') + '</button>' +
+        '<button class="acct-item danger" role="menuitem" onclick="authLogout()"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> <span data-i18n="auth.logout">' + T('auth.logout') + '</span></button>' +
       '</div>' +
     '</div>';
 }

@@ -8,15 +8,27 @@
    ═════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
-  var API_BASE = (typeof window !== 'undefined' && window.API_BASE_URL) ||
-    ((typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.hostname))
-      ? location.origin
-      : ((typeof location !== 'undefined' && /(^|\.)dmgames\.pages\.dev$/.test(location.hostname))
-        ? 'https://casino-api.dmgames-api.workers.dev'
-        : 'https://casino-api.tarikc.workers.dev'));
-  /* التطوير المحلي: origin http://localhost:3000 → ws://localhost:3000 (وليس wss) */
-  if (API_BASE.indexOf('http://') === 0) API_BASE = 'ws' + API_BASE.slice(4);
-  else if (API_BASE.indexOf('https://') === 0) API_BASE = 'wss' + API_BASE.slice(5);
+  /* [PhoneLink] نفس منطق api.js: العنوان يُقرأ من api-url2.json (ووركر الوسيط الدائم).
+     الووركر الوسيط يمرر SSE لكن خادم الهاتف (server.js) لا يدعم WebSocket —
+     لذا في وضع الووركر الوسيط/النفق نُبقي EventSource الأصلي ولا نستبدله. */
+  var API_BASE = (typeof window !== 'undefined' && typeof window.API_BASE_URL === 'string') ? window.API_BASE_URL : null;
+  var basePromise = (API_BASE !== null)
+    ? Promise.resolve(API_BASE)
+    : ((typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.hostname))
+      ? Promise.resolve(location.origin)
+      : fetch('/api-url2.json', { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (cfg) { return (cfg && cfg.url) || 'https://casino-api.dmgames-api.workers.dev'; })
+          .catch(function () { return 'https://casino-api.dmgames-api.workers.dev'; }));
+  basePromise.then(function (b) { API_BASE = b; });
+  function toWs(base) {
+    if (base.indexOf('http://') === 0) return 'ws' + base.slice(4);
+    if (base.indexOf('https://') === 0) return 'wss' + base.slice(5);
+    return base;
+  }
+  /* الووركر الوسيط (casino-phone) = عبور SSE إلى الهاتف — بلا Durable Objects/WS */
+  var isSSEMode = false;
+  basePromise.then(function (b) { isSSEMode = /casino-phone\.|trycloudflare\.com$|\.lhr\.life$|\.loca\.lt$/.test(b); });
   function getUid() {
     /* [PR-Sync] const AUTH لا يظهر على window — يقرأ كرابطة عالمية مباشرة.
        كان uid يصل '0' فلا يتعرف الخادم على اللاعب ولا يرسل room:replay (لوحة مجمدة). */
@@ -44,7 +56,7 @@
     _connect: function () {
       var self = this;
       if (self.closed) return;
-      self._ws = new WebSocket(API_BASE + '/api/rooms/' + encodeURIComponent(self.rid) + '/ws?uid=' + encodeURIComponent(getUid()));
+      self._ws = new WebSocket(toWs(API_BASE) + '/api/rooms/' + encodeURIComponent(self.rid) + '/ws?uid=' + encodeURIComponent(getUid()));
       self._ws.onopen = function () {
         for (var i = 0; i < self.facades.length; i++) {
           var f = self.facades[i];
@@ -127,6 +139,7 @@
   /* polyfill: استبدال EventSource للـ '/api/live' فقط */
   var OrigES = window.EventSource;
   window.EventSource = function (url) {
+    if (isSSEMode) return new OrigES(API_BASE + '/api/live');
     if (url === '/api/live' || url === (API_BASE + '/api/live')) {
       return new LiveWS('global');
     }
@@ -138,6 +151,7 @@
   /* مراقبة الغرفة الحالية: عند فتح غرفة لعب → اتصال إضافي بها */
   var gameConn = null;
   function watchRoom(force) {
+    if (isSSEMode) return; /* [PhoneLink] خادم الهاتف: الغرف عبر SSE، بلا WS */
     var rid = getCurrentRoomId();
     if (rid && rid !== 'global' && (force || !gameConn || gameConn._rid !== rid)) {
       if (gameConn) { try { gameConn.close(); } catch (e) { } }

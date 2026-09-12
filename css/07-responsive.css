@@ -195,6 +195,22 @@
   .brand {
     justify-content: center;
   }
+  /* [Legal] الجوال: محتوى القائمة أطول من الشاشة — اسمح بالتمرير داخلها
+     مع تثبيت side-foot أسفلها (sticky) كي تبقى أيقونات الأمان الثلاث
+     (2FA / Provably Fair / العدالة والشفافية) مرئية دائماً حتى أثناء التمرير */
+  .sidebar {
+    overflow-y: auto;
+    padding-bottom: 24px;
+  }
+  .side-foot {
+    margin-top: auto;
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: var(--gc);
+    z-index: 2;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
 }
 /* ── Landscape للهواتف ── */
 @media (max-height: 500px) and (orientation: landscape) {

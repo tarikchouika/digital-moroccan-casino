@@ -39,7 +39,6 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<a class="nav-item" data-nav="games" href="index.html#games">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-gamepad"></i></span>' +
 '<span data-i18n="ui.games">الألعاب</span>' +
-'<span class="badge" aria-label="22 لعبة">22</span>' +
 '</a>' +
 '<a class="nav-item" data-nav="lb" href="index.html#lb">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-ranking-star"></i></span>' +
@@ -66,6 +65,10 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>' +
 '<span data-i18n="ui.fair">Provably Fair</span>' +
 '</a>' +
+'<a class="nav-item" data-nav="fairness" href="fairness.html">' +
+'<span class="ic" aria-hidden="true"><i class="fa-solid fa-scale-balanced"></i></span>' +
+'<span data-i18n="ui.fairness">العدالة والشفافية</span>' +
+'</a>' +
 '<a class="nav-item" data-nav="admin" id="navAdmin" href="index.html#admin">' +
 '<span class="ic" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>' +
 '<span data-i18n="ui.admin">الإدارة</span>' +
@@ -74,7 +77,7 @@ return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="الق
 '<div class="sf-icons">' +
 '<a class="sf-icon" href="2fa.html" data-i18n-title="ui.fb2fa" title="2FA محمي"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></a>' +
 '<a class="sf-icon" href="provably-fair.html" data-i18n-title="ui.fbFair" title="Provably Fair"><i class="fa-solid fa-dice" aria-hidden="true"></i></a>' +
-'<a class="sf-icon" href="fairness.html" data-i18n-title="ui.fbSecure" title="العدالة والشفافية"><i class="fa-regular fa-lock" aria-hidden="true"></i></a>' +
+'<a class="sf-icon" href="fairness.html" data-i18n-title="ui.fbSecure" title="العدالة والشفافية"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></a>' +
 '</div>' +
 '</div>' +
 '</aside>';

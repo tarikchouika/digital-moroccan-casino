@@ -1345,112 +1345,133 @@ body.app-fs-on #rdStage,
   #rdStage.rd-spectating .rd-botrail { align-items: center; }
 }
 
-/* ═══════════════ v2.13 — لاندسكيب: هندسة المساحات (مبنية على قياس 800×360) ═══════════════
-   المسرح 274px عمودياً:
-   0-40   : tophead (روندا + الجولة) + مقاعد الأعلى عمودية تحت الهامش الأعلى
-   40-170 : ورق الوسط المرمي (قاعة عليا) — أضيق جانبياً
-   95-120 : الهدف (يمين) والتوزيعة (يسار) بجانب الورق بحجم كبير مقروء
-   170-274: هامش أسفل — الرزمة وسط + مقبض السجل يمين + مقاعد القاع + صف اليد أعلاها */
+/* ═══════════════ v2.13 — لاندسكيب: مقاعد بجانب الأوراق (كتلة أخيرة فتغلب الكل) ═══════════════
+   إصلاحات لقطة 4 لاعبين باللاندسكيب:
+   (أ) توحيد حجم ورق صفوف الظهر: كانت tl/tr بحجم --cw وbl بـ 0.78×cwB
+       فتظهر بأحجام مختلفة — قيمة واحدة من --chB للجميع.
+   (ب) أيقونة كل لاعب بجانب أوراقه أفقياً: اليميني tr أيقونته يسار أوراقه،
+       واليساريان tl/bl أيقونتهما يمين أوراقهما، والرئيسي br أيقونته على
+       نفس خط يده يسار أول ورقة.
+   (ج) صف bl مرفوع فوق مستوى الصف السفلي فلا يزاحم أوراق الرئيسي.
+   (د) مقبض سجل الأحداث أعلى الشاشة فوق عنوان الروندا. */
 @media (orientation: landscape) {
-  /* مقاعد الأعلى (tl/tr): عمود رأسي بمحاذاة الهامش الأعلى — لوحة ثم ورقها تحتها */
-  #rdStage .rd-corner-tl {
-    top: 2px; left: 8px;
-    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
-  }
-  #rdStage .rd-corner-tl .rd-seat { order: 1; }
-  #rdStage .rd-corner-tl .rd-backrow { order: 2; align-items: flex-start; }
-  #rdStage .rd-corner-tr {
-    top: 2px; right: 8px;
-    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
-  }
-  #rdStage .rd-corner-tr .rd-seat { order: 1; }
-  #rdStage .rd-corner-tr .rd-backrow { order: 2; align-items: flex-end; }
-  #rdStage .rd-corner-tl .rd-seat-stats,
-  #rdStage .rd-corner-tr .rd-seat-stats { font-size: .56rem; gap: 2px; }
-  /* صف ورق المقاعد العلوية مضغوط عمودياً (×0.5) لتحرير عمق الطاولة
-     (صف tr يمتد على منطقة اليد اليمنى — يجب أن ينتهي قبل مستوى صف اليد) */
-  #rdStage .rd-corner-tl .rd-back-card,
-  #rdStage .rd-corner-tr .rd-back-card {
-    width: calc(var(--cwB) * .5); height: calc(var(--chB) * .5);
-    margin-inline-start: calc(var(--cwB) * -.3);
-  }
 
-  /* القاعة (ورق الوسط): الجزء العلوي فقط — من تحت tophead إلى بدء الهامش الأسفل */
-  #rdStage .rd-court {
-    top: 13cqh;
-    bottom: calc(var(--chB) + 78px);   /* فوق اليد + المقاعد القاعية (52+26) */
+  /* (أ) توحيد حجم ورق الظهر — القاعدة العامة */
+  #rdStage .rd-back-card {
+    width: calc(var(--chB) * 0.62);
+    height: calc(var(--chB) * 0.82);
+    margin-inline-start: calc(var(--chB) * -0.30);
+    border-radius: clamp(5px, .8vw, 9px);
   }
-  #rdStage.rd-uppers .rd-court { top: 16cqh; }
-  #rdStage .rd-table-cards {
-    inset-inline-start: 15cqw; inset-inline-end: 15cqw;
-    bottom: 2px;
+  /* تجاوز صريح للمحددات القديمة الأعلى خصوصية (rd-uppers وbl وbr)
+     بنفس القيم — قاعدة واحدة تساوي ثلاثة محددات */
+  #rdStage.rd-uppers .rd-back-card,
+  #rdStage .rd-corner-bl .rd-back-card,
+  #rdStage.rd-uppers .rd-corner-br .rd-back-card {
+    width: calc(var(--chB) * 0.62);
+    height: calc(var(--chB) * 0.82);
+    margin-inline-start: calc(var(--chB) * -0.30);
   }
-  /* الورق المرمي أصغر نسبياً كي تسع القاعة صفوفه */
-  #rdStage { --tcw: 10.5cqw; --tch: calc(var(--tcw) * 1.36); }
-  #rdStage.rd-uppers { --tcw: 9.6cqw; --tch: calc(var(--tcw) * 1.34); }
+  /* أول ورقة بلا هامش سالب — قاعدة :first-child الموجودة (سطر 418)
+     خصوصيتها أعلى فتسبق هذه الكتلة تلقائياً، لا حاجة لإعادة صياغتها */
+  /* فجوة موحدة بين أوراق الصف (كانت bl/br بفجوة والعلويان بلا) */
+  #rdStage .rd-corner-bl .rd-backrow { gap: 0; }
 
-  /* الهدف/التوزيعة: حجم كبير + منتصف عمودي لمنطقة الورق المرمي، على جانبيه */
+  /* (ب) المقاعد صفوف أفقية — DOM: backrow أولاً ثم seat، والزوايا ltr
+     فيزيائياً: row يجعل الأوراق يساراً والأيقونة يمينها (tl/bl)،
+     وrow-reverse يجعل الأوراق أقصى اليمين والأيقونة يسارها (tr) */
+  #rdStage .rd-corner-tl,
+  #rdStage .rd-corner-tr,
+  #rdStage .rd-corner-bl {
+    display: flex; flex-direction: row; align-items: center; gap: 8px;
+  }
+  /* خصم tr (يمين الشاشة): الأوراق ملاصقة للحافة اليمنى والأيقونة يسارها */
+  #rdStage .rd-corner-tr { flex-direction: row-reverse; }
+  /* (ج) خصم bl (يسار الشاشة): مثل tl لكن مرفوعاً فوق مستوى اليد
+     (أوراقه وأيقونته بعيدان عن أوراق الرئيسي) */
+  #rdStage .rd-corner-bl { bottom: calc(var(--chB) + 14px); left: 8px; flex-direction: row; }
+
+  /* الرئيسي br: لوحة فقط (صف الظهر مخفي). اليد داخل botrail تلتصق
+     بأقصى اليمين (justify-content: flex-end، قاع 4-8px) وأوراقها عرضها
+     chB×0.72 — لذا اخترنا الصف الأفقي على نفس خط اليد بدل العمودي فوقها
+     (العمودي يغطي القاعة). الإزاحة من اليمين = عرض 3 أوراق + 34px:
+     أقصى امتداد فعلي لليد من اليمين = botrail(6-10) + padding(2+2) +
+     فجوتان(3+3 على الهاتف حتى 8+8 على الشاشات العريضة) + 3 أوراق
+     = 2.16chB + 30px — فتجلس الأيقونة بجانب (يسار) أول ورقة بفجوة
+     4px على أقصى عرض، وتبتعد أماناً كلما نقصت أوراق اليد */
+  #rdStage .rd-corner-br {
+    position: absolute;
+    bottom: 10px;
+    inset-inline-end: calc(var(--chB) * .72 * 3 + 34px);
+    inset-inline-start: auto;
+    display: flex; flex-direction: row; align-items: flex-end; gap: 8px;
+    z-index: 32;
+  }
+  #rdStage .rd-corner-br .rd-backrow { display: none; }
+
+  /* (د) مقبض السجل أعلى الشاشة فوق العنوان — لوحة أعلى الوسط */
+  #rdStage .rd-log-panel {
+    top: 0; bottom: auto;
+    left: 50%; transform: translateX(-50%);
+    z-index: 90;
+  }
+  /* عند فتح السجل يبقى أعلى الشاشة متمركزاً أفقياً */
+  #rdStage .rd-log-panel.rd-log-open { top: 2px; bottom: auto; }
+  /* العنوان ينزل قليلاً فيظهر المقبض (9-17px) فوقه تماماً */
+  #rdStage .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
+  #rdStage.rd-uppers .rd-tophead { top: clamp(16px, 3.4vh, 26px); }
+}
+
+/* ═══ [sam-merge-patch] تثبيت قرارات المستخدم فوق كتلة cat (آخر الملف يغلب) ═══
+   المستخدم نصّ حرفياً: ورق التوزيع (الرزمة) وزر سجل الحركات «إلى الهامش الأسفل
+   من الشاشة في المنطقة الفارغة» — لا أعلى الشاشة. والتسميات (الهدف/التوزيعة)
+   «تكبير حجمهما وإزاحتهم للأسفل نحو منتصف الشاشة في المنطقة الخالية». */
+@media (orientation: landscape) {
+  /* مقبض السجل: الهامش الأسفل يمين الشاشة فوق صف اليد (لا أعلى الشاشة) */
+  #rdStage .rd-log-panel {
+    top: auto; bottom: calc(var(--chB) + 6px);
+    left: auto; right: 108px;
+    transform: none;
+    align-items: flex-end;
+    z-index: 90;
+  }
+  #rdStage .rd-log-panel.rd-log-open { top: auto; bottom: calc(var(--chB) + 6px); }
+  /* العنوان يعود لأعلى المنتصف الطبيعي */
+  #rdStage .rd-tophead { top: 2px; }
+  #rdStage.rd-uppers .rd-tophead { top: 2px; }
+
+  /* الهدف/التوزيعة: حجم كبير، منتصف الشاشة في المنطقة الخالية تحت القاعة
+     (بجوار الرزمة) — بلا تداخل مع أوراق المقاعد (قياس: صفوف tl/tr تنتهي قبلها) */
   #rdStage .rd-infline {
     position: absolute;
-    top: 52cqh;               /* تحت القاعة: الهامش الأوسط الجانبي بجوار الرزمة */
+    top: 54cqh;
     width: 100%;
     min-height: 0;
     pointer-events: none;
     direction: rtl;
   }
   #rdStage .rd-infline .rd-inf-seg,
-  #rdStage .rd-inf-seg { font-size: clamp(.95rem, 3.6vh, 1.3rem); gap: 6px; }
+  #rdStage .rd-inf-seg { font-size: clamp(.95rem, 3.4vh, 1.3rem); gap: 6px; }
   #rdStage .rd-infline .rd-inf-seg b,
   #rdStage .rd-inf-seg b { font-size: 1.3em; }
   #rdStage .rd-inf-deal { left: 16cqw; transform: translate(0, -50%); }
   #rdStage .rd-inf-target { left: auto; right: 16cqw; transform: translate(0, -50%); }
 
-  /* الهامش الأسفل: مقاعد بمحاذاة القاع (bl عمود معكوس + br يمين القاع) */
-  #rdStage .rd-corner-bl {
-    left: 8px; bottom: calc(var(--chB) + 10px);
-    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 3px;
-  }
-  #rdStage .rd-corner-bl .rd-backrow { order: 2; align-items: flex-start; }
-  #rdStage .rd-corner-bl .rd-seat { order: 1; }
-  #rdStage .rd-corner-bl .rd-back-card { width: calc(var(--cwB) * .78); height: calc(var(--chB) * .78); margin-inline-start: 0; }
-  #rdStage .rd-corner-br {
-    position: absolute;
-    bottom: calc(var(--chB) + 10px);
-    inset-inline-end: 8px;
-    inset-inline-start: auto;
-    display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
-    z-index: 32;
-  }
-  #rdStage .rd-corner-br .rd-seat { order: 1; }
-  #rdStage .rd-corner-br .rd-backrow { display: none; }
-
-  /* صف اليد فوق الهامش الأسفل (فوق الرزمة والمقاعد) — تخصيص قوي يغلب ميديا
-     430/620 القديمة (كانت bottom 3-4px تؤدي لتداخل اليد مع صفوف الأعلى) */
-  @media (orientation: landscape) and (max-height: 620px) {
-    #rdStage .rd-botrail { bottom: 6px !important; }   /* اليد بالهامش الأسفل — تحت صفوف الأعلى بلا تراكب */
-    #rdStage .rd-corner-tl .rd-back-card,
-    #rdStage .rd-corner-tr .rd-back-card { margin-inline-start: calc(var(--cwB) * -.38); }
-  }
-
-  /* الرزمة: وسط الهامش الأسفل (المستقلة على المسرح) */
+  /* الرزمة (عنصر مستقل على المسرح منذ rd-html v2.13): وسط الهامش الأسفل فوق اليد */
   #rdStage .rd-deck {
+    position: absolute;
     bottom: calc(var(--chB) + 18px);
     left: 50%; transform: translateX(-50%);
     z-index: 8;
   }
+  #rdStage.rd-spectating .rd-deck { bottom: 20px; }
 
-  /* مقبض السجل: الهامش الأسفل يمين الشاشة بجوار لوحة br */
-  #rdStage .rd-log-panel {
-    bottom: calc(var(--chB) + 4px); left: auto; right: 110px;
-    transform: none;
-    align-items: flex-end;
-  }
-  #rdStage.rd-spectating .rd-log-panel { right: 50%; transform: translateX(50%); }
+  /* القاعة تُسند فوق الهامش الأسفل (لا تبتلع منطقة التسميات/الرزمة) */
+  #rdStage .rd-court { bottom: calc(var(--chB) + 74px); }
   #rdStage.rd-spectating .rd-court { bottom: calc(var(--chB) + 70px); }
-  #rdStage.rd-spectating .rd-botrail { bottom: 8px; }
-}
 
-/* [v2.13-b] الرزمة (مستقلة على المسرح): فوق الصف السفلي في البورتريه أيضاً */
-@media (orientation: portrait) {
-  #rdStage .rd-deck { bottom: calc(var(--chB) + 26px); z-index: 8; }
+  /* صف اليد بالهامش الأسفل */
+  @media (orientation: landscape) and (max-height: 620px) {
+    #rdStage .rd-botrail { bottom: 6px !important; }
+  }
 }

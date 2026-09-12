@@ -97,23 +97,7 @@ function newSeeds() {
 }
 /* ── Daily Reward ── */
 function claimDaily() {
-  const now = Date.now();
-  if (now - ST.lastClaim < 15000) {
-    toast(T('ts.wait') || 'انتظر قليلاً بين كل مطالبة', 'warn');
-    return;
-  }
-  ST.lastClaim = now;
-  save();
-  if (typeof openWheelModal === 'function') {
-    openWheelModal();
-  } else {
-    ST.gold += 100;
-    save();
-    wallet();
-    if (typeof SND !== 'undefined' && SND.coin) SND.coin();
-    if (typeof confetti === 'function') confetti(40);
-    toast(T('ts.claim') || 'تم استلام المكافأة اليومية +100', 'ok');
-  }
+  toast('المكافآت اليومية مُعطّلة', 'warn');
 }
 /* ── تهيئة الحالة عند التحميل ── */
 function initState() {

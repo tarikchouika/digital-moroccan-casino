@@ -79,6 +79,41 @@ CREATE TABLE IF NOT EXISTS admin_messages (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_admin_msg_created ON admin_messages(created_at);
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+`);
+
+/* [server-tx] سجل المعاملات المالية (transactions) + تذاكر الرهانات (bet_tickets) */
+db.exec(`
+CREATE TABLE IF NOT EXISTS transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  balance_after INTEGER,
+  counterparty_id INTEGER,
+  counterparty_name TEXT,
+  actor_id INTEGER,
+  actor_name TEXT,
+  game_id TEXT,
+  note TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tx_user_time ON transactions(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_tx_type ON transactions(type);
+CREATE TABLE IF NOT EXISTS bet_tickets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  game_id TEXT NOT NULL,
+  bet INTEGER NOT NULL DEFAULT 0,
+  won INTEGER NOT NULL DEFAULT 0,
+  payout INTEGER NOT NULL DEFAULT 0,
+  result_txt TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tk_user_time ON bet_tickets(user_id, created_at);
 `);
 
 /* [Group] جداول الجولات الجماعية (كينو/كراش — السيرفر يحكم الجولة، Provably Fair) */
@@ -226,6 +261,35 @@ function persistUser(u) {
   if (u.id >= nextUserId) nextUserId = u.id + 1;
   users[u.id] = u;
 }
+/* [server-tx] تسجيل معاملة مالية في جدول transactions (لا تُفشل العملية الأصل أبداً) */
+function logTx(user, type, amount, extra) {
+  try {
+    const ex = extra || {};
+    db.prepare(
+      'INSERT INTO transactions (user_id, type, amount, balance_after, counterparty_id, counterparty_name, actor_id, actor_name, game_id, note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+    ).run(
+      user.id, String(type || ''), Math.round(amount || 0),
+      (ex.balance_after != null) ? Math.round(ex.balance_after) : null,
+      ex.counterparty_id != null ? ex.counterparty_id : null,
+      ex.counterparty_name != null ? String(ex.counterparty_name) : null,
+      ex.actor_id != null ? ex.actor_id : null,
+      ex.actor_name != null ? String(ex.actor_name) : null,
+      ex.game_id != null ? String(ex.game_id) : null,
+      ex.note != null ? String(ex.note) : null,
+      Math.floor(Date.now() / 1000)
+    );
+  } catch (e) {}
+}
+/* [server-tx] تسجيل تذكرة رهان في جدول bet_tickets (لا تُفشل اللعبة أبداً) */
+function logTicket(userId, gameId, bet, won, payout, resultTxt) {
+  try {
+    db.prepare(
+      'INSERT INTO bet_tickets (user_id, game_id, bet, won, payout, result_txt, created_at) VALUES (?,?,?,?,?,?,?)'
+    ).run(userId, String(gameId || ''), bet || 0, won ? 1 : 0, payout || 0,
+      (resultTxt != null) ? String(resultTxt).slice(0, 90) : null, Math.floor(Date.now() / 1000));
+  } catch (e) {}
+}
+
 /* إنشاء الحسابات الافتراضية فقط إن كانت القاعدة فارغة (نفس حسابات الباك-أند القديم) */
 (function seedIfEmpty() {
   const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
@@ -487,7 +551,6 @@ const chatMessages = [
   { username: 'tarik', message: 'السلام عليكم ورحمة الله!', created_at: Date.now() - 60000 },
   { username: 'hamza_casawi', message: 'مبروك للرابحين في الروندا 🏆', created_at: Date.now() - 30000 }
 ];
-let transfersList = [];
 const winners = [
   { username: 'tarik', game_id: 'Moroccan Ronda', payout: 350 },
   { username: 'mehdi_rabat', game_id: 'Crash 🚀', payout: 1250 },
@@ -765,6 +828,12 @@ const server = http.createServer((req, res) => {
   }
 
   /* ═══════ نقاط API ═══════ */
+  if (pathname === '/api/health') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true, service: 'dmgames-arena', ts: Date.now() }));
+    return;
+  }
   if (pathname.startsWith('/api/')) {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -940,13 +1009,61 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/transfer') {
         const amt = parseInt(data.amount, 10);
         if (!me || !data.to || isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
+        /* [server-tx] المستلم مستخدم حقيقي بالاسم — لا تحويل لأسماء وهمية */
+        const toName = String(data.to).trim();
+        const toUser = Object.values(users).find(function (u) { return u.username === toName; });
+        if (!toUser) { json({ ok: false, message: 'المستخدم غير موجود' }, 404); return; }
+        if (toUser.id === me.id) { json({ ok: false, message: 'لا يمكنك التحويل لنفسك' }, 400); return; }
         if ((me.gold || 0) < amt) { json({ ok: false, message: 'رصيدك غير كافٍ' }, 400); return; }
-        me.gold -= amt;
-        transfersList.unshift({ id: Date.now(), from_id: me.id, from_name: me.username, to_name: data.to, amount: amt, created_at: Math.floor(Date.now() / 1000) });
-        json({ ok: true, amount: amt, to: data.to, gold: me.gold });
+        me.gold = me.gold - amt;
+        toUser.gold = (toUser.gold || 0) + amt;
+        try {
+          db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id);
+          db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(toUser.gold, toUser.id);
+        } catch (e) {}
+        logTx(me, 'transfer_out', amt, { counterparty_id: toUser.id, counterparty_name: toUser.username, balance_after: me.gold });
+        logTx(toUser, 'transfer_in', amt, { counterparty_id: me.id, counterparty_name: me.username, balance_after: toUser.gold });
+        json({ ok: true, amount: amt, to: toName, gold: me.gold });
         return;
       }
-      if (pathname === '/api/transfers') { json({ ok: true, transfers: transfersList }); return; }
+      if (pathname === '/api/transfers') {
+        /* [server-tx] سجل معاملات المستخدم الحالي من جدول transactions */
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const rows = db.prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 100").all(me.id);
+        const TX_TYPES = ['transfer_out', 'transfer_in', 'charge', 'deduct', 'set_balance', 'referral_bonus', 'claim', 'win', 'bet'];
+        json({
+          ok: true,
+          transfers: rows.filter(function (t) { return TX_TYPES.indexOf(t.type) !== -1; }).map(function (t) {
+            let from_id = null, from_name = null, to_name = null;
+            if (t.type === 'transfer_out') {
+              from_id = me.id; from_name = me.username; to_name = t.counterparty_name;
+            } else if (t.type === 'transfer_in') {
+              from_id = t.counterparty_id; from_name = t.counterparty_name; to_name = me.username;
+            } else if (t.type === 'charge') {
+              from_name = t.actor_name; to_name = me.username;
+            } else if (t.type === 'deduct') {
+              from_name = me.username; to_name = t.actor_name;
+            } else if (t.type === 'set_balance') {
+              from_name = t.actor_name; to_name = me.username;
+            } else if (t.type === 'referral_bonus') {
+              from_name = t.counterparty_name; to_name = me.username;
+            } else if (t.type === 'claim') {
+              from_name = 'العجلة'; to_name = me.username;
+            } else if (t.type === 'win') {
+              from_id = t.counterparty_id; from_name = t.counterparty_name || 'المنصة'; to_name = me.username;
+            } else if (t.type === 'bet') {
+              from_id = me.id; from_name = me.username; to_name = t.counterparty_name || 'المنصة';
+            }
+            return {
+              id: t.id, type: t.type,
+              from_id: from_id, from_name: from_name, to_name: to_name,
+              amount: t.amount, balance_after: t.balance_after,
+              note: t.note, created_at: t.created_at
+            };
+          })
+        });
+        return;
+      }
 
       /* ── [Friends] الأصدقاء والرسائل الخاصة ── */
       if (pathname === '/api/friends/add' && req.method === 'POST') {
@@ -1093,6 +1210,7 @@ const server = http.createServer((req, res) => {
         me.last_claim = Math.floor(nowMs / 1000);
         me.gold = (me.gold || 0) + WHEEL[idx];
         try { db.prepare('UPDATE users SET gold = ?, last_claim = ? WHERE id = ?').run(me.gold, me.last_claim, me.id); } catch (e) {}
+        logTx(me, 'claim', WHEEL[idx], { balance_after: me.gold });
         json({ ok: true, amount: WHEEL[idx], prize_index: idx, gold: me.gold });
         return;
       }
@@ -1109,7 +1227,25 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/games' || (pathname === '/api/admin/games' && req.method === 'GET')) { json({ ok: true, games: gameFlags }); return; }
-      if (pathname === '/api/rounds') { json({ ok: true }); return; }
+      if (pathname === '/api/rounds' && req.method === 'POST') {
+        /* [server-tx] تسجيل تذكرة رهان — للضيف قبول صامت بلا تسجيل */
+        if (me) {
+          const gid = String(data.game_id || '').slice(0, 64);
+          const bet = Math.max(0, parseInt(data.bet, 10) || 0);
+          const won = !!data.won;
+          const payout = Math.max(0, parseInt(data.payout, 10) || 0);
+          logTicket(me.id, gid, bet, won, payout, data.result_txt);
+        }
+        json({ ok: true });
+        return;
+      }
+      if (pathname === '/api/rounds' && req.method === 'GET') {
+        /* [server-tx] آخر 100 تذكرة للمستخدم من كل الألعاب */
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const rows = db.prepare('SELECT game_id, bet, won, payout, result_txt, created_at FROM bet_tickets WHERE user_id = ? ORDER BY id DESC LIMIT 100').all(me.id);
+        json({ ok: true, rounds: rows });
+        return;
+      }
 
       /* ── [Group] الجولات الجماعية: كينو (ke) وكراش (av) — الجولة والرصيد من السيرفر حصراً ── */
       /* نتيجة جولة منتهية (فائزو السحب فقط) */
@@ -1274,6 +1410,18 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      /* [server-tx] سجل تذاكر المستخدم لهذه اللعبة تحديداً (لوحة التيكيتس داخل اللعبة) */
+      let ghh;
+      if ((ghh = /^\/api\/games\/([\w-]+)\/history$/.exec(pathname)) && req.method === 'GET') {
+        if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+        const rows = db.prepare('SELECT game_id, bet, won, payout, result_txt, created_at FROM bet_tickets WHERE user_id = ? AND game_id = ? ORDER BY id DESC LIMIT 25').all(me.id, ghh[1]);
+        const out = rows.map(function (r) {
+          return { username: me.username, game_id: r.game_id, bet: r.bet, won: r.won, payout: r.payout, result_txt: r.result_txt, created_at: r.created_at };
+        });
+        json({ ok: true, rounds: out });
+        return;
+      }
+
       /* ═══════ API الإدارة — الأدوار والصلاحيات ═══════
          سوبر أدمن: كل الصلاحيات (تسجيل، مسح حساب، شحن/سحب مباشر،
                     الاطلاع على الأرصدة، تغيير كلمات المرور والبيانات،
@@ -1330,8 +1478,15 @@ const server = http.createServer((req, res) => {
           /* ضبط مباشر للرصيد: سوبر أدمن فقط */
           if (data.gold !== undefined) {
             if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+            const before = target.gold || 0;
             target.gold = Math.max(0, parseInt(data.gold, 10) || 0);
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(target.gold, target.id); } catch (e) {}
+            logTx(target, 'set_balance', target.gold, {
+              actor_id: me.id, actor_name: me.username,
+              counterparty_id: me.id, counterparty_name: me.username,
+              note: 'من ' + before + ' إلى ' + target.gold,
+              balance_after: target.gold
+            });
             json({ ok: true, gold: target.gold });
             return;
           }
@@ -1358,6 +1513,17 @@ const server = http.createServer((req, res) => {
               if (!isSuper(me)) db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id);
               if (refBonus > 0 && users[target.referred_by]) db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(users[target.referred_by].gold, target.referred_by);
             } catch (e) {}
+            logTx(target, 'charge', amt, {
+              actor_id: me.id, actor_name: me.username,
+              counterparty_id: me.id, counterparty_name: me.username,
+              balance_after: target.gold
+            });
+            if (refBonus > 0 && users[target.referred_by]) {
+              logTx(users[target.referred_by], 'referral_bonus', refBonus, {
+                counterparty_id: target.id, counterparty_name: target.username,
+                balance_after: users[target.referred_by].gold
+              });
+            }
             json({ ok: true, gold: target.gold, admin_gold: me.gold, referral_bonus: refBonus });
             return;
           }
@@ -1369,6 +1535,11 @@ const server = http.createServer((req, res) => {
             if ((target.gold || 0) < amt) { json({ ok: false, message: 'رصيد العميل غير كافٍ' }, 400); return; }
             target.gold -= amt;
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(target.gold, target.id); } catch (e) {}
+            logTx(target, 'deduct', amt, {
+              actor_id: me.id, actor_name: me.username,
+              counterparty_id: me.id, counterparty_name: me.username,
+              balance_after: target.gold
+            });
             json({ ok: true, gold: target.gold });
             return;
           }
@@ -1443,6 +1614,70 @@ const server = http.createServer((req, res) => {
         return;
       }
 
+      /* إعدادات المكافأة اليومية (تبويب المكافآت) — تحفظ في settings وتقرأ من هناك */
+      if (pathname === '/api/admin/rewards' && req.method === 'GET') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        let cfg = { amount: 100, interval_hours: 24 };
+        try {
+          const row = db.prepare("SELECT value FROM settings WHERE key = 'rewards'").get();
+          if (row) cfg = Object.assign({}, cfg, JSON.parse(row.value));
+        } catch (e) {}
+        json({ ok: true, amount: cfg.amount, interval_hours: cfg.interval_hours });
+        return;
+      }
+      if (pathname === '/api/admin/rewards' && req.method === 'POST') {
+        if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+        const amount = Math.max(0, parseInt(data.amount, 10));
+        const interval_hours = Math.min(720, Math.max(1, parseInt(data.interval_hours, 10) || 24));
+        if (isNaN(amount)) { json({ ok: false, message: 'قيمة غير صالحة' }, 400); return; }
+        try {
+          db.prepare("INSERT INTO settings (key, value) VALUES ('rewards', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+            .run(JSON.stringify({ amount: amount, interval_hours: interval_hours }));
+        } catch (e) {}
+        json({ ok: true, amount: amount, interval_hours: interval_hours });
+        return;
+      }
+
+      /* إحصاءات مالية لكل لعبة (تبويب المالية) — من رهانات الجولات الجماعية */
+      if (pathname === '/api/admin/stats/games') {
+        if (!isAdmin(me)) { json({ ok: false, message: 'غير مصرح' }, 403); return; }
+        let rows = [];
+        try {
+          rows = db.prepare('SELECT r.game_id AS game_id, COUNT(b.id) AS plays, SUM(CASE WHEN b.won = 1 THEN 1 ELSE 0 END) AS wins, COALESCE(SUM(CASE WHEN b.won = 1 THEN b.payout ELSE 0 END),0) AS coins_won FROM group_bets b JOIN group_rounds r ON r.id = b.round_id GROUP BY r.game_id').all();
+        } catch (e) {}
+        json({ ok: true, games: rows.map(function (g) { return { game_id: g.game_id, plays: g.plays || 0, wins: g.wins || 0, coins_won: g.coins_won || 0 }; }) });
+        return;
+      }
+
+      /* [server-tx] سجل كل المعاملات المالية — سوبر أدمن فقط (مع فلترة اختيارية وترقيم) */
+      if (pathname === '/api/admin/transactions' && req.method === 'GET') {
+        if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
+        const where = [];
+        const params = [];
+        if (parsedUrl.query.user_id != null && parsedUrl.query.user_id !== '') {
+          const uid = parseInt(parsedUrl.query.user_id, 10);
+          if (!isNaN(uid)) { where.push('t.user_id = ?'); params.push(uid); }
+        }
+        if (parsedUrl.query.type) {
+          where.push('t.type = ?'); params.push(String(parsedUrl.query.type));
+        }
+        const whereSql = where.length ? (' WHERE ' + where.join(' AND ')) : '';
+        let total = 0;
+        let rows = [];
+        try {
+          total = db.prepare('SELECT COUNT(*) AS c FROM transactions t' + whereSql).get(...params).c;
+          const limit = Math.min(1000, Math.max(1, parseInt(parsedUrl.query.limit, 10) || 200));
+          const offset = Math.max(0, parseInt(parsedUrl.query.offset, 10) || 0);
+          rows = db.prepare(
+            'SELECT t.id, t.user_id, u.username AS username, t.type, t.amount, t.balance_after, t.counterparty_name, t.actor_name, t.game_id, t.note, t.created_at ' +
+            'FROM transactions t LEFT JOIN users u ON u.id = t.user_id' + whereSql +
+            ' ORDER BY t.id DESC LIMIT ? OFFSET ?'
+          ).all(...params, limit, offset);
+        } catch (e) {}
+        json({ ok: true, total: total, transactions: rows });
+        return;
+      }
+
       /* ── الغرف ── */
       if (pathname === '/api/rooms' && req.method === 'GET') {
         const list = Object.values(rooms).filter(function (r) { return r.status === 'waiting' && r.visibility !== 'private'; }).map(function (r) {
@@ -1463,6 +1698,7 @@ const server = http.createServer((req, res) => {
         if (isNaN(bet) || bet <= 0) { json({ ok: false, error: 'bet_required' }, 400); return; }
         const visibility = (data.visibility === 'private') ? 'private' : 'public';   /* [B-rooms] عامة/خاصة */
         const gid = data.game_id || 'rm';
+        if (!ROOM_GAMES_ALLOWED[gid]) { json({ ok: false, message: 'لعبة غير مدعومة في الغرف' }, 400); return; }
         const maxp = Math.max(2, Math.min(8, parseInt(data.max_players, 10) || 4));
         const rid = 'r' + (nextRoomId++);
         const code = crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -1640,9 +1876,10 @@ const server = http.createServer((req, res) => {
       /* [Settle] تسوية رهان فلات دوچ بين لاعبَين: يُقتطع من الخاسر ويُضاف للرابح
          بعد اقتطاع رسم الرهان (BET_FEE_RATE). للمالك فقط (نتيجة حتمية). */
       /* [B-settle] تسوية رهان المباريات الحتمية (ضاما/شطرنج — العميل يعرف الفائز): للمضيف فقط.
-         result: 'w0' فاز صاحب order[0] | 'w1' فاز صاحب order[1] | 'draw' تعادل.
+         result: 'w0'..'w3' فاز صاحب order[seat] (وسّعناها من w0/w1 — كانت ترفض مقاعد
+         2-3 فتكسر تسوية الروندا FFA بثلاثة لاعبين) | 'draw' تعادل.
          الرهانات اقتُطعت عند /api/rooms/start — هنا تُوزَّع فقط:
-         draw → استرجاع كامل بلا رسوم؛ w0/w1 → الرابح يأخذ pot كاملاً بعد رسم 5% (غرف percentage فقط) */
+         draw → استرجاع كامل بلا رسوم؛ wN → الرابح يأخذ pot كاملاً بعد رسم 5% (غرف percentage فقط) */
       if (pathname === '/api/rooms/settleRound') {
         const room = rooms[data.room_id];
         if (!room) { json({ ok: false, message: 'الغرفة غير موجودة' }, 404); return; }
@@ -1650,8 +1887,11 @@ const server = http.createServer((req, res) => {
         if (room.status !== 'playing') { json({ ok: false, message: 'لا جولة جارية للتسوية' }, 400); return; }
         if (room.settled) { json({ ok: false, message: 'تمت تسوية هذه الجولة مسبقاً' }, 400); return; }
         const result = data.result;
-        if (result !== 'w0' && result !== 'w1' && result !== 'w2' && result !== 'w3' && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
+        /* [BJMP] w0-w3: مقاعد 0-3 (غرف 2-4 لاعبين) + draw */
+        const seatMatch = /^w([0-3])$/.exec(result);
+        if (!seatMatch && result !== 'draw') { json({ ok: false, message: 'نتيجة غير صالحة' }, 400); return; }
         const order = serializeRoom(room).order;   /* غير المتفرجين حسب المقعد (بشر + بوتّات) */
+        if (seatMatch && Number(seatMatch[1]) >= order.length) { json({ ok: false, message: 'مقعد غير موجود' }, 400); return; }
         const pot = Number(room.bet) || 0;   /* رهان كل لاعب — اقتُطع عند البدء */
         /* اللاعبون البشريون الحقيقيون (البوتّات بلا رصيد تُتجاهل في الحساب) */
         const humans = order.filter(function (pid) { return users[pid]; })
@@ -1664,8 +1904,7 @@ const server = http.createServer((req, res) => {
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(u.gold, u.id); } catch (e) {}
           });
         } else {
-          /* [RDC-ffa] 'w0'/'w1'/'w2'/'w3' — فائز واحد مقابل الجميع (1ضد1/1ضد2/1ضد3) */
-          const wIdx = { w0: 0, w1: 1, w2: 2, w3: 3 }[result];
+          const wIdx = Number(seatMatch[1]);
           const winner = order[wIdx] != null ? users[order[wIdx]] : null;
           if (!winner) { json({ ok: false, message: 'الرابح لاعب آلي أو غير موجود — لا تسوية' }, 400); return; }
           /* المال الفعلي على الطاولة: رهانات البشريين فقط (رهان الخصم البوتّي لا يُخلق من فراغ) */
@@ -1677,9 +1916,9 @@ const server = http.createServer((req, res) => {
         }
         room.settled = true;   /* منع تكرار التسوية للجولة نفسها */
         const shape = function (u) { return u ? { id: u.id, username: u.username, gold: u.gold } : null; };
-        const wSeat = { w0: 0, w1: 1, w2: 2, w3: 3 }[result];
-        const winnerOut = (result === 'draw') ? null : shape(users[order[wSeat]]);
-        const loserOut = (result === 'draw') ? null : shape(users[order[(wSeat === 0) ? 1 : 0]]);
+        const wSeat = seatMatch ? Number(seatMatch[1]) : -1;
+        const winnerOut = (wSeat >= 0) ? shape(users[order[wSeat]]) : null;
+        const loserOut = (wSeat === 0) ? shape(users[order[1]]) : (wSeat === 1 ? shape(users[order[0]]) : null);   /* بلا خاسر محدد في FFA متعدد المقاعد */
         const refunds = (result === 'draw') ? humans.map(function (u) { return shape(u); }) : [];
         const payout = (result === 'draw') ? pot : (humans.length * pot) - fee;
         const payload = {
@@ -1758,7 +1997,11 @@ const server = http.createServer((req, res) => {
         const fee = Math.round(amt * BET_FEE_RATE);
         loser.gold = (loser.gold || 0) - amt;
         winner.gold = (winner.gold || 0) + (amt - fee);
-        transfersList.unshift({ id: Date.now(), from_id: loser.id, from_name: loser.username, to_name: winner.username, amount: amt, created_at: Math.floor(Date.now() / 1000) });
+        /* [server-tx] تسوية الغرفة في سجل المعاملات DB (win للفائز / bet للخاسر) */
+        try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(loser.gold, loser.id); } catch (e) {}
+        try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(winner.gold, winner.id); } catch (e) {}
+        logTx(winner, 'win', amt - fee, { game_id: room.game_id, counterparty_id: loser.id, counterparty_name: loser.username, balance_after: winner.gold });
+        logTx(loser, 'bet', amt, { game_id: room.game_id, counterparty_id: winner.id, counterparty_name: winner.username, note: 'خسارة جولة', balance_after: loser.gold });
         json({ ok: true, fee: fee, loser: { username: loser.username, gold: loser.gold }, winner: { username: winner.username, gold: winner.gold } });
         return;
       }
@@ -1926,7 +2169,7 @@ const server = http.createServer((req, res) => {
       }
 
       // Default API fallback
-      json({ ok: true });
+      json({ ok: false, error: 'not_found', path: pathname }, 404);
     });
     return;
   }
