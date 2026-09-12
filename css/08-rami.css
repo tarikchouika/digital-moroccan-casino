@@ -664,6 +664,14 @@
   border: 1.5px solid var(--gold, #FFD23F);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6); position: relative; overflow: hidden;
 }
+/* [BackImg] بطاقات الظهر بصورة الشفافة الجديدة — الخلفية الزرقاء تُخفى فقط
+   عندما تحمل صورة الظهر inline (أوراق التشكيل rami-shuffle-card بلا صورة تبقى زرقاء) */
+.rcard-vector.rcard-back[style*="back.webp"] {
+  background: transparent;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .rcard-back-pattern {
   position: absolute; inset: 2px; border: 1px dashed rgba(245, 197, 24, 0.6); border-radius: 3px;
   background: repeating-linear-gradient(45deg, rgba(245,197,24,0.12), rgba(245,197,24,0.12) 3px, transparent 3px, transparent 6px);

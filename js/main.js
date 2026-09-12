@@ -1964,10 +1964,6 @@ function renderChat() {
   const el = document.getElementById('chatMsgs');
   if (el) el.innerHTML = '';
 }
-/* ═══════════ Daily Reward ═══════════ */
-function claimDaily() {
-  toast('المكافأة اليومية غير متاحة حالياً', 'warn');
-}
 /* ═══════════ Render All ═══════════ */
 /* مزامنة عدد الألعاب المعروض (الشارة + الإحصائية) مع العدد الفعلي في الكتالوج */
 function syncGamesCount() {
