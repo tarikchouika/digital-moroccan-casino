@@ -872,6 +872,10 @@ class MeldValidator {
     const physJokers = cards.filter(c => c.isJoker);
     if (physJokers.length > 1) return false;
     if (physJokers.length === 1 && !jokerAllowed) return false;
+    /* [قاعدة الجوكرين 2026-09-12] أي نوعين من الجوكر معاً في نفس المجموعة ممنوع:
+       جوكر مطبوع + ورقة برية، أو بريتان (كلاهما يظهران كوجه جوكر معكوس اللون) —
+       جوكر واحد على الأكثر في المتماثلة (قواعد الرامي) */
+    if (physJokers.length + wilds.length > 1) return false;
 
     // تحديد الرتبة: من الأوراق الطبيعية، وإلا من الأوراق البرية (الجوكرات البرية تحدد الرتبة)
     let rank = null;
@@ -931,6 +935,12 @@ class MeldValidator {
     const physJokers = cards.filter(c => c.isJoker);
     if (physJokers.length > 1) return false;
     if (physJokers.length === 1 && !jokerAllowed) return false;
+    /* [SAMPEL-RULE 2026-09-12] تصحيح جوهري بقواعد الرامي السامبل (طلب المستخدم):
+       الورقة البرية (المعكوسة اللون، مثل Q♣ السوداء عند مؤشر Q♥) وظيفتها الوحيدة
+       إكمال المتماثلة — لا تصلح لمتتالية حرة إطلاقاً: لا كرقم بقيمتها ولا كسد فجوة.
+       خطأ اللاعب الآلي السابق: عدّ Q♣ رقماً عادياً وخصم جوكراً آخر ليسد K♣.
+       في الطالاج: الجوكر المطبوع (isJoker) يظل يعمل في المتتاليات كسد فجوة كالمعتاد. */
+    if (wilds.length > 0) return false;
 
     if (naturals.length === 0 && wilds.length === 0) return false;
 
