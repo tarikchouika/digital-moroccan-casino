@@ -28,19 +28,19 @@
   }
   </script>
   <!-- CSS Files -->
-  <link rel="stylesheet" href="css/01-variables.css?v=dtsg1">
-  <link rel="stylesheet" href="css/02-base.css?v=dtsg1">
-  <link rel="stylesheet" href="css/03-components.css?v=dtsg1">
-  <link rel="stylesheet" href="css/04-games.css?v=dtsg1">
-  <link rel="stylesheet" href="css/05-ronda.css?v=dtsg1">
-  <link rel="stylesheet" href="css/06-parchisi.css?v=dtsg1">
-  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg1">
-  <link rel="stylesheet" href="css/08-rami.css?v=dtsg1">
-  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg1">
-  <link rel="stylesheet" href="css/10-dama.css?v=dtsg1">
-  <link rel="stylesheet" href="css/12-chess.css?v=dtsg1">
-  <link rel="stylesheet" href="css/11-game-theme.css?v=dtsg1">
-  <link rel="stylesheet" href="css/13-billiards.css?v=dtsg1">
+  <link rel="stylesheet" href="css/01-variables.css?v=dtsg2">
+  <link rel="stylesheet" href="css/02-base.css?v=dtsg2">
+  <link rel="stylesheet" href="css/03-components.css?v=dtsg2">
+  <link rel="stylesheet" href="css/04-games.css?v=dtsg2">
+  <link rel="stylesheet" href="css/05-ronda.css?v=dtsg2">
+  <link rel="stylesheet" href="css/06-parchisi.css?v=dtsg2">
+  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg2">
+  <link rel="stylesheet" href="css/08-rami.css?v=dtsg2">
+  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg2">
+  <link rel="stylesheet" href="css/10-dama.css?v=dtsg2">
+  <link rel="stylesheet" href="css/12-chess.css?v=dtsg2">
+  <link rel="stylesheet" href="css/11-game-theme.css?v=dtsg2">
+  <link rel="stylesheet" href="css/13-billiards.css?v=dtsg2">
   <link rel="stylesheet" href="css/14-ronda-classic.css?v=rdc7">
   <!-- [BGDO] الطاولة + الضومنة: هوية المشروعين المستقلين (بادئات bw-/dm-) -->
   <link rel="stylesheet" href="backgammon-game/css/backgammon.css?v=bgdo1">
@@ -680,8 +680,8 @@
     <i class="fa-solid fa-compress" aria-hidden="true"></i>
   </button>
   <!-- ═══════════ Scripts ═══════════ -->
-  <script src="js/core/session.js?v=unified13"></script>
-  <script src="js/core/state.js?v=unified21"></script>
+  <script src="js/core/session.js?v=dtsg2"></script>
+  <script src="js/core/state.js?v=dtsg2"></script>
   <script>
     /* [Dev localhost] جسر WebSocket (Durable Objects) خاص بالإنتاج على Cloudflare Worker.
        عند التشغيل المحلي (server.js يدعم SSE أصلاً ولا يدعم WS) نتجاوز الجسر لنبقى على SSE. */
@@ -689,15 +689,15 @@
       document.write('<script src="js/core/live-ws-bridge.js?v=auto"><\/script>');
     }
   </script>
-  <script src="js/core/api.js?v=unified13"></script>
-  <script src="js/core/auth.js?v=unified18"></script>
-  <script src="js/core/audio.js?v=unified13"></script>
-  <script src="js/core/utils.js?v=unified21"></script>
-  <script src="js/core/fx.js?v=unified13"></script>
-  <script src="js/i18n/translations.js?v=dtsg1"></script>
-  <script src="js/rules/game-rules.js?v=unified18"></script>
-  <script src="js/games/catalog.js?v=unified13"></script>
-  <script src="js/games/blackjack.js?v=unified13"></script>
+  <script src="js/core/api.js?v=dtsg2"></script>
+  <script src="js/core/auth.js?v=dtsg2"></script>
+  <script src="js/core/audio.js?v=dtsg2"></script>
+  <script src="js/core/utils.js?v=dtsg2"></script>
+  <script src="js/core/fx.js?v=dtsg2"></script>
+  <script src="js/i18n/translations.js?v=dtsg2"></script>
+  <script src="js/rules/game-rules.js?v=dtsg2"></script>
+  <script src="js/games/catalog.js?v=dtsg2"></script>
+  <script src="js/games/blackjack.js?v=dtsg2"></script>
   <script src="js/games/ronda.js?v=unified13"></script>
   <!-- [RDC] روندا الكلاسيكية: المحرك الأصلي المستورد (ronda-game) حرفياً + الواجهة المنصّية -->
   <script src="ronda-game/js/engine/ronda-core.js?v=rdc6"></script>
@@ -725,21 +725,21 @@
   <script src="dominoes-game/js/ui/domino-renderer.js?v=bgdo1"></script>
   <script src="dominoes-game/js/ui/domino-app.js?v=bgdo1"></script>
   <script src="dominoes-game/dominoes-bridge.js?v=bgdo1"></script>
-  <script src="js/games/parchisi.js?v=unified13"></script>
-  <script src="js/games/rami.js?v=unified21"></script>
+  <script src="js/games/parchisi.js?v=dtsg2"></script>
+  <script src="js/games/rami.js?v=dtsg2"></script>
   <script src="js/games/dama.js?v=unified13"></script>
-  <script src="js/games/chess.js?v=unified13"></script>
-  <script src="js/games/billiards-physics.js?v=unified13"></script>
+  <script src="js/games/chess.js?v=dtsg2"></script>
+  <script src="js/games/billiards-physics.js?v=dtsg2"></script>
   <script src="js/games/billiards-rules.js?v=unified13"></script>
-  <script src="js/games/billiards.js?v=unified13"></script>
-  <script src="js/games/engines.js?v=unified21"></script>
-  <script type="module" src="js/games/crash.js?v=unified13"></script>
-  <script src="js/core/rooms.js?v=unified13"></script>
-  <script src="js/main.js?v=unified22"></script>
-  <script src="js/core/live.js?v=unified13"></script>
-  <script src="js/core/fair.js?v=unified13"></script>
-  <script src="js/games/group.js?v=unified13"></script>
-  <script src="js/friends.js?v=unified14"></script>
+  <script src="js/games/billiards.js?v=dtsg2"></script>
+  <script src="js/games/engines.js?v=dtsg2"></script>
+  <script type="module" src="js/games/crash.js?v=dtsg2"></script>
+  <script src="js/core/rooms.js?v=dtsg2"></script>
+  <script src="js/main.js?v=dtsg2"></script>
+  <script src="js/core/live.js?v=dtsg2"></script>
+  <script src="js/core/fair.js?v=dtsg2"></script>
+  <script src="js/games/group.js?v=dtsg2"></script>
+  <script src="js/friends.js?v=dtsg2"></script>
 
   <!-- ═══════════ Mobile Bottom Navigation Bar ═══════════ -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="التنقل السفلي">
