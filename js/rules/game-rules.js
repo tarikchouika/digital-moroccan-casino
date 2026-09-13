@@ -389,32 +389,6 @@ var FULL_RULES = {
       fr: '<tr><td>Finir la manche</td><td>0 point de pénalité (victoire)</td></tr><tr><td>Ouverture invalide — Talaj</td><td>+71 points</td></tr><tr><td>Ouverture invalide — Sample</td><td>+51 points</td></tr><tr><td>Prise de carte sans conditions — Talaj</td><td>+71 (carte rendue)</td></tr><tr><td>Prise de la défausse — Sample</td><td>Libre, sans pénalité (non libre le même tour)</td></tr><tr><td>Rejet de la défausse/du Fojok le même tour — Sample</td><td>+51 ajoutés au score de la manche en fin de manche</td></tr><tr><td>Violation de la règle des 12 cartes</td><td>+71</td></tr><tr><td>Main pleine sans pose — Talaj</td><td>+100</td></tr><tr><td>Main pleine sans pose — Sample</td><td>+51</td></tr><tr><td>Cartes restantes après pose partielle — Talaj</td><td>10 fixes par carte</td></tr><tr><td>Cartes restantes après pose partielle — Sample</td><td>Valeur faciale (V/D/R/As et joker = 10)</td></tr>',
       en: '<tr><td>Finish Round</td><td>0 penalty points (Round Win)</td></tr><tr><td>Invalid meld/opening — Talaj</td><td>+71 penalty points</td></tr><tr><td>Invalid meld/opening — Sample</td><td>+51 penalty points</td></tr><tr><td>Take card without conditions — Talaj</td><td>+71 (card returned)</td></tr><tr><td>Discard-pile draw — Sample</td><td>Free, no penalty (not free the same turn)</td></tr><tr><td>Same-turn throwback of drawn discard/Fojok — Sample</td><td>+51 added to the round score at round end</td></tr><tr><td>Violate 12-card rule</td><td>+71</td></tr><tr><td>Full hand without lay-down — Talaj</td><td>+100</td></tr><tr><td>Full hand without lay-down — Sample</td><td>+51</td></tr><tr><td>Remaining after partial lay-down — Talaj</td><td>Flat 10 per card</td></tr><tr><td>Remaining after partial lay-down — Sample</td><td>Face value (J/Q/K/A & Joker = 10)</td></tr><tr><td>Doubled round (free isolated Joker finish)</td><td>Remaining/full-hand points ×2 (penalties not doubled)</td></tr>'
     },
-    tips: {
-      ar: [
-        'في الطلاح: لا تُحسب ورقة الجوكر ضمن نقاط الافتتاح (يجب تجاوز 71 بدونها).',
-        'في السامبل: راقب ورقة الفوجوك — نظيرتها المعاكسة اللون تصبح الجوكر (تُحسب 10 عند الكشف)، ولا تنسَ حقك في سحبها خلال دورك الأول فقط.',
-        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) لا يتطلب أي شرط افتتاح.',
-        'قاعدة الـ12 ورقة (طلاح فقط): إن أنزلت 12 ورقة فخذ ورقة المرموق المطابقة لمجموعات الطاولة، وإلا فالجزاء +71. في السامبل سحب المرموق حر دائماً.'
-      ],
-      da: [
-        'فالطالاج: الجوكر ما كيتحسبش فنقاط الافتتاح (خاصك تفوت 71 بلا بيه).',
-        'فالسامبل: رد البال للفوجوك — النظير المعكوس ديالها كيولي جوكر (كيتحسب 10)، وعندك الحق تسحبها غير فالدور اللول ديالك.',
-        'الإنهاء الأساسي (14 ورقة + رمي الورقة 15) ما كيحتاج حتى شرط افتتاح.',
-        'قاعدة الـ12 (طالاج غير): إلا نزلتي 12 ورقة خذ المرموق المطابق للمجموعات وإلا +71. فالسامبل السحب من المرموق حر ديما.'
-      ],
-      fr: [
-        'En Talaj : le joker ne compte pas dans l\'ouverture (il faut dépasser 71 sans lui).',
-        'En Sample : surveillez le Fojok — sa contrepartie de couleur inversée devient le joker (vaut 10 à la révélation) ; vous ne pouvez le prendre qu\'à votre premier tour.',
-        'La fin de manche standard (14 cartes + défausse de la 15e) n\'exige aucune condition d\'ouverture.',
-        'Règle des 12 cartes (Talaj uniquement) : si vous en posez 12, prenez la défausse qui complète une combinaison, sinon +71. En Sample la prise de la défausse est toujours libre.'
-      ],
-      en: [
-        'In Talaj: the Joker does not count toward the opening (you must exceed 71 without it).',
-        'In Sample: watch the Fojok — its colour-reversed counterpart becomes the Joker (counts 10 at reveal); you may only draw it on your first turn.',
-        'Standard round finish (14 cards + discarding the 15th) requires no opening condition.',
-        '12-card rule (Talaj only): if you have laid 12 cards, take the discard that fits a meld, otherwise +71. In Sample the discard draw is always free.'
-      ]
-    }
   },
 
 rn: {
@@ -455,23 +429,6 @@ rn: {
       fr: '<tr><td>Numéro seul</td><td>×2</td></tr><tr><td>Numéro + Symbole</td><td>×3</td></tr>',
       en: '<tr><td>Number only</td><td>×2</td></tr><tr><td>Number + Symbol</td><td>×3</td></tr>'
     },
-    tips: {
-      ar: [
-        'الرهان على رقم فقط أسهل لكن الربح أقل',
-        'راقب البطاقات المسحوبة لتقدير الاحتمالات',
-        'كلما زاد عدد البطاقات المسحوبة، قلّت الخيارات المتبقية'
-      ],
-      fr: [
-        'Parier sur le numéro seul est plus facile mais rapporte moins',
-        'Observez les cartes tirées pour estimer les probabilités',
-        'Plus il y a de cartes tirées, moins il reste d\'options'
-      ],
-      en: [
-        'Betting on number only is easier but pays less',
-        'Watch drawn cards to estimate probabilities',
-        'The more cards drawn, the fewer options remain'
-      ]
-    }
   },
   /* ═══ Crash ═══ */
   av: {
@@ -509,23 +466,6 @@ rn: {
       fr: '<tr><td>Encaisser à 2.00×</td><td>×2 le pari</td></tr><tr><td>Encaisser à 5.00×</td><td>×5 le pari</td></tr><tr><td>Encaisser à 10.00×</td><td>×10 le pari</td></tr>',
       en: '<tr><td>Cash at 2.00×</td><td>×2 bet</td></tr><tr><td>Cash at 5.00×</td><td>×5 bet</td></tr><tr><td>Cash at 10.00×</td><td>×10 bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'السحب المبكر (1.5× - 2×) أكثر أماناً',
-        'لا تطمع — حدد هدفاً والتزم به',
-        'راقب تاريخ الجولات السابقة'
-      ],
-      fr: [
-        'Encaisser tôt (1.5× - 2×) est plus sûr',
-        'Ne soyez pas gourmand — fixez un objectif',
-        'Observez l\'historique des tours précédents'
-      ],
-      en: [
-        'Early cash out (1.5× - 2×) is safer',
-        'Don\'t be greedy — set a target and stick to it',
-        'Watch previous round history'
-      ]
-    }
   },
   /* ═══ Blackjack ═══ */
   bj: {
@@ -566,26 +506,6 @@ rn: {
       fr: '<tr><td>Victoire normale</td><td>×2</td></tr><tr><td>Blackjack (21 en 2 cartes)</td><td>×2.5</td></tr><tr><td>Push (égalité)</td><td>Remboursé</td></tr>',
       en: '<tr><td>Normal win</td><td>×2</td></tr><tr><td>Blackjack (21 in 2 cards)</td><td>×2.5</td></tr><tr><td>Push (tie)</td><td>Refund</td></tr>'
     },
-    tips: {
-      ar: [
-        'قف دائماً عند 17 أو أكثر',
-        'اسحب عند 11 أو أقل دائماً',
-        'قسّم الآسات والثمانيات دائماً',
-        'لا تقسّم العشرات أو الخمسات'
-      ],
-      fr: [
-        'Restez toujours à 17 ou plus',
-        'Tirez toujours à 11 ou moins',
-        'Divisez toujours les As et les 8',
-        'Ne divisez jamais les 10 ou les 5'
-      ],
-      en: [
-        'Always stand on 17 or higher',
-        'Always hit on 11 or lower',
-        'Always split Aces and 8s',
-        'Never split 10s or 5s'
-      ]
-    }
   },
   /* ═══ Mines ═══ */
   mn: {
@@ -623,11 +543,6 @@ rn: {
       fr: '<tr><th colspan="2">Multiplicateurs de la mise (GB) — formule : (1 ÷ (1 − mines/25)) puissance cases sûres</th></tr><tr><td><b>3</b> mines</td><td>5 → ×1,89 · 10 → ×3,59 · 15 → ×6,8 · 20 → ×12,89 · 22 → ×16,65</td></tr><tr><td><b>5</b> mines</td><td>5 → ×3,05 · 10 → ×9,31 · 15 → ×28,42 · 20 → ×86,74</td></tr><tr><td><b>10</b> mines</td><td>5 → ×12,86 · 10 → ×165,38 · 15 → ×2126,82</td></tr><tr><td><b>15</b> mines</td><td>5 → ×97,66 · 10 → ×9536,74</td></tr><tr><td><b>24</b> mines</td><td>1 → ×25</td></tr><tr><td colspan="2">Multiplicateurs mathématiquement équitables — RTP 100 % (encaissez le multiplicateur ou mine = 0)</td></tr>',
       en: '<tr><th colspan="2">Bet multipliers (GB) — formula: (1 ÷ (1 − mines/25)) ^ safe tiles</th></tr><tr><td><b>3</b> mines</td><td>5 → ×1.89 · 10 → ×3.59 · 15 → ×6.8 · 20 → ×12.89 · 22 → ×16.65</td></tr><tr><td><b>5</b> mines</td><td>5 → ×3.05 · 10 → ×9.31 · 15 → ×28.42 · 20 → ×86.74</td></tr><tr><td><b>10</b> mines</td><td>5 → ×12.86 · 10 → ×165.38 · 15 → ×2126.82</td></tr><tr><td><b>15</b> mines</td><td>5 → ×97.66 · 10 → ×9536.74</td></tr><tr><td><b>24</b> mines</td><td>1 → ×25</td></tr><tr><td colspan="2">Mathematically fair multipliers — RTP 100% (cash out the multiplier or mine = 0)</td></tr>'
     },
-    tips: {
-      ar: ['المزيد من الألغام = مضاعفات أعلى لكن خطر أكبر', 'اسحب بعد 5-8 خانات للربح الآمن'],
-      fr: ['Plus de mines = multiplicateurs plus élevés mais plus de risque', 'Encaissez après 5-8 cases pour un gain sûr'],
-      en: ['More mines = higher multipliers but more risk', 'Cash out after 5-8 tiles for safe profit']
-    }
   },
   /* ═══ Parchisi ═══ */
   pr: {
@@ -680,11 +595,6 @@ rn: {
       fr: '<tr><td>Victoire (2 joueurs)</td><td>×1.9 la mise</td></tr><tr><td>Victoire (3 joueurs)</td><td>×2.85 la mise</td></tr><tr><td>Victoire (4 joueurs)</td><td>×3.8 la mise</td></tr><tr><td>Défaite</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Win (2 players)</td><td>×1.9 bet</td></tr><tr><td>Win (3 players)</td><td>×2.85 bet</td></tr><tr><td>Win (4 players)</td><td>×3.8 bet</td></tr><tr><td>Loss</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: ['أخرج قطعك بالنرد 5 مبكراً', 'استخدم الخلايا الآمنة والحواجز للحماية', 'ادخل الميتا بنرد مضبوط ولا تنسَ +10 و+20'],
-      fr: ['Sortez vos pièces avec un 5 tôt', 'Utilisez cases sûres et barrages', 'Entrez à la maison avec un score exact, pensez au +10 et +20'],
-      en: ['Bring pieces out with a 5 early', 'Use safe cells and barriers for defense', 'Enter home with exact roll, remember +10 and +20']
-    }
   },
   /* ═══ Slots ═══ */
   sl: {
@@ -722,23 +632,6 @@ rn: {
       fr: '<tr><td>7️⃣7️⃣7️⃣</td><td>×120</td></tr><tr><td>🍒🍒🍒</td><td>×60</td></tr><tr><td>🍇🍇🍇</td><td>×40</td></tr><tr><td>⭐⭐⭐</td><td>×30</td></tr><tr><td>🍋🍋🍋</td><td>×25</td></tr><tr><td>🔔🔔🔔</td><td>×20</td></tr><tr><td>💎💎💎</td><td>×15</td></tr><tr><td>🚀🚀🚀</td><td>×12</td></tr><tr><td>2 identiques</td><td>pari remboursé</td></tr>',
       en: '<tr><td>7️⃣7️⃣7️⃣</td><td>×120</td></tr><tr><td>🍒🍒🍒</td><td>×60</td></tr><tr><td>🍇🍇🍇</td><td>×40</td></tr><tr><td>⭐⭐⭐</td><td>×30</td></tr><tr><td>🍋🍋🍋</td><td>×25</td></tr><tr><td>🔔🔔🔔</td><td>×20</td></tr><tr><td>💎💎💎</td><td>×15</td></tr><tr><td>🚀🚀🚀</td><td>×12</td></tr><tr><td>2 matching</td><td>bet refunded</td></tr>'
     },
-    tips: {
-      ar: [
-        'RTP 95.9% — العائد نظري على المدى الطويل',
-        'كل رمز متساوي الاحتمال (1/8) — كل لفة مستقلة تماماً (RNG)',
-        'جاكبوت 7️⃣ ×120 نادر لكنه ممكن: احتماله 1 من 512'
-      ],
-      fr: [
-        'RTP 95,9 % — le retour est théorique à long terme',
-        'Chaque symbole est équiprobable (1/8) — chaque tour est indépendant (RNG)',
-        'Le jackpot 7️⃣ ×120 est rare mais possible : probabilité 1 sur 512'
-      ],
-      en: [
-        '95.9% RTP — return is theoretical long-term',
-        'Each symbol is equally likely (1/8) — every spin is independent (RNG)',
-        'The 7️⃣ ×120 jackpot is rare but possible: 1 in 512 chance'
-      ]
-    }
   },
   /* ═══ Plinko ═══ */
   pl: {
@@ -776,23 +669,6 @@ rn: {
       fr: '<tr><td colspan="2">12 rangées par défaut (13 cases) — le tableau change avec les rangées</td></tr><tr><td>Bord extrême</td><td>×299.3</td></tr><tr><td>Deuxième depuis le bord</td><td>×24.9</td></tr><tr><td>Troisième depuis le bord</td><td>×4.5</td></tr><tr><td>Quatrième depuis le bord</td><td>×1.4</td></tr><tr><td>Cinquième depuis le bord</td><td>×0.6</td></tr><tr><td>Sixième depuis le bord</td><td>×0.4</td></tr><tr><td>Centre exact</td><td>×0.32</td></tr>',
       en: '<tr><td colspan="2">12 default rows (13 slots) — table changes with rows</td></tr><tr><td>Extreme edge</td><td>×299.3</td></tr><tr><td>Second from edge</td><td>×24.9</td></tr><tr><td>Third from edge</td><td>×4.5</td></tr><tr><td>Fourth from edge</td><td>×1.4</td></tr><tr><td>Fifth from edge</td><td>×0.6</td></tr><tr><td>Sixth from edge</td><td>×0.4</td></tr><tr><td>Dead center</td><td>×0.32</td></tr>'
     },
-    tips: {
-      ar: [
-        'مضاعفات الأطراف ضخمة لكن احتمالها نادر جداً',
-        'الوسط يدفع أقل من الرهان لكنه يتحقق غالباً',
-        'كل إسقاط مستقل تماماً (توزيع ثنائي عادل)'
-      ],
-      fr: [
-        'Les multiplicateurs des bords sont énormes mais très rares',
-        'Le centre paie moins que la mise mais arrive souvent',
-        'Chaque chute est totalement indépendante (distribution binomiale équitable)'
-      ],
-      en: [
-        'Edge multipliers are huge but very rare',
-        'The center pays less than the bet but hits often',
-        'Every drop is completely independent (fair binomial distribution)'
-      ]
-    }
   },
   /* ═══ Dice ═══ */
   dc: {
@@ -830,23 +706,6 @@ rn: {
       fr: '<tr><td>Sous 2</td><td>×49</td></tr><tr><td>Sous 10</td><td>×9.8</td></tr><tr><td>Sous 25</td><td>×3.92</td></tr><tr><td>Sous 50</td><td>×1.96</td></tr><tr><td>Au-dessus 90</td><td>×9.8</td></tr><tr><td>Au-dessus 98</td><td>×49</td></tr>',
       en: '<tr><td>Under 2</td><td>×49</td></tr><tr><td>Under 10</td><td>×9.8</td></tr><tr><td>Under 25</td><td>×3.92</td></tr><tr><td>Under 50</td><td>×1.96</td></tr><tr><td>Above 90</td><td>×9.8</td></tr><tr><td>Above 98</td><td>×49</td></tr>'
     },
-    tips: {
-      ar: [
-        'ارفع الهدف لزيادة فرص الفوز (مضاعف أقل)',
-        'خفّض الهدف للربح الكبير لكن الخطر أعلى',
-        'هدف 50 (أقل من أو فوق) يعادل تقريباً عملة — فرصة 50%'
-      ],
-      fr: [
-        'Augmentez la cible pour plus de chances (multiplicateur plus bas)',
-        'Baissez la cible pour un gros gain mais plus de risque',
-        'Cible 50 (sous ou au-dessus) ≈ pile ou face — 50% de chance'
-      ],
-      en: [
-        'Raise the target for higher chances (lower multiplier)',
-        'Lower the target for a big win but more risk',
-        'Target 50 (under or above) is about a coin flip — 50% chance'
-      ]
-    }
   },
   /* ═══ Coin Flip 3D ═══ */
   cf: {
@@ -881,23 +740,6 @@ rn: {
       fr: '<tr><td>Face choisie</td><td>×1.95</td></tr><tr><td>Pas de correspondance</td><td>Perte du pari</td></tr>',
       en: '<tr><td>Chosen side matches</td><td>×1.95</td></tr><tr><td>No match</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'اللعبة عادلة تماماً: 50/50 مع RNG',
-        'لا توجد استراتيجية تزيد فرصك — العب للترفيه',
-        'المضاعف 1.95 بدل 2 هو هامش الكازينو'
-      ],
-      fr: [
-        'Jeu parfaitement équitable : 50/50 avec RNG',
-        'Aucune stratégie n\'augmente vos chances — jouez pour le plaisir',
-        'Le multiplicateur de 1.95 au lieu de 2 est la marge du casino'
-      ],
-      en: [
-        'Perfectly fair game: 50/50 with RNG',
-        'No strategy increases your chances — play for fun',
-        'The 1.95 multiplier instead of 2 is the house edge'
-      ]
-    }
   },
   /* ═══ Hi-Lo Cards ═══ */
   hl: {
@@ -935,23 +777,6 @@ rn: {
       fr: '<tr><td>Bonne prédiction</td><td>×1.9</td></tr><tr><td>Égalité (même valeur)</td><td>Remboursé</td></tr><tr><td>Mauvaise prédiction</td><td>Perte du pari</td></tr>',
       en: '<tr><td>Correct guess</td><td>×1.9</td></tr><tr><td>Push (same value)</td><td>Refund</td></tr><tr><td>Wrong guess</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'بعد بطاقة منخفضة (2-6)، التالي غالباً أعلى',
-        'تجنب التخمين عند البطاقات المتوسطة (7-9)',
-        'الاحتمالات تتغير مع كل بطاقة — انتبه'
-      ],
-      fr: [
-        'Après une carte basse (2-6), la suivante est souvent plus haute',
-        'Évitez de deviner sur les cartes moyennes (7-9)',
-        'Les probabilités changent à chaque carte — restez attentif'
-      ],
-      en: [
-        'After a low card (2-6), the next is usually higher',
-        'Avoid guessing on mid cards (7-9)',
-        'Odds change with every card — stay alert'
-      ]
-    }
   },
   /* ═══ Wheel of Fortune ═══ */
   wf: {
@@ -989,23 +814,6 @@ rn: {
       fr: '<tr><td>Secteur ×10</td><td>Pari ×10</td></tr><tr><td>Secteur ×5</td><td>Pari ×5</td></tr><tr><td>Secteur ×3</td><td>Pari ×3</td></tr><tr><td>Secteur ×2 (deux secteurs)</td><td>Pari ×2</td></tr><tr><td>Secteur ×1.5</td><td>Pari ×1.5</td></tr><tr><td>Secteur ×1 (deux secteurs)</td><td>Pari remboursé</td></tr><tr><td>Secteur ×0.5 (trois secteurs)</td><td>Perte partielle</td></tr><tr><td>Secteur ×0</td><td>Perte du pari</td></tr>',
       en: '<tr><td>×10 sector</td><td>Bet ×10</td></tr><tr><td>×5 sector</td><td>Bet ×5</td></tr><tr><td>×3 sector</td><td>Bet ×3</td></tr><tr><td>×2 sector (two sectors)</td><td>Bet ×2</td></tr><tr><td>×1.5 sector</td><td>Bet ×1.5</td></tr><tr><td>×1 sector (two sectors)</td><td>Bet refunded</td></tr><tr><td>×0.5 sector (three sectors)</td><td>Partial loss</td></tr><tr><td>×0 sector</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'احتمال القطاع الأعلى من 1 هو 6 من 12 (نصف العجلة)',
-        'قطاعات ×0.5 و×0 تعني خسارة — لا تعتمد على الربح الدائم',
-        'كل دوران مستقل تماماً — لا توجد "عجلة ساخنة"'
-      ],
-      fr: [
-        'La probabilité d\'un secteur supérieur à 1 est de 6 sur 12 (moitié de la roue)',
-        'Les secteurs ×0.5 et ×0 signifient une perte — ne comptez pas sur un gain permanent',
-        'Chaque tour est indépendant — aucune roue "chaude"'
-      ],
-      en: [
-        'The chance of a sector above 1 is 6 out of 12 (half the wheel)',
-        '×0.5 and ×0 sectors mean a loss — do not expect steady wins',
-        'Every spin is independent — no "hot wheel"'
-      ]
-    }
   },
   /* ═══ Scratch Card — Diamond Mine ═══ */
   sc: {
@@ -1040,23 +848,6 @@ rn: {
       fr: '<tr><td>6 diamants 💎</td><td>×80</td></tr><tr><td>Une mine 💣</td><td>Perte</td></tr>',
       en: '<tr><td>All 6 diamonds 💎</td><td>×80</td></tr><tr><td>Any mine 💣</td><td>Loss</td></tr>'
     },
-    tips: {
-      ar: [
-        'احتمال الفوز: شبكة رابحة من أصل 84 (1 ÷ C(9,3))',
-        'RTP ≈ 95% — جولة قصيرة ودفع كبير',
-        'لا استراتيجية — كل جولة مستقلة تماماً'
-      ],
-      fr: [
-        'Chance de gagner : 1 grille gagnante sur 84 (1 ÷ C(9,3))',
-        'RTP ≈ 95% — partie courte, gros gain',
-        'Aucune stratégie — chaque partie est indépendante'
-      ],
-      en: [
-        'Win chance: 1 winning grid out of 84 (1 ÷ C(9,3))',
-        'RTP ≈ 95% — quick round, big payout',
-        'No strategy — every round is fully independent'
-      ]
-    }
   },
   /* ═══ Wingo Colors ═══ */
   wg: {
@@ -1091,23 +882,6 @@ rn: {
       fr: '<tr><td>🔴 Rouge (50%)</td><td>×1,9</td></tr><tr><td>🟢 Vert (33%)</td><td>×2,85</td></tr><tr><td>🔵 Bleu (17%)</td><td>×5,7</td></tr>',
       en: '<tr><td>🔴 Red (50%)</td><td>×1.9</td></tr><tr><td>🟢 Green (33%)</td><td>×2.85</td></tr><tr><td>🔵 Blue (17%)</td><td>×5.7</td></tr>'
     },
-    tips: {
-      ar: [
-        'الأحمر الأكثر احتمالاً لكنه يدفع الأقل',
-        'الأزرق يدفع ×5 لكن احتمال ظهوره 1 من 6',
-        'لا توجد استراتيجية — الكرة عشوائية'
-      ],
-      fr: [
-        'Le rouge est le plus probable mais paie le moins',
-        'Le bleu paie ×5 mais n\'apparaît qu\'1 fois sur 6',
-        'Aucune stratégie — la boule est aléatoire'
-      ],
-      en: [
-        'Red is most likely but pays the least',
-        'Blue pays ×5 but only appears 1 in 6',
-        'No strategy — the ball is random'
-      ]
-    }
   },
   /* ═══ Rock Paper Scissors ═══ */
   rp: {
@@ -1142,20 +916,6 @@ rn: {
       fr: '<tr><td>Victoire</td><td>×1.95</td></tr><tr><td>Égalité</td><td>Pari remboursé</td></tr><tr><td>Défaite</td><td>Perte du pari</td></tr>',
       en: '<tr><td>Win</td><td>×1.95</td></tr><tr><td>Tie</td><td>Bet refunded</td></tr><tr><td>Loss</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'فرصة الفوز 1 من 3 (مع احتمال تعادل)',
-        'لا يمكن التنبؤ باختيار الحاسوب — العب بتوزيع متوازن'
-      ],
-      fr: [
-        '1 chance sur 3 de gagner (avec possibilité d\'égalité)',
-        'Impossible de prédire l\'IA — jouez de façon équilibrée'
-      ],
-      en: [
-        '1 in 3 chance to win (ties possible)',
-        'You cannot predict the AI — play balanced'
-      ]
-    }
   },
   /* ═══ Penalty Shootout ═══ */
   pn: {
@@ -1196,20 +956,6 @@ rn: {
       fr: '<tr><td>But (direction différente)</td><td>×1.45</td></tr><tr><td>Arrêt (même direction)</td><td>Perte du pari</td></tr>',
       en: '<tr><td>Goal (different direction)</td><td>×1.45</td></tr><tr><td>Save (same direction)</td><td>Lose bet</td></tr>'
     },
-    tips: {
-      ar: [
-        'فرصة التسجيل 2 من 3 لأن الحارس يختار عشوائياً',
-        'لا يوجد نمط في اختيار الحارس — لا تتبع "سلاسل"'
-      ],
-      fr: [
-        '2 chances sur 3 de marquer car le gardien choisit au hasard',
-        'Aucun schéma dans le choix du gardien — pas de "série"'
-      ],
-      en: [
-        '2 in 3 chance to score since the keeper picks randomly',
-        'There is no pattern in the keeper\'s choice — no "streaks"'
-      ]
-    }
   },
   /* ═══ Lucky 7 ═══ */
   l7: {
@@ -1247,23 +993,6 @@ rn: {
       fr: '<tr><td>< 7 (numéros 1-6)</td><td>×1,4</td></tr><tr><td>= 7 (exactement 7)</td><td>×8,6</td></tr><tr><td>> 7 (numéros 8-9)</td><td>×4,3</td></tr>',
       en: '<tr><td>< 7 (numbers 1-6)</td><td>×1.4</td></tr><tr><td>= 7 (exactly 7)</td><td>×8.6</td></tr><tr><td>> 7 (numbers 8-9)</td><td>×4.3</td></tr>'
     },
-    tips: {
-      ar: [
-        '"< 7" الأكثر أماناً (6 من 9) لكنه يدفع ×1.4 فقط',
-        '"= 7" يدفع ×8.6 لكن احتمال ظهوره ضعيف',
-        'كل سحب مستقل — الرقم 7 لا "يستحق" الظهور'
-      ],
-      fr: [
-        '"< 7" est le plus sûr (6 sur 9) mais paie seulement ×1,4',
-        '"= 7" paie ×8,6 mais apparaît rarement',
-        'Chaque tirage est indépendant — le 7 ne "doit" pas sortir'
-      ],
-      en: [
-        '"< 7" is safest (6 out of 9) but only pays ×1.4',
-        '"= 7" pays ×8.6 but rarely appears',
-        'Every draw is independent — 7 is not "due"'
-      ]
-    }
   },
   /* ═══ Sic Bo ═══ */
   sb: {
@@ -1301,23 +1030,6 @@ rn: {
       fr: '<tr><td>Petit (total 4-10, sans triple)</td><td>×2</td></tr><tr><td>Grand (total 11-17, sans triple)</td><td>×2</td></tr><tr><td>Triple (ex. 4-4-4)</td><td>×30</td></tr>',
       en: '<tr><td>Small (total 4-10, no triple)</td><td>×2</td></tr><tr><td>Big (total 11-17, no triple)</td><td>×2</td></tr><tr><td>Triple (e.g. 4-4-4)</td><td>×30</td></tr>'
     },
-    tips: {
-      ar: [
-        'الصغير والكبير متساويان تقريباً في الاحتمال (~48%)',
-        'التريبل نادر (1 من 36 لكل مجموعة) لكنه يدفع ×30',
-        'تجنب رهان التريبل كاستراتيجية أساسية'
-      ],
-      fr: [
-        'Petit et grand ont une probabilité presque égale (~48%)',
-        'Le triple est rare (1 sur 36 par combinaison) mais paie ×30',
-        'Évitez le triple comme stratégie principale'
-      ],
-      en: [
-        'Small and big have nearly equal odds (~48%)',
-        'A triple is rare (1 in 36 per combination) but pays ×30',
-        'Avoid betting triple as your main strategy'
-      ]
-    }
   },
   /* ═══ European Roulette ═══ */
   rl: {
@@ -1358,23 +1070,6 @@ rn: {
       fr: '<tr><td>Rouge (18 numéros)</td><td>×2</td></tr><tr><td>Noir (18 numéros)</td><td>×2</td></tr><tr><td>Pair / Impair</td><td>×2</td></tr><tr><td>1-18 / 19-36</td><td>×2</td></tr><tr><td>1-12 / 13-24 / 25-36</td><td>×3</td></tr><tr><td>Vert (0)</td><td>×14</td></tr>',
       en: '<tr><td>Red (18 numbers)</td><td>×2</td></tr><tr><td>Black (18 numbers)</td><td>×2</td></tr><tr><td>Even / Odd</td><td>×2</td></tr><tr><td>1-18 / 19-36</td><td>×2</td></tr><tr><td>1-12 / 13-24 / 25-36</td><td>×3</td></tr><tr><td>Green (0)</td><td>×14</td></tr>'
     },
-    tips: {
-      ar: [
-        '18 رقماً أحمر و18 أسود و0 واحد أخضر',
-        'الرهانات المزدوجة (أحمر/أسود...) تفوز في 18 من 37 حالة',
-        'الـ 0 وحده يعطي الكازينو الأفضلية (18/37 وليس 18/36)'
-      ],
-      fr: [
-        '18 rouges, 18 noirs et un seul vert (0)',
-        'Les paris doubles (rouge/noir...) gagnent dans 18 cas sur 37',
-        'Le 0 seul donne l\'avantage au casino (18/37 et non 18/36)'
-      ],
-      en: [
-        '18 reds, 18 blacks, and a single green 0',
-        'Even-money bets (red/black...) win 18 out of 37 times',
-        'The single 0 gives the house its edge (18/37, not 18/36)'
-      ]
-    }
   },
   /* ═══ Baccarat ═══ */
   bc: {
@@ -1433,23 +1128,6 @@ rn: {
       fr: '<tr><td>Player gagne</td><td>×2</td></tr><tr><td>Banker gagne</td><td>×1.95</td></tr><tr><td>Égalité</td><td>×9</td></tr>',
       en: '<tr><td>Player wins</td><td>×2</td></tr><tr><td>Banker wins</td><td>×1.95</td></tr><tr><td>Tie</td><td>×9</td></tr>'
     },
-    tips: {
-      ar: [
-        'التعادل يدفع ×9 لكن احتمال حدوثه منخفض',
-        'Banker يدفع ×1.95 لأنه الأكثر فوزاً قليلاً',
-        'تذكر: العشرة والصور = 0 — انتبه للقيم'
-      ],
-      fr: [
-        'L\'égalité paie ×9 mais reste rare',
-        'Le Banker paie ×1.95 car il gagne un peu plus souvent',
-        'Rappel : 10 et figures = 0 — attention aux valeurs'
-      ],
-      en: [
-        'Tie pays ×9 but is rare',
-        'Banker pays ×1.95 because it wins slightly more often',
-        'Remember: 10 and faces = 0 — watch the values'
-      ]
-    }
   },
   /* ═══ Dragon Tiger ═══ */
   dt: {
@@ -1487,23 +1165,6 @@ rn: {
       fr: '<tr><td>🐉 Dragon gagne</td><td>×2</td></tr><tr><td>🐯 Tigre gagne</td><td>×2</td></tr><tr><td>Égalité (même valeur)</td><td>×11</td></tr>',
       en: '<tr><td>🐉 Dragon wins</td><td>×2</td></tr><tr><td>🐯 Tiger wins</td><td>×2</td></tr><tr><td>Tie (same value)</td><td>×11</td></tr>'
     },
-    tips: {
-      ar: [
-        'فرصتا التنين والنمر متساويتان تماماً',
-        'التعادل نادر ويستحق ×11 — مغري لكنه محفوف بالمخاطر',
-        'لا توجد استراتيجية تتبع بطاقات هنا'
-      ],
-      fr: [
-        'Dragon et Tigre ont exactement les mêmes chances',
-        'L\'égalité est rare et paie ×11 — tentant mais risqué',
-        'Aucune stratégie de comptage de cartes ici'
-      ],
-      en: [
-        'Dragon and Tiger have exactly equal chances',
-        'Tie is rare and pays ×11 — tempting but risky',
-        'No card-counting strategy applies here'
-      ]
-    }
   },
   /* ═══ Video Poker ═══ */
   vp: {
@@ -1541,23 +1202,6 @@ rn: {
       fr: '<tr><td>Royal Flush</td><td>×250</td></tr><tr><td>Quinte Flush</td><td>×50</td></tr><tr><td>Carré</td><td>×25</td></tr><tr><td>Full House</td><td>×9</td></tr><tr><td>Couleur</td><td>×6</td></tr><tr><td>Quinte</td><td>×4</td></tr><tr><td>Brelan</td><td>×3</td></tr><tr><td>Deux paires</td><td>×2</td></tr><tr><td>Jacks or Better (paire de Valets ou plus)</td><td>×1</td></tr>',
       en: '<tr><td>Royal Flush</td><td>×250</td></tr><tr><td>Straight Flush</td><td>×50</td></tr><tr><td>Four of a Kind</td><td>×25</td></tr><tr><td>Full House</td><td>×9</td></tr><tr><td>Flush</td><td>×6</td></tr><tr><td>Straight</td><td>×4</td></tr><tr><td>Three of a Kind</td><td>×3</td></tr><tr><td>Two Pair</td><td>×2</td></tr><tr><td>Jacks or Better (pair of 10 or higher)</td><td>×1</td></tr>'
     },
-    tips: {
-      ar: [
-        'احتفظ دائماً بزوج J+ أو بأي سحب قوي',
-        'احتفظ بالبطاقات العالية (10-A) من نفس اللون لاصطياد Flush',
-        'Royal Flush يدفع ×250 — لا تهمل بطاقاته'
-      ],
-      fr: [
-        'Gardez toujours une paire de J+ ou un bon tirage',
-        'Gardez les hautes cartes (10-A) de même couleur pour viser la quinte flush',
-        'La Royal Flush paie ×250 — gardez ses cartes'
-      ],
-      en: [
-        'Always hold a pair of J+ or a strong draw',
-        'Hold high cards (10-A) of the same suit to chase a flush',
-        'Royal Flush pays ×250 — keep its cards'
-      ]
-    }
   },
   /* ═══ Keno ═══ */
   ke: {
@@ -1595,23 +1239,6 @@ rn: {
       fr: '<tr><th colspan="2">Multiplicateurs de la mise (GB)</th></tr><tr><td><b>1</b> numéro : 1 → ×3,8</td></tr><tr><td><b>2</b> numéros : 1 → ×1 · 2 → ×10</td></tr><tr><td><b>3</b> numéros : 2 → ×3 · 3 → ×38</td></tr><tr><td><b>4</b> numéros : 2 → ×1 · 3 → ×9 · 4 → ×100</td></tr><tr><td><b>5</b> numéros : 3 → ×4 · 4 → ×26 · 5 → ×448</td></tr><tr><td><b>6</b> numéros : 3 → ×2 · 4 → ×9 · 5 → ×85 · 6 → ×1324</td></tr><tr><td><b>7</b> numéros : 4 → ×6 · 5 → ×39 · 6 → ×270 · 7 → ×4199</td></tr><tr><td><b>8</b> numéros : 4 → ×3 · 5 → ×18 · 6 → ×98 · 7 → ×684 · 8 → ×8924</td></tr><tr><td><b>9</b> numéros : 5 → ×10 · 6 → ×63 · 7 → ×313 · 8 → ×2170 · 9 → ×28930</td></tr><tr><td><b>10</b> numéros : 5 → ×5 · 6 → ×28 · 7 → ×154 · 8 → ×794 · 9 → ×4205 · 10 → ×56061</td></tr>',
       en: '<tr><th colspan="2">Bet multipliers (GB)</th></tr><tr><td><b>1</b> number: 1 → ×3.8</td></tr><tr><td><b>2</b> numbers: 1 → ×1 · 2 → ×10</td></tr><tr><td><b>3</b> numbers: 2 → ×3 · 3 → ×38</td></tr><tr><td><b>4</b> numbers: 2 → ×1 · 3 → ×9 · 4 → ×100</td></tr><tr><td><b>5</b> numbers: 3 → ×4 · 4 → ×26 · 5 → ×448</td></tr><tr><td><b>6</b> numbers: 3 → ×2 · 4 → ×9 · 5 → ×85 · 6 → ×1324</td></tr><tr><td><b>7</b> numbers: 4 → ×6 · 5 → ×39 · 6 → ×270 · 7 → ×4199</td></tr><tr><td><b>8</b> numbers: 4 → ×3 · 5 → ×18 · 6 → ×98 · 7 → ×684 · 8 → ×8924</td></tr><tr><td><b>9</b> numbers: 5 → ×10 · 6 → ×63 · 7 → ×313 · 8 → ×2170 · 9 → ×28930</td></tr><tr><td><b>10</b> numbers: 5 → ×5 · 6 → ×28 · 7 → ×154 · 8 → ×794 · 9 → ×4205 · 10 → ×56061</td></tr>'
     },
-    tips: {
-      ar: [
-        'المزيد من الأرقام المختارة = فرصة أكبر لكن تقلب أعلى',
-        'عدد قليل من المطابقات بالكاد يغطي الرهان',
-        'لعبة حظ خالص — اختر أرقامك المفضلة'
-      ],
-      fr: [
-        'Plus de numéros choisis = plus de chances mais plus de variance',
-        'Peu de correspondances couvrent à peine le pari',
-        'Jeu de pur hasard — choisissez vos numéros favoris'
-      ],
-      en: [
-        'More numbers picked = more chances but higher variance',
-        'Few matches barely cover your bet',
-        'Pure luck game — pick your favorite numbers'
-      ]
-    }
   },
   /* ═══ Andar Bahar ═══ */
   ab: {
@@ -1649,23 +1276,6 @@ rn: {
       fr: '<tr><td>Andar gagne</td><td>×1,9</td></tr><tr><td>Bahar gagne</td><td>×1,9</td></tr>',
       en: '<tr><td>Andar wins</td><td>×1.9</td></tr><tr><td>Bahar wins</td><td>×1.9</td></tr>'
     },
-    tips: {
-      ar: [
-        'كلا الجانبين يدفع ×1.9 — ميزة الكازينو 5% (RTP 95%)',
-        'Andar يُوزّع أولاً لكن الاحتمالات متساوية عملياً',
-        'لا توجد طريقة لمعرفة موضع البطاقة المطابقة مسبقاً'
-      ],
-      fr: [
-        'Les deux côtés paient ×1,9 — avantage du casino 5 % (RTP 95 %)',
-        'Andar reçoit la première carte, mais les probabilités sont quasi égales',
-        'Aucun moyen de connaître la position de la carte correspondante'
-      ],
-      en: [
-        'Both sides pay ×1.9 — house edge 5% (RTP 95%)',
-        'Andar is dealt first, but the odds are virtually equal',
-        'There is no way to know the matching card\'s position in advance'
-      ]
-    }
   },
   /* ═══ Crabbin ═══ */
   crabbin: {
@@ -1685,11 +1295,6 @@ rn: {
       fr: '<tr><td>Crabe doré ×1,3</td><td>×1,3</td></tr><tr><td>Crabe doré ×1,4</td><td>×1,4</td></tr><tr><td>Crabe doré ×1,5</td><td>×1,5</td></tr><tr><td>Crabe doré ×1,6</td><td>×1,6</td></tr><tr><td>Crabe rouge</td><td>×0</td></tr>',
       en: '<tr><td>Golden crab ×1.3</td><td>×1.3</td></tr><tr><td>Golden crab ×1.4</td><td>×1.4</td></tr><tr><td>Golden crab ×1.5</td><td>×1.5</td></tr><tr><td>Golden crab ×1.6</td><td>×1.6</td></tr><tr><td>Red crab</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['6 خلايا ذهبية من أصل 9 — احتمال الفوز 66.7%', 'المضاعفات 1.3، 1.3، 1.4، 1.4، 1.5، 1.6 (متوسط 1.42)', 'RTP 94.4% — ميزة الكازينو 5.6%'],
-      fr: ['6 cellules dorées sur 9 — probabilité de gain 66,7 %', 'Multiplicateurs 1,3, 1,3, 1,4, 1,4, 1,5, 1,6 (moyenne 1,42)', 'RTP 94,4 % — avantage du casino 5,6 %'],
-      en: ['6 golden cells out of 9 — win chance 66.7%', 'Multipliers 1.3, 1.3, 1.4, 1.4, 1.5, 1.6 (avg 1.42)', 'RTP 94.4% — house edge 5.6%']
-    }
   },
   /* ═══ Fishing ═══ */
   fishing: {
@@ -1709,11 +1314,6 @@ rn: {
       fr: '<tr><td>Sardine 🐟</td><td>×1,1 (90 %)</td></tr><tr><td>Dorade 🐠</td><td>×1,3 (75 %)</td></tr><tr><td>Fugu 🐡</td><td>×1,6 (60 %)</td></tr><tr><td>Poulpe 🐙</td><td>×2 (40 %)</td></tr><tr><td>Requin 🦈</td><td>×3 (35 %)</td></tr>',
       en: '<tr><td>Sardine 🐟</td><td>×1.1 (90%)</td></tr><tr><td>Dorade 🐠</td><td>×1.3 (75%)</td></tr><tr><td>Fugu 🐡</td><td>×1.6 (60%)</td></tr><tr><td>Octopus 🐙</td><td>×2 (40%)</td></tr><tr><td>Shark 🦈</td><td>×3 (35%)</td></tr>'
     },
-    tips: {
-      ar: ['كل سمكة تُعرض مضاعفها قبل الإطلاق', 'الأسماك الكبيرة تجازف أكثر — احتمال أقل', 'RTP 95.5% — ميزة الكازينو 4.5%'],
-      fr: ['Chaque poisson affiche son multiplicateur avant le tir', 'Les gros poissons risquent plus — probabilité plus faible', 'RTP 95,5 % — avantage du casino 4,5 %'],
-      en: ['Each fish shows its multiplier before firing', 'Big fish risk more — lower chance', 'RTP 95.5% — house edge 4.5%']
-    }
   },
   /* ═══ Gates ═══ */
   gates: {
@@ -1733,11 +1333,6 @@ rn: {
       fr: '<tr><td>Porte dorée</td><td>×1,2 / ×1,3</td></tr><tr><td>Porte maudite</td><td>×0</td></tr>',
       en: '<tr><td>Golden gate</td><td>×1.2 / ×1.3</td></tr><tr><td>Cursed gate</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['3 بوابات مربحة من أصل 4 — احتمال الفوز 75%', 'المتوسط المرجح ×1.27 لكل بوابة', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['3 portes gagnantes sur 4 — probabilité de gain 75 %', 'Moyenne pondérée ×1,27 par porte', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['3 winning gates out of 4 — win chance 75%', 'Weighted average ×1.27 per gate', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Lightning ═══ */
   lightning: {
@@ -1757,11 +1352,6 @@ rn: {
       fr: '<tr><td>Éclair doré ×1,1 / ×1,2 / ×1,3 / ×1,4 / ×1,5</td><td>×1,1-×1,5</td></tr><tr><td>Tempête</td><td>×0</td></tr>',
       en: '<tr><td>Golden bolt ×1.1 / ×1.2 / ×1.3 / ×1.4 / ×1.5</td><td>×1.1-×1.5</td></tr><tr><td>Storm</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['9 خلايا رابحة من أصل 12 — احتمال الفوز 75%', 'مجموع المضاعفات 11.5 عبر 12 خلية', 'RTP 95.8% — ميزة الكازينو 4.2%'],
-      fr: ['9 cellules gagnantes sur 12 — probabilité de gain 75 %', 'Total des multiplicateurs 11,5 sur 12 cellules', 'RTP 95,8 % — avantage du casino 4,2 %'],
-      en: ['9 winning cells out of 12 — win chance 75%', 'Multiplier total 11.5 across 12 cells', 'RTP 95.8% — house edge 4.2%']
-    }
   },
   /* ═══ Lottery ═══ */
   lottery: {
@@ -1781,11 +1371,6 @@ rn: {
       fr: '<tr><td>Billet doré</td><td>×1,4 / ×1,9 / ×2,4</td></tr><tr><td>Billet vide</td><td>×0</td></tr>',
       en: '<tr><td>Golden ticket</td><td>×1.4 / ×1.9 / ×2.4</td></tr><tr><td>Empty ticket</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['3 تذاكر رابحة من أصل 6 — احتمال الفوز 50%', 'مجموع الجوائز 5.7 عبر 6 تذاكر', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['3 billets gagnants sur 6 — probabilité de gain 50 %', 'Total des prix 5,7 sur 6 billets', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['3 winning tickets out of 6 — win chance 50%', 'Prize total 5.7 across 6 tickets', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Mahjong ═══ */
   mahjong: {
@@ -1805,11 +1390,6 @@ rn: {
       fr: '<tr><td>Tuile dorée ×1,3 / ×1,4 / ×1,5 / ×1,6</td><td>×1,3-×1,6</td></tr><tr><td>Tuile rouge</td><td>×0</td></tr>',
       en: '<tr><td>Golden tile ×1.3 / ×1.4 / ×1.5 / ×1.6</td><td>×1.3-×1.6</td></tr><tr><td>Red tile</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['8 بلاطات رابحة من أصل 12 — احتمال الفوز 66.7%', 'مجموع المضاعفات 11.4 عبر 12 بلاطة', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['8 tuiles gagnantes sur 12 — probabilité de gain 66,7 %', 'Total des multiplicateurs 11,4 sur 12 tuiles', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['8 winning tiles out of 12 — win chance 66.7%', 'Multiplier total 11.4 across 12 tiles', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Money ═══ */
   money: {
@@ -1829,11 +1409,6 @@ rn: {
       fr: '<tr><td>Coffre doré ×1,3 / ×1,4 / ×1,5 / ×1,6</td><td>×1,3-×1,6</td></tr><tr><td>Bombe</td><td>×0</td></tr>',
       en: '<tr><td>Golden safe ×1.3 / ×1.4 / ×1.5 / ×1.6</td><td>×1.3-×1.6</td></tr><tr><td>Bomb</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['6 خزائن رابحة من أصل 9 — احتمال الفوز 66.7%', 'مجموع المضاعفات 8.5 عبر 9 خزائن', 'RTP 94.4% — ميزة الكازينو 5.6%'],
-      fr: ['6 coffres gagnants sur 9 — probabilité de gain 66,7 %', 'Total des multiplicateurs 8,5 sur 9 coffres', 'RTP 94,4 % — avantage du casino 5,6 %'],
-      en: ['6 winning safes out of 9 — win chance 66.7%', 'Multiplier total 8.5 across 9 safes', 'RTP 94.4% — house edge 5.6%']
-    }
   },
   /* ═══ Olympus ═══ */
   olympus: {
@@ -1853,11 +1428,6 @@ rn: {
       fr: '<tr><td>Dieu doré</td><td>×1,2 / ×1,3</td></tr><tr><td>Dieu maudit</td><td>×0</td></tr>',
       en: '<tr><td>Golden god</td><td>×1.2 / ×1.3</td></tr><tr><td>Cursed god</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['3 آلهة رابحة من أصل 4 — احتمال الفوز 75%', 'مجموع المضاعفات 3.8 عبر 4 آلهة', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['3 dieux gagnants sur 4 — probabilité de gain 75 %', 'Total des multiplicateurs 3,8 sur 4 dieux', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['3 winning gods out of 4 — win chance 75%', 'Multiplier total 3.8 across 4 gods', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Poker ═══ */
   poker: {
@@ -1877,11 +1447,6 @@ rn: {
       fr: '<tr><td>As de pique A♠</td><td>×1,4</td></tr><tr><td>Roi de cœur K♥</td><td>×1,6</td></tr><tr><td>Dame de carreau Q♦</td><td>×1,75</td></tr><tr><td>Carte basse 2♣</td><td>×0</td></tr>',
       en: '<tr><td>Ace of spades A♠</td><td>×1.4</td></tr><tr><td>King of hearts K♥</td><td>×1.6</td></tr><tr><td>Queen of diamonds Q♦</td><td>×1.75</td></tr><tr><td>Low card 2♣</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['3 بطاقات رابحة من أصل 5 — احتمال الفوز 60%', 'مجموع المضاعفات 4.75 عبر 5 بطاقات', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['3 cartes gagnantes sur 5 — probabilité de gain 60 %', 'Total des multiplicateurs 4,75 sur 5 cartes', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['3 winning cards out of 5 — win chance 60%', 'Multiplier total 4.75 across 5 cards', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Rose ═══ */
   rose: {
@@ -1901,11 +1466,6 @@ rn: {
       fr: '<tr><td>Rose dorée ×1,2 / ×1,3 / ×1,5 / ×1,7</td><td>×1,2-×1,7</td></tr><tr><td>Cactus</td><td>×0</td></tr>',
       en: '<tr><td>Golden rose ×1.2 / ×1.3 / ×1.5 / ×1.7</td><td>×1.2-×1.7</td></tr><tr><td>Cactus</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['4 وردات رابحة من أصل 6 — احتمال الفوز 66.7%', 'مجموع المضاعفات 5.7 عبر 6 وردات', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['4 roses gagnantes sur 6 — probabilité de gain 66,7 %', 'Total des multiplicateurs 5,7 sur 6 roses', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['4 winning roses out of 6 — win chance 66.7%', 'Multiplier total 5.7 across 6 roses', 'RTP 95% — house edge 5%']
-    }
   },
   /* ═══ Sweet Bonanza ═══ */
   "sweet-bonanza": {
@@ -1925,11 +1485,6 @@ rn: {
       fr: '<tr><td>Bonbon 🍭 ×1,2</td><td>×1,2</td></tr><tr><td>Bonbon 🍬 ×1,3</td><td>×1,3</td></tr><tr><td>Chocolat 🍫 ×1,4</td><td>×1,4</td></tr><tr><td>Donut 🍩 ×1,5</td><td>×1,5</td></tr><tr><td>Cupcake 🧁 ×1,8</td><td>×1,8</td></tr><tr><td>Bombe</td><td>×0</td></tr>',
       en: '<tr><td>Lollipop 🍭 ×1.2</td><td>×1.2</td></tr><tr><td>Candy 🍬 ×1.3</td><td>×1.3</td></tr><tr><td>Chocolate 🍫 ×1.4</td><td>×1.4</td></tr><tr><td>Donut 🍩 ×1.5</td><td>×1.5</td></tr><tr><td>Cupcake 🧁 ×1.8</td><td>×1.8</td></tr><tr><td>Bomb</td><td>×0</td></tr>'
     },
-    tips: {
-      ar: ['8 حلوى رابحة من أصل 12 — احتمال الفوز 66.7%', 'مجموع المضاعفات 11.4 عبر 12 حلوى', 'RTP 95% — ميزة الكازينو 5%'],
-      fr: ['8 bonbons gagnants sur 12 — probabilité de gain 66,7 %', 'Total des multiplicateurs 11,4 sur 12 bonbons', 'RTP 95 % — avantage du casino 5 %'],
-      en: ['8 winning candies out of 12 — win chance 66.7%', 'Multiplier total 11.4 across 12 candies', 'RTP 95% — house edge 5%']
-    }
   },
   bl8: {
     name: { ar: 'البلياردو — 8-بول (WPA) 🎱', da: 'البلياردو — 8-بول (WPA) 🎱', fr: 'Billard — 8-Ball (WPA) 🎱', en: 'Billiards — 8-Ball (WPA) 🎱' },
@@ -2065,32 +1620,6 @@ rn: {
       fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Aucun enjeu financier</td></tr><tr><td>Abandon ou 8 fautive</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Winning the frame in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No money recorded</td></tr><tr><td>Resigning or fouling the 8</td><td>Loss of the stake</td></tr>'
     },
-    tips: {
-      ar: [
-        'في الكسر اضرب بقوة عالية (90+) على قمة المثلث لتفريق الكرات',
-        'القرص الأبيض يضبط الدوران: أعلى = متابعة، أسفل = ارتداد، جانب = انحراف',
-        'بعد أي خطأ تصبح الكرة بيدك — اختر موضعاً يفتح زاوية إدخال سهلة',
-        'لا تذهب إلى الكرة 8 قبل تنظيف مجموعتك: إدخالها المبكر خسارة فورية'
-      ],
-      da: [
-        'فالكسر ضرب بقوة عالية (90+) على راس المثلث باش تفرق الكورات',
-        'القرص الأبيض كيضبط الدوران: الفوق = متابعة، التحت = ارتداد، الجانب = انحراف',
-        'من بعد أي مخالفة كتولي الكورة بيدك — ختار بلاصة كتحل زاوية إدخال ساهلة',
-        'ما تمشيش لكورة 8 قبل ما تنقّي مجموعة ديالك: إدخالها بكري خسارة ديال الوقت'
-      ],
-      fr: [
-        'À la casse, frappez fort (90+) au sommet du triangle pour disperser les boules',
-        'Le disque blanc règle l\'effet : haut = suivi, bas = rétro, côté = effet latéral',
-        'Après une faute vous avez bille en main — choisissez une position qui ouvre un angle facile',
-        'N\'allez pas à la 8 avant d\'avoir nettoyé votre groupe : trop tôt, c\'est une perte immédiate'
-      ],
-      en: [
-        'On the break, strike hard (90+) at the apex of the rack to spread the balls',
-        'The white disc sets spin: top = follow, bottom = draw, side = english',
-        'After a foul you get ball in hand — pick a spot that opens an easy potting angle',
-        'Do not go for the 8 before clearing your group: too early is an instant loss'
-      ]
-    }
   },
   blbb: {
     name: {
@@ -2227,32 +1756,6 @@ rn: {
       fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon ou noire fautive</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Frame win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign or black on a foul</td><td>Stake lost</td></tr>'
     },
-    tips: {
-      ar: [
-        'الكسر القوي من جانب المثلث يرفع نقاطك: كل كرة تعبر خط الوسط تحتسب',
-        'لا تستعجل السوداء: أدخلها فقط بعد تنظيف مجموعتك وبزاوية مضمونة',
-        'الكرة الملتصقة بالوسادة تحتاج ضرباً يبعدها عن وسادتها أو يلمس وسادة أخرى',
-        'الجمود يعيد الرفّ لمصلحة من كسر أولاً — لا تعلنه إلا حين يستحيل اللعب'
-      ],
-      da: [
-        'الكسر القوي من جانب المثلث كيرفع نقاطك: كل كورة كتفوت خط الوسط كتحتسب',
-        'ماتسرعش للكحلاء: دخلها غير من بعد ما تنقّي مجموعة ديالك وبزاوية مضمونة',
-        'الكورة اللازقة فالباندة خاصها ضربة تبعدها على الباندة ديالها ولا تلمس باندة أخرى',
-        'الجمود كيرجع الرف لمصلحة اللي كسر الأول — ماتعلنوش حتى يولي اللعب مستحيل'
-      ],
-      fr: [
-        'Une casse puissante côté triangle augmente vos points : chaque boule dépassant la ligne médiane compte',
-        'N\'allez pas trop vite sur la noire : ne la jouez qu\'après avoir nettoyé votre groupe, avec un angle sûr',
-        'Une bille collée à la bande doit être jouée vers une autre bande ou empochée',
-        'L\'impasse remet le triangle au premier casseur — ne la déclarez que si le jeu est vraiment impossible'
-      ],
-      en: [
-        'A powerful break at the triangle\'s side raises your points: every ball past the centre line counts',
-        'Do not rush the black: pot it only after clearing your group, with a safe angle',
-        'A ball frozen to a cushion must be played to a different cushion or potted',
-        'Stalemate re-racks in favour of the original breaker — declare it only when play is truly impossible'
-      ]
-    }
   },
   blsn: {
     name: {
@@ -2369,32 +1872,6 @@ rn: {
       fr: '<tr><td>Victoire en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Frame win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign</td><td>Stake lost</td></tr>'
     },
-    tips: {
-      ar: [
-        'بعد كل حمراء رشّح السوداء (7) ما دام وضعها سهلاً — أكبر مردود في الإطار',
-        'لا تدخل لوناً صعباً يترك البيضاء محجوبة خلف الألوان — الخطأ 4 نقاط على الأقل',
-        'في التنظيف ابدأ بموقع جيد للصفراء — الترتيب تصاعدي ولا رجعة',
-        'على التعادل تُعاد السوداء: ضربة واحدة تحسم — اختر زاوية آمنة للبيضاء من D'
-      ],
-      da: [
-        'من بعد كل حمرة رشّح الكحلاء (7) مادام وضعها ساهل — أكبر ربح فالشوط',
-        'ماتدخلش لون صعيب كيخلي البيضة محجوبة ورا الألوان — الخطأ 4 نقاط ولا كتر',
-        'فالتنقية بدا بموقع مزيان للصفرة — الترتيب تصاعدي وماكاينش رجوع',
-        'فالتعادل كترجع الكحلاء: ضربة وحدة كتحدد — اختار زاوية آمنة للبيضة من D'
-      ],
-      fr: [
-        'Après chaque rouge, nommez la noire (7) tant que sa position est facile — le meilleur rendement de la manche',
-        'N\'empochez pas une couleur difficile qui laisse la blanche masquée — une faute coûte 4 points minimum',
-        'Au nettoyage, placez-vous bien pour la jaune — l\'ordre est croissant et sans retour',
-        'À égalité la noire est remise : un seul coup décide — choisissez un angle sûr depuis le D'
-      ],
-      en: [
-        'After each red, nominate the black (7) while its position is easy — the biggest scoring per frame',
-        'Don\'t pot a difficult colour that leaves the cue ball snookered — a foul costs at least 4 points',
-        'In clearance, get shape for the yellow — the order ascends with no going back',
-        'On a level score the black is re-spotted: one shot decides — pick a safe angle from the D'
-      ]
-    }
   },
   blca: {
     name: {
@@ -2503,32 +1980,6 @@ rn: {
       fr: '<tr><td>Victoire de partie en salle avec mise</td><td>Mise × 2</td></tr><tr><td>Face à face ou contre l\'IA</td><td>Sans enjeu financier</td></tr><tr><td>Abandon</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Match win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign</td><td>Stake lost</td></tr>'
     },
-    tips: {
-      ar: [
-        'في ثلاث وسائد فكّر بمسار البيضاء كله لا بالتماس الأول فقط',
-        'اترك الكرات متباعدة قرب الوسائد لتصعيب كاروم الخصم',
-        'في الحرة ابنِ سلسلة قرب الزاوية لكن لا تحشر الكرات',
-        'القوة المعتدلة أدق من القصوى: السيطرة على الارتدادات تكسب النقاط'
-      ],
-      da: [
-        'فثلاث وسائد فكر فمسار البيضة كامل ماشي غير فالتماس الأول',
-        'خلي الكورات متباعدين قرب الوسائد باش تصعب كاروم الخصم',
-        'فالحرة بني سلسلة قرب الزاوية ولا ماتحشرش الكورات',
-        'القوة المعتدلة أدق من القصوى: السيطرة على الارتدادات كتربح النقاط'
-      ],
-      fr: [
-        'À trois bandes, pensez tout le parcours de votre bille, pas seulement le premier contact',
-        'Laissez les boules écartées près des bandes pour compliquer la carambole adverse',
-        'En libre, construisez une série près d\'un coin sans y enfermer les billes',
-        'Une puissance modérée est plus précise : maîtriser les rebonds marque des points'
-      ],
-      en: [
-        'In three-cushion, plan your ball\'s whole route, not just the first contact',
-        'Keep the balls spread near the rails to complicate your opponent\'s carom',
-        'In libre, build a run near a corner without trapping the balls',
-        'Moderate power is more accurate: controlling rebounds wins points'
-      ]
-    }
   },
 };
 /* ═══════════════════════════════════════════
@@ -2596,19 +2047,6 @@ var Tutorial = {
       html += '<thead><tr><th>' + (T('ui.outcome') || 'النتيجة') + '</th><th>' + (T('ui.reward') || 'المضاعف / المكسب') + '</th></tr></thead>';
       html += '<tbody>' + payoutContent + '</tbody>';
       html += '</table>';
-      html += '</div>';
-    }
-    
-    /* نصائح — تُعرض فقط للألعاب التي فيها قسم tips معرّف (لم تُطلب روندا) */
-    var tipsList = (rules.tips && (rules.tips[lang] || rules.tips[fallbackLang] || rules.tips['ar'] || rules.tips['en'])) || [];
-    if (tipsList.length > 0) {
-      html += '<div class="rules-section">';
-      html += '<h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> ' + (T('ui.tips') || 'نصائح وإرشادات') + '</h4>';
-      html += '<ul class="rules-tips">';
-      tipsList.forEach(function(tip) {
-        html += '<li>' + tip + '</li>';
-      });
-      html += '</ul>';
       html += '</div>';
     }
     
@@ -2740,22 +2178,6 @@ tutorialCSS.textContent = `
   .rules-steps li {
     margin-bottom: 8px;
     line-height: 1.6;
-  }
-  .rules-tips {
-    list-style: none;
-    padding: 0;
-  }
-  .rules-tips li {
-    color: var(--t2);
-    font-size: 0.82rem;
-    padding: 6px 0;
-    padding-inline-start: 20px;
-    position: relative;
-  }
-  .rules-tips li::before {
-    content: '💡';
-    position: absolute;
-    inset-inline-start: 0;
   }
 `;
 document.head.appendChild(tutorialCSS);

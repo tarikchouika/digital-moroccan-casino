@@ -811,3 +811,35 @@ body.app-fs-on .game-fs-exit { display: inline-flex; }
   font-family: 'Courier New', monospace;
   word-break: break-all;
 }
+
+/* ═══════════ واتساب الرسمي العائم ═══════════
+   أيقونة دائرية خضراء أسفل يسار الشاشة (RTL) — تظهر في كل الصفحات
+   باستثناء صفحات الألعاب: nav() يوسم <body> بـ pg-game عند دخول
+   أي لعبة فتُخفى الأيقونة تلقائياً بلا JavaScript. */
+#waFab {
+  position: fixed;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: 16px;
+  z-index: 950;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #34d75c, #1faa44 70%);
+  border: 2px solid rgba(255,255,255,.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 0 4px rgba(52,215,92,.18);
+  color: #fff;
+  font-size: 1.65rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+#waFab:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 24px rgba(0,0,0,.5), 0 0 0 6px rgba(52,215,92,.25);
+}
+/* صفحات الألعاب: مخفية دائماً (وسم body.pg-game من nav) + وضع ملء الشاشة */
+body.pg-game #waFab,
+body.app-fs-on #waFab { display: none !important; }

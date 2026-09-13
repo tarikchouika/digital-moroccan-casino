@@ -189,6 +189,12 @@ document.body.insertAdjacentHTML('beforeend',
 '<div id="toasts" role="alert" aria-live="assertive"></div>');
 }
 
+/* [WAFab] واتساب الرسمي العائم في كل الصفحات القانونية (ليست صفحات ألعاب) */
+if (!document.getElementById('waFab')) {
+document.body.insertAdjacentHTML('beforeend',
+'<a id="waFab" href="https://wa.me/212706865019" target="_blank" rel="noopener" aria-label="واتساب الرسمي — الدعم 7/24" title="واتساب الرسمي — الدعم 7/24"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>');
+}
+
 var titleKey = PAGE_TITLES[pageKey] || PAGE_TITLES.about;
 var pageTitle = typeof T === 'function' ? T(titleKey) : '';
 document.title = 'Digital Moroccan Casino | ' + pageTitle;

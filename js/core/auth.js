@@ -108,6 +108,11 @@ function applyAuthUser(user) {
   wallet();
   save();
   renderAuthChip();
+  /* [2FA-Status] تحديث واجهة 2FA فور وصول حالة المستخدم (authRestore بعد إعادة
+     تحميل الصفحة) — وإلا بقي زر «تفعيل 2FA» ظاهراً رغم أنها مفعلة */
+  if (typeof window._refresh2faStatus === 'function') {
+    try { window._refresh2faStatus(); } catch (e) { /* ignore */ }
+  }
   /* تحميل الألعاب المعطلة من الخادم وإعادة رسم الشبكة */
   if (typeof loadDisabledGames === 'function') {
     loadDisabledGames().then(function () {
@@ -280,10 +285,18 @@ function openSecurity() {
 }
 window.openSecurity = openSecurity;
 
-/* إظهار مودال إدخال رمز 2FA أثناء الدخول */
+/* إظهار مودال إدخال رمز 2FA أثناء الدخول — وضع «الدخول»: قفل قسم التفعيل
+   وإظهار صندوق رمز الدخول (twofaLoginBox) الذي يبقى مخفياً افتراضياً
+   كي لا يزدوج مع حقل رمز التفعيل عند فتح النافذة لغير الدخول */
 function show2faLogin() {
   var m = document.getElementById('twofaModal');
   if (!m) { toast(T('auth.error'), 'err'); return; }
+  var setup = document.getElementById('twofaSetup');
+  var loginBox = document.getElementById('twofaLoginBox');
+  var disBtn = document.getElementById('twofaDisable');
+  if (setup) setup.style.display = 'none';
+  if (loginBox) { loginBox.style.display = ''; loginBox.dataset.loginMode = '1'; }
+  if (disBtn) disBtn.style.display = 'none';
   m.classList.add('show');
   var inp = document.getElementById('twofaLoginCode');
   if (inp) setTimeout(function () { inp.focus(); }, 60);
@@ -340,7 +353,8 @@ function init2fa() {
     if (statusLine) statusLine.textContent = enabled ? T('sec.enabled') : (T('sec.status') + ': —');
     if (enable) enable.style.display = enabled ? 'none' : '';
     if (disable) disable.style.display = enabled ? '' : 'none';
-    /* إخفاء عناصر نموذج التفعيل فقط (دون إخفاء زر التعطيل إن كان خارجه) */
+    /* [2FA-Modal] الحالة المرئية داخل النافذة: مفعّلة = زر تعطيل + شارة،
+       وغير مفعّلة = نموذج التفعيل (QR/سر/رمز) — لا يظهران معاً أبداً */
     if (enabled) {
       if (qrEl) qrEl.style.display = 'none';
       if (secretEl) secretEl.style.display = 'none';
@@ -352,6 +366,11 @@ function init2fa() {
       status.className = 'twofa-status ok';
       status.innerHTML = '✅ ' + T('sec.enabled');
     }
+    /* صندوق رمز الدخول يظهر في وضع الدخول فقط (يضبطه show2faLogin) */
+    var loginBox = document.getElementById('twofaLoginBox');
+    if (loginBox && loginBox.style.display !== 'none' && !loginBox.dataset.loginMode) {
+      loginBox.style.display = 'none';
+    }
   }
   window._refresh2faStatus = refreshStatus;
 
@@ -360,6 +379,10 @@ function init2fa() {
     if (!AUTH.user) { toast(T('auth.sessionExpired'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
     if (AUTH.user.twofaEnabled) { if (typeof openTwofaModal === 'function') openTwofaModal(); return; }
     openTwofaModal();
+    /* وضع التفعيل: قسم الإعداد ظاهر وصندوق الدخول مخفي */
+    var loginBox0 = document.getElementById('twofaLoginBox');
+    if (loginBox0) { loginBox0.style.display = 'none'; delete loginBox0.dataset.loginMode; }
+    if (setup) setup.style.display = '';
     if (status) { status.textContent = ''; status.className = 'authmsg'; status.style.display = ''; }
     API.post('/api/2fa/enable', {}).then(function (r) {
       if (!r.ok) { toast((r.data && r.data.message) || T('auth.error'), 'err'); return; }
@@ -422,6 +445,10 @@ window.openTwofaModal = openTwofaModal;
 function closeTwofaModal() {
   var m = document.getElementById('twofaModal');
   if (m) m.classList.remove('show');
+  /* [2FA-Modal] إنهاء وضع الدخول: صندوق رمز الدخول يعود مخفياً كي لا يزدوج
+     مع نموذج التفعيل عند فتح النافذة لاحقاً من صفحة الحساب */
+  var loginBox = document.getElementById('twofaLoginBox');
+  if (loginBox) { loginBox.style.display = 'none'; delete loginBox.dataset.loginMode; }
 }
 window.closeTwofaModal = closeTwofaModal;
 

@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/02-base.css">
   <link rel="stylesheet" href="css/03-components.css">
   <link rel="stylesheet" href="css/07-responsive.css">
-  <link rel="stylesheet" href="css/09-chrome.css">
+  <link rel="stylesheet" href="css/09-chrome.css?v=chrome2">
   <!-- Language detection (must run before CSS paint) -->
   <script src="js/i18n/auto-lang.js?v=al2"></script>
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
@@ -178,11 +178,8 @@
     <h2><i class="fa-solid fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsappTitle">الدعم عبر واتساب</span></h2>
     <p data-k="c.whatsappIntro">تواصل مع الدعم عبر واتساب — متاح 7/24.</p>
     <div class="whatsapp-btns">
-      <a href="https://wa.me/212766672027" class="btn ghost small" target="_blank" rel="noopener" aria-label="واتساب 1">
-        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsapp1">واتساب 1</span>
-      </a>
-      <a href="https://wa.me/212706865019" class="btn ghost small" target="_blank" rel="noopener" aria-label="واتساب 2">
-        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsapp2">واتساب 2</span>
+      <a href="https://wa.me/212706865019" class="btn ghost small" target="_blank" rel="noopener" aria-label="واتساب الرسمي">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> <span data-k="c.whatsapp2">واتساب الرسمي</span>
       </a>
     </div>
 
@@ -218,10 +215,10 @@
   <script src="js/core/state.js"></script>
   <script src="js/core/audio.js"></script>
   <script src="js/core/utils.js"></script>
-  <script src="js/i18n/translations.js?v=unified16"></script>
+  <script src="js/i18n/translations.js?v=unified19"></script>
   <script src="js/core/api.js?v=unified13"></script>
 <script src="js/core/auth.js?v=unified13"></script>
-<script src="js/ui/legal-ui.js?v=lu2"></script>
+<script src="js/ui/legal-ui.js?v=lu3"></script>
   <script>
     /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
@@ -381,17 +378,11 @@
         "fr": "Contactez le support via WhatsApp — 7j/24",
         "en": "Contact support via WhatsApp — available 24/7."
     },
-    "c.whatsapp1": {
-        "ar": "واتساب 1",
-        "da": "واتساب 1",
-        "fr": "WhatsApp 1",
-        "en": "WhatsApp 1"
-    },
     "c.whatsapp2": {
-        "ar": "واتساب 2",
-        "da": "واتساب 2",
-        "fr": "WhatsApp 2",
-        "en": "WhatsApp 2"
+        "ar": "واتساب الرسمي",
+        "da": "واتساب الرسمي",
+        "fr": "WhatsApp officiel",
+        "en": "Official WhatsApp"
     },
     "c.formTitle": {
         "ar": "نموذج التواصل",
