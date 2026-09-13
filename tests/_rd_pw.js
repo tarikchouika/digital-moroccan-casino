@@ -9,18 +9,27 @@
 const { chromium } = require('playwright');
 const BASE = 'http://localhost:4173/';
 
+/* [aarch64] ثنائي @sparticuz/chromium مبني لـ x86-64 فقط — على الأجهزة
+   ذات النواة ARM (هاتف cat) يفشل الإقلاع بـ ENOENT. نستخدم ثنائي
+   Playwright المحلي المتوافق مع المعمارية إن تعذّر sparticuz. */
 async function launchBrowser() {
-  let execPath = null;
-  try {
-    execPath = await (await import('@sparticuz/chromium')).default.executablePath();
-  } catch (e) { /* ننزل للافتراضي */ }
   const args = ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'];
-  if (execPath) return chromium.launch({ executablePath: execPath, args: args });
+  try {
+    const execPath = await (await import('@sparticuz/chromium')).default.executablePath();
+    const fs = require('fs');
+    if (fs.existsSync(execPath)) {
+      try { return await chromium.launch({ executablePath: execPath, args: args }); }
+      catch (e) { /* ثنائي بمعمارية مختلفة — سقوط للنظامي */ }
+    }
+  } catch (e) { /* بلا sparticuz — سقوط للنظامي */ }
   return chromium.launch({ args: args });
 }
 
 async function newPage(browser, viewport) {
-  const ctx = await browser.newContext({ viewport: viewport || { width: 1280, height: 800 } });
+  /* [v2.16.1 auto-lang] كشف اللغة التلقائي يجعل الزائر بلا تفضيل محفوظ يرى لغة
+     المتصفح — الاختبارات كُتبت بعربية ثابتة، فنضبط locale ar-MA (وأزرار
+     data-lang تنقر العربية عند الحاجة) لاستقرار النتائج عبر الأجهزة. */
+  const ctx = await browser.newContext({ viewport: viewport || { width: 1280, height: 800 }, locale: 'ar-MA' });
   const page = await ctx.newPage();
   const errs = [];
   page._errs = errs;

@@ -3378,6 +3378,10 @@ const ENG = {
   /* [Billiards] المحرك يُعرَّف في billiards.js (يُحمَّل قبل engines.js) —
      قراءة كسولة عبر window لتفادي ReferenceError لو تغيّر الترتيب */
   get billiards() { return (typeof window.eBilliards === 'function') ? window.eBilliards : ((typeof eBilliards === 'function') ? eBilliards : null); },
+  /* [BGDO] الطاولة والضومنة: مشروعان مستقلان محكومان بعقد المنصة —
+     نفس نمط القراءة الكسولة (eBackgammon/eDominoes من ملفي الجسر) */
+  get backgammon() { return (typeof window.eBackgammon === 'function') ? window.eBackgammon : null; },
+  get dominoes() { return (typeof window.eDominoes === 'function') ? window.eDominoes : null; },
   /* crash.js هو module (يُنفَّذ بعد كل السكربتات العادية) — لذلك نقرأ eCrash
      كسولاً عند الفتح عبر window.eCrash بدلاً من الإشارة المباشرة (ReferenceError) */
   get crash() { return (typeof window.eCrash !== 'undefined') ? window.eCrash : null; },
