@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-Digital Moroccan Casino — Legal Pages UI
+DTSG — Digital Traditional Skills Games — Legal Pages UI
 Same structure as index.html
 ═══════════════════════════════════════════ */
 "use strict";
@@ -24,11 +24,11 @@ function buildSidebar() {
 return '<aside class="sidebar" id="sidebar" role="navigation" aria-label="القائمة الرئيسية">' +
 '<div class="brand">' +
 '<div class="brand-logo" aria-hidden="true">' +
-'<img src="assets/logo/moroccan-casino-logo-main.webp" alt="Digital Moroccan Casino">' +
+'<img src="assets/dtsg/dtsg-logo-main.webp" alt="ألعاب الدكاء التقليدية الرقمية">' +
 '</div>' +
 '<div class="brand-name">' +
-'<b>Digital</b> Moroccan Casino' +
-'<small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> المغرب • 22 لعبة</small>' +
+'<b>DTSG</b> ألعاب الدكاء التقليدية الرقمية' +
+'<small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <span data-i18n="ui.brandSub">المغرب</span></small>' +
 '</div>' +
 '</div>' +
 '<div class="side-title" id="sideTitleMain" data-i18n="ui.home">الرئيسية</div>' +
@@ -121,7 +121,7 @@ return bnav +
 '<footer role="contentinfo" class="watermark">' +
 '<div class="foot-inner">' +
 '<div class="foot-brand">' +
-'<span class="foot-name">Digital Moroccan Casino</span>' +
+'<span class="foot-name"><b>DTSG</b> — ألعاب الدكاء التقليدية الرقمية</span>' +
 '<span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>' +
 '</div>' +
 '<div class="foot-legal" role="navigation" aria-label="روابط قانونية">' +
@@ -197,10 +197,10 @@ document.body.insertAdjacentHTML('beforeend',
 
 var titleKey = PAGE_TITLES[pageKey] || PAGE_TITLES.about;
 var pageTitle = typeof T === 'function' ? T(titleKey) : '';
-document.title = 'Digital Moroccan Casino | ' + pageTitle;
+document.title = 'ألعاب الدكاء التقليدية الرقمية | ' + pageTitle;
 
 var descKey = 'legal.' + pageKey + 'Desc';
-var desc = typeof T === 'function' ? T(descKey) : '';
+var desc = (typeof T === 'function' && typeof TR !== 'undefined' && TR[descKey]) ? T(descKey) : '';
 if (desc) {
 var metaDesc = document.querySelector('meta[name="description"]');
 if (metaDesc) metaDesc.setAttribute('content', desc);

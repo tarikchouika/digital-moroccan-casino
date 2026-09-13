@@ -993,7 +993,7 @@ const server = http.createServer((req, res) => {
         const secret = totpSecret();
         me.totpSecret = secret;
         try { db.prepare('UPDATE users SET totp_secret = ? WHERE id = ?').run(secret, me.id); } catch (e) {}
-        const otpauth = 'otpauth://totp/DigitalMoroccanCasino:' + me.username + '?secret=' + secret + '&issuer=DigitalMoroccanCasino&algorithm=SHA1&digits=6&period=30';
+        const otpauth = 'otpauth://totp/DTSG:' + me.username + '?secret=' + secret + '&issuer=DTSG&algorithm=SHA1&digits=6&period=30';
         json({ ok: true, secret: secret, otpauth: otpauth });
         return;
       }
@@ -2190,5 +2190,5 @@ const server = http.createServer((req, res) => {
 groupStartAll();
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('Digital Moroccan Casino Live Server running at http://0.0.0.0:' + PORT);
+  console.log('DTSG (Digital Traditional Skills Games) Live Server running at http://0.0.0.0:' + PORT);
 });

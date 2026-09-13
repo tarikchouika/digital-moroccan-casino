@@ -1,7 +1,7 @@
 {
-  "name": "digital-moroccan-casino",
+  "name": "digital-traditional-skills-games",
   "version": "2.5.1",
-  "description": "Digital Moroccan Casino — منصة الألعاب التراثية المغربية والكازينو العالمية (Vanilla JS + Node.js SSE)",
+  "description": "DTSG — Digital Traditional Skills Games — منصة الألعاب التراثية والمهارات التقليدية (Vanilla JS + Node.js SSE)",
   "private": true,
   "scripts": {
     "start": "node --experimental-sqlite server.js",

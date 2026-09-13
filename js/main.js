@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Main Application
+   DTSG — Digital Traditional Skills Games — Main Application
    Initialization, Rendering, Navigation
    ═══════════════════════════════════════════ */
 "use strict";
@@ -2075,7 +2075,7 @@ function initApp() {
       closeRulesModal();
     }
   });
-  console.log(' Digital Moroccan casino loaded successfully!');
+  console.log(' DTSG — Digital Traditional Skills Games loaded successfully!');
 }
 /* ═══════════ معالجة الأخطاء العامة ═══════════ */
 /* نتجاهل أخطاء تحميل الموارد (صور/خطوط/أيقونات) وأخطاء السكربتات عبر النطاقات،
@@ -2083,7 +2083,7 @@ function initApp() {
 window.addEventListener('error', function(e) {
   if (!e || !e.error) return;                 // خطأ تحميل مورد (لا يوجد كائن خطأ)
   if (e.message === 'Script error.') return;  // خطأ عبر نطاق مختلف (بدون تفاصيل)
-  console.error('Digital Moroccan casino Error:', e.error);
+  console.error('DTSG — Digital Traditional Skills Games Error:', e.error);
   if (typeof toast === 'function') toast('حدث خطأ غير متوقع — أعد المحاولة', 'err');
 });
 window.addEventListener('unhandledrejection', function(e) {

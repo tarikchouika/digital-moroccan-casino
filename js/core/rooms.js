@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Rooms (multiplayer)
+   DTSG — Digital Traditional Skills Games — Rooms (multiplayer)
    فتح غرفة + دعوة صديق بكود + لعب وجهاً لوجه
    يعتمد على السيرفر: /api/rooms/* + أحداث SSE room:*
    ═══════════════════════════════════════════ */

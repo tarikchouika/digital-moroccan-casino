@@ -666,7 +666,7 @@ const RamiExpertAI = {
 if (typeof window !== 'undefined') window.RamiExpertAI = RamiExpertAI;
 
 /* ═══════════════════════════════════════════
-   Digital Moroccan Casino — Rami Engine (Multiplayer Rami/Talaj Card Game)
+   DTSG — Digital Traditional Skills Games — Rami Engine (Multiplayer Rami/Talaj Card Game)
    محرك رامي — لعبة أوراق متعددة اللاعين (Talaj/Simple)
    ═══════════════════════════════════════════ */
 "use strict";
@@ -2450,7 +2450,7 @@ class RamiGame {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Digital Moroccan Casino — Rami UI Adapter & Interactive Controls
+   DTSG — Digital Traditional Skills Games — Rami UI Adapter & Interactive Controls
    طاولة كازينو دائرية مقسمة بقطاعات متساوية وخانات تفاعلية
    ═══════════════════════════════════════════════════════════ */
 

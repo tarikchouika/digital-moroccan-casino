@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   Digital Moroccan casino — Game Engines
+   DTSG — Digital Traditional Skills Games — Game Engines
    Slots, Mines, Plinko, Dice, Coin Flip, Hi-Lo,
    Wheel, Scratch, Wingo, RPS, Penalty, Lucky7,
    Sic Bo, Roulette, Baccarat, Dragon Tiger,

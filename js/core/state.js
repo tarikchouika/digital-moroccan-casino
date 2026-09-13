@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   Digital Moroccan casino — State Management
+   DTSG — Digital Traditional Skills Games — State Management
    ══════════════════════════════════════════ */
 "use strict";
 /* ── Fallback للـ localStorage في البيئات المقيدة ── */

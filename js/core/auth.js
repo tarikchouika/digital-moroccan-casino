@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Authentication & User Session
+   DTSG — Digital Traditional Skills Games — Authentication & User Session
    Global functions (visible to Playwright + onclick):
    authLogin, authRegister, authLogout, authSync, authSyncNow,
    openAuthModal, closeAuthModal, authTab, renderAuthChip, authRestore

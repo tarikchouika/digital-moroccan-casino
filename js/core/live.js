@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Live (SSE) client
+   DTSG — Digital Traditional Skills Games — Live (SSE) client
    دردشة حية + عدد المتصلين + شريط الفائزين
    بيانات حقيقية من الخادم عبر EventSource (/api/live)
    ═══════════════════════════════════════════ */

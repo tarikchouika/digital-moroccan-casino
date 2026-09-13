@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Utility Functions
+   DTSG — Digital Traditional Skills Games — Utility Functions
    ═══════════════════════════════════════════ */
 "use strict";
 /* ── فهرس اللغة الحالي ── */

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Digital Moroccan casino — Crash Engine v2 (Three.js + 3D Plane)
+   DTSG — Digital Traditional Skills Games — Crash Engine v2 (Three.js + 3D Plane)
    ═══════════════════════════════════════════════════════════════ */
 "use strict";
 
