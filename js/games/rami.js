@@ -3013,6 +3013,8 @@ class RamiUIAdapter {
     /* [Spectator] عرض فقط — لا مؤقّتات ولا أفعال */
     if (this.isSpectator) { this._updateUI(); return; }
     setRamiBusy(false);
+    /* [Persist] حفظ الجولة بعد كل تقدّم دور — تستمر بعد إغلاق/تحديث المتصفح */
+    if (typeof ramiAutoSave === 'function') ramiAutoSave();
     const curP = this.game.roundManager.getCurrentPlayer();
     this.game.roundManager.turnSecondsRemaining = this.game.rules.turnSeconds || 90;
     this.game.roundManager._turnStartedAt = Date.now();
@@ -3937,6 +3939,13 @@ class RamiUIAdapter {
         }
       } catch (e) { /* تجاهل */ }
     }
+    /* [Persist] نهاية المباراة: مسح الجولة المحفوظة (اكتملت وتسجّلت) —
+       نهاية شوط فقط: تحديث الحفظ ليتابع الشوط التالي من حيث توقّف */
+    if (isMatchOver) {
+      ramiClearSavedRound();
+    } else if (typeof ramiAutoSave === 'function') {
+      ramiAutoSave();
+    }
     const titleText = isMatchOver ? ('🏆 ' + _ramiT('rami.matchEnd', 'نهاية الجولة (انتهت المباراة)')) : ('🏆 ' + _ramiT('rami.roundEnd', 'نهاية الشوط'));
     const subText = isMatchOver
       ? _ramiT('rami.res.overall', 'النتيجة الإجمالية للمباراة')
@@ -4313,8 +4322,239 @@ function fallbackCopy(text) {
   } catch (e) {}
 }
 
+/* ═══════════ [Persist] استمرارية جولة الرامي المحلية ═══════════
+   بلاغ المالك: الجولة تتجمّد عند دور البوت، وعند إغلاق المتصفح/تحديثه
+   يُفقد الرهان ولا تُسجَّل تذكرة ولا تكتمل الجولة. الحل الجذري:
+   حفظ حالة الجولة كاملة في localStorage بعد كل حركة/شوط، واستعادتها
+   عند فتح اللعبة إن لم تكن انتهت — فيكمل اللاعب من حيث توقّف (user vs ai
+   و user vs user على نفس الجهاز). الخصم يحدث عند البدء فقط: الاستعادة
+   لا تخصم رهاناً ثانياً، وعند انتهاء الجولة المستعادة يُسجَّل التيكيت
+   والمعاملات كأي جولة عادية (نفس مسار recordRound). */
+var RAMI_PERSIST_KEY = 'rc_rami_active_round';
+
+function _ramiSerCard(c) {
+  if (!c) return null;
+  return { id: c.id, rank: c.rank, suit: c.suit, type: c.type, fromDiscard: !!c.fromDiscard, fromLaTour: !!c.fromLaTour, fromFojok: !!c.fromFojok };
+}
+function _ramiDeserCard(o) {
+  if (!o) return null;
+  const c = new RamiCard(o.id, o.rank, o.suit, o.type);
+  if (o.fromDiscard) c.fromDiscard = true;
+  if (o.fromLaTour) c.fromLaTour = true;
+  if (o.fromFojok) c.fromFojok = true;
+  return c;
+}
+function _ramiSerMeld(m) {
+  return m ? { type: m.type, cards: (m.cards || []).map(_ramiSerCard), id: m.id } : null;
+}
+function _ramiDeserMeld(o) {
+  if (!o) return null;
+  const m = new RamiMeld(o.type, (o.cards || []).map(_ramiDeserCard));
+  if (o.id) m.id = o.id;
+  return m;
+}
+
+/* تسلسل الجولة كاملة — يُستدعى بعد كل حركة/تغير حالة */
+function ramiSerializeGame(game) {
+  try {
+    if (!game || !game.roundManager || game.gamePhase === 'MATCH_END' || game.multiplayer) return;
+    const rm = game.roundManager;
+    const data = {
+      v: 1,
+      savedAt: Date.now(),
+      mode: game.mode, playerCount: game.playerCount, botCount: game.botCount,
+      botSeats: game.botSeats || null, seed: game.seed, turnSeconds: game.rules.turnSeconds,
+      targetScore: game.targetScore, isSingleRound: !!game.isSingleRound,
+      bet: window.RAMI_BET || 0,
+      gamePhase: game.gamePhase,
+      players: (game.players || []).map(function (p) {
+        return {
+          id: p.id, name: p.name, isBot: !!p.isBot,
+          hand: (p.hand || []).map(_ramiSerCard),
+          melds: (p.melds || []).map(_ramiSerMeld),
+          displayCards: (p.displayCards || []).map(_ramiSerCard),
+          totalScore: p.totalScore || 0, penaltyScore: p.penaltyScore || 0,
+          hasOpened: !!p.hasOpened,
+          drawnDiscardCard: _ramiSerCard(p.drawnDiscardCard),
+          drawnFojokCard: _ramiSerCard(p.drawnFojokCard),
+          drawnLaTourCard: _ramiSerCard(p.drawnLaTourCard),
+          tookLaTour: !!p.tookLaTour,
+          isEliminated: !!p.isEliminated,
+          consecutiveAutoTurns: p.consecutiveAutoTurns || 0,
+          lastRoundPoints: p.lastRoundPoints || 0,
+          lastPenalty: p.lastPenalty || 0,
+          lastPenaltyReasons: (p.lastPenaltyReasons || []).map(function (r) { return (typeof r === 'string') ? r : (r && r.label) || ''; }),
+          lastRoundDetail: p.lastRoundDetail || null
+        };
+      }),
+      rm: {
+        currentPlayerIndex: rm.currentPlayerIndex,
+        dealerIndex: rm.dealerIndex,
+        drawPile: (rm.drawPile || []).map(_ramiSerCard),
+        discardPile: (rm.discardPile || []).map(_ramiSerCard),
+        tableMelds: (rm.tableMelds || []).map(_ramiSerMeld),
+        jokerIndicator: _ramiSerCard(rm.jokerIndicator),
+        jokerIndicatorInfo: rm.jokerIndicatorInfo || null,
+        laTourCard: _ramiSerCard(rm.laTourCard),
+        turnPhase: rm.turnPhase,
+        roundNumber: rm.roundNumber || 0,
+        turnSecondsRemaining: rm.turnSecondsRemaining,
+        highestOpeningScore: rm.highestOpeningScore || 0,
+        highestOpeningPlayer: rm.highestOpeningPlayer || null,
+        jokerDouble: !!rm.jokerDouble,
+        dealerFirstCycle: !!rm.dealerFirstCycle,
+        roundHistory: rm.roundHistory || []
+      }
+    };
+    localStorage.setItem(RAMI_PERSIST_KEY, JSON.stringify(data));
+  } catch (e) { /* امتلاء التخزين أو نطاق خاص — تجاهل صامت */ }
+}
+
+/* هل توجد جولة محفوظة قابلة للاستئناف؟ (غير منتهية وضمن نافذة الاستئناف) */
+function ramiHasSavedRound() {
+  try {
+    const raw = localStorage.getItem(RAMI_PERSIST_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    return !!(d && d.v === 1 && d.gamePhase && d.gamePhase !== 'MATCH_END' &&
+      d.players && d.players.length >= 2 && d.rm && d.rm.players !== null);
+  } catch (e) { return false; }
+}
+
+/* مسح الجولة المحفوظة (نهاية المباراة أو بدء جولة جديدة) */
+function ramiClearSavedRound() {
+  try { localStorage.removeItem(RAMI_PERSIST_KEY); } catch (e) {}
+}
+
+/* استعادة الجولة: تُنشئ كائن RamiGame مطابقاً للحالة المحفوظة.
+   تعيد كائن اللعبة أو null. يعتمد الاستئناف في ramiResumeSavedRound(). */
+function ramiDeserializeGame() {
+  try {
+    const raw = localStorage.getItem(RAMI_PERSIST_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || d.v !== 1 || !d.players || !d.rm || d.gamePhase === 'MATCH_END') return null;
+    const game = new RamiGame(d.mode, d.playerCount, d.botCount, d.seed, d.turnSeconds, d.botSeats);
+    game.targetScore = d.targetScore;
+    game.isSingleRound = !!d.isSingleRound;
+    game.gamePhase = d.gamePhase || 'PLAYING';
+    const rm = game.roundManager;
+    /* اللاعبون بأيديهم وحالاتهم كاملة */
+    rm.players = d.players.map(function (po) {
+      const p = new RamiPlayer(po.id, po.name, po.isBot);
+      p.hand = (po.hand || []).map(_ramiDeserCard);
+      p.melds = (po.melds || []).map(_ramiDeserMeld);
+      p.displayCards = (po.displayCards || []).map(_ramiDeserCard);
+      p.totalScore = po.totalScore || 0;
+      p.penaltyScore = po.penaltyScore || 0;
+      p.hasOpened = !!po.hasOpened;
+      p.drawnDiscardCard = _ramiDeserCard(po.drawnDiscardCard);
+      p.drawnFojokCard = _ramiDeserCard(po.drawnFojokCard);
+      p.drawnLaTourCard = _ramiDeserCard(po.drawnLaTourCard);
+      p.tookLaTour = !!po.tookLaTour;
+      p.isEliminated = !!po.isEliminated;
+      p.consecutiveAutoTurns = po.consecutiveAutoTurns || 0;
+      p.lastRoundPoints = po.lastRoundPoints || 0;
+      p.lastPenalty = po.lastPenalty || 0;
+      p.lastPenaltyReasons = po.lastPenaltyReasons || [];
+      p.lastRoundDetail = po.lastRoundDetail || null;
+      return p;
+    });
+    game.players = rm.players;
+    /* حالة الجولة */
+    rm.currentPlayerIndex = d.rm.currentPlayerIndex || 0;
+    rm.dealerIndex = d.rm.dealerIndex || 0;
+    rm.drawPile = (d.rm.drawPile || []).map(_ramiDeserCard);
+    rm.discardPile = (d.rm.discardPile || []).map(_ramiDeserCard);
+    rm.tableMelds = (d.rm.tableMelds || []).map(_ramiDeserMeld);
+    rm.jokerIndicator = _ramiDeserCard(d.rm.jokerIndicator);
+    rm.jokerIndicatorInfo = d.rm.jokerIndicatorInfo || null;
+    rm.laTourCard = _ramiDeserCard(d.rm.laTourCard);
+    rm.turnPhase = d.rm.turnPhase || 'WAITING_DRAW';
+    rm.roundNumber = d.rm.roundNumber || 1;
+    rm.turnSecondsRemaining = Math.max(10, d.rm.turnSecondsRemaining || game.rules.turnSeconds);
+    rm.highestOpeningScore = d.rm.highestOpeningScore || 0;
+    rm.highestOpeningPlayer = d.rm.highestOpeningPlayer || null;
+    rm.jokerDouble = !!d.rm.jokerDouble;
+    rm.dealerFirstCycle = !!d.rm.dealerFirstCycle;
+    rm.roundHistory = d.rm.roundHistory || [];
+    if (typeof clearRamiPartitionCache === 'function') clearRamiPartitionCache();
+    return game;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* حفظ تلقائي: يُستدعى من نقاط تغيّر الحالة كلها (بعد أي executeMove /
+   نهاية شوط / تقدّم دور) — رخيص (تسلسل ~KB قليلة) */
+function ramiAutoSave() {
+  try {
+    const g = RAMI_STATE || (typeof window !== 'undefined' ? window.RAMI_STATE : null);
+    if (g && !g.multiplayer && g.gamePhase !== 'MATCH_END') ramiSerializeGame(g);
+  } catch (e) {}
+}
+
+if (typeof window !== 'undefined') {
+  window.ramiHasSavedRound = ramiHasSavedRound;
+  window.ramiClearSavedRound = ramiClearSavedRound;
+}
+
 /* ═══════════ Actions and Event Handlers ═══════════ */
 function ramiStartGame() {
+  /* [Persist] جولة محفوظة غير منتهية → استئنافها: بلا خصم رهان جديد
+     (الرهان خُصم عند بدئها) — يكمل اللاعب من حيث توقف (بلاغ المالك:
+     يجب أن يستطيع إتمام جولته مهما أغلق/حدّث/خرج وعاد).
+     الاستئناف فقط إذا طابقت إعدادات الشاشة الجولة المحفوظة (الوضع/العدد/
+     الهدف) — تغيير الإعدادات = نية جولة جديدة صريحة: تُلغى القديمة. */
+  if (typeof ramiHasSavedRound === 'function' && ramiHasSavedRound() && !window.RAMI_SETUP_FORCE_NEW) {
+    var _savedRaw = null;
+    try { _savedRaw = JSON.parse(localStorage.getItem(RAMI_PERSIST_KEY) || 'null'); } catch (e) { _savedRaw = null; }
+    var playersElQ = document.getElementById('ramiPlayers');
+    var targetElQ = document.getElementById('ramiTarget');
+    var modeQ = window.RAMI_SETUP_MODE || 'talaj';
+    var playersQ = playersElQ ? parseInt(playersElQ.value, 10) : 4;
+    var targetValQ = targetElQ ? targetElQ.value : '501';
+    var singleQ = (targetValQ === 'single');
+    var targetQ = singleQ ? 999999 : (parseInt(targetValQ, 10) || (modeQ === 'talaj' ? 501 : 301));
+    var _matches = _savedRaw &&
+      _savedRaw.mode === modeQ &&
+      _savedRaw.playerCount === playersQ &&
+      _savedRaw.targetScore === targetQ;
+    if (_matches) {
+      const saved = ramiDeserializeGame();
+      if (saved) {
+        RAMI_STATE = saved;
+        window.RAMI_STATE = RAMI_STATE;
+        if (_savedRaw.bet) { RAMI_BET = _savedRaw.bet; window.RAMI_BET = _savedRaw.bet; }
+        if (window.RamiAdapter) {
+          window.RamiAdapter.game = RAMI_STATE;
+          window.RamiAdapter.selectedCards.clear();
+          window.RamiAdapter.handSlots = [[], [], [], [], []];
+          window.RamiAdapter._renderGame();
+        }
+        _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ'), 'ok');
+        /* البوت يكمل إن كان دوره */
+        if (window.RamiAdapter && window.RamiAdapter._processTurn) {
+          try { window.RamiAdapter._processTurn(); } catch (e) {}
+        }
+        return;
+      }
+    }
+    /* إعدادات مختلفة أو بيانات تالفة = جولة جديدة صريحة: امسح القديمة.
+       [TicketSafety] الجولة الملغاة رهانُها خُصم فعلاً — لا يضيع صامتاً:
+       تُسجَّل تذكرة خسارة (بلا payout) في السجل المحلي و/ api/rounds كي
+       يظهر الرهان في سجل التذاكر والمعاملات (حزام الأمان ضد فقدان المال) */
+    if (_savedRaw && _savedRaw.bet && _savedRaw.gamePhase !== 'MATCH_END') {
+      try {
+        if (typeof recordRound === 'function') {
+          recordRound(false, 0, 'رامي (أُلغيت ببدء جديدة)', _savedRaw.bet);
+        }
+      } catch (e) { /* تجاهل */ }
+    }
+    ramiClearSavedRound();
+  }
+  window.RAMI_SETUP_FORCE_NEW = false;
+
   const playersEl = document.getElementById('ramiPlayers');
   const targetEl = document.getElementById('ramiTarget');
   const timerEl = document.getElementById('ramiTimerSelect');
@@ -4368,6 +4608,8 @@ function ramiStartGame() {
     window.RamiAdapter._renderGame();
     window.RamiAdapter.playIntroAndStart();
   }
+  /* [Persist] بدء جولة جديدة: تُحفظ فوراً — أول حفظ في سلسلة الاستمرارية */
+  ramiAutoSave();
 }
 
 function ramiAction(type, cardId) {
