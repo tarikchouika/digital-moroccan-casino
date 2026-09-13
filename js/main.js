@@ -13,6 +13,7 @@ const GAME_IMG = {
   ke: 'keno', sl: 'slot-spin', ab: 'andar-bahar',
   rm: 'rami',
   ch: 'chess', dm: 'dama',
+  bg: 'backgammon', do: 'dominoes',
   bl8: 'billiards', blbb: 'billiards', blgv: 'billiards', blsn: 'billiards', blca: 'billiards',
   crabbin: 'crabbin',
   fishing: 'fishing',
@@ -66,7 +67,9 @@ function renderGames() {
   const all = document.getElementById('allGames');
   const vis = g => !DISABLED[g.id];
   if (featured) {
-    featured.innerHTML = [GAMES[0], GAMES[1], GAMES[2], GAMES[17]]
+    /* [BGDO] فهرس wf ثابت بالمعرف — إدراج الطاولة/الضومنة بعد blca أزاح كل ما بعده */
+    const wfIdx = GAMES.findIndex(function (x) { return x.id === 'wf'; });
+    featured.innerHTML = [GAMES[0], GAMES[1], GAMES[2], GAMES[wfIdx >= 0 ? wfIdx : 17]]
       .filter(Boolean)
       .filter(vis)
       .map(tileHTML)
@@ -514,6 +517,8 @@ function initFor(eng) {
     chess: (typeof initChess === 'function') ? initChess : null,
     billiards: (typeof initBilliards === 'function') ? initBilliards : null,
     rami: (typeof initRami === 'function') ? initRami : null,
+    backgammon: (typeof initBackgammon === 'function') ? initBackgammon : null,
+    dominoes: (typeof initDominoes === 'function') ? initDominoes : null,
     plinko: (typeof initPlinko === 'function') ? initPlinko : null,
     wheel: (typeof initWheel === 'function') ? initWheel : null,
     hilo: (typeof initHilo === 'function') ? initHilo : null,
@@ -667,6 +672,13 @@ function closeGamePage() {
   /* تنظيف روندا الكلاسيكية (المحرك المستورد) عند مغادرة الصفحة */
   if (typeof cleanupRondaCard === 'function') {
     try { cleanupRondaCard(); } catch (e) { console.error('cleanupRondaCard error:', e); }
+  }
+  /* [BGDO] تنظيف الطاولة والضومنة (المشروعان المستقلان) عند مغادرة الصفحة */
+  if (typeof cleanupBackgammon === 'function') {
+    try { cleanupBackgammon(); } catch (e) { console.error('cleanupBackgammon error:', e); }
+  }
+  if (typeof cleanupDominoes === 'function') {
+    try { cleanupDominoes(); } catch (e) { console.error('cleanupDominoes error:', e); }
   }
   if (!keepLive) {
     window._liveGameId = null;

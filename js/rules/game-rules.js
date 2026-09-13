@@ -1981,6 +1981,120 @@ rn: {
       en: '<tr><td>Match win in a staked room</td><td>Stake × 2</td></tr><tr><td>Hot-seat or versus AI</td><td>No financial stake</td></tr><tr><td>Resign</td><td>Stake lost</td></tr>'
     },
   },
+  /* ═══ [BGDO] الطاولة — Backgammon (bg) ═══ */
+  bg: {
+    name: {
+      ar: 'الطاولة 🎲',
+      da: 'الطاولة ديال الجوز والنرد 🎲',
+      fr: 'Tawla — Backgammon 🎲',
+      en: 'Backgammon — Tawla 🎲'
+    },
+    goal: {
+      ar: 'انقل أحجارك الخمسة عشر حول الرقعة إلى بيتك ثم أخرِجها كلها قبل خصمك — والفوز بمارس أو باك جامون يضاعف نقاط الجولة.',
+      da: 'دور الجوج ديالك الخمسة عشر على الرقعة حتى لدار ديالك ومن بعد أخرجهم كاملين قبل الخصم — ومارس ولا باك جامون كيضاعفو نقط الجولة.',
+      fr: 'Faites le tour du plateau avec vos quinze dames jusqu\'à votre zone, puis sortez-les toutes avant votre adversaire — un gammon ou un backgammon double les points de la manche.',
+      en: 'Race your fifteen checkers around the board into your home quadrant, then bear them all off before your opponent — a gammon or backgammon doubles the game points.'
+    },
+    steps: {
+      ar: [
+        'الافتتاح: كل لاعب يرمي نرداً واحداً — الأعلى يبدأ ويلعب برقمي النردَين معاً (والتعادل يُعاد).',
+        'الحركة: كل نرد حركة مستقلة، والدبل يمنح 4 حركات — لا هبوط على نقطة فيها حجاران للخصم.',
+        'الضرب: الحجر المفرد يُضرب إلى الأدمن (الحاجز) — ولا حركة قبل إدخال كل أحجار الأدمن (نقطة مغلقة = دور ضائع).',
+        'الإخراج: لا يبدأ إلا بوجود كل الأحجار في البيت — بالرقم المطابق لمسافة الحجر أو برقم أكبر إن لم توجد أحجار أبعد.',
+        'النرد الإجباري: يجب استخدام أكبر عدد ممكن من النردات — وإن أمكن واحدة فوجب استخدام الأكبر.',
+        'الحسم: فوز عادي ×1 — مارس (خصمك لم يُخرج شيئاً) ×2 — باك جامون (وحجر له في بيتك أو على الأدمن) ×3.',
+        'المباراة: أول من يجمع طول المباراة (1/3/5 نقاط) يفوز — بلا مكعب مضاعفة في هذه النسخة.'
+      ],
+      da: [
+        'البداية: كل واحد كيرمي نرد واحد — الأعلى كيبدا وكيدير بجوج نْيَمْ مع بعضهم.',
+        'الحركة: كل نرد حركة بوحدو، والدبل كيعطي 4 حركات — ما كتهبطش على نقطة فيها جوج حجور ديال الخصم.',
+        'الضرب: الحجر بوحدو كيتضرب للأدمن — وما كاين حركة قبل ما تدخل كلش من الأدمن.',
+        'الإخراج: ما كيبدا حتى يكون كلشي فالدار — بالرقم المطابق ولا بالأكبر إلا ما كانش حجر أبعد.',
+        'خاصك تستعمل أكبر عدد ممكن من النردات — وإلا أمكنت وحدة خاصك تستعمل الكبيرة.',
+        'الحسم: عادي ×1 — مارس ×2 — باك جامون ×3.',
+        'الماتش: أول واحد كيجمع الطول (1/3/5) كيربح.'
+      ],
+      fr: [
+        'Ouverture : chaque joueur lance un dé — le plus haut commence et joue les deux numéros ensemble (égalité = relancer).',
+        'Déplacement : chaque dé est un coup indépendant, un double donne 4 coups — pas d\'atterrissage sur un point tenu par deux dames adverses.',
+        'Frappe : une dame isolée est envoyée à la barre — aucun coup avant d\'avoir rentré toutes les dames (point fermé = tour perdu).',
+        'Sortie : impossible avant que toutes les dames soient dans la zone — par le numéro exact, ou un plus grand s\'il ne reste aucune dame plus lointaine.',
+        'Dés obligatoires : jouez le maximum de dés possible — si un seul, jouez le plus grand.',
+        'Résultat : victoire simple ×1 — gammon (adversaire sorti de rien) ×2 — backgammon (dame adverse dans votre zone ou à la barre) ×3.',
+        'Match : le premier à atteindre la longueur du match (1/3/5 points) gagne — pas de cube de doubler dans cette version.'
+      ],
+      en: [
+        'Opening: each player rolls one die — the higher starts and plays both numbers together (a tie re-rolls).',
+        'Movement: each die is an independent move, a double grants 4 moves — no landing on a point held by two enemy checkers.',
+        'Hitting: a lone checker is sent to the bar — no move until every bar checker re-enters (a closed point loses the turn).',
+        'Bearing off: only when all your checkers are home — by the exact die, or a larger one if no farther checker exists.',
+        'Forced play: use the maximum number of dice possible — if only one, play the larger.',
+        'Result: single win ×1 — gammon (opponent bore off nothing) ×2 — backgammon (a checker in your home or on the bar) ×3.',
+        'Match: first to reach the match length (1/3/5 points) wins — no doubling cube in this version.'
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Match gagné — Facile</td><td>Mise ×1,5</td></tr><tr><td>Match gagné — Moyen</td><td>Mise ×2</td></tr><tr><td>Match gagné — Expert</td><td>Mise ×3</td></tr><tr><td>Défaite ou abandon</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Match won — Easy</td><td>Bet ×1.5</td></tr><tr><td>Match won — Medium</td><td>Bet ×2</td></tr><tr><td>Match won — Expert</td><td>Bet ×3</td></tr><tr><td>Loss or resign</td><td>Bet lost</td></tr>'
+    },
+  },
+  /* ═══ [BGDO] الضومنة — Dominoes (do) ═══ */
+  do: {
+    name: {
+      ar: 'الضومنة 🁫',
+      da: 'الضومنة ديال القهاوة 🁫',
+      fr: 'Domino Marocain — Double-Six 🁫',
+      en: 'Moroccan Dominoes — Double-Six 🁫'
+    },
+    goal: {
+      ar: 'أفرغ يدك من قطع الدومينو قبل خصمك أو اجمع أقل النقاط عند الانسداد — وأول من يبلغ النقاط المستهدفة (50-200) يفوز بالمباراة.',
+      da: 'خوي يدك من القطع قبل الخصم ولا جمع أقل النقط ملي تسدات اللعبة — وأول واحد كيوصل للهدف (50-200) كيربح الماتش.',
+      fr: 'Videz votre main de dominos avant l\'adversaire, ou totalisez le moins de points au blocage — le premier à la cible (50-200) gagne le match.',
+      en: 'Empty your hand of dominoes before your opponent, or hold the fewest pips when the game blocks — first to the target score (50-200) wins the match.'
+    },
+    steps: {
+      ar: [
+        'المجموعة: Double-Six من 28 قطعة فريدة — 7 قطع لكل لاعب والـ 14 الباقية «البنك».',
+        'البداية: يبدأ صاحب أعلى دبل ويلعبه إلزامياً — وإن لم يوجد دبل بدأ صاحب أثقل قطعة بحرة الاختيار.',
+        'الحركة: القطعة قانونية إذا طابقت إحدى قيميها أحد طرفي السلسلة — الدبل يوضع عرضياً ولا يفتح طرفاً ثالثاً.',
+        'السحب: بلا حركة؟ اسحب من البنك قطعةً قطعة حتى تصل قطعة صالحة ثم العبها فوراً (نمط Block بلا سحب).',
+        'التمرير: بنك فارغ بلا حركة؟ مرّر الدور — وتمريران متتاليان = انسداد وتنتهي الجولة.',
+        'الحساب: إفراغ اليد تأخذ مجموع نقاط يد خصمك — والانسداد يفوز صاحب اليد الأخف بالفرق، والتعادل بلا نقاط.'
+      ],
+      da: [
+        'المجموعة: Double-Six ديال 28 قطعة — 7 لكل لعاب والـ 14 الباقية «البنك».',
+        'البداية: صاحب أكبر دبل كيبدا وكيضطر يلعبو — وإلا ما كانش دبل، صاحب أثقل قطعة كيبدا وكيختار.',
+        'الحركة: القطعة صالحة إلا وافقت شي قيمة ديالها مع طرف من السلسلة — والدبل كيتحط بالعرض وماكيفتحش طرف ثالث.',
+        'السحب: ما عندك حركة؟ جبد من البنك حتى توصلك قطعة صالحة وتلعبها دغيا (Block: بلا سحب).',
+        'التمرير: البنك خاوي وما كاين حركة؟ دوز الدور — وجوج تمريرات = تسداد وتسالي الجولة.',
+        'الحساب: لي خلص يده كياخذ مجموع نقط يد الخصم — والتسداد كيربح صاحب اليد الخفيفة بالفرق.'
+      ],
+      fr: [
+        'Le jeu : Double-Six de 28 tuiles uniques — 7 par joueur, les 14 restantes forment le talon.',
+        'Départ : le plus grand double commence et doit le jouer — sinon le joueur à la tuile la plus lourde ouvre librement.',
+        'Coup : une tuile est légale si l\'une de ses valeurs correspond à une extrémité de la chaîne — le double se pose en travers et n\'ouvre pas de troisième bout.',
+        'Pioche : sans coup, piochez au talon jusqu\'à une tuile jouable, puis jouez-la immédiatement (mode Bloc : sans pioche).',
+        'Passe : talon vide sans coup ? Passez — deux passes successives bloquent la manche.',
+        'Score : vider sa main rapporte le total de la main adverse — au blocage, la main la plus légère gagne la différence (égalité : aucun point).'
+      ],
+      en: [
+        'The set: a Double-Six of 28 unique tiles — 7 per player, the remaining 14 form the boneyard.',
+        'Start: the highest double begins and must play it — with no double, the heaviest tile opens with a free choice.',
+        'Play: a tile is legal when either of its values matches an open chain end — doubles sit crosswise and open no third end.',
+        'Drawing: no move? Draw from the boneyard one tile at a time until playable, then play it at once (Block mode: no drawing).',
+        'Passing: empty boneyard and no move? Pass — two consecutive passes block the round.',
+        'Scoring: going out takes the opponent\'s hand total — at a block, the lighter hand wins the difference (a tie scores nothing).'
+      ]
+    },
+    payouts: {
+      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
+      fr: '<tr><td>Match gagné — Facile</td><td>Mise ×1,5</td></tr><tr><td>Match gagné — Moyen</td><td>Mise ×2</td></tr><tr><td>Match gagné — Expert</td><td>Mise ×3</td></tr><tr><td>Défaite ou abandon</td><td>Perte de la mise</td></tr>',
+      en: '<tr><td>Match won — Easy</td><td>Bet ×1.5</td></tr><tr><td>Match won — Medium</td><td>Bet ×2</td></tr><tr><td>Match won — Expert</td><td>Bet ×3</td></tr><tr><td>Loss or resign</td><td>Bet lost</td></tr>'
+    },
+  },
 };
 /* ═══════════════════════════════════════════
    Tutorial System

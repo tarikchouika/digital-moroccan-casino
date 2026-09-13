@@ -44,7 +44,8 @@ cd "$REPO"
 
 # الملفات والمجلدات العامة فقط (نفس قاعدة deploy-clean.sh المعتمدة)
 # ronda-game: محرك روندا الكلاسيكية (index.html يحمل سكربتاته من ronda-game/js/*)
-cp -r js css assets ronda-game "$OUT/"
+# backgammon-game / dominoes-game: [BGDO] مشروعا الطاولة والضومنة المستقلان
+cp -r js css assets ronda-game backgammon-game dominoes-game "$OUT/"
 
 for f in index.html admins.html about.html contact.html 2fa.html \
          provably-fair.html fairness.html privacy.html terms.html \
@@ -62,6 +63,9 @@ done
 # لا اختبارات ولا وثائق ولا قواعد بيانات ولا configs في النشر
 rm -rf "$OUT"/data 2>/dev/null || true
 rm -rf "$OUT"/ronda-game/tests "$OUT"/ronda-game/README.md 2>/dev/null || true
+# [BGDO] تنظيف احتياطي لمجلدات tests داخل المشروعين + حذف ملفات تدقيق الدمج من النشر
+rm -rf "$OUT"/backgammon-game/tests "$OUT"/dominoes-game/tests 2>/dev/null || true
+rm -f "$OUT"/backgammon-game/INTEGRATION.md "$OUT"/dominoes-game/INTEGRATION.md 2>/dev/null || true
 find "$OUT" -name "*.db*" -delete 2>/dev/null || true
 
 N_FILES="$(find "$OUT" -type f | wc -l)"
