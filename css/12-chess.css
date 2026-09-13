@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════
-   الشطرنج الدولي — هوية بصرية موحدة مع الكازينو (نمط ضاما)
+   الشطرنج الدولي — هوية بصرية موحدة مع ألعاب المنصة (نمط ضاما)
    ══════════════════════════════════════════════════════════ */
 .ch-wrap { max-width: 470px; margin: 0 auto; }
 .ch-logo-em { font-size: 44px; }
@@ -69,14 +69,14 @@
   box-shadow:
     0 12px 34px rgba(0, 0, 0, 0.55),
     0 0 0 4px #3a2a12,
-    0 0 0 6px #d9a94e,
+    0 0 0 6px #d9b45c,
     inset 0 0 0 1px rgba(255, 227, 150, 0.2);
 }
 /* [Logo] اللوغو الرسمي بمنتصف رقعة الشطرنج — علامة مائية فوق المربعات وخلف القطع */
 .ch-board::after {
   content: '';
   position: absolute; inset: 0;
-  background: url('../assets/logo/logo-transparent.png') center / min(44%, 250px) auto no-repeat;
+  background: url('../assets/dtsg/dtsg-logo-watermark.png') center / min(44%, 250px) auto no-repeat;
   opacity: 0.12;
   pointer-events: none;
   z-index: 1;
@@ -84,9 +84,9 @@
 .ch-sq { position: relative; display: flex; align-items: center; justify-content: center; cursor: default; user-select: none; }
 .ch-sq.light { background: linear-gradient(135deg, #efe0bb, #e2ce9d); }
 .ch-sq.dark { background: linear-gradient(135deg, #8a5a2c, #6b3f1c); }
-.ch-sq.sel { box-shadow: inset 0 0 0 3px #f5c518, inset 0 0 14px rgba(245, 197, 24, 0.5); }
-.ch-sq.last { box-shadow: inset 0 0 0 2px rgba(245, 197, 24, 0.55); }
-.ch-sq.sel.last { box-shadow: inset 0 0 0 3px #f5c518, inset 0 0 14px rgba(245, 197, 24, 0.5); }
+.ch-sq.sel { box-shadow: inset 0 0 0 3px #d9b45c, inset 0 0 14px rgba(217, 180, 92, 0.5); }
+.ch-sq.last { box-shadow: inset 0 0 0 2px rgba(217, 180, 92, 0.55); }
+.ch-sq.sel.last { box-shadow: inset 0 0 0 3px #d9b45c, inset 0 0 14px rgba(217, 180, 92, 0.5); }
 .ch-sq.check {
   animation: chCheckPulse 0.9s ease-in-out infinite;
 }
@@ -127,7 +127,7 @@
   width: 26%;
   height: 26%;
   border-radius: 50%;
-  background: rgba(245, 197, 24, 0.85);
+  background: rgba(217, 180, 92, 0.85);
   box-shadow: 0 0 9px rgba(255, 215, 94, 0.65);
   animation: dmPulse 1.1s ease-in-out infinite;
   z-index: 3;
@@ -194,7 +194,7 @@
 .ch-promo[hidden] { display: none; }
 .ch-promo-card {
   background: linear-gradient(180deg, #4a2f1a, #241206);
-  border: 2px solid #d9a94e;
+  border: 2px solid #d9b45c;
   border-radius: 14px;
   padding: 14px 18px;
   text-align: center;
@@ -206,7 +206,7 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  border: 2px solid #d9a94e;
+  border: 2px solid #d9b45c;
   background: linear-gradient(145deg, #fffef7, #e8dfc8);
   font-size: 34px;
   line-height: 1;

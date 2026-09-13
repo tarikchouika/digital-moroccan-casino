@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Base Styles
+   DTSG — Digital Traditional Skills Games — Base Styles
    ═══════════════════════════════════════════ */
 /* ── Reset ── */
 *,
@@ -19,8 +19,8 @@ html {
 }
 body {
   font-family: var(--font);
-  background: linear-gradient(rgba(7, 11, 18, 0.9), rgba(7, 11, 18, 0.9)),
-    url('../assets/logo/dark-bg.webp') center/cover fixed no-repeat;
+  background: linear-gradient(rgba(11, 21, 38, 0.9), rgba(11, 21, 38, 0.9)),
+    url('../assets/dtsg/dtsg-bg-page-dark.webp') center/cover fixed no-repeat;
   background-color: var(--bg);
   color: var(--t1);
   line-height: 1.6;
@@ -28,8 +28,8 @@ body {
   min-height: 100vh;
 }
 html[data-theme="radiant"] body {
-  background: linear-gradient(rgba(251, 249, 244, 0.92), rgba(251, 249, 244, 0.92)),
-    url('../assets/logo/luminous-background.webp') center/cover fixed no-repeat;
+  background: linear-gradient(rgba(247, 241, 226, 0.92), rgba(247, 241, 226, 0.92)),
+    url('../assets/dtsg/dtsg-bg-page-light.webp') center/cover fixed no-repeat;
   background-color: var(--bg);
 }
 /* ── Scrollbar ── */
@@ -140,8 +140,8 @@ canvas,
   justify-content: center;
   box-shadow: var(--shadow-gold);
   /* شارة ثابتة بالوضعين — لوغو واحد معتم (بلا alpha) يبدو متناسقاً على أي ثيم */
-  background: linear-gradient(145deg, #0D1320, #141C2E);
-  border: 1px solid rgba(255, 210, 63, 0.5);
+  background: linear-gradient(145deg, #101d31, #16263c);
+  border: 1px solid rgba(217, 180, 92, 0.5);
   padding: 4px;
   overflow: hidden;
   flex-shrink: 0;
@@ -197,11 +197,11 @@ canvas,
     text-decoration: none;
 }
 .nav-item:hover, .sidebar a.nav-item:hover {
-  background: rgba(255, 210, 63, 0.07);
+  background: rgba(217, 180, 92, 0.07);
   color: var(--t1);
 }
 .nav-item.active, .sidebar a.nav-item.active {
-  background: linear-gradient(90deg, rgba(255, 210, 63, 0.16), transparent);
+  background: linear-gradient(90deg, rgba(217, 180, 92, 0.16), transparent);
   color: var(--gold);
   border-inline-start-color: var(--gold);
 }
@@ -210,7 +210,7 @@ canvas,
     text-align: center;
     font-size: 1.2rem;
     line-height: 1;
-    filter: drop-shadow(0 0 6px rgba(255, 210, 63, 0.35));
+    filter: drop-shadow(0 0 6px rgba(217, 180, 92, 0.35));
 }
 .nav-item .badge {
   margin-inline-start: auto;
@@ -250,7 +250,7 @@ canvas,
   gap: 10px;
   padding: calc(10px + var(--safe-top)) 18px 10px;
   /* الخلفية تتكيّف مع الوضع عبر --topbar-bg (افتراضيًا داكنة لتتوافق مع الأيقونات البيضاء) */
-  background: var(--topbar-bg, rgba(7, 11, 18, 0.96));
+  background: var(--topbar-bg, rgba(11, 21, 38, 0.96));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--bd);
@@ -339,13 +339,13 @@ canvas,
 .mute:focus-visible {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.2);
+  box-shadow: 0 0 0 3px rgba(217, 180, 92, 0.2);
 }
 .mute:active {
   transform: scale(0.95);
 }
 .mute.active {
-  background: rgba(255, 210, 63, 0.16);
+  background: rgba(217, 180, 92, 0.16);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -363,7 +363,7 @@ canvas,
 /* ── الأزرار ── */
 .btn {
   background: var(--gg);
-  color: #0A0E1A;
+  color: #0b1526;
   border: none;
   padding: 8px 15px;
   border-radius: 10px;
@@ -411,7 +411,7 @@ canvas,
   border-radius: 10px;
 }
 .btn.icon-btn:hover {
-  background: rgba(245, 197, 24, 0.15);
+  background: rgba(242, 212, 137, 0.15);
   color: var(--gold);
 }
 .btn.icon-btn:focus-visible {
@@ -421,7 +421,7 @@ canvas,
 /* ── Ticker ── */
 .ticker {
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 210, 63, 0.22);
+  border-bottom: 1px solid rgba(217, 180, 92, 0.22);
   padding: 6px 0;
   font-size: 0.76rem;
 }
@@ -488,8 +488,8 @@ canvas,
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
-  background: rgba(255, 210, 63, 0.1);
-  border: 1px solid rgba(255, 210, 63, 0.28);
+  background: rgba(217, 180, 92, 0.1);
+  border: 1px solid rgba(217, 180, 92, 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -509,8 +509,8 @@ canvas,
   border: 1px solid var(--bd);
   box-shadow: var(--shadow-lg);
   margin-bottom: 22px;
-  /* نسبة الصورة moroccan-casino-banner.webp (1856x576 = 3.22) — بدون قص أفقي للتصميم */
-  aspect-ratio: 3.22;
+  /* نسبة بانر الصفحة الرئيسية (dtsg-banner-hero-dark.webp 1792x592 = 3.03) — بدون قص أفقي للتصميم */
+  aspect-ratio: 3.03;
   background: var(--bg2);
 }
 .home-banner img {
@@ -525,7 +525,7 @@ canvas,
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #0D1320, #141C2E 55%, #1A2035);
+  background: linear-gradient(135deg, #101d31, #16263c 55%, #1d2a44);
   border: 1px solid var(--bd);
   border-radius: var(--radius-xl);
   padding: 30px;
@@ -658,8 +658,8 @@ footer {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(145deg, #0D1320, #141C2E);
-  border: 1px solid rgba(255, 210, 63, 0.45);
+  background: linear-gradient(145deg, #101d31, #16263c);
+  border: 1px solid rgba(217, 180, 92, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -742,7 +742,7 @@ footer.watermark::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: url('../assets/logo/moroccan-casino-logo-main.webp') center/contain no-repeat;
+  background: url('../assets/dtsg/dtsg-logo-main.webp') center/contain no-repeat;
   opacity: 0.03;
   pointer-events: none;
 }

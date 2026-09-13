@@ -17,7 +17,7 @@
   align-items: stretch;
   padding: 0;
   border-radius: 0;
-  border: 3px solid #d9a94e;
+  border: 3px solid #d9b45c;
   /* خشب دموي قاتم (ماهوغني) */
   background:
     repeating-linear-gradient(90deg, rgba(0,0,0,.16) 0 3px, rgba(0,0,0,0) 3px 10px),
@@ -98,7 +98,7 @@
 .bl-ring {
   position: absolute;
   display: none;
-  border: 3px solid #E9B83C;
+  border: 3px solid #d9b45c;
   border-radius: 50%;
   background: transparent;
   box-shadow: 0 0 0 1px rgba(40,20,5,.5), 0 2px 8px rgba(0,0,0,.45);
@@ -130,7 +130,7 @@
   width: 40px; height: 40px;
   border-radius: 50%;
   border: 2px solid #96651f;
-  background: radial-gradient(circle at 34% 28%, #F7DC6F, #E0A82E 72%, #b9851f);
+  background: radial-gradient(circle at 34% 28%, #f2d489, #b8892f 72%, #7a5a1e);
   color: #4a2c10;
   font-size: 19px;
   line-height: 1;
@@ -165,7 +165,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 .bl-tcell.hot { background: transparent; }
-.bl-tcell.hot .bl-tb { box-shadow: 0 0 0 2px #F2C230, 0 0 8px rgba(242,194,48,.7), inset -2px -3px 5px rgba(0,0,0,.5); }
+.bl-tcell.hot .bl-tb { box-shadow: 0 0 0 2px #d9b45c, 0 0 8px rgba(217,180,92,.7), inset -2px -3px 5px rgba(0,0,0,.5); }
 .bl-tb {
   width: 20px; height: 20px;
   border-radius: 50%;
@@ -192,9 +192,9 @@
   width: 44px; height: 44px;
   transform: translate(-15%, 15%);
   border-radius: 50%;
-  border: 3px solid #E9B83C;
+  border: 3px solid #d9b45c;
   background: transparent;
-  color: #F7DC6F;
+  color: #f2d489;
   font-size: 17px;
   line-height: 1;
   cursor: pointer;
@@ -311,13 +311,13 @@
   box-shadow: 0 2px 6px rgba(0,0,0,.55), inset 0 1px 2px rgba(255,255,255,.3);
   transition: box-shadow .25s;
 }
-.bl-av.p1 { background: radial-gradient(circle at 34% 30%, #3a68e8, #1F4BCB 65%, #16368f); border: 3px solid #E9B83C; }
+.bl-av.p1 { background: radial-gradient(circle at 34% 30%, #3a68e8, #1F4BCB 65%, #16368f); border: 3px solid #d9b45c; }
 .bl-av.p2 { background: radial-gradient(circle at 34% 30%, #e04a60, #C62A44 65%, #8f1a2e); border: 3px solid #2E4BCB; }
 .bl-av.active { box-shadow: 0 0 0 3px rgba(255, 210, 63, .55), 0 0 16px rgba(255, 210, 63, .5); }
 
 /* تدوين رقمي (نقاط سنوكر / كارومات) */
 .bl-score {
-  color: #F2C230;
+  color: #d9b45c;
   font-size: 14px;
   font-weight: 900;
   text-shadow: 0 1px 3px rgba(0,0,0,.8);
@@ -347,7 +347,7 @@
   align-self: center;
   border: 2px solid #96651f;
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #F7DC6F, #E0A82E 72%, #b9851f);
+  background: radial-gradient(circle at 34% 28%, #f2d489, #b8892f 72%, #7a5a1e);
   color: #4a2c10;
   font-size: 26px;
   font-weight: 900;
@@ -393,7 +393,7 @@
   width: 22px;
   min-height: 36px;
   max-height: 46vh;
-  accent-color: #F2C230;
+  accent-color: #d9b45c;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
@@ -414,7 +414,7 @@
   width: 22px; height: 22px;
   margin-inline: -6.5px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffe9a0, #F2C230 55%, #b8860b);
+  background: radial-gradient(circle at 35% 30%, #f2d489, #d9b45c 55%, #b8892f);
   border: 2px solid #7a5606;
   box-shadow: 0 2px 5px rgba(0,0,0,.55);
   cursor: grab;
@@ -428,7 +428,7 @@
 #blPower::-moz-range-thumb {
   width: 22px; height: 22px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffe9a0, #F2C230 55%, #b8860b);
+  background: radial-gradient(circle at 35% 30%, #f2d489, #d9b45c 55%, #b8892f);
   border: 2px solid #7a5606;
   box-shadow: 0 2px 5px rgba(0,0,0,.55);
   cursor: grab;
@@ -691,7 +691,7 @@ body.bl-game-open:not(.app-fs-on) #gamePageBody #billiardsStage {
 
 /* شارة النقاط (سنوكر/كاروم) تحت الأفاتار */
 .bl-score {
-  color: #F2C230;
+  color: #d9b45c;
   font-size: 14px;
   font-weight: 900;
   text-shadow: 0 1px 3px rgba(0,0,0,.8);

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — API Client
+   DTSG — Digital Traditional Skills Games — API Client
    Thin fetch wrapper — يستهدف Worker API على Cloudflare
    (cookies عبر credentials: include لأن الباك على نطاق workers.dev)
    ═══════════════════════════════════════════ */

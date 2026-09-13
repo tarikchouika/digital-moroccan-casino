@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Group Rounds Panel (Keno + Crash)
+   DTSG — Digital Traditional Skills Games — Group Rounds Panel (Keno + Crash)
    لوحة الجولة الجماعية: جولات أوتوماتيكية يتحكم بها الخادم،
    رهان جماعي موحّد، سجل حي جماعي، ومدقق Provably Fair لكل جولة.
    يعتمد على: fair.js (sha256 + المولد الحتمي)، live.js (SSE gr:ke/gr:av)

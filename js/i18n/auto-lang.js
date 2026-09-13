@@ -1,4 +1,4 @@
-/* Digital Moroccan Casino — auto language bootstrap
+/* DTSG — Digital Traditional Skills Games — auto language bootstrap
  * Provides window._origSetLang so the shared legal-page logic can chain the
  * platform-wide setLang() (defined later in js/core/utils.js). It is wrapped
  * lazily so it works regardless of script load order (this file loads before

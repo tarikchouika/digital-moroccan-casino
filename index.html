@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="description" content="Digital Moroccan casino — ألعاب مجانية. Ronda، Crash، Blackjack، Parchisi والمزيد!">
-  <meta name="theme-color" content="#070B12">
-  <meta property="og:title" content="Digital Moroccan Casino">
+  <meta name="description" content="ألعاب الدكاء التقليدية الرقمية (DTSG) — ألعاب مجانية. Ronda، Crash، Blackjack، Parchisi والمزيد!">
+  <meta name="theme-color" content="#0b1526">
+  <meta property="og:title" content="ألعاب الدكاء التقليدية الرقمية (DTSG)">
   <meta property="og:description" content="Moroccan Ronda + Parchisi وألعاب أخرى — ترفيه بأفضل الجرافيك">
-  <title>Digital Moroccan Casino</title>
+  <title>ألعاب الدكاء التقليدية الرقمية (DTSG)</title>
   <!-- Icons -->
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/dtsg/favicon/dtsg-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/dtsg/favicon/dtsg-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/dtsg/favicon/dtsg-180.png">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,19 +28,19 @@
   }
   </script>
   <!-- CSS Files -->
-  <link rel="stylesheet" href="css/01-variables.css?v=unified13">
-  <link rel="stylesheet" href="css/02-base.css?v=unified13">
-  <link rel="stylesheet" href="css/03-components.css?v=unified13">
-  <link rel="stylesheet" href="css/04-games.css?v=unified13">
-  <link rel="stylesheet" href="css/05-ronda.css?v=unified13">
-  <link rel="stylesheet" href="css/06-parchisi.css?v=unified13">
-  <link rel="stylesheet" href="css/07-responsive.css?v=unified13">
-  <link rel="stylesheet" href="css/08-rami.css?v=unified13">
-  <link rel="stylesheet" href="css/09-chrome.css?v=chrome2">
-  <link rel="stylesheet" href="css/10-dama.css?v=unified13">
-  <link rel="stylesheet" href="css/12-chess.css?v=unified13">
-  <link rel="stylesheet" href="css/11-game-theme.css?v=unified13">
-  <link rel="stylesheet" href="css/13-billiards.css?v=unified13">
+  <link rel="stylesheet" href="css/01-variables.css?v=dtsg1">
+  <link rel="stylesheet" href="css/02-base.css?v=dtsg1">
+  <link rel="stylesheet" href="css/03-components.css?v=dtsg1">
+  <link rel="stylesheet" href="css/04-games.css?v=dtsg1">
+  <link rel="stylesheet" href="css/05-ronda.css?v=dtsg1">
+  <link rel="stylesheet" href="css/06-parchisi.css?v=dtsg1">
+  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg1">
+  <link rel="stylesheet" href="css/08-rami.css?v=dtsg1">
+  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg1">
+  <link rel="stylesheet" href="css/10-dama.css?v=dtsg1">
+  <link rel="stylesheet" href="css/12-chess.css?v=dtsg1">
+  <link rel="stylesheet" href="css/11-game-theme.css?v=dtsg1">
+  <link rel="stylesheet" href="css/13-billiards.css?v=dtsg1">
   <link rel="stylesheet" href="css/14-ronda-classic.css?v=rdc7">
   <!-- [BGDO] الطاولة + الضومنة: هوية المشروعين المستقلين (بادئات bw-/dm-) -->
   <link rel="stylesheet" href="backgammon-game/css/backgammon.css?v=bgdo1">
@@ -55,6 +55,12 @@
       }
     })();
   </script>
+  <!-- بانر الصفحة الرئيسية: نسخة داكنة للوضع القاتم وفاتحة للوضع المشع -->
+  <style>
+    .home-banner .banner-light { display: none; }
+    html[data-theme="radiant"] .home-banner .banner-dark { display: none; }
+    html[data-theme="radiant"] .home-banner .banner-light { display: block; }
+  </style>
 </head>
 <body>
   <!-- ═══════════ تأثيرات بصرية ═══════════ -->
@@ -66,10 +72,10 @@
     <aside class="sidebar" id="sidebar" role="navigation" aria-label="القائمة الرئيسية">
       <div class="brand">
         <div class="brand-logo" aria-hidden="true">
-          <img src="assets/logo/moroccan-casino-logo-main.webp" alt="Digital Moroccan Casino">
+          <img src="assets/dtsg/dtsg-logo-main.webp" alt="ألعاب الدكاء التقليدية الرقمية">
         </div>
         <div class="brand-name">
-          <b>Digital</b> Moroccan Casino
+          <b>DTSG</b> ألعاب الدكاء التقليدية الرقمية
           <small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <span data-i18n="ui.brandSub">المغرب</span></small>
         </div>
       </div>
@@ -160,7 +166,8 @@
         <!-- الصفحة الرئيسية -->
         <section class="page active" id="pg-home" aria-labelledby="homeTitle">
           <div class="home-banner" aria-hidden="true">
-            <img src="assets/logo/moroccan-casino-banner.webp" alt="">
+            <img class="banner-dark" src="assets/dtsg/dtsg-banner-hero-dark.webp" alt="">
+            <img class="banner-light" src="assets/dtsg/dtsg-banner-hero-light.webp" alt="">
           </div>
           <!-- [نقل] حاوية الهيرو انتقلت لصفحة «من نحن» (about.html) بطلب المالك -->
           <h1 id="homeTitle" class="sr-only" data-i18n-html="ui.heroTitle">ألعاب فريدة <b>بجرافيك وصوتيات</b></h1>
@@ -183,7 +190,7 @@
             <button class="fchip" role="tab" onclick="filterG('crash', this)"><i class="fa-solid fa-rocket" aria-hidden="true"></i> <span data-i18n="ui.crashCat">كراش</span></button>
             <button class="fchip" role="tab" onclick="filterG('instant', this)"><i class="fa-solid fa-bolt" aria-hidden="true"></i> <span data-i18n="ui.instant">فورية</span></button>
             <button class="fchip" role="tab" onclick="filterG('card', this)"><i class="fa-solid fa-clubs" aria-hidden="true"></i> <span data-i18n="ui.card">ورق</span></button>
-            <button class="fchip" role="tab" onclick="filterG('casino', this)"><i class="fa-solid fa-dice" aria-hidden="true"></i> <span data-i18n="ui.casino">كازينو</span></button>
+            <button class="fchip" role="tab" onclick="filterG('casino', this)"><i class="fa-solid fa-dice" aria-hidden="true"></i> <span data-i18n="ui.casino">الطاولة والورق</span></button>
             <button class="fchip" role="tab" onclick="filterG('traditional', this)"><i class="fa-solid fa-crown" aria-hidden="true"></i> <span data-i18n="ui.traditional">تقليدية</span></button>
           </div>
           <div class="grid g4" id="allGames"></div>
@@ -403,7 +410,7 @@
             <a href="contact.html" data-i18n="legal.contact.link">تواصل معنا</a>
           </div>
           <div class="foot-brand">
-            <span class="foot-name">Digital Moroccan Casino</span>
+            <span class="foot-name"><b>DTSG</b> — ألعاب الدكاء التقليدية الرقمية</span>
             <span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>
           </div>
         </div>
@@ -687,7 +694,7 @@
   <script src="js/core/audio.js?v=unified13"></script>
   <script src="js/core/utils.js?v=unified13"></script>
   <script src="js/core/fx.js?v=unified13"></script>
-  <script src="js/i18n/translations.js?v=unified13"></script>
+  <script src="js/i18n/translations.js?v=dtsg1"></script>
   <script src="js/rules/game-rules.js?v=unified18"></script>
   <script src="js/games/catalog.js?v=unified13"></script>
   <script src="js/games/blackjack.js?v=unified13"></script>
@@ -728,7 +735,7 @@
   <script src="js/games/engines.js?v=unified13"></script>
   <script type="module" src="js/games/crash.js?v=unified13"></script>
   <script src="js/core/rooms.js?v=unified13"></script>
-  <script src="js/main.js?v=unified14"></script>
+  <script src="js/main.js?v=dtsg1"></script>
   <script src="js/core/live.js?v=unified13"></script>
   <script src="js/core/fair.js?v=unified13"></script>
   <script src="js/games/group.js?v=unified13"></script>

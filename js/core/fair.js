@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Provably Fair (Group Rounds)
+   DTSG — Digital Traditional Skills Games — Provably Fair (Group Rounds)
    sha256 نقي بلغة JS + المولد الحتمي للنتائج + التحقق
    يجب أن يطابق توليد الخادم (server.cjs: groupOutcome) حرفياً
    ═══════════════════════════════════════════ */

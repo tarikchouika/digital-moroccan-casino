@@ -1,23 +1,23 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Design Tokens
-   الهوية الفاخرة: أسود قاتم × ذهب فاتح × نحاسي
+   DTSG — Digital Traditional Skills Games — Design Tokens
+   الهوية الفاخرة: كحلي زليج × ذهب دكاء × نحاسي
    ═══════════════════════════════════════════ */
 :root {
-  /* ── الألوان الأساسية (داكن قاتم فاخر) ── */
-  --bg: #070B12;
-  --bg2: #0D1320;
-  --bg3: #141C2E;
-  --card: #0F1626;
+  /* ── الألوان الأساسية (كحلي زليج فاخر) ── */
+  --bg: #0b1526;
+  --bg2: #101d31;
+  --bg3: #16263c;
+  --card: #111c30;
   /* ── الحدود ── */
-  --bd: #22304A;
-  --bd2: #3A4C70;
+  --bd: #24354f;
+  --bd2: #3c5075;
   /* حدود أدوات الهيدر — ذهبية رفيعة فاخرة */
-  --ctl-bd: rgba(255, 210, 63, 0.28);
+  --ctl-bd: rgba(217, 180, 92, 0.28);
   /* ── ألوان العلامة ── */
-  --gold: #FFD23F;
-  --gold2: #F5C518;
-  --copper: #C99050;
-  --copper2: #B87333;
+  --gold: #d9b45c;
+  --gold2: #f2d489;
+  --copper: #b8892f;
+  --copper2: #a3742a;
   --silver: #A6AAB4;
   --silver2: #C9CBD2;
   --blue: #1A6CF6;
@@ -29,20 +29,20 @@
   --red: #EF4444;
   --red2: #F87171;
   /* ── النصوص ── */
-  --t1: #F6F8FC;
-  --t2: #A7B0C3;
+  --t1: #e9e2cf;
+  --t2: #9aa5b8;
   --t3: #66708A;
   /* ── التدرجات ── */
-  --gg: linear-gradient(135deg, #FFD23F, #C99050);
+  --gg: linear-gradient(135deg, #d9b45c, #b8892f);
   --gb: linear-gradient(135deg, #1A6CF6, #3B82F6);
-  --gc: linear-gradient(145deg, #0F1626, #0D1320);
+  --gc: linear-gradient(145deg, #111c30, #101d31);
   --gp: linear-gradient(135deg, #7C3AED, #A78BFA);
   --gr: linear-gradient(135deg, #EF4444, #F87171);
   /* ── الظلال ── */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
-  --shadow-gold: 0 0 22px rgba(255, 210, 63, 0.35);
+  --shadow-gold: 0 0 22px rgba(217, 180, 92, 0.35);
   /* ── الأبعاد ── */
   --sidebar-w: 260px;
   --radius-sm: 8px;
@@ -61,24 +61,24 @@
 }
 
 /* ═══════════════════════════════════════════
-   الوضع المشع (Radiant) — أبيض فاخر وذهبي
+   الوضع المشع (Radiant) — عاجي كريمي وذهبي
    ═══════════════════════════════════════════ */
 html[data-theme="radiant"] {
   /* ── الألوان الأساسية ── */
-  --bg: #FBF9F4;
-  --bg2: #F4EFE3;
+  --bg: #f7f1e2;
+  --bg2: #efe8d3;
   --bg3: #FFFFFF;
   --card: #FFFFFF;
   /* الترويسة العلوية تتكيّف مع الوضع — فاتحة في المشع (الأيقونات تظهر) */
-  --topbar-bg: rgba(251, 249, 244, 0.92);
+  --topbar-bg: rgba(247, 241, 226, 0.92);
   /* ── الحدود ── */
   --bd: #E6DCC2;
   --bd2: #D6C9A5;
   /* حدود أدوات الهيدر — ذهبية رفيعة فاخرة */
-  --ctl-bd: rgba(201, 150, 31, 0.42);
+  --ctl-bd: rgba(184, 137, 47, 0.42);
   /* ── ألوان العلامة ── */
-  --gold: #C9961F;
-  --gold2: #B8860B;
+  --gold: #b8892f;
+  --gold2: #d9b45c;
   --copper: #B07B3C;
   --copper2: #8C5A24;
   --silver: #A6AAB4;
@@ -96,39 +96,39 @@ html[data-theme="radiant"] {
   --t2: #4A453B;
   --t3: #6E6A60;
   /* ── التدرجات (ذهب → فضة أنيقة) ── */
-  --gg: linear-gradient(135deg, #D4A017, #C9CBD2);
+  --gg: linear-gradient(135deg, #d9b45c, #C9CBD2);
   --gb: linear-gradient(135deg, #1D4ED8, #3B82F6);
-  --gc: linear-gradient(145deg, #FFFFFF, #F4EFE3);
+  --gc: linear-gradient(145deg, #FFFFFF, #efe8d3);
   --gp: linear-gradient(135deg, #7C3AED, #A78BFA);
   --gr: linear-gradient(135deg, #DC2626, #F87171);
   /* ── الظلال ── */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.14);
-  --shadow-gold: 0 0 22px rgba(201, 150, 31, 0.4);
+  --shadow-gold: 0 0 22px rgba(184, 137, 47, 0.4);
 }
 
-/* الألعاب والمودالات تبقى داكنة ومتباينة بوضوح في الوضعين — تباين كازينو فخم وواضح */
+/* الألعاب والمودالات تبقى داكنة ومتباينة بوضوح في الوضعين — تباين طاولة فخم وواضح */
 html[data-theme="radiant"] .mwrap,
 html[data-theme="radiant"] .modal,
 html[data-theme="radiant"] #pg-game,
 html[data-theme="radiant"] .rules-full,
 html[data-theme="radiant"] .gp-head {
-  --bg: #070B12;
-  --bg2: #0D1320;
-  --bg3: #141C2E;
-  --card: #0F1626;
-  --bd: #22304A;
-  --bd2: #3A4C70;
-  --ctl-bd: rgba(255, 210, 63, 0.35);
-  --gold: #FFD23F;
-  --gold2: #F5C518;
-  --copper: #C99050;
-  --t1: #F6F8FC;
-  --t2: #A7B0C3;
-  --t3: #7E8BA6;
-  --gc: linear-gradient(145deg, #0F1626, #0D1320);
+  --bg: #0b1526;
+  --bg2: #101d31;
+  --bg3: #16263c;
+  --card: #111c30;
+  --bd: #24354f;
+  --bd2: #3c5075;
+  --ctl-bd: rgba(217, 180, 92, 0.35);
+  --gold: #d9b45c;
+  --gold2: #f2d489;
+  --copper: #b8892f;
+  --t1: #e9e2cf;
+  --t2: #9aa5b8;
+  --t3: #8291ad;
+  --gc: linear-gradient(145deg, #111c30, #101d31);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-gold: 0 0 22px rgba(255, 210, 63, 0.35);
+  --shadow-gold: 0 0 22px rgba(217, 180, 92, 0.35);
   color: var(--t1);
 }

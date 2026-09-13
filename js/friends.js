@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Friends (DM + Rooms invite)
+   DTSG — Digital Traditional Skills Games — Friends (DM + Rooms invite)
    قائمة الأصدقاء + المحادثة الخاصة + دعوة لغرفة
    يعتمد على: GET/POST /api/friends, /api/messages, SSE 'dm' على /api/live
    ═══════════════════════════════════════════ */

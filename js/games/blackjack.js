@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Blackjack Engine
+   DTSG — Digital Traditional Skills Games — Blackjack Engine
    ═══════════════════════════════════════════ */
 "use strict";
 /* ═══════════ BJMP — بلاك جاك الجماعي (2-4 لاعبين بلا بانكر) ═══════════

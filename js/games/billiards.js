@@ -1288,7 +1288,7 @@ function blDraw() {
   /* [Logo] اللوغو الرسمي بمنتصف قماش الطاولة — علامة مائية خفيفة تحت الكرات */
   if (!B._logoImg) {
     B._logoImg = new Image();
-    B._logoImg.src = 'assets/logo/logo-transparent.png';
+    B._logoImg.src = 'assets/dtsg/dtsg-logo-watermark.png';
     B._logoImg.onload = function () { try { blDraw(); } catch (e) {} };
   }
   if (B._logoImg.complete && B._logoImg.naturalWidth) {

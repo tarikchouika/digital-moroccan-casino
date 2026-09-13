@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Game Rules & Tutorial System
+   DTSG — Digital Traditional Skills Games — Game Rules & Tutorial System
    ═══════════════════════════════════════════ */
 "use strict";
 /* ── قاعدة بيانات القواعد الكاملة ── */

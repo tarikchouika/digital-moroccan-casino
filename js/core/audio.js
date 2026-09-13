@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   Digital Moroccan casino — Audio Engine (Web Audio API)
+   DTSG — Digital Traditional Skills Games — Audio Engine (Web Audio API)
    ═══════════════════════════════════════════ */
 "use strict";
 let audioContext = null;

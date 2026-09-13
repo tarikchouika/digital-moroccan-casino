@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   Digital Moroccan casino — Game Catalog (45 Games)
+   DTSG — Digital Traditional Skills Games — Game Catalog (45 Games)
    ══════════════════════════════════════════ */
 "use strict";
 const GAMES = [
