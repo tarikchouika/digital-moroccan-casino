@@ -54,8 +54,9 @@
     var el = document.getElementById('ticker');
     if (!el) return;
     var items = RC_ticks.map(function (x) {
+      var gl = (typeof window.tickGameLabel === 'function') ? window.tickGameLabel(x[1]) : x[1];
       return '<span class="tk"> <span class="p">' + esc(x[0]) + '</span> ' + T('tk.won') +
-        ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + esc(x[1]) + ')</span></span>';
+        ' <span class="w">🪙 ' + fmt(x[2]) + '</span> <span class="g">(' + esc(gl) + ')</span></span>';
     }).join('');
     el.innerHTML = items + items;
   }
@@ -116,6 +117,14 @@
     _source.addEventListener('gr:av', function (e) {
       try { if (typeof window.RC_groupEvent === 'function') window.RC_groupEvent('av', JSON.parse(e.data)); }
       catch (err) { console.error('[live] gr:av', err); }
+    });
+    /* [Auth] رسائل تنسيق المشرفين (admin ⇄ super) */
+    _source.addEventListener('admin_msg', function (e) {
+      try {
+        var d = JSON.parse(e.data);
+        if (typeof window.RC_admin_msg === 'function') window.RC_admin_msg(d);
+        else window.dispatchEvent(new CustomEvent('RC_admin_msg', { detail: d }));
+      } catch (err) { console.error('[live] admin_msg', err); }
     });
     _source.onerror = function () {
       /* EventSource يغلق ويعيد المحاولة — نتركه يعمل */

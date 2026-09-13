@@ -17,17 +17,32 @@ let GB = 10;
 
 // ── Shared functions ──
 function betRow() {
-  return '<div class="bets">' +
+  /* [BetUI] حلقتان دائريتان − / + وخانة رقمية للإدخال اليدوي — بلا حاوية مستطيلة */
+  return '<div class="bets bets-min">' +
     '<button class="bbtn" onclick="chB(-10)" aria-label="تقليل الرهان">−</button>' +
-    '<div class="bamt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span id="GBd">' + GB + '</span></div>' +
+    '<span class="bet-field"><i class="fa-solid fa-coins" aria-hidden="true"></i>' +
+      '<input type="number" inputmode="numeric" class="bet-input" id="GBd" value="' + GB + '" min="10"' +
+      ' onfocus="this.select()" onchange="setBetInput(this)" aria-label="مبلغ الرهان"></span>' +
     '<button class="bbtn" onclick="chB(10)" aria-label="زيادة الرهان">+</button>' +
     '</div>';
+}
+/* [BetUI] GBd صار <input> — التحديث عبر value مع دعم أي عنصر نصي قديم */
+function _setGBd(v) {
+  const el = document.getElementById('GBd');
+  if (!el) return;
+  if ('value' in el && el.tagName === 'INPUT') el.value = v;
+  else el.textContent = v;
+}
+function setBetInput(el) {
+  const v = parseInt(el.value, 10);
+  GB = Math.max(10, Math.min(ST.gold || 100, isNaN(v) ? 10 : v));
+  _setGBd(GB);
+  SND.click();
 }
 function chB(d) {
   SND.click();
   GB = Math.max(10, Math.min(ST.gold || 100, GB + d));
-  const el = document.getElementById('GBd');
-  if (el) el.textContent = GB;
+  _setGBd(GB);
 }
 function take() {
   if (ST.gold < GB) {
@@ -45,8 +60,9 @@ function give(w) {
   wallet();
   save();
 }
-function gres(m, w) {
-  if ((m !== '' || w > 0) && typeof recordRound === 'function') {
+function gres(m, w, noRec) {
+  /* noRec=true: عرض فقط بلا تسجيل تذكرة (ملخصات جماعية مثلاً) */
+  if (!noRec && (m !== '' || w > 0) && typeof recordRound === 'function') {
     recordRound(w > 0, (typeof w === 'number' && w > 0) ? w : 0, m);
   }
   const e = document.getElementById('GRes');
@@ -75,6 +91,7 @@ function gFrame(inner, g) {
     ? '<div class="gstage-bg" style="background-image:url(assets/games/' + GAME_IMG[g.id] + '/background.webp)"></div>'
     : '';
   return '<div class="stage">' + gbg +
+    '<div class="glogo-wm" aria-hidden="true"></div>' +
     '<div class="gtop">' +
       '<span class="pf"> Provably Fair</span>' +
       '<span class="ctext">RTP <b style="color:var(--green2)">' + g.rtp + '%</b></span>' +
@@ -234,6 +251,24 @@ function slSettle(r) {
 
 /* ═══════════ 2. Mines ═══════════ */
 let mState = { grid: [], opened: 0, mines: 5, playing: false, mult: 1 };
+/* ── حساب مضاعف الألغام الرياضي العادل (Hypergeometric بدون إرجاع) ── */
+function nCr(n, r) {
+  if (r < 0 || r > n) return 0;
+  if (r === 0 || r === n) return 1;
+  let res = 1;
+  for (let i = 1; i <= r; i++) res = (res * (n - i + 1)) / i;
+  return res;
+}
+function calcMinesMultiplier(minesCount, openedCount) {
+  const total = 25;
+  const safe = total - minesCount;
+  if (openedCount <= 0 || openedCount > safe) return 1;
+  const houseEdge = 0.97;
+  const prob = nCr(safe, openedCount) / nCr(total, openedCount);
+  const mult = (1 / prob) * houseEdge;
+  return Math.max(1.01, Math.round(mult * 100) / 100);
+}
+
 function eMines(g) {
   let cells = '';
   for (let i = 0; i < 25; i++) {
@@ -309,7 +344,7 @@ function mClick(i) {
     return;
   }
   mState.opened++;
-  mState.mult = Math.round((1 / (1 - mState.mines / 25)) ** mState.opened * 100) / 100;
+  mState.mult = calcMinesMultiplier(mState.mines, mState.opened);
   cell.innerHTML = '<div class="mSafe">💎</div>';
   cell.classList.add('safe');
   const c = document.getElementById('mnCnt');
@@ -670,9 +705,9 @@ function dRoll() {
 let cSide = 'heads', cBusy = false, cLast = null;
 function eCoin(g) {
   return gFrame(
-    '<div style="text-align:center;margin:20px 0">' +
+    '<div class="cf-wrap" style="text-align:center;margin:20px 0">' +
       '<div class="cf-hint">' + T('cf.hint') + '</div>' +
-      '<div class="coin3d" id="cCoin" style="width:132px;height:132px;margin:0 auto">' +
+      '<div class="coin3d" id="cCoin" style="margin:0 auto">' +
         '<div class="coinInner" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2s cubic-bezier(0.17,0.67,0.83,0.67)">' +
           '<div class="coinFace heads" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:50%"></div>' +
           '<div class="coinFace tails" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:50%;transform:rotateY(180deg)"></div>' +
@@ -883,6 +918,7 @@ function initWheel() {
   wLastIdx = -1;
 }
 function drawWheel(ctx, rot, winIdx) {
+  if (!ctx) return;
   const cx = 160, cy = 160, r = 145, a = (Math.PI * 2) / wSegments.length;
   ctx.clearRect(0, 0, 320, 320);
   ctx.save();
@@ -1399,7 +1435,8 @@ function rpsRoomSettle() {
   else if (oppWin) txt += '\n😅 ' + T('rp.loseRound');
   else txt += '\n🤝 ' + T('rp.tieRound');
   if (el) el.textContent = txt;
-  if (rpRoom.round >= 3) {
+  var rpMax = (window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3;   /* [RS-GameOpts] */
+  if (rpRoom.round >= rpMax) {
     var finalTxt = '';
     if (rpRoom.myWins > rpRoom.oppWins) finalTxt = '\n🏆 ' + T('rp.matchWin') + ' ' + rpRoom.myWins + ':' + rpRoom.oppWins + '!';
     else if (rpRoom.oppWins > rpRoom.myWins) finalTxt = '\n' + T('rp.matchLose') + ' ' + rpRoom.myWins + ':' + rpRoom.oppWins;
@@ -1430,20 +1467,29 @@ function rpsRoomUi() {
     return;
   }
   if (rpRoom.waiting) {
-    el.textContent = '⏳ ' + T('rp.roomWaiting') + (rpRoom.oppPicked ? ' — ' + T('rp.oppPicked') : '') + ' (' + T('rp.round') + ' ' + rpRoom.round + '/3 — ' + (rpRoom.oppName || T('rp.opp')) + ')';
+    el.textContent = '⏳ ' + T('rp.roomWaiting') + (rpRoom.oppPicked ? ' — ' + T('rp.oppPicked') : '') + ' (' + T('rp.round') + ' ' + rpRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3) + ' — ' + (rpRoom.oppName || T('rp.opp')) + ')';
   } else {
-    el.textContent = '🎮 ' + T('rp.roomGo') + '  (' + T('rp.round') + ' ' + rpRoom.round + '/3 — ' + T('rp.you') + ' ' + rpRoom.myWins + ' : ' + rpRoom.oppWins + ')';
+    el.textContent = '🎮 ' + T('rp.roomGo') + '  (' + T('rp.round') + ' ' + rpRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.rp) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 3) + ' — ' + T('rp.you') + ' ' + rpRoom.myWins + ' : ' + rpRoom.oppWins + ')';
   }
 }
 
 /* ═══════════ 11. Penalty ═══════════ */
-/* solo: تسديدة ضد حارس — جهة مختلفة = هدف ×1.45 (P=2/3) → RTP 96.7% (هامش كازينو 3.3%)
+/* solo: تسديدة ضد حارس — 9 جهات (يمين/وسط/يسار × أعلى/وسط/أسفل) — جهة مختلفة = هدف
+   P(goal)=8/9 → ×1.08 → RTP = 8/9 × 1.08 = 0.96 (هامش كازينو 4%)
    غرفة (2 لاعبين وجهاً لوجه): 5 جولات متناوبة — seat 0 يهاجم 1/3/5، seat 1 في 2/4 —
    اختيار أعمى متزامن (sendBlind): الخادم يكشف الزوج معاً فلا يرى من يختار ثانياً حركة الأول */
 var pnRoom = null;
 var pnBusy = false;
-const PN_DIRS = ['⬅️', '⬆️', '➡️'];
-const PN_KEYS = { '⬅️': 'pn.left', '⬆️': 'pn.center', '➡️': 'pn.right' };
+/* ترتيب الجهات: أعلى-يسار، أعلى، أعلى-يمين، يسار-وسط، وسط، يمين-وسط، أسفل-يسار، أسفل، أسفل-يمين */
+const PN_DIRS = ['↖️', '⬆️', '↗️', '⬅️', '🎯', '➡️', '↙️', '⬇️', '↘️'];
+const PN_KEYS = { '↖️': 'pn.tl', '⬆️': 'pn.tc', '↗️': 'pn.tr', '⬅️': 'pn.ml', '🎯': 'pn.mc', '➡️': 'pn.mr', '↙️': 'pn.bl', '⬇️': 'pn.bc', '↘️': 'pn.br' };
+/* إحداثيات الشبكة 3×3: x نسبة مئوية للعرض (translateX%) و y بالبكسل (translateY) —
+   القيم العلوية سالبة (الكرة/الحارس فوق المنتصف) والسفلية موجبة */
+const PN_POS = {
+  '↖️': { x: -112, y: -36 }, '⬆️': { x: 0, y: -46 }, '↗️': { x: 112, y: -36 },
+  '⬅️': { x: -112, y: 0 }, '🎯': { x: 0, y: 0 }, '➡️': { x: 112, y: 0 },
+  '↙️': { x: -112, y: 30 }, '⬇️': { x: 0, y: 38 }, '↘️': { x: 112, y: 30 }
+};
 function pnLabel(d) {
   return T(PN_KEYS[d] || '');
 }
@@ -1470,19 +1516,22 @@ function penField() {
 function penMoveBall(d) {
   const f = penField();
   if (!f.ball) return;
-  const x = d === '⬅️' ? -112 : d === '➡️' ? 112 : 0;
-  f.ball.style.transform = 'translateX(' + x + '%) translateY(-38px)';
+  /* شبكة 3×3: x كنسبة من عرض المرمى (translateX%) و y بالبكسل */
+  const p = PN_POS[d] || PN_POS['🎯'];
+  f.ball.style.transform = 'translateX(' + p.x + '%) translateY(' + p.y + 'px)';
 }
 function penMoveKeeper(d) {
   const f = penField();
   if (!f.keeper) return;
-  const x = d === '⬅️' ? -92 : d === '➡️' ? 92 : 0;
-  f.keeper.style.transform = 'translateX(' + x + '%) rotate(' + (d === '⬅️' ? -14 : d === '➡️' ? 14 : 0) + 'deg)';
+  /* نفس إحداثيات الكرة مع دوران خفيف حسب العمود: يسار → -12deg، يمين → 12deg */
+  const p = PN_POS[d] || PN_POS['🎯'];
+  const rot = p.x < 0 ? -12 : p.x > 0 ? 12 : 0;
+  f.keeper.style.transform = 'translateX(' + p.x + '%) translateY(' + p.y + 'px) rotate(' + rot + 'deg)';
 }
 function penResetField() {
   const f = penField();
   if (f.ball) f.ball.style.transform = 'translateX(0) translateY(0)';
-  if (f.keeper) f.keeper.style.transform = 'translateX(0) rotate(0deg)';
+  if (f.keeper) f.keeper.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
   if (f.arena) f.arena.classList.remove('pn-goal', 'pn-saved');
 }
 function ePenalty(g) {
@@ -1513,7 +1562,8 @@ function ePenalty(g) {
       '</div>' +
     '</div>' +
     '<div class="pn-role" id="pnRole">⚽ ' + T('pn.youShoot') + '</div>' +
-    '<div class="pn-picks">' +
+    /* تسعة أزرار 3×3 — نمط .nine في CSS (شبكة بدل الصف الواحد القديم) */
+    '<div class="pn-picks nine">' +
       PN_DIRS.map(function (d) {
         return '<button class="pnBtn" data-d="' + d + '" onclick="penShoot(\'' + d + '\')">' +
           '<span class="pn-arrow">' + d + '</span>' +
@@ -1540,18 +1590,19 @@ function penShoot(d) {
   if (f.role) f.role.textContent = '🧤 ' + T('pn.saving');
   if (f.res) f.res.textContent = '';
   penMoveBall(d);
-  /* كشف حتمي باستدعاء Math.random واحد — جهة الحارس */
-  const gk = PN_DIRS[Math.floor(Math.random() * 3)];
+  /* كشف حتمي باستدعاء Math.random واحد — جهة الحارس من 9 جهات (P(تصدي)=1/9) */
+  const gk = PN_DIRS[Math.floor(Math.random() * 9)];
   setTimeout(function () {
     penMoveKeeper(gk);
     const win = gk !== d;
-    const w = win ? Math.floor(GB * 1.45) : 0;
+    /* P(goal)=8/9 → ×1.08 → RTP = 8/9 × 1.08 ≈ 96% (هامش كازينو 4%) */
+    const w = win ? Math.floor(GB * 1.08) : 0;
     if (win) {
       give(w);
       SND.coin();
       if (f.arena) f.arena.classList.add('pn-goal');
       if (f.res) f.res.textContent = T('pn.shot') + ': ' + pnLabel(d) + '  —  ' + T('pn.keep') + ': ' + pnLabel(gk) + '\n🥅 ' + T('pn.goal');
-      gres('×1.45 +' + fmt(w) + ' 🪙', w);
+      gres('×1.08 +' + fmt(w) + ' 🪙', w);
       winFX(w);
     } else {
       SND.lose();
@@ -1617,7 +1668,8 @@ function pnRoomSettle() {
     f.res.textContent = T('pn.shot') + ': ' + pnLabel(pnRoom.shootD) + '  —  ' + T('pn.keep') + ': ' + pnLabel(pnRoom.saveD) +
       (goal ? '\n🥅 ' + T('pn.goal') : '\n🙌 ' + T('pn.save'));
   }
-  if (pnRoom.round >= 5) {
+  var pnMax = (window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5;   /* [RS-GameOpts] */
+  if (pnRoom.round >= pnMax) {
     var finalTxt = '';
     if (pnRoom.myScore > pnRoom.oppScore) finalTxt = '\n🏆 ' + T('pn.matchWin') + ' ' + pnRoom.myScore + ':' + pnRoom.oppScore + '!';
     else if (pnRoom.oppScore > pnRoom.myScore) finalTxt = '\n' + T('pn.matchLose') + ' ' + pnRoom.myScore + ':' + pnRoom.oppScore;
@@ -1650,10 +1702,10 @@ function pnRoomUi() {
   var score = '(' + T('pn.you') + ' ' + pnRoom.myScore + ' : ' + pnRoom.oppScore + ')';
   if (pnRoom.waiting) {
     if (role) role.textContent = attacker ? '⚽ ' + T('pn.shotSent') : '🧤 ' + T('pn.saveSent');
-    el.textContent = '⏳ ' + T('pn.roomWaiting') + (pnRoom.oppPicked ? ' — ' + T('pn.oppPicked') : '') + ' (' + T('pn.round') + ' ' + pnRoom.round + '/5) ' + score;
+    el.textContent = '⏳ ' + T('pn.roomWaiting') + (pnRoom.oppPicked ? ' — ' + T('pn.oppPicked') : '') + ' (' + T('pn.round') + ' ' + pnRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5) + ') ' + score;
   } else {
     if (role) role.textContent = attacker ? '⚽ ' + T('pn.youShoot') : '🧤 ' + T('pn.youSave');
-    el.textContent = (attacker ? '🎮 ' + T('pn.roomGo') : '🎮 ' + T('pn.roomGoSave')) + ' (' + T('pn.round') + ' ' + pnRoom.round + '/5) ' + score;
+    el.textContent = (attacker ? '🎮 ' + T('pn.roomGo') : '🎮 ' + T('pn.roomGoSave')) + ' (' + T('pn.round') + ' ' + pnRoom.round + '/' + ((window.HTH_ROUNDS && window.HTH_ROUNDS.pn) || (Rooms.state && Rooms.state.game_opts && Rooms.state.game_opts.rounds) || 5) + ') ' + score;
   }
 }
 
@@ -1833,7 +1885,9 @@ function eRoulette(g) {
   return gFrame(
     '<div class="rl-stage">' +
       '<div class="rl-wheel" id="rlWrap">' +
-        '<canvas id="rlCv" width="320" height="320"></canvas>' +
+        /* [Real] عجلة المنصة الحقيقية (icon-roulette أصل مرقّم 0-36) تدور حول مركزها */
+        '<div class="rl-real-wheel" id="rlRealWheel" style="background-image:url(assets/games/roulette/wheel.png)"></div>' +
+        '<div class="rl-ball" id="rlBall" aria-hidden="true"></div>' +
         '<div class="rl-pointer" aria-hidden="true"></div>' +
       '</div>' +
       '<div class="rl-last" id="rlLast">' + T('rl.wait') + '</div>' +
@@ -1867,76 +1921,16 @@ function rlBet(c) {
   SND.click();
 }
 function initRoulette() {
-  const cv = document.getElementById('rlCv');
-  if (!cv) return;
-  drawRoulette(cv.getContext('2d'), 0);
+  /* [Real] العجلة صورة أصل حقيقية تدور بـ CSS transform — لا canvas */
+  const wheel = document.getElementById('rlRealWheel');
+  if (wheel) wheel.style.transform = 'rotate(0rad)';
   /* الحالة الافتراضية: رهان أحمر — ظهّره في الواجهة */
   const redBtn = document.getElementById('rlBtnRed');
   if (redBtn) redBtn.classList.add('active');
 }
-function drawRoulette(ctx, rot, ball, winIdx) {
-  const S = 320, cx = S / 2, cy = S / 2, r = 146;
-  ctx.clearRect(0, 0, S, S);
-  /* حلقة خارجية ذهبية مزدوجة */
-  ctx.beginPath(); ctx.arc(cx, cy, r + 9, 0, Math.PI * 2); ctx.fillStyle = '#0e0a26'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, r + 5, 0, Math.PI * 2); ctx.fillStyle = '#f5c518'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#8a6d1a'; ctx.fill();
-  const angle = (Math.PI * 2) / rlNumbers.length;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(rot);
-  rlNumbers.forEach(function (n, i) {
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, r, i * angle, (i + 1) * angle);
-    ctx.closePath();
-    ctx.fillStyle = n === 0 ? '#0a7a55' : (i % 2 === 0 ? '#d0263f' : '#151515');
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(245,197,24,0.5)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.save();
-    ctx.rotate(i * angle + angle / 2);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px Cairo';
-    ctx.textAlign = 'center';
-    ctx.fillText(n.toString(), 0, -r * 0.68);
-    ctx.restore();
-  });
-  /* توهج الجيب الفائز بعد التوقف */
-  if (winIdx >= 0 && winIdx < rlNumbers.length) {
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, r, winIdx * angle, (winIdx + 1) * angle);
-    ctx.closePath();
-    ctx.fillStyle = rlNumbers[winIdx] === 0 ? '#0a7a55' : (winIdx % 2 === 0 ? '#d0263f' : '#151515');
-    ctx.shadowColor = 'rgba(245,197,24,0.95)';
-    ctx.shadowBlur = 24;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-  ctx.restore();
-  /* المحور المركزي */
-  ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fillStyle = '#141033'; ctx.fill();
-  ctx.strokeStyle = '#f5c518'; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#ffd700'; ctx.fill();
-  /* الكرة — تُرسم فوق كل شيء في إحداثيات الشاشة */
-  if (ball) {
-    const bx = cx + Math.cos(ball.ang) * ball.radius;
-    const by = cy + Math.sin(ball.ang) * ball.radius;
-    const gr = ctx.createRadialGradient(bx - 2, by - 3, 1, bx, by, 9);
-    gr.addColorStop(0, '#ffffff');
-    gr.addColorStop(0.35, '#ffe9a3');
-    gr.addColorStop(1, '#d4a017');
-    ctx.beginPath();
-    ctx.arc(bx, by, 7, 0, Math.PI * 2);
-    ctx.shadowColor = 'rgba(255,255,255,0.9)';
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = gr;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-}
+/* [Real] فيزياء دوران واقعية: العجلة تتباطأ أُسّياً من سرعة عالية،
+   والكرة تدور عكس العجلة أسرع ثم تهبط تدريجياً نحو الجيب الفائز
+   مع ارتدادات صغيرة عند اصطدامها بحواجز الجيوب (كما في العجلة الفعلية). */
 function rlSpin() {
   if (rlSpinning) return;
   if (!take()) return;
@@ -1945,57 +1939,81 @@ function rlSpin() {
   gres('', 0);
   const spinBtn = document.getElementById('rlSpinBtn');
   if (spinBtn) spinBtn.disabled = true;
-  const cv = document.getElementById('rlCv');
-  if (!cv) { finishRoulette(Math.floor(Math.random() * rlNumbers.length)); return; }
-  const ctx = cv.getContext('2d');
+  const wheelEl = document.getElementById('rlRealWheel');
+  const ballEl = document.getElementById('rlBall');
+  const wrapEl = document.getElementById('rlWrap');
+  if (wrapEl) wrapEl.classList.add('spinning');   /* تُظهر الكرة (opacity) */
+  if (!wheelEl) { finishRoulette(Math.floor(Math.random() * rlNumbers.length)); return; }
   const seg = (Math.PI * 2) / rlNumbers.length;
-  const spins = 5 + Math.random() * 3;
   const stopAt = Math.floor(Math.random() * rlNumbers.length);
-  /* المحور: المؤشر أعلى العجلة (−π/2) — مركز الجيب الفائز يصطف تحته تماماً */
-  const targetRot = spins * Math.PI * 2 - Math.PI / 2 - (stopAt + 0.5) * seg;
-  const ball = { start: Math.random() * Math.PI * 2, spins: 3 + Math.random() * 2, stopAt, lastIdx: -1 };
-  const start = performance.now();
-  const DUR = 5400;
-  let lastTick = 0;
-  function animate(now) {
-    const progress = Math.min((now - start) / DUR, 1);
-    const eased = 1 - Math.pow(1 - progress, 3.4);
-    const rot = eased * targetRot;
-    const bs = rlBallState(rot, progress, ball, seg);
-    drawRoulette(ctx, rot, bs);
-    /* نقر الكرة أثناء عبورها حدود الجيوب */
-    const idx = Math.floor((((bs.ang - rot) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / seg);
-    const nowMs = performance.now();
-    if (idx !== ball.lastIdx && nowMs - lastTick > 28) {
-      SND.tickSoft();
-      ball.lastIdx = idx;
-      lastTick = nowMs;
+  /* المؤشر أعلى العجلة (-π/2): مركز الجيب الفائز يصطف تحته تماماً عند التوقف */
+  const wheelTarget = (4 + Math.random() * 2) * Math.PI * 2 - Math.PI / 2 - (stopAt + 0.5) * seg;
+  /* الكرة: تدور عكس اتجاه العجلة بسرعة أولية أعلى ثم تتباطأ أسرع وتسقط للجيب */
+  const ballDir = -1; /* عكس عقارب الساعة بينما العجلة مع العقارب */
+  const ballTotal = ballDir * (6 + Math.random() * 2) * Math.PI * 2 + (-Math.PI / 2 - (stopAt + 0.5) * seg - wheelTarget);
+  const DUR = 6200;
+  const t0 = performance.now();
+  let lastTick = 0, lastBallAng = null;
+  function frame(now) {
+    const t = Math.min((now - t0) / DUR, 1);
+    /* العجلة: تباطؤ أُسّي واقعي (سريعة ثم بطيئة جداً في النهاية) */
+    const wEase = 1 - Math.pow(1 - t, 2.6);
+    const rot = wEase * wheelTarget;
+    wheelEl.style.transform = 'rotate(' + rot + 'rad)';
+    /* الكرة: طور حر سريع عكسي (72%) ثم هبوط للجيب مع ارتداد صغير عند الحواجز */
+    const dropAt = 0.72;
+    let ballAng, ballR;
+    if (t < dropAt) {
+      const p = t / dropAt;
+      const bEase = 1 - Math.pow(1 - p, 1.9);
+      ballAng = ballTotal * bEase + rot * 0.35;   /* الكرة تنجرف مع دوران العجلة جزئياً */
+      ballR = 44;                                  /* مسار الحافة الخارجية (%) */
+    } else {
+      const s = (t - dropAt) / (1 - dropAt);
+      const smooth = s * s * (3 - 2 * s);          /* smoothstep هبوط ناعم */
+      /* الجيب النهائي: زاوية مطلقة ثابتة تحت المؤشر (العجلة شبه متوقفة هنا) */
+      const finalAbs = -Math.PI / 2 - (stopAt + 0.5) * seg;
+      const freeAng = ballTotal * (1 - Math.pow(1 - 1, 1.9)) + rot * 0.35;
+      const bounce = Math.sin(s * Math.PI * 7) * (1 - s) * seg * 1.6;
+      ballAng = freeAng + (finalAbs + bounce - freeAng) * smooth;
+      ballR = 44 - 26 * smooth;                    /* تهبط من الحافة نحو الجيب الداخلي */
     }
-    if (progress < 1) requestAnimationFrame(animate);
+    /* تحديد موقع الكرة: مدار دائري حول مركز العجلة */
+    if (ballEl) {
+      const ang = ballAng - Math.PI / 2;
+      const xPct = 50 + Math.cos(ang) * ballR;
+      const yPct = 50 + Math.sin(ang) * ballR;
+      ballEl.style.left = xPct + '%';
+      ballEl.style.top = yPct + '%';
+    }
+    /* نقر عند عبور الكرة حدود جيب (فرق زاوي عن العجلة يقطع قطاعات) */
+    if (lastBallAng !== null) {
+      let d = ballAng - lastBallAng;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      const crossed = Math.floor(Math.abs(d) / seg);
+      if (crossed > 0 && now - lastTick > 24) {
+        SND.tickSoft();
+        lastTick = now;
+      }
+    }
+    lastBallAng = ballAng;
+    if (t < 1) requestAnimationFrame(frame);
     else {
-      rlLastRot = rot;
+      rlLastRot = wheelTarget;
       finishRoulette(stopAt);
     }
   }
-  animate(performance.now());
+  requestAnimationFrame(frame);
 }
-/* حالة الكرة: طور حر (تدور أسرع من العجلة) ثم طور انزلاق نحو الجيب الفائز مع ارتداد خفيف */
-function rlBallState(rot, progress, ball, seg) {
-  const dropStart = 0.82;
-  const pFree = Math.min(progress / dropStart, 1);
-  const free = ball.start + ball.spins * Math.PI * 2 * (1 - Math.pow(1 - pFree, 2.2));
-  if (progress < dropStart) return { ang: free, radius: 132 };
-  const s = Math.min((progress - dropStart) / (1 - dropStart), 1);
-  const blend = s * s * (3 - 2 * s);
-  /* الهدف: مركز الجيب الفائز تحت المؤشر — rot النهائية تضبطه تلقائياً */
-  const target = rot + (ball.stopAt + 0.5) * seg;
-  const bounce = Math.sin(s * Math.PI * 8) * (1 - s) * seg * 2;
-  return { ang: free + (target + bounce - free) * blend, radius: 132 - 46 * blend };
-}
+/* ضبط أبعاد canvas المتجاوب: حجم CSS من الحاوية (مربع) + backing store بدقة dpr */
 function finishRoulette(idx) {
   rlSpinning = false;
   const spinBtn = document.getElementById('rlSpinBtn');
   if (spinBtn) spinBtn.disabled = false;
+  /* [Real] إخفاء الكرة بعد التوقف على الجيب */
+  const wrapEl0 = document.getElementById('rlWrap');
+  if (wrapEl0) wrapEl0.classList.remove('spinning');
   const num = rlNumbers[idx];
   const color = rlColorOf(num);
   const lastEl = document.getElementById('rlLast');
@@ -2016,9 +2034,9 @@ function finishRoulette(idx) {
   gres(win ? '×' + mult + ' +' + fmt(w) + ' 🪙' : T('ts.lose'), win ? w : 0);
   winFX(w);
   fairTick();
-  /* توهج الجيب الفائز + اهتزاز العجلة عند الفوز الكبير */
-  const cv = document.getElementById('rlCv');
-  if (cv) drawRoulette(cv.getContext('2d'), rlLastRot, null, idx);
+  /* [Real] تثبيت العجلة الحقيقية على الرقم الفائز + اهتزاز عند الفوز الكبير */
+  const wheel = document.getElementById('rlRealWheel');
+  if (wheel) wheel.style.transform = 'rotate(' + rlLastRot + 'rad)';
   if (win && w >= GB * 5) {
     const wrap = document.getElementById('rlWrap');
     if (wrap) shake(wrap, 5, 380);
@@ -2036,7 +2054,7 @@ function eBaccarat(g) {
         '<div class="bc-cards" id="bcP"></div>' +
         '<div class="bc-total" id="bcPs">0</div>' +
       '</div>' +
-      '<div class="bc-vs">🂡</div>' +
+      '<div class="bc-vs"><img src="assets/cards/back.webp" class="card-ic" alt=""></div>' +
       '<div class="bc-side">' +
         '<div class="bjal">' + T('bc.banker') + '</div>' +
         '<div class="bc-cards" id="bcB"></div>' +
@@ -2049,7 +2067,7 @@ function eBaccarat(g) {
       '<button class="rb bc-b bc-tie" id="bcBtnTie" onclick="bacBet(\'tie\')"> ' + T('bc.tie') + ' <b>×9</b></button>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big bc-deal" id="bcDealBtn" onclick="bacDeal()">🂠 ' + T('bc.deal') + '</button>' +
+      '<button class="big bc-deal" id="bcDealBtn" onclick="bacDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('bc.deal') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2151,22 +2169,22 @@ function eDragonTiger(g) {
   return gFrame(
     '<div class="bc-table dt-table">' +
       '<div class="bc-side">' +
-        '<div class="bjal dt-label dt-label-dragon">🐉 ' + T('dt.dragon') + '</div>' +
+        '<div class="bjal dt-label dt-label-dragon"><i class="fa-solid fa-dragon" aria-hidden="true"></i> ' + T('dt.dragon') + '</div>' +
         '<div class="bc-cards" id="dtD"></div>' +
       '</div>' +
-      '<div class="dt-vs">⚔️</div>' +
+      '<div class="dt-vs"><span class="vs-txt">VS</span></div>' +
       '<div class="bc-side">' +
-        '<div class="bjal dt-label dt-label-tiger">🐯 ' + T('dt.tiger') + '</div>' +
+        '<div class="bjal dt-label dt-label-tiger"><i class="fa-solid fa-paw" aria-hidden="true"></i> ' + T('dt.tiger') + '</div>' +
         '<div class="bc-cards" id="dtT"></div>' +
       '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="rb dt-b dt-dragon active" id="dtBtnDragon" onclick="dtBet(\'dragon\')">🐉 ' + T('dt.dragon') + ' <b>×2</b></button>' +
-      '<button class="rb dt-b dt-tiger" id="dtBtnTiger" onclick="dtBet(\'tiger\')">🐯 ' + T('dt.tiger') + ' <b>×2</b></button>' +
-      '<button class="rb dt-b dt-tie" id="dtBtnTie" onclick="dtBet(\'tie\')">🤝 ' + T('dt.tie') + ' <b>×11</b></button>' +
+      '<button class="rb dt-b dt-dragon active" id="dtBtnDragon" onclick="dtBet(\'dragon\')"><i class="fa-solid fa-dragon" aria-hidden="true"></i> ' + T('dt.dragon') + ' <b>×2</b></button>' +
+      '<button class="rb dt-b dt-tiger" id="dtBtnTiger" onclick="dtBet(\'tiger\')"><i class="fa-solid fa-paw" aria-hidden="true"></i> ' + T('dt.tiger') + ' <b>×2</b></button>' +
+      '<button class="rb dt-b dt-tie" id="dtBtnTie" onclick="dtBet(\'tie\')"><i class="fa-solid fa-handshake" aria-hidden="true"></i> ' + T('dt.tie') + ' <b>×11</b></button>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big dt-deal" id="dtDealBtn" onclick="dtDeal()">🂠 ' + T('dt.deal') + '</button>' +
+      '<button class="big dt-deal" id="dtDealBtn" onclick="dtDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('dt.deal') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2220,7 +2238,7 @@ function eVp(g) {
   return gFrame(
     '<div class="vp-wrap">' +
       '<div class="vp-pt">' +
-        '<div class="vp-pt-title">💎 ' + T('vp.paytitle') + '</div>' +
+        '<div class="vp-pt-title"><i class="fa-solid fa-gem" aria-hidden="true"></i> ' + T('vp.paytitle') + '</div>' +
         '<div class="vp-pt-grid">' +
           '<div class="vp-pt-row"><span>' + T('vp.hand.royal') + '</span><b>×250</b></div>' +
           '<div class="vp-pt-row"><span>' + T('vp.hand.sflush') + '</span><b>×50</b></div>' +
@@ -2234,10 +2252,10 @@ function eVp(g) {
         '</div>' +
       '</div>' +
       '<div class="vp-hand" id="vpHand"></div>' +
-      '<div class="vp-hint" id="vpHint">🂠 ' + T('vp.dealhint') + '</div>' +
+      '<div class="vp-hint" id="vpHint"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('vp.dealhint') + '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big vp-deal" id="vpDeal" onclick="vpDeal()">🂠 ' + T('g.deal') + '</button>' +
+      '<button class="big vp-deal" id="vpDeal" onclick="vpDeal()"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('g.deal') + '</button>' +
       '<button class="big vp-draw" id="vpDraw" onclick="vpDraw()" disabled> ' + T('g.draw') + '</button>' +
     '</div>' +
     betRow(),
@@ -2332,7 +2350,7 @@ function evaluateVP() {
   const dl = document.getElementById('vpDeal');
   if (dl) dl.disabled = false;
   const h = document.getElementById('vpHint');
-  if (h) h.textContent = '🂠 ' + T('vp.dealhint');
+  if (h) h.innerHTML = '<img src=\"assets/cards/back.webp\" class=\"card-ic\" alt=\"\"> ' + T('vp.dealhint');
 }
 
 /* ═══════════ 18. Keno ═══════════ */
@@ -2350,7 +2368,7 @@ const KENO_PAYS = [
   [0, 0, 0, 0, 0, 10, 63, 313, 2170, 28930],
   [0, 0, 0, 0, 0, 5, 28, 154, 794, 4205, 56061]
 ];
-let kPicks = [], kNumbers = [], kDrawing = false;
+let kPicks = [], kNumbers = [], kDrawing = false, kPlacedBets = [];
 function eKeno(g) {
   let cells = '';
   for (let n = 1; n <= 80; n++) {
@@ -2360,14 +2378,14 @@ function eKeno(g) {
     '<div id="gpanel"></div>' +
     '<div class="ke-wrap">' +
       '<div class="ke-top">' +
-        '<div class="ke-counter" id="kCounter">🔢 <b>0</b>/10 ' + T('ke.sel') + '</div>' +
-        '<button type="button" class="ke-clear" id="kClear" onclick="kClear()">🗑 ' + T('ke.clear') + '</button>' +
+        '<div class="ke-counter" id="kCounter"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> <b>0</b>/10 ' + T('ke.sel') + '</div>' +
+        '<button type="button" class="ke-clear" id="kClear" onclick="kClear()"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> ' + T('ke.clear') + '</button>' +
       '</div>' +
       '<div class="kgrid" id="kGrid">' + cells + '</div>' +
-      '<div class="ke-hint">🎱 ' + T('ke.hint') + '</div>' +
+      '<div class="ke-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + T('ke.hint') + '</div>' +
     '</div>' +
     '<div class="bets">' +
-      '<button class="big ke-draw" id="kDraw" onclick="kStart()">🎯 ' + T('ke.draw') + '</button>' +
+      '<button class="big ke-draw" id="kDraw" onclick="kStart()"><i class="fa-solid fa-play" aria-hidden="true"></i> ' + T('ke.draw') + '</button>' +
     '</div>' +
     betRow(),
     g
@@ -2375,6 +2393,10 @@ function eKeno(g) {
 }
 function kToggle(n) {
   if (kDrawing) return;
+  /* [MultiBet] رقم مرهون عليه في تذكرة سابقة لا يُختار ثانية — أرقام مختلفة لكل رهان */
+  for (let bi = 0; bi < kPlacedBets.length; bi++) {
+    if (kPlacedBets[bi].picks.indexOf(n) !== -1) { toast(T('ke.dupWarn'), 'warn'); return; }
+  }
   const idx = kPicks.indexOf(n);
   if (idx !== -1) {
     kPicks.splice(idx, 1);
@@ -2414,10 +2436,20 @@ function kStart() {
     }
     /* الرصيد يتحدث حصرياً من السيرفر */
     if (typeof Group !== 'undefined' && Group.setGold && typeof r.data.gold === 'number') Group.setGold(r.data.gold);
-    kDrawing = true;
-    if (btn) btn.disabled = true;
+    /* [MultiBet] الرهان قُبل: يُحفظ محلياً وتُفرَّغ الاختيارات — يمكن رهان آخر
+       بأرقام مختلفة في نفس الجولة حتى إقفال نافذة الرهان */
+    kPlacedBets.push({ picks: kPicks.slice(), bet: GB });
+    kPicks.forEach(function (n) {
+      const cell = document.querySelector('.kc[data-num="' + n + '"]');
+      if (cell) { cell.classList.remove('sel'); cell.classList.add('placed'); }
+    });
+    kPicks = [];
+    const cc = document.getElementById('kCounter');
+    if (cc) cc.innerHTML = '🔢 <b>0</b>/10 ' + T('ke.sel') + ' · 🎫 ' + kPlacedBets.length;
+    if (btn) btn.disabled = false;
     SND.spin();
-    gres(T('grp.placeBet'), 0);
+    /* عرض تأكيد الرهان فقط — التذكرة تُسجَّل مرة واحدة عند النتيجة (لا تكرار) */
+    gres(T('grp.placeBet') + ' 🎫 ' + kPlacedBets.length, 0, true);
   });
 }
 /* كشف أرقام الجولة المسحوبة (يستدعيها Group.keOnDraw عبر SSE/round API) */
@@ -2433,31 +2465,48 @@ function keReveal(numbers) {
     c.classList.remove('drawn', 'match', 'miss');
   });
   /* كشف الأرقام المسحوبة تباعاً */
+  /* [MultiBet] كل الأرقام المرهون عليها (من كل التذاكر) تُلوَّن كإصابة/إخفاق */
+  const allPicked = {};
+  kPlacedBets.forEach(function (b) { b.picks.forEach(function (n) { allPicked[n] = 1; }); });
+  kPicks.forEach(function (n) { allPicked[n] = 1; });
   numbers.forEach(function (n, di) {
     setTimeout(function () {
       const cell = document.querySelector('.kc[data-num="' + n + '"]');
       if (!cell) return;
       cell.classList.add('drawn');
-      if (kPicks.indexOf(n) !== -1) cell.classList.add('match');
+      if (allPicked[n]) cell.classList.add('match');
       else cell.classList.add('miss');
       if (di === numbers.length - 1) keFinish();
     }, di * 120);
   });
 }
 function keFinish() {
-  const hits = kPicks.filter(function (n) { return kNumbers.indexOf(n) !== -1; }).length;
-  const k = kPicks.length;
-  const mult = (KENO_PAYS[k] && KENO_PAYS[k][hits]) || 0;
-  const w = Math.floor(GB * mult);
-  /* العرض محلي — الرصيد الفعلي يتحدث من السيرفر بعد التسوية */
-  gres(T('ke.result') + ' ' + hits + '/20' + (mult ? ' ×' + mult : ''), w);
-  if (w > 0) winFX(w);
+  /* [MultiBet] تجميع نتائج كل التذاكر المرهونة في الجولة */
+  const bets = kPlacedBets.length ? kPlacedBets : (kPicks.length ? [{ picks: kPicks, bet: GB }] : []);
+  let totalWin = 0;
+  const parts = [];
+  bets.forEach(function (b, i) {
+    const hits = b.picks.filter(function (n) { return kNumbers.indexOf(n) !== -1; }).length;
+    const mult = (KENO_PAYS[b.picks.length] && KENO_PAYS[b.picks.length][hits]) || 0;
+    const w = Math.floor(b.bet * mult);
+    totalWin += w;
+    parts.push(hits + '/' + b.picks.length + (mult ? '×' + mult : ''));
+    /* [Tickets] تذكرة مستقلة لكل رهان بأرقامه الخاصة ورهانه الخاص */
+    if (typeof recordRound === 'function') {
+      const nums = b.picks.slice().sort(function (x, y) { return x - y; }).join('·');
+      recordRound(w > 0, w, '🎫 ' + (i + 1) + '/' + bets.length + ' [' + nums + '] ← ' + hits + '/' + b.picks.length + (mult ? ' ×' + mult : ''), b.bet);
+    }
+  });
+  /* العرض محلي فقط (التذاكر سُجلت أعلاه واحدة واحدة) — الرصيد يتحدث من السيرفر */
+  gres(T('ke.result') + ' ' + parts.join(' · '), totalWin, true);
+  if (totalWin > 0) winFX(totalWin);
   fairTick();
 }
 /* نتيجة الجولة الجماعية من السيرفر (winners/total_paid) */
 function keResolveResult(result) {
   if (result && result.winners !== undefined) {
-    gres('🏆 ' + T('grp.winners') + ': ' + result.winners + ' · ' + T('grp.totalPaid') + ': ' + fmt(result.total_paid) + ' 🪙', 0);
+    /* عرض ملخص الجولة الجماعية فقط — تذكرتي سُجلت في keFinish (لا تكرار) */
+    gres('🏆 ' + T('grp.winners') + ': ' + result.winners + ' · ' + T('grp.totalPaid') + ': ' + fmt(result.total_paid) + ' 🪙', 0, true);
   }
 }
 /* جولة جديدة: إعادة تعيين الاختيارات والتمكين */
@@ -2465,8 +2514,9 @@ function keNewRound() {
   kPicks = [];
   kNumbers = [];
   kDrawing = false;
+  kPlacedBets = [];
   document.querySelectorAll('.kc').forEach(function (c) {
-    c.classList.remove('drawn', 'match', 'miss', 'sel');
+    c.classList.remove('drawn', 'match', 'miss', 'sel', 'placed');
   });
   const c = document.getElementById('kCounter');
   if (c) c.innerHTML = '🔢 <b>0</b>/10 ' + T('ke.sel');
@@ -2497,17 +2547,17 @@ function eAndarbahar(g) {
   return gFrame(
     '<div class="ab-hint">' + T('ab.hint') + '</div>' +
     '<div class="ab-joker-box">' +
-      '<div class="ab-joker-label">🂠 ' + T('ab.joker') + '</div>' +
-      '<div class="ab-joker" id="abJoker">🂠</div>' +
+      '<div class="ab-joker-label"><img src="assets/cards/back.webp" class="card-ic" alt=""> ' + T('ab.joker') + '</div>' +
+      '<div class="ab-joker" id="abJoker"><img src="assets/cards/back.webp" class="card-ic" alt=""></div>' +
     '</div>' +
     '<div class="ab-sides">' +
       '<div class="ab-side ab-side-andar">' +
-        '<div class="ab-side-name">🔵 ' + T('ab.andar') + '</div>' +
+        '<div class="ab-side-name"><i class="fa-solid fa-circle ab-dot-a" aria-hidden="true"></i> ' + T('ab.andar') + '</div>' +
         '<div class="ab-cards" id="abAndar"></div>' +
         '<div class="ab-cnt" id="abAndarCnt">0</div>' +
       '</div>' +
       '<div class="ab-side ab-side-bahar">' +
-        '<div class="ab-side-name">🔴 ' + T('ab.bahar') + '</div>' +
+        '<div class="ab-side-name"><i class="fa-solid fa-circle ab-dot-b" aria-hidden="true"></i> ' + T('ab.bahar') + '</div>' +
         '<div class="ab-cards" id="abBahar"></div>' +
         '<div class="ab-cnt" id="abBaharCnt">0</div>' +
       '</div>' +
@@ -3128,7 +3178,7 @@ function ePoker(g) {
     '<div class="pk-hint">' + T('pk.hint') + '</div>' +
     '<div class="pk-row" id="pkRow">' + cards + '</div>' +
     '<div class="cr-status" id="pkResult"></div>' +
-    '<div class="bets"><button class="crBtn" id="pkBtn" onclick="pkGo()">🃏 ' + T('pk.go') + '</button></div>' +
+    '<div class="bets"><button class="crBtn" id="pkBtn" onclick="pkGo()"><i class="fa-solid fa-clone" aria-hidden="true"></i> ' + T('pk.go') + '</button></div>' +
     betRow(),
     g
   );
@@ -3321,9 +3371,16 @@ function swGo() {
 /* ═══════════ سجل المحركات ═══════════ */
 const ENG = {
   ronda: eRonda,
+  get rondacard() { return (typeof window.eRondaCard === 'function') ? window.eRondaCard : null; },
+  chess: eChess,
+  dama: eDama,
+  /* [Billiards] المحرك يُعرَّف في billiards.js (يُحمَّل قبل engines.js) —
+     قراءة كسولة عبر window لتفادي ReferenceError لو تغيّر الترتيب */
+  get billiards() { return (typeof window.eBilliards === 'function') ? window.eBilliards : ((typeof eBilliards === 'function') ? eBilliards : null); },
   /* crash.js هو module (يُنفَّذ بعد كل السكربتات العادية) — لذلك نقرأ eCrash
      كسولاً عند الفتح عبر window.eCrash بدلاً من الإشارة المباشرة (ReferenceError) */
   get crash() { return (typeof window.eCrash !== 'undefined') ? window.eCrash : null; },
+  rami: eRami,
   andarbahar: eAndarbahar,
   bj: eBj,
   slots: eSlots,
