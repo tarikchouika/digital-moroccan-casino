@@ -121,7 +121,7 @@ return bnav +
 '<footer role="contentinfo" class="watermark">' +
 '<div class="foot-inner">' +
 '<div class="foot-brand">' +
-'<span class="foot-name"><b>DTSG</b> — ألعاب الدكاء التقليدية الرقمية</span>' +
+'<span class="foot-name"><b>DTSG</b></span>' +
 '<span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>' +
 '</div>' +
 '<div class="foot-legal" role="navigation" aria-label="روابط قانونية">' +

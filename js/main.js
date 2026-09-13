@@ -33,7 +33,10 @@ function tileHTML(g) {
   const art = img
     ? '<div class="art ' + g.art + ' hasimg" aria-hidden="true">' +
         '<span class="art-emoji">' + (g.em || '') + '</span>' +
-        '<img src="assets/games/' + img + '/icon.webp" alt="" loading="lazy" ' +
+        /* [TileImg 2026-09-13] eager (بلا lazy): إعادة بناء innerHTML في filterG/renderGames
+           كانت تستبدل البطاقات قبل بدء تحميل lazy (خارج viewport/صفحة مخفية) فتُفقد
+           الصور نهائياً — البطاقات صغيرة (4-9KB) فالتحميل الفوري أرخص وأضمن */
+        '<img src="assets/games/' + img + '/icon.webp" alt="" ' +
         'onerror="var p=this.parentNode;this.remove();if(p)p.classList.remove(\'hasimg\');">' +
       '</div>'
     : '<div class="art ' + g.art + '" aria-hidden="true">' + g.em + '</div>';
@@ -66,6 +69,16 @@ function renderGames() {
   const instant = document.getElementById('rowInstant');
   const all = document.getElementById('allGames');
   const vis = g => !DISABLED[g.id];
+  /* [HideEmpty 2026-09-13] عنوان القسم يختفي مع شبكته الفارغة — لا عنوان
+     «كراش» ظاهراً بعد تعطيل كل ألعابه (بلاغ المالك) */
+  const hideIfEmpty = (gridId, headId) => {
+    const g = document.getElementById(gridId);
+    const h = document.getElementById(headId);
+    if (!g || !h) return;
+    const empty = !(g.children && g.children.length);
+    h.style.display = empty ? 'none' : '';
+    g.style.display = empty ? 'none' : '';
+  };
   if (featured) {
     /* [BGDO] فهرس wf ثابت بالمعرف — إدراج الطاولة/الضومنة بعد blca أزاح كل ما بعده */
     const wfIdx = GAMES.findIndex(function (x) { return x.id === 'wf'; });
@@ -84,6 +97,10 @@ function renderGames() {
   if (all) {
     all.innerHTML = GAMES.filter(vis).map(tileHTML).join('');
   }
+  hideIfEmpty('rowFeatured', 'sheFeatured');
+  hideIfEmpty('rowCrash', 'sheCrash');
+  hideIfEmpty('rowInstant', 'sheInstant');
+  if (typeof updateFilterChips === 'function') updateFilterChips();
 }
 function filterG(c, el) {
   SND.click();
@@ -100,6 +117,21 @@ function filterG(c, el) {
   const allEl = document.getElementById('allGames');
   if (allEl) allEl.innerHTML = list.map(tileHTML).join('');
 }
+/* [Chips 2026-09-13] فلاتر التصنيف: يظهر فقط ما فيه ألعاب مفعلة —
+   لا أزرار معطلمة تشوه الصفحة (بلاغ المالك) */
+function updateFilterChips() {
+  const chips = document.querySelectorAll('#gameFilters .fchip');
+  chips.forEach(function (chip) {
+    const oc = chip.getAttribute('onclick') || '';
+    const m = oc.match(/filterG\(['"]([\w-]+)['"]/);
+    const cat = m ? m[1] : 'all';
+    const list = cat === 'all'
+      ? GAMES.filter(function (g) { return !DISABLED[g.id]; })
+      : GAMES.filter(function (g) { return g.cat === cat && !DISABLED[g.id]; });
+    chip.style.display = list.length ? '' : 'none';
+  });
+}
+
 /* ═══════════ البطولات ═══════════ */
 /* ═══════════ صفحة البطولات (حقيقية — من الـ API) ═══════════ */
 function renderTourney() {

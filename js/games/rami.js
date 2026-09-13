@@ -2502,6 +2502,30 @@ function initRami() {
   adapter.start('ramiContainer');
   /* ربط معالجات الغرفة للمزامنة الجماعية */
   ramiRegisterRooms();
+  /* [AutoResume 2026-09-13] بلاغ المالك: فتح الرامي بعد تحديث/إغلاق كان يظهر
+     شاشة الإعدادات فقط والجولة المحفوظة لا تُستأنف (والرهان يبدو مقتطعاً).
+     الاستئناف صار تلقائياً: فتح اللعبة + جولة محفوظة غير منتهية = تكمل فوراً
+     (البوت يلتقط دوره) — الشفافية والاستمرارية التي طلبها. الغرف الجماعية
+     مستثناة (لها إعادة بناء الخادم الخاصة بها). */
+  try {
+    if (ramiHasSavedRound() &&
+        !(typeof Rooms !== 'undefined' && Rooms.state && Rooms.state.status === 'playing' && Rooms.state.game_id === 'rm')) {
+      var res = ramiDeserializeGame();
+      if (res && res.gamePhase === 'PLAYING') {
+        RAMI_STATE = res;
+        window.RAMI_STATE = RAMI_STATE;
+        try { var raw = JSON.parse(localStorage.getItem(RAMI_PERSIST_KEY) || 'null'); if (raw && raw.bet) { RAMI_BET = raw.bet; window.RAMI_BET = raw.bet; } } catch (e) {}
+        adapter.game = RAMI_STATE;
+        adapter.selectedCards.clear();
+        adapter.handSlots = [[], [], [], [], []];
+        adapter._renderGame();
+        _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ'), 'ok');
+        adapter._processTurn();
+      } else if (res) {
+        /* حالة غير PLAYING (ROUND_END مثلاً) — شاشة الإعدادات كالمعتاد */
+      }
+    }
+  } catch (e) { console.warn('[Rami] auto-resume skip:', e && e.message); }
 }
 
 /* ── محرك واجهة المستخدم التفاعلي ── */

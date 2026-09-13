@@ -448,7 +448,10 @@
       var timer90 = { key: 'timer', label: T('dama.timer') || 'مؤقت الدور', opts: [[30, sec(30)], [60, sec(60)], [90, sec(90)], [120, sec(120)], [180, sec(180)], [300, sec(300)]], def: 90 };
       if (gid === 'rm') return [
         { key: 'mode', label: T('rami.roundType') || 'نوع الجولة', opts: [['talaj', T('rami.talaj') || 'طالاج'], ['simple', T('rami.simple') || 'سامبل']], def: 'talaj' },
-        { key: 'target', label: T('rami.target') || 'الهدف', opts: [['single', T('rami.singleRound') || 'جولة واحدة'], ['301', '301'], ['501', '501'], ['701', '701']], def: 'single' },
+        /* [Targets-Match 2026-09-13] أهداف مطابقة لنافذة اللعبة حرفياً (rami._targetOptions):
+           لكل وضع قائمته — قائمة فارغة تُملأ ديناميكياً في _renderGameOpts
+           تبعاً للوضع المختار: سامبل [201,301,401,501,701,801] وطالاج [301,401,501,701,801,901,1001] */
+        { key: 'target', label: T('rami.target') || 'الهدف', opts: [], def: 'single' },
         timer90
       ];
       if (gid === 'rn') return [
@@ -500,6 +503,25 @@
       var box = document.getElementById('rsGameOpts');
       if (!box) return;
       var defs = Rooms._gameOptsDefs(gid).slice();
+      /* [Targets-Match] رامي: أهداف القائمة تتبع الوضع المختار — نفس نافذة اللعبة
+         حرفياً (rami._targetOptions). عند إعادة البناء بسبب تغيير الوضع: يُحفظ
+         الهدف المختار إن ظل ضمن القائمة الجديدة وإلا يعود لافتراضي «شوط واحد». */
+      if (gid === 'rm') {
+        var prevMode = document.getElementById('rsOpt_mode');
+        var prevTarget = document.getElementById('rsOpt_target');
+        var modeV = prevMode ? ((prevMode.value === 'simple') ? 'simple' : 'talaj') : 'talaj';
+        var keepTarget = prevTarget ? prevTarget.value : null;
+        var tDef = null;
+        for (var ti = 0; ti < defs.length; ti++) if (defs[ti].key === 'target') { tDef = defs[ti]; break; }
+        if (tDef) {
+          var nums = (modeV === 'simple') ? [201, 301, 401, 501, 701, 801] : [301, 401, 501, 701, 801, 901, 1001];
+          tDef.opts = [['single', T('rami.singleRound') || 'رهان على شوط واحد']];
+          nums.forEach(function (n) { tDef.opts.push([String(n), String(n)]); });
+          if (keepTarget && tDef.opts.some(function (o) { return String(o[0]) === String(keepTarget); })) {
+            tDef.def = keepTarget;
+          }
+        }
+      }
       /* [RS-GameOpts] الألعاب الجماعية (سعة > 2): خانة تحديد عدد اللاعبين
          (تُضاف تلقائياً فقط إن لم تعرّفها اللعبة بنفسها — الروندا تفرض 2 أو 4) */
       var hasMaxp = defs.some(function (d) { return d.key === 'maxp'; });
@@ -519,6 +541,14 @@
           '</select>';
       }
       box.innerHTML = html;
+      /* [Targets-Match] رامي: تغيير الوضع يعيد بناء الأهداف بقائمة الوضع الجديد */
+      if (gid === 'rm') {
+        var ms = document.getElementById('rsOpt_mode');
+        if (ms && !ms.dataset.targetSync) {
+          ms.dataset.targetSync = '1';
+          ms.addEventListener('change', function () { Rooms._renderGameOpts('rm'); });
+        }
+      }
     },
     _collectGameOpts: function (gid) {
       var defs = Rooms._gameOptsDefs(gid);
