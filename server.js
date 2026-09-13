@@ -259,6 +259,15 @@ function persistUser(u) {
   if (u.id >= nextUserId) nextUserId = u.id + 1;
   users[u.id] = u;
 }
+/* [Decimal 2026-09-13] تقريب مالي موحد لمنزلتين عشريتين — الرصيد والأرباح
+   يقبلان القيم العشرية (0.00) لدقة توزيع الأرباح والخسائر (طلب المالك).
+   SQLite يخزن REAL داخل أعمدة INTEGER بلا تقريب (أنواع ديناميكية) — r2
+   يمنع فوضى الفاصلة العائمة (0.1+0.2) ولا يفرض أعداداً صحيحة. */
+function r2(v) {
+  if (typeof v !== 'number' || !isFinite(v)) return 0;
+  return Math.round(v * 100) / 100;
+}
+
 /* [server-tx] تسجيل معاملة مالية في جدول transactions (لا تُفشل العملية الأصل أبداً) */
 function logTx(user, type, amount, extra) {
   try {
@@ -266,8 +275,8 @@ function logTx(user, type, amount, extra) {
     db.prepare(
       'INSERT INTO transactions (user_id, type, amount, balance_after, counterparty_id, counterparty_name, actor_id, actor_name, game_id, note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
     ).run(
-      user.id, String(type || ''), Math.round(amount || 0),
-      (ex.balance_after != null) ? Math.round(ex.balance_after) : null,
+      user.id, String(type || ''), r2(amount || 0),
+      (ex.balance_after != null) ? r2(ex.balance_after) : null,
       ex.counterparty_id != null ? ex.counterparty_id : null,
       ex.counterparty_name != null ? String(ex.counterparty_name) : null,
       ex.actor_id != null ? ex.actor_id : null,
@@ -435,7 +444,7 @@ function groupKeResolve(round) {
     try {
       const picks = JSON.parse(b.picks || '[]');
       const hits = picks.filter((n) => numbers.indexOf(n) !== -1).length;
-      payout = Math.floor(b.bet * kenoPayout(picks.length, hits));
+      payout = r2(b.bet * kenoPayout(picks.length, hits));
     } catch (e) { payout = 0; }
     updBet.run(payout > 0 ? 1 : 0, payout, b.id);
     if (payout > 0) {
@@ -1005,8 +1014,8 @@ const server = http.createServer((req, res) => {
         return;
       }
       if (pathname === '/api/transfer') {
-        const amt = parseInt(data.amount, 10);
-        if (!me || !data.to || isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
+        const amt = r2(Number(data.amount));
+        if (!me || !data.to || isNaN(amt) || amt < 0.01) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
         /* [server-tx] المستلم مستخدم حقيقي بالاسم — لا تحويل لأسماء وهمية */
         const toName = String(data.to).trim();
         const toUser = Object.values(users).find(function (u) { return u.username === toName; });
@@ -1215,9 +1224,9 @@ const server = http.createServer((req, res) => {
         /* [server-tx] تسجيل تذكرة رهان — للضيف قبول صامت بلا تسجيل */
         if (me) {
           const gid = String(data.game_id || '').slice(0, 64);
-          const bet = Math.max(0, parseInt(data.bet, 10) || 0);
+          const bet = Math.max(0, r2(Number(data.bet)) || 0);
           const won = !!data.won;
-          const payout = Math.max(0, parseInt(data.payout, 10) || 0);
+          const payout = Math.max(0, r2(Number(data.payout)) || 0);
           logTicket(me.id, gid, bet, won, payout, data.result_txt);
         }
         json({ ok: true });
@@ -1282,8 +1291,8 @@ const server = http.createServer((req, res) => {
           }
           picks.push(n);
         }
-        const amount = parseInt(data.amount, 10);
-        if (!Number.isInteger(amount) || amount < 1 || amount > 100000000) {
+        const amount = r2(Number(data.amount));
+        if (isNaN(amount) || amount < 0.01 || amount > 100000000) {
           json({ ok: false, message: 'مبلغ غير صالح' }, 400); return;
         }
         if ((me.gold || 0) < amount) { json({ ok: false, message: 'رصيد غير كافٍ' }, 400); return; }
@@ -1337,8 +1346,8 @@ const server = http.createServer((req, res) => {
         if (r.status !== 'betting' || Date.now() >= r.bet_ends_at) {
           json({ ok: false, message: 'انتهى وقت الرهان — انتظر الجولة التالية' }, 400); return;
         }
-        const amount = parseInt(data.amount, 10);
-        if (!Number.isInteger(amount) || amount < 1 || amount > 100000000) {
+        const amount = r2(Number(data.amount));
+        if (isNaN(amount) || amount < 0.01 || amount > 100000000) {
           json({ ok: false, message: 'مبلغ غير صالح' }, 400); return;
         }
         if ((me.gold || 0) < amount) { json({ ok: false, message: 'رصيد غير كافٍ' }, 400); return; }
@@ -1365,7 +1374,7 @@ const server = http.createServer((req, res) => {
         if (!isFinite(mult) || mult < 1 || (crashAt !== Infinity && mult >= crashAt)) {
           json({ ok: false, message: 'انفجرت الطائرة قبل السحب — حظاً أوفر' }, 400); return;
         }
-        const payout = Math.floor(bet.bet * mult);
+        const payout = r2(bet.bet * mult);
         /* [Group] الإضافة في الذاكرة + DB معاً */
         me.gold = (me.gold || 0) + payout;
         try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(me.gold, me.id); } catch (e) {}
@@ -1463,7 +1472,7 @@ const server = http.createServer((req, res) => {
           if (data.gold !== undefined) {
             if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
             const before = target.gold || 0;
-            target.gold = Math.max(0, parseInt(data.gold, 10) || 0);
+            target.gold = Math.max(0, r2(Number(data.gold)) || 0);
             try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(target.gold, target.id); } catch (e) {}
             logTx(target, 'set_balance', target.gold, {
               actor_id: me.id, actor_name: me.username,
@@ -1474,8 +1483,8 @@ const server = http.createServer((req, res) => {
             json({ ok: true, gold: target.gold });
             return;
           }
-          const amt = parseInt(data.amount, 10);
-          if (isNaN(amt) || amt <= 0) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
+          const amt = r2(Number(data.amount));
+          if (isNaN(amt) || amt < 0.01) { json({ ok: false, message: 'المبلغ غير صالح' }, 400); return; }
           if (data.action === 'charge') {
             /* الأدمن يشحن أي عميل مسجل بالمنصة (من طرفه أو من طرف أدمن آخر)
                بشرط رصيد كافٍ عنده؛ السوبر يشحن بلا قيد */
@@ -1611,7 +1620,7 @@ const server = http.createServer((req, res) => {
       }
       if (pathname === '/api/admin/rewards' && req.method === 'POST') {
         if (!isSuper(me)) { json({ ok: false, message: 'سوبر أدمن فقط' }, 403); return; }
-        const amount = Math.max(0, parseInt(data.amount, 10));
+        const amount = Math.max(0, r2(Number(data.amount)));
         const interval_hours = Math.min(720, Math.max(1, parseInt(data.interval_hours, 10) || 24));
         if (isNaN(amount)) { json({ ok: false, message: 'قيمة غير صالحة' }, 400); return; }
         try {
@@ -1896,7 +1905,7 @@ const server = http.createServer((req, res) => {
           /* المال الفعلي على الطاولة: رهانات البشريين فقط (رهان الخصم البوتّي لا يُخلق من فراغ) */
           const stake = humans.length * pot;
           /* الرسم: 5% من رهان الرابح في كل الجولات (نظام موحد — لا غرف ساعة بعد الآن) */
-          fee = Math.round(pot * BET_FEE_RATE);
+          fee = r2(pot * BET_FEE_RATE);
           winner.gold = (winner.gold || 0) + (stake - fee);
           try { db.prepare('UPDATE users SET gold = ? WHERE id = ?').run(winner.gold, winner.id); } catch (e) {}
         }
@@ -1906,7 +1915,7 @@ const server = http.createServer((req, res) => {
         const winnerOut = (wSeat >= 0) ? shape(users[order[wSeat]]) : null;
         const loserOut = (wSeat === 0) ? shape(users[order[1]]) : (wSeat === 1 ? shape(users[order[0]]) : null);   /* بلا خاسر محدد في FFA متعدد المقاعد */
         const refunds = (result === 'draw') ? humans.map(function (u) { return shape(u); }) : [];
-        const payout = (result === 'draw') ? pot : (humans.length * pot) - fee;
+        const payout = (result === 'draw') ? pot : r2((humans.length * pot) - fee);
         const payload = {
           ok: true, result: result, pot: pot, fee: fee,
           winner: winnerOut, loser: loserOut, refunds: refunds,
@@ -1944,9 +1953,9 @@ const server = http.createServer((req, res) => {
         /* المال الفعلي على الطاولة = رهانات البشريين فقط */
         const stake = humansAll.length * bet;
         /* الرسم: 5% من رهان كل رابح (نظام موحد) */
-        const fee = Math.round(bet * BET_FEE_RATE * winners.length);
-        const net = stake - fee;
-        const share = Math.floor(net / winners.length);
+        const fee = r2(bet * BET_FEE_RATE * winners.length);
+        const net = r2(stake - fee);
+        const share = r2(net / winners.length);
         let remainder = net - share * winners.length;
         winners.forEach(function (u) {
           const add = share + (remainder > 0 ? 1 : 0);

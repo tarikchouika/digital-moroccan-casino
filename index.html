@@ -532,7 +532,7 @@
         <select class="afinput" id="rsGame"></select>
         <div id="rsGameOpts"></div>
         <label class="aflabel" for="rsBet"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="rs.bet">مبلغ الرهان</span></label>
-        <input class="afinput" id="rsBet" type="number" min="1" placeholder="مبلغ الرهان">
+        <input class="afinput" id="rsBet" type="number" min="0.01" step="0.01" placeholder="مبلغ الرهان" inputmode="decimal">
         <div id="rsMsg" class="authmsg" role="alert" aria-live="polite"></div>
         <div class="crow" style="margin-top:10px">
           <button class="btn full" id="rsSave"><i class="fa-solid fa-check" aria-hidden="true"></i> <span data-i18n="rs.save">إنشاء الغرفة</span></button>
@@ -625,7 +625,7 @@
         <label class="aflabel" for="trTo"><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-i18n="tr.recipient">اسم المستلم</span></label>
         <input class="afinput" id="trTo" maxlength="20" placeholder="...">
         <label class="aflabel" for="trAmt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="tr.amount">المبلغ</span></label>
-        <input class="afinput" id="trAmt" type="number" min="1" value="100">
+        <input class="afinput" id="trAmt" type="number" min="0.01" step="0.01" value="100" inputmode="decimal">
         <div id="trMsg" class="authmsg" role="alert" aria-live="polite"></div>
         <button class="btn full" onclick="sendCoins()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> <span data-i18n="tr.send">إرسال</span></button>
         <div class="ctitle" style="margin-top:14px" id="trHistTitle"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="tr.history">سجل تحويلاتي</span></div>
@@ -671,7 +671,7 @@
   </button>
   <!-- ═══════════ Scripts ═══════════ -->
   <script src="js/core/session.js?v=unified13"></script>
-  <script src="js/core/state.js?v=unified14"></script>
+  <script src="js/core/state.js?v=unified21"></script>
   <script>
     /* [Dev localhost] جسر WebSocket (Durable Objects) خاص بالإنتاج على Cloudflare Worker.
        عند التشغيل المحلي (server.js يدعم SSE أصلاً ولا يدعم WS) نتجاوز الجسر لنبقى على SSE. */
@@ -682,7 +682,7 @@
   <script src="js/core/api.js?v=unified13"></script>
   <script src="js/core/auth.js?v=unified18"></script>
   <script src="js/core/audio.js?v=unified13"></script>
-  <script src="js/core/utils.js?v=unified13"></script>
+  <script src="js/core/utils.js?v=unified21"></script>
   <script src="js/core/fx.js?v=unified13"></script>
   <script src="js/i18n/translations.js?v=unified13"></script>
   <script src="js/rules/game-rules.js?v=unified18"></script>
@@ -699,16 +699,16 @@
   <script src="js/ronda/rd-app.js?v=rdc6"></script>
   <script src="js/games/rondacard.js?v=rdc6"></script>
   <script src="js/games/parchisi.js?v=unified13"></script>
-  <script src="js/games/rami.js?v=unified20"></script>
+  <script src="js/games/rami.js?v=unified21"></script>
   <script src="js/games/dama.js?v=unified13"></script>
   <script src="js/games/chess.js?v=unified13"></script>
   <script src="js/games/billiards-physics.js?v=unified13"></script>
   <script src="js/games/billiards-rules.js?v=unified13"></script>
   <script src="js/games/billiards.js?v=unified13"></script>
-  <script src="js/games/engines.js?v=unified13"></script>
+  <script src="js/games/engines.js?v=unified21"></script>
   <script type="module" src="js/games/crash.js?v=unified13"></script>
   <script src="js/core/rooms.js?v=unified13"></script>
-  <script src="js/main.js?v=unified14"></script>
+  <script src="js/main.js?v=unified21"></script>
   <script src="js/core/live.js?v=unified13"></script>
   <script src="js/core/fair.js?v=unified13"></script>
   <script src="js/games/group.js?v=unified13"></script>

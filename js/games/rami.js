@@ -2711,7 +2711,7 @@ class RamiUIAdapter {
           '<label class="rami-field-label">🪙 ' + (_ramiT('g.bet') || 'الرهان') + ' <span class="rami-bal-hint">(' + balTxt + ')</span></label>' +
           '<div class="rami-bet-row">' +
             '<button type="button" class="bbtn" onclick="ramiChangeBet(-10)" aria-label="تقليل">−</button>' +
-            '<input type="number" id="ramiBetInput" class="rami-bet-input" min="10" max="' + bal + '" value="' + curBet + '" inputmode="numeric" aria-label="قيمة الرهان">' +
+            '<input type="number" id="ramiBetInput" class="rami-bet-input" min="0.01" step="0.01" max="' + bal + '" value="' + curBet + '" inputmode="decimal" aria-label="قيمة الرهان">' +
             '<button type="button" class="bbtn" onclick="ramiChangeBet(10)" aria-label="زيادة">+</button>' +
             '<button type="button" class="bbtn small" onclick="ramiSetMaxBet()" title="' + T('g.max') + '">' + T('g.max') + '</button>' +
           '</div>' +
@@ -4570,10 +4570,10 @@ function ramiStartGame() {
   /* الرهان من خانة الإدخال اليدوي (ضمن الرصيد المتاح) */
   let currentBet = 50;
   if (betInp) {
-    let v = parseInt(betInp.value, 10);
-    if (isNaN(v) || v < 10) v = 10;
+    let v = parseFloat(betInp.value);
+    if (isNaN(v) || v < 0.01) v = 10;
     const maxGold = (typeof ST !== 'undefined' && typeof ST.gold === 'number') ? ST.gold : v;
-    currentBet = Math.min(v, maxGold);
+    currentBet = Math.round(Math.min(v, maxGold) * 100) / 100;
     betInp.value = currentBet;
   } else {
     currentBet = window.RAMI_BET || 50;

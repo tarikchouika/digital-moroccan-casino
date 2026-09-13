@@ -33,15 +33,16 @@ function _setGBd(v) {
   if ('value' in el && el.tagName === 'INPUT') el.value = v;
   else el.textContent = v;
 }
+/* [Decimal 2026-09-13] الرهان العام يقبل القيم العشرية (0.00) — بحد أدنى 0.01 */
 function setBetInput(el) {
-  const v = parseInt(el.value, 10);
-  GB = Math.max(10, Math.min(ST.gold || 100, isNaN(v) ? 10 : v));
+  const v = parseFloat(el.value);
+  GB = Math.max(0.01, Math.round(Math.min(ST.gold || 100, isNaN(v) ? 10 : v) * 100) / 100);
   _setGBd(GB);
   SND.click();
 }
 function chB(d) {
   SND.click();
-  GB = Math.max(10, Math.min(ST.gold || 100, GB + d));
+  GB = Math.max(0.01, Math.round(Math.min(ST.gold || 100, GB + d) * 100) / 100);
   _setGBd(GB);
 }
 function take() {

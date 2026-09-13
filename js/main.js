@@ -286,9 +286,9 @@ function closeTrModal() {
 function sendCoins() {
   const to = ((document.getElementById('trTo') || {}).value || '').trim();
   const amtEl = document.getElementById('trAmt');
-  const amount = parseInt(amtEl ? amtEl.value : '0', 10);
+  const amount = Math.round(parseFloat(amtEl ? amtEl.value : '0') * 100) / 100;
   if (!to) { toast((T('tr.recipient') || 'يرجى إدخال اسم المستلم') + ' ⚠', 'warn'); return; }
-  if (Number.isNaN(amount) || amount <= 0) { toast(T('tr.badAmount') || 'المبلغ غير صالح', 'err'); return; }
+  if (Number.isNaN(amount) || amount < 0.01) { toast(T('tr.badAmount') || 'المبلغ غير صالح', 'err'); return; }
   if (AUTH.user && to === AUTH.user.username) { toast(T('tr.self') || 'لا يمكنك التحويل لنفسك', 'warn'); return; }
   if (ST.gold < amount) {
     toast(T('ts.noc') || 'رصيدك غير كافٍ', 'err');
