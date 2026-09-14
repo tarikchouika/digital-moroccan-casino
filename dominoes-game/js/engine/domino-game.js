@@ -7,7 +7,9 @@
  *  DominoAI   : ثلاثة مستويات
  *               0 مبتدئ  — عشوائي موجّه لتبديد الثقيل
  *               1 متوسط  — تبديد + دبل مبكر + تنويع الألوان
- *               2 محترف  — + احتكار الأطراف ووعي الانسداد وقرب الإفراغ
+ *               2 خبير   — + احتكار الأطراف ووعي الانسداد باحتمالات
+ *               غير المرئي (يد الخصم والبنك معاً — بلا قراءة يد الخصم)
+ *               وقرب الإفراغ ومتابعة الطرف.
  * ============================================================================
  */
 (function (root, factory) {
@@ -27,8 +29,9 @@
   }
 
   DominoGame.prototype.newMatch = function () {
-    this.state = Core.newRound(null, this.rng, null);
-    this.state.scores = [0, 0];
+    /* [RS-GameOpts] cfg من التهيئة (هدف/قاعدة سحب الغرفة) — كان newRound(prev=null)
+       يعود إلى DEFAULT_CONFIG فيُهمَل هدف الغرفة (خطأ حتمي: غرفة target=50 كانت تلعب 100) */
+    this.state = Core.newRound({ cfg: this.cfg, round: 0, scores: [0, 0] }, this.rng, null);
     this.state.round = 1;
     this._emit('matchStarted', { starter: this.state.starter });
     return this.state;
@@ -139,7 +142,9 @@
   DominoAI.prototype._unseenTiles = function (me) {
     const s = this.game.state;
     const seen = {};
-    for (let h = 0; h < s.hands.length; h++) for (let i = 0; i < s.hands[h].length; i++) seen[s.hands[h][i].id] = 1;
+    /* العدالة: يد الذكاء نفسه + السلسلة المكشوفة فقط — يد الخصم والبنك
+       مخفيان فيتُحسبان ضمن «غير المرئي» (لا قراءة يد الخصم الحقيقية) */
+    for (let i = 0; i < s.hands[me].length; i++) seen[s.hands[me][i].id] = 1;
     for (let c = 0; c < s.chain.length; c++) seen[s.chain[c].tile.id] = 1;
     const unseen = [];
     for (let a = 0; a <= 6; a++) for (let b = a; b <= 6; b++) if (!seen[a + '-' + b]) unseen.push({ a: a, b: b });
@@ -163,28 +168,43 @@
     if (!suit[openVal]) v -= 2;
 
     if (this.level >= 2) {
-      /* احتكار الطرف: كلما قلّت القطع غير المرئية الملامسة للطرف الجديد زادت السيطرة */
+      /* [AI-MAX] احتكار الطرف: قلّة الملامسات غير المرئية = سيطرة أعلى
+         (غير المرئي = يد الخصم المحتملة + البنك — حتمي وعادل بلا كشف يد) */
       let touches = 0;
       for (let u = 0; u < unseen.length; u++) if (unseen[u].a === openVal || unseen[u].b === openVal) touches++;
       v += (7 - Math.min(touches, 7)) * 0.6;
 
-      /* وعي بالانسداد: يبقى الخصم بلا ردود */
+      /* [AI-MAX] احتمال انسداد الخصم بعد الطرف الجديد: يقدَّر من غير المرئي
+         (عدد القطع الملامسة للطرفين بعد اللعب من كل غير المرئي — عدالة كاملة) */
       const endsAfter = { L: s.leftEnd, R: s.rightEnd };
       endsAfter[mv.end] = openVal;
-      const opp = 1 - me;
-      let oppMoves = 0;
-      if (s.chain.length) {
-        const oh = s.hands[opp];
-        for (let o = 0; o < oh.length; o++) {
-          const ot = oh[o];
-          if (ot.a === endsAfter.L || ot.b === endsAfter.L || ot.a === endsAfter.R || ot.b === endsAfter.R) oppMoves++;
-        }
+      const denom = unseen.length || 1;
+      let withMove = 0;
+      for (let u = 0; u < unseen.length; u++) {
+        const ot = unseen[u];
+        if (ot.a === endsAfter.L || ot.b === endsAfter.L || ot.a === endsAfter.R || ot.b === endsAfter.R) withMove++;
       }
-      v += (2 - Math.min(oppMoves, 4)) * 1.5;
+      const oppBlockProb = 1 - withMove / denom;   /* حصة غير المرئي بلا رد */
+      /* انسداد الخصم أثمن كلما اقتربت يدي من الإفراغ (نقطة الجولة تُقبض) */
+      const emptiness = 1 / (h.length || 1);
+      v += oppBlockProb * (6 + 14 * emptiness);
+
+      /* كشف جهة الضعف لي: طرف لا أملك له متابعة يفتح هجوم الخصم */
+      let myFollow = 0;
+      for (let i = 0; i < h.length; i++) {
+        const mt = h[i];
+        if (mt !== t && (mt.a === openVal || mt.b === openVal)) myFollow++;
+      }
+      v += Math.min(myFollow, 3) * 1.1;
 
       /* قرب الإفراغ */
       if (h.length === 1) v += 25;
       else if (h.length === 2) v += 4;
+      /* [AI-MAX] حساب انسداد محتمل: إن كانت النقاط ستنقلني لجوار الهدف خسرت
+         موضع التمرير — يقيَّم من هامش الهدف الحقيقي للجولة */
+      const myPips = h.reduce(function (acc, x) { return acc + x.a + x.b; }, 0) - pip;
+      const margin = s.cfg.target - s.scores[me];
+      if (myPips > 0 && myPips <= Math.max(12, margin - myPips)) v -= 0.5;
     }
     return v;
   };

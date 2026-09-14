@@ -37,8 +37,8 @@ window.BWG_HTML = (function () {
           '<div class="bw-flabel" data-i18n="bg.level">المستوى</div>' +
           '<div class="bw-seg" id="bwLevelSeg">' +
             '<button type="button" class="bw-segbtn" data-level="0" data-i18n="bg.level.0">مبتدئ</button>' +
-            '<button type="button" class="bw-segbtn selected" data-level="1" data-i18n="bg.level.1">متوسط</button>' +
-            '<button type="button" class="bw-segbtn" data-level="2" data-i18n="bg.level.2">محترف</button>' +
+            '<button type="button" class="bw-segbtn" data-level="1" data-i18n="bg.level.1">متوسط</button>' +
+            '<button type="button" class="bw-segbtn selected" data-level="2" data-i18n="bg.level.2">خبير</button>' +
           '</div>' +
         '</div>' +
 
@@ -62,16 +62,16 @@ window.BWG_HTML = (function () {
           '<div class="bw-bethint" id="bwBetHint" data-i18n="bg.bet.hint"></div>' +
         '</div>' +
 
-        '<button type="button" class="bw-go" id="bwStartBtn" data-i18n="bg.start">ابدأ المباراة</button>' +
-        '<button type="button" class="bw-resume" id="bwResumeBtn" hidden data-i18n="bg.resume">استئناف المباراة</button>' +
-        '<button type="button" class="bw-ruleslink" id="bwRulesBtn" data-i18n="bg.rules">قواعد اللعبة</button>' +
+        '<button type="button" class="bw-go" id="bwStartBtn"><i class="fa-solid fa-trophy" aria-hidden="true"></i> <span data-i18n="bg.start">ابدأ المباراة</span></button>' +
+        '<button type="button" class="bw-resume" id="bwResumeBtn" hidden><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span data-i18n="bg.resume">استئناف المباراة</span></button>' +
+        '<button type="button" class="bw-ruleslink" id="bwRulesBtn"><i class="fa-solid fa-book-open" aria-hidden="true"></i> <span data-i18n="bg.rules">قواعد اللعبة</span></button>' +
       '</div>' +
 
       '<div class="bw-layer" id="bwRulesLayer" hidden>' +
         '<div class="bw-sheet">' +
           '<h2 class="bw-sheet-title" data-i18n="bg.rules">قواعد اللعبة</h2>' +
           '<div class="bw-rules-doc" id="bwRulesDoc"></div>' +
-          '<button type="button" class="bw-go" id="bwRulesClose" data-i18n="bg.close">فهمت</button>' +
+          '<button type="button" class="bw-go" id="bwRulesClose"><i class="fa-solid fa-check" aria-hidden="true"></i> <span data-i18n="bg.close">فهمت</span></button>' +
         '</div>' +
       '</div>' +
     '</section>' +
@@ -132,8 +132,8 @@ window.BWG_HTML = (function () {
         '<div class="bw-sheet small">' +
           '<h2 class="bw-sheet-title" id="bwResignText" data-i18n="bg.resignAsk">تنسحب؟</h2>' +
           '<div class="bw-askrow">' +
-            '<button type="button" class="bw-go danger" id="bwResignYes" data-i18n="bg.yes">نعم</button>' +
-            '<button type="button" class="bw-resume" id="bwResignNo" data-i18n="bg.no">متابعة</button>' +
+            '<button type="button" class="bw-go danger" id="bwResignYes"><i class="fa-solid fa-flag" aria-hidden="true"></i> <span data-i18n="bg.yes">نعم</span></button>' +
+            '<button type="button" class="bw-resume" id="bwResignNo"><i class="fa-solid fa-play" aria-hidden="true"></i> <span data-i18n="bg.no">متابعة</span></button>' +
           '</div>' +
         '</div>' +
       '</div>' +

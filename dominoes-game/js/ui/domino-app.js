@@ -27,9 +27,11 @@
 
   const App = {
     /* ═══════════ الحالة ═══════════ */
-    config: { mode: 'ai', level: 1, target: 100, drawUntilPlayable: true, bet: 25 },
+    /* [AI-MAX] الافتراضي خبير (المستوى 2) — طلب المالك: أعلى مستوى في جميع الألعاب */
+    config: { mode: 'ai', level: 2, target: 100, drawUntilPlayable: true, bet: 25 },
     game: null,
     ai: null,
+    room: null,               /* [DO-Room] سياق الغرفة (DOMINO_ROOM) — null = محلي */
     betPlaced: 0,
     localWallet: 500,          /* محفظة الوضع المستقل */
     selTile: null,             /* القطعة المختارة (بطرفين) */
@@ -86,6 +88,10 @@
       try { if (root.ST && typeof root.ST.mute !== 'undefined') SFX.setMuted(!!root.ST.mute); } catch (e) {}
       this.refreshResumeBtn();
       this.updateBetUI();
+      /* [DO-Room] تسجيل معالجات الغرفة عند فتح اللعبة (نمط damaInit→damaRegisterRooms) */
+      if (root.DOMINO_ROOM && typeof root.DOMINO_ROOM.register === 'function') {
+        try { root.DOMINO_ROOM.register(); } catch (e) { console.error('ضومنة rooms init error:', e); }
+      }
     },
 
     detach: function () {
@@ -100,6 +106,7 @@
       /* لا نمسح حفظ المباراة هنا — «استئناف المباراة» يجب أن يصمد بين الجلسات
          (نفس سلوك الطاولة bg-app)؛ الحفظ يُمسح عند انتهاء/انسحاب المباراة فقط */
       this.game = null; this.ai = null; this.busy = false; this.selTile = null;
+      this.room = null;   /* [DO-Room] مغادرة وضع الغرفة — معالجات Rooms تبقى مسجلة */
     },
 
     clearTimers: function () {
@@ -125,7 +132,9 @@
         if (!raw) return;
         const p = JSON.parse(raw);
         if (p.mode) this.config.mode = p.mode;
-        if (typeof p.level === 'number') this.config.level = p.level;
+        /* [AI-MAX] هجرة تفضيل المستوى: الإصدار القديم كان متوسطاً (1) افتراضياً —
+           المالك طلب خبيراً افتراضياً في كل الألعاب؛ نرقّي التفضيل القديم مرة واحدة */
+        if (typeof p.level === 'number') this.config.level = (p._v === 2) ? p.level : 2;
         if (p.target) this.config.target = p.target;
         if (typeof p.drawUntilPlayable === 'boolean') this.config.drawUntilPlayable = p.drawUntilPlayable;
         if (p.bet) this.config.bet = p.bet;
@@ -133,7 +142,7 @@
       this.applyConfigToMenu();
     },
     savePrefs: function () {
-      try { localStorage.setItem(PREFS_KEY, JSON.stringify(this.config)); } catch (e) {}
+      try { localStorage.setItem(PREFS_KEY, JSON.stringify(Object.assign({}, this.config, { _v: 2 }))); } catch (e) {}
     },
     applyConfigToMenu: function () {
       const mark = (segId, attr, val) => {
@@ -235,6 +244,8 @@
     /* ═══════════ حفظ / استئناف ═══════════ */
     saveMatch: function () {
       if (!this.game || this.finished) return;
+      /* [DO-Room] لا حفظ محلي في وضع الغرفة — الجولة تُستعاد من سجل الخادم */
+      if (this.room && this.room.on) return;
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify({
           v: 1, cfg: this.game.cfg, s: this.game.state,
@@ -263,6 +274,7 @@
     resume: function () {
       const d = this.loadSave();
       if (!d) return;
+      if (this.room && this.room.on) return;   /* [DO-Room] لا استئناف محلي في الغرفة */
       /* استئناف مبرمج: رهان الجولة الموقوفة لا يُعاد خصمه — قد خُصم مرة عند البدء */
       this.config.mode = d.mode; this.config.level = d.level;
       this.makeGame(d.cfg);
@@ -289,6 +301,8 @@
     },
 
     startMatch: function () {
+      /* [DO-Room] جولة غرفة جارية: زر القائمة محجوب في وضع الغرفة أصلاً — سلامة */
+      if (this.room && this.room.on) return;
       /* الرهان في نمط AI — المحفظة الحقيقية (takeBet) أو المحلية (الوضع المستقل).
          حدّ الرهان: 10 كحد أدنى؛ الرصيد كحد أعلى — رهان أكبر من الرصيد يُرفض
          بالكامل (بلا خصم جزئي) كي تطابق التذكرةُ المبلغَ المخصوم فعلاً. */
@@ -349,21 +363,26 @@
       try { if (root.ST && typeof root.ST.mute !== 'undefined' && SFX.setMuted && SFX.isMuted() !== !!root.ST.mute) SFX.setMuted(!!root.ST.mute); } catch (e) {}
       const view = this.game.view();
       const isAI = this.config.mode === 'ai';
+      /* [DO-Room] الغرفة: الحالة مطلقة (0 أسفل/1 أعلى) — أسفل شاشتي يعرض مقعدي */
+      const inRoom = !!(this.room && this.room.on);
+      const me = this.mySeatNum();
+      const opp = this.oppSeatNum();
 
       /* النقاط */
-      this.$('dmOppScore').textContent = String(view.scores[1]);
-      this.$('dmMyScore').textContent = String(view.scores[0]);
+      this.$('dmOppScore').textContent = String(view.scores[opp]);
+      this.$('dmMyScore').textContent = String(view.scores[me]);
       this.$('dmRoundLbl').textContent = R.roundLabel(view);
 
-      /* مقعد الخصم */
+      /* مقعد الخصم: ظهور (AI/غرفة) أو يده المكشوفة (لاعبان — أو مقعدي الآخر في الغرفة) */
       const oppRow = this.$('dmOppRow');
       if (oppRow) {
-        if (isAI) {
-          oppRow.innerHTML = R.backsHTML(view.handsCount[1]);
+        if (isAI || (inRoom && me === 0)) {
+          oppRow.innerHTML = R.backsHTML(view.handsCount[opp]);
         } else {
-          const legal1 = {};
-          for (let i = 0; i < view.legal1.length; i++) legal1[view.legal1[i].tile.id] = 1;
-          oppRow.innerHTML = R.handTilesHTML(view.hand1, legal1, view.forcedTile && view.forcedTile.id, 'dmPickP2');
+          const legalOpp = {};
+          const oppLegalList = view['legal' + opp];
+          for (let i = 0; i < oppLegalList.length; i++) legalOpp[oppLegalList[i].tile.id] = 1;
+          oppRow.innerHTML = R.handTilesHTML(view['hand' + opp], legalOpp, view.forcedTile && view.forcedTile.id, 'dmPickP2');
         }
       }
 
@@ -372,13 +391,15 @@
       const sel = this.selTile;
       R.renderEndHints(this.$('dmHintL'), this.$('dmHintR'), view, pos, sel);
 
-      /* اليد */
+      /* اليد — أسفل الشاشة = مقعدي دائماً */
       const hand = this.$('dmHand');
       if (hand) {
-        const myTurn = view.turn === 0 && view.phase === 'play' && !this.busy;
-        const legal0 = {};
-        for (let i = 0; i < view.legal0.length; i++) legal0[view.legal0[i].tile.id] = 1;
-        hand.innerHTML = R.handTilesHTML(view.hand0, legal0, view.forcedTile && view.forcedTile.id, 'dmPickHand');
+        const myHand = view['hand' + me];
+        const myLegalList = view['legal' + me];
+        const myTurn = view.phase === 'play' && !this.busy && (!inRoom || view.turn === me);
+        const legalMe = {};
+        for (let i = 0; i < myLegalList.length; i++) legalMe[myLegalList[i].tile.id] = 1;
+        hand.innerHTML = R.handTilesHTML(myHand, legalMe, view.forcedTile && view.forcedTile.id, 'dmPickHand');
         hand.classList.toggle('myturn', myTurn);
       }
 
@@ -386,7 +407,7 @@
       const by = this.$('dmBoneyard');
       if (by) {
         this.$('dmByCount').textContent = String(view.boneyardCount);
-        const iPlay = view.phase === 'play' && !this.busy && (view.turn === 0 || (!isAI && view.turn === 1));
+        const iPlay = view.phase === 'play' && !this.busy && (!inRoom || view.turn === me);
         const mustDraw = iPlay && !this.game.hasAnyMove(view.turn) && view.boneyardCount > 0 && view.cfg.drawUntilPlayable;
         by.classList.toggle('pulse', mustDraw);
         by.classList.toggle('dim', !mustDraw);
@@ -398,20 +419,35 @@
       if (st) {
         let s = '';
         if (view.phase === 'play') {
-          const myTurn = view.turn === 0 && !this.busy;
-          if (myTurn) {
-            if (view.forcedTile) s = T('dm.mustPlayDrawn');
-            else if (!this.game.hasAnyMove(0) && view.boneyardCount > 0 && view.cfg.drawUntilPlayable) s = T('dm.mustDraw');
-            else if (!this.game.hasAnyMove(0)) s = T('dm.mustPass');
-            else s = T(isAI ? 'dm.turn.you' : 'dm.turn.p1');
+          if (inRoom) {
+            /* الغرفة: الحالة حسب مقعدي — 0 أسفل · 1 أعلى (ترقيم مطلق) */
+            if (this.room.spec) s = T('dm.room.watch') || 'وضع المتفرج — تشاهد المباراة';
+            else if (view.turn === me) {
+              if (view.forcedTile) s = T('dm.mustPlayDrawn');
+              else if (!this.game.hasAnyMove(me) && view.boneyardCount > 0 && view.cfg.drawUntilPlayable) s = T('dm.mustDraw');
+              else if (!this.game.hasAnyMove(me)) s = T('dm.mustPass');
+              else s = T(me === 0 ? 'dm.turn.p1' : 'dm.turn.p2');
+            } else {
+              s = T(me === 0 ? 'dm.turn.opp' : 'dm.turn.opp');
+            }
           } else {
-            s = T(isAI ? 'dm.turn.opp' : 'dm.turn.p2');
+            const myTurn = view.turn === me && !this.busy;
+            if (myTurn) {
+              if (view.forcedTile) s = T('dm.mustPlayDrawn');
+              else if (!this.game.hasAnyMove(me) && view.boneyardCount > 0 && view.cfg.drawUntilPlayable) s = T('dm.mustDraw');
+              else if (!this.game.hasAnyMove(me)) s = T('dm.mustPass');
+              else s = T(isAI ? 'dm.turn.you' : (me === 0 ? 'dm.turn.p1' : 'dm.turn.p2'));
+            } else {
+              s = T(isAI ? 'dm.turn.opp' : 'dm.turn.p2');
+            }
           }
         }
         st.textContent = s;
       }
       if (passBtn) {
-        const humanTurn = view.phase === 'play' && !this.busy && (view.turn === 0 || (!isAI && view.turn === 1));
+        const humanTurn = view.phase === 'play' && !this.busy &&
+          (inRoom ? (!this.room.spec && view.turn === me)
+                  : (view.turn === me || (!isAI && view.turn === opp)));
         passBtn.hidden = !(humanTurn && !this.game.hasAnyMove(view.turn) &&
           (view.boneyardCount === 0 || !view.cfg.drawUntilPlayable));
       }
@@ -435,12 +471,22 @@
       this.on(this.$('dmPassBtn'), 'click', () => this.tryPass());
       this.on(this.$('dmResignBtn'), 'click', () => {
         SFX.click();
+        /* [DO-Room] الغرفة: الانسحاب عبر DOMINO_ROOM (بثّ + تسوية خادمية) */
+        if (this.room && this.room.on) {
+          if (!this.room.spec && this.game && this.game.state) {
+            this.$('dmResignText').textContent = T('dm.resignAsk');
+            this.showLayer('dmResignLayer', true);
+          }
+          return;
+        }
         if (this.config.mode !== 'ai') { this.toMenu(); return; }
         this.$('dmResignText').textContent = T('dm.resignAsk');
         this.showLayer('dmResignLayer', true);
       });
       this.on(this.$('dmResignYes'), 'click', () => {
         this.showLayer('dmResignLayer', false);
+        /* [DO-Room] الغرفة: الانسحاب بثّ + خسارة عند الجميع */
+        if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.resign(); return; }
         this.finished = true; this.clearSave();
         if (this.config.mode === 'ai' && this.game && this.game.state) {
           /* خسارة بالانسحاب: الخصم يبلغ الهدف — التذكرة تسجّلها showMatchEnd */
@@ -453,30 +499,47 @@
       this.on(this.$('dmResignNo'), 'click', () => { SFX.click(); this.showLayer('dmResignLayer', false); });
       this.on(this.$('dmNextRoundBtn'), 'click', () => {
         SFX.click();
+        /* [DO-Room] الغرفة: الجولة التالية عبر DOMINO_ROOM (بثّ nextround) */
+        if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.nextRoundBtn(); return; }
         this.showLayer('dmRoundLayer', false);
         this.game.nextRound();
         this.busy = false; this.selTile = null;
         this.refresh(); this.saveMatch(); this.kickAI();
       });
-      this.on(this.$('dmNewMatchBtn'), 'click', () => { SFX.click(); this.toMenu(); });
+      this.on(this.$('dmNewMatchBtn'), 'click', () => {
+        SFX.click();
+        /* [DO-Room] الغرفة: مباراة جديدة = مودال الغرفة (تصويت/خروج هناك) */
+        if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.newMatchBtn(); return; }
+        this.toMenu();
+      });
     },
+
+    /* [DO-Room] مقعد المحرك الذي أديره (الغرفة: مقعدي الغرفي · المحلي: 0)
+       الحالة المشتركة مطلقة — هذا ترقيم عرض/تفاعل فقط (نمط flipped في ضاما) */
+    mySeatNum: function () {
+      return (this.room && this.room.on) ? this.room.mySeat : 0;
+    },
+    oppSeatNum: function () { return 1 - this.mySeatNum(); },
 
     pickHand: function (tileId) {
       if (this.busy || !this.game) return;
       const s = this.game.state;
-      if (s.phase !== 'play' || s.turn !== 0) return;
+      const me = this.mySeatNum();
+      if (s.phase !== 'play' || s.turn !== me) return;
+      /* [DO-Room] المتفرج لا يلعب */
+      if (this.room && this.room.on && this.room.spec) return;
       let tile = null;
-      for (let i = 0; i < s.hands[0].length; i++) if (s.hands[0][i].id === tileId) { tile = s.hands[0][i]; break; }
+      for (let i = 0; i < s.hands[me].length; i++) if (s.hands[me][i].id === tileId) { tile = s.hands[me][i]; break; }
       if (!tile) return;
       const ends = Core.legalEnds(s, tile);
       if (!ends.length) { SFX.error(); return; }
       if (s.chain.length && ends.length === 2) {
         this.selTile = (this.selTile && this.selTile.id === tileId) ? null : tile;
-        this.selOwner = 0;
+        this.selOwner = me;
         SFX.click();
         this.refresh();
       } else {
-        this.playerPlay(tile, ends[0], 0);
+        this.playerPlay(tile, ends[0], me);
       }
     },
 
@@ -489,38 +552,48 @@
     },
 
     playerPlay: function (tile, end, owner) {
+      /* [DO-Room] الغرفة: وضع القطعة عبر المحرك ثم بثّها (DOMINO_ROOM.emitPlay) */
+      const inRoom = !!(this.room && this.room.on && root.DOMINO_ROOM);
       this.busy = true;
       this.selTile = null;
       const r = this.game.play(owner, tile.id, end);
       if (!r.ok) { this.busy = false; this.refresh(); return; }
-      this.refresh(); this.saveMatch();
+      if (inRoom) root.DOMINO_ROOM.emitPlay(owner, tile, end);
+      this.refresh();
       if (this.game.state.phase !== 'play') {
+        /* [DO-Room][fix] نهاية الجولة: تحرير busy هنا — كان يعلق true فتحرس
+           نقرات واجهة الجولة التالية (الزر يعمل لكن المسار البرمجي يبقى مقيداً) */
+        this.busy = false;
         this.later(() => this.onRoundOver(), 520);
         return;
       }
       this.later(() => {
         this.busy = false;
         this.refresh();
-        if (owner === 0) this.kickAI();
+        if (inRoom) root.DOMINO_ROOM.flow();   /* [DO-Room] بوت الخصم/انتظار البثّ */
+        else if (owner === 0) this.kickAI();
       }, 400);
     },
 
     pickP2: function (tileId) {
       if (this.busy || !this.game) return;
       const s = this.game.state;
-      if (s.phase !== 'play' || s.turn !== 1) return;
+      const opp = this.oppSeatNum();
+      if (s.phase !== 'play' || s.turn !== opp) return;
+      /* [DO-Room] الغرفة: يد الأعلى ليست يدي أصلاً (كشفتها للعرض فقط إن كانت لي) */
+      if (this.room && this.room.on && this.room.mySeat === 0) return;
       let tile = null;
-      for (let i = 0; i < s.hands[1].length; i++) if (s.hands[1][i].id === tileId) { tile = s.hands[1][i]; break; }
+      for (let i = 0; i < s.hands[opp].length; i++) if (s.hands[opp][i].id === tileId) { tile = s.hands[opp][i]; break; }
       if (!tile) return;
       const ends = Core.legalEnds(s, tile);
       if (!ends.length) { SFX.error(); return; }
       if (s.chain.length && ends.length === 2) {
         this.selTile = (this.selTile && this.selTile.id === tileId) ? null : tile;
-        this.selOwner = 1;
+        this.selOwner = opp;
         SFX.click();
         this.refresh();
       } else {
-        this.playerPlay(tile, ends[0], 1);
+        this.playerPlay(tile, ends[0], opp);
       }
     },
 
@@ -528,18 +601,39 @@
       const s = this.game && this.game.state;
       if (!s || this.busy || s.phase !== 'play') return;
       const t = s.turn;
-      if (t !== 0 && !(this.config.mode === 'local' && t === 1)) return;
+      const me = this.mySeatNum();
+      const opp = this.oppSeatNum();
+      if (t !== me && !(this.config.mode === 'local' && !this.room && t === opp)) return;
+      if (this.room && this.room.on && (this.room.spec || t !== me)) return;
       if (this.game.legalMoves(t).length) return;
       if (!s.boneyard.length || !s.cfg.drawUntilPlayable) return;
       const r = this.game.draw(t);
-      if (r.ok) { this.refresh(); this.saveMatch(); if (s.forcedTile) this._toast(T('dm.mustPlayDrawn')); }
+      if (r.ok) {
+        this.refresh();
+        if (this.room && this.room.on && root.DOMINO_ROOM) root.DOMINO_ROOM.emitDraw();   /* [DO-Room] */
+        else this.saveMatch();
+        if (s.forcedTile) this._toast(T('dm.mustPlayDrawn'));
+      }
     },
 
     tryPass: function () {
       const s = this.game && this.game.state;
       if (!s || this.busy || s.phase !== 'play') return;
       const t = s.turn;
-      if (t !== 0 && !(this.config.mode === 'local' && t === 1)) return;
+      const me = this.mySeatNum();
+      const opp = this.oppSeatNum();
+      if (t !== me && !(this.config.mode === 'local' && !this.room && t === opp)) return;
+      if (this.room && this.room.on) {
+        /* [DO-Room] الغرفة: التمرير في دوري فقط ثم بثّه */
+        if (this.room.spec || t !== me) return;
+        const r = this.game.pass(t);
+        if (!r.ok) return;
+        this.refresh();
+        root.DOMINO_ROOM.emitPass();
+        if (s.phase !== 'play') { this.later(() => this.onRoundOver(), 420); return; }
+        root.DOMINO_ROOM.flow();
+        return;
+      }
       const r = this.game.pass(t);
       if (!r.ok) return;
       this.refresh(); this.saveMatch();
@@ -550,6 +644,8 @@
     /* ═══════════ دور الذكاء ═══════════ */
     kickAI: function () {
       if (!this.game || !this.ai || this.finished) return;
+      /* [DO-Room] الغرفة: بوت الخصم يُدار من DOMINO_ROOM (بثّ أفعاله) */
+      if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.flow(); return; }
       const s = this.game.state;
       if (s.phase !== 'play' || s.turn !== 1) return;
       this.busy = true;
@@ -585,6 +681,8 @@
     onRoundOver: function () {
       const s = this.game.state;
       if (!s.result) return;
+      /* [DO-Room] الغرفة: لوحات النهاية يديرها DOMINO_ROOM (بثّ + تسوية) */
+      if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.flow(); return; }
       this.$('dmOppScore').textContent = String(s.scores[1]);
       this.$('dmMyScore').textContent = String(s.scores[0]);
       if (s.phase === 'matchEnd') { this.showMatchEnd(false); return; }
@@ -601,6 +699,8 @@
 
     showMatchEnd: function (resigned) {
       const s = this.game.state;
+      /* [DO-Room] الغرفة: لوحة النهاية والتسوية يديرها DOMINO_ROOM */
+      if (this.room && this.room.on && root.DOMINO_ROOM) { root.DOMINO_ROOM.showMatchEnd(); return; }
       this.finished = true;
       this.clearSave();
       const isAI = this.config.mode === 'ai';
@@ -645,6 +745,17 @@
       this.showLayer('dmRoundLayer', false);
       this.showLayer('dmMatchLayer', false);
       this.showLayer('dmResignLayer', false);
+      /* [DO-Room] الخروج من الغرفة الحية = انسحاب (نمط damaToSetup) */
+      if (this.room && this.room.on && root.DOMINO_ROOM) {
+        if (this.game && this.game.state && this.game.state.phase === 'play' && !this.room.spec) {
+          root.DOMINO_ROOM.resign();
+          return;
+        }
+        this.showScreen('menu');
+        this.refreshResumeBtn();
+        SFX.click();
+        return;
+      }
       this.showScreen('menu');
       this.refreshResumeBtn();
       SFX.click();

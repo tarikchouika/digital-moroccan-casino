@@ -116,6 +116,9 @@
   box-shadow: 0 5px 18px rgba(200, 154, 78, 0.32);
   transition: transform 0.14s ease, box-shadow 0.2s;
 }
+/* [Polish] أيقونات FA داخل الأزرار — مسافة موحدة مثل أزرار المنصة */
+.dm-go > .fa-solid, .dm-resume > .fa-solid, .dm-tool > .fa-solid { margin-inline-end: 7px; }
+.dm-go:disabled, .dm-resume:disabled { opacity: 0.5; cursor: default; transform: none; }
 .dm-go:hover { transform: translateY(-1px); box-shadow: 0 7px 24px rgba(200, 154, 78, 0.45); }
 .dm-go:active { transform: translateY(1px); }
 .dm-go.danger { background: linear-gradient(135deg, #b4523f, #8c3324); color: #ffe9dd; box-shadow: 0 5px 18px rgba(180, 82, 63, 0.3); }
@@ -346,5 +349,19 @@
   .dm-menu-card { margin-top: 2vh; }
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  .dm-menu-card { max-width: 520px; }
+  /* [Polish] لاندسكيب: قائمة أعرض بعمودين — كل الإعدادات مرئية بلا تمرير */
+  .dm-menu-card { max-width: 700px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; padding: 8px 14px 10px; margin-top: 4px; }
+  .dm-menu-card > .dm-logo { display: none; }
+  .dm-menu-card > .dm-title { font-size: 16px; margin: 0; }
+  .dm-menu-card > .dm-tagline { margin: 0 0 2px; font-size: 10px; }
+  .dm-menu-card > .dm-field { margin: 1px 0; }
+  .dm-menu-card .dm-flabel { font-size: 10px; margin-bottom: 2px; }
+  .dm-menu-card .dm-seg { gap: 4px; }
+  .dm-menu-card .dm-segbtn { flex: 1 1 0; min-width: 0; padding: 5px 4px; font-size: 10.5px; }
+  .dm-menu-card .dm-betrow { gap: 6px; }
+  .dm-menu-card .dm-betbtn { width: 30px; height: 30px; font-size: 15px; }
+  .dm-menu-card .dm-bethint { display: none; }
+  .dm-menu-card > #dmStartBtn { grid-column: 1 / -1; margin-top: 3px; padding: 8px 12px; font-size: 13px; }
+  .dm-menu-card > #dmResumeBtn { grid-column: 1 / -1; margin-top: 3px; padding: 7px 12px; font-size: 12px; }
+  .dm-menu-card > .dm-ruleslink { grid-column: 1 / -1; margin-top: 2px; font-size: 10px; }
 }

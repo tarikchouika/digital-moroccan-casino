@@ -23,9 +23,11 @@
   const SAVE_KEY = 'backgammon.save';
 
   const App = {
-    config: { mode: 'ai', level: 1, len: 5, bet: 25 },
+    /* [AI-MAX] الافتراضي خبير (المستوى 2) — طلب المالك: أعلى مستوى في جميع الألعاب */
+    config: { mode: 'ai', level: 2, len: 5, bet: 25 },
     game: null,
     ai: null,
+    room: null,               /* [BG-Room] سياق الغرفة (BG_ROOM) — null = محلي */
     betPlaced: 0,
     localWallet: 500,
     sel: null,
@@ -76,6 +78,10 @@
       R.buildBoard(document.getElementById('bwPoints'));
       this.refreshResumeBtn();
       this.updateBetUI();
+      /* [BG-Room] تسجيل معالجات الغرفة عند فتح اللعبة (نمط damaInit→damaRegisterRooms) */
+      if (root.BG_ROOM && typeof root.BG_ROOM.register === 'function') {
+        try { root.BG_ROOM.register(); } catch (e) { console.error('BG rooms init error:', e); }
+      }
     },
 
     detach: function () {
@@ -87,6 +93,7 @@
       }
       this._handlers = [];
       this.game = null; this.ai = null; this.busy = false; this.sel = null; this.undoStack = [];
+      this.room = null;   /* [BG-Room] مغادرة وضع الغرفة — معالجات Rooms تبقى مسجلة */
     },
 
     clearTimers: function () { for (let i = 0; i < this._timers.length; i++) clearTimeout(this._timers[i]); this._timers = []; },
@@ -97,13 +104,18 @@
     /* ═══════════ التفضيلات ═══════════ */
     loadPrefs: function () {
       try {
-        const p = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+        const raw = localStorage.getItem(PREFS_KEY);
+        const p = JSON.parse(raw || 'null');
         if (p) {
           if (p.mode) this.config.mode = p.mode;
-          if (typeof p.level === 'number') this.config.level = p.level;
+          /* [AI-MAX] هجرة تفضيل المستوى: الإصدار القديم كان متوسطاً (1) افتراضياً —
+             المالك طلب خبيراً افتراضياً في كل الألعاب؛ نرقّي التفضيل المحفوظ القديم مرة واحدة */
+          if (typeof p.level === 'number') this.config.level = (p._v === 2) ? p.level : 2;
           if (p.len) this.config.len = p.len;
           if (p.bet) this.config.bet = p.bet;
         }
+        /* طبع إصدار التفضيل ليعرف savePrefs أن المستوى الحالي اختيار واعٍ */
+        this._prefsV = 2;
       } catch (e) {}
       const mark = (segId, attr, val) => {
         const seg = this.$(segId); if (!seg) return;
@@ -113,7 +125,7 @@
       mark('bwLevelSeg', 'data-level', this.config.level);
       mark('bwLenSeg', 'data-len', this.config.len);
     },
-    savePrefs: function () { try { localStorage.setItem(PREFS_KEY, JSON.stringify(this.config)); } catch (e) {} },
+    savePrefs: function () { try { localStorage.setItem(PREFS_KEY, JSON.stringify(Object.assign({}, this.config, { _v: 2 }))); } catch (e) {} },
 
     /* ═══════════ القائمة ═══════════ */
     bindMenu: function () {
@@ -186,6 +198,8 @@
     /* ═══════════ حفظ / استئناف ═══════════ */
     saveMatch: function () {
       if (!this.game || this.finished) return;
+      /* [BG-Room] لا حفظ محلي في وضع الغرفة — الجولة تُستعاد من سجل الخادم */
+      if (this.room && this.room.on) return;
       try {
         const s = this.game.state;
         localStorage.setItem(SAVE_KEY, JSON.stringify({
@@ -212,6 +226,7 @@
     resume: function () {
       const d = this.loadSave();
       if (!d) return;
+      if (this.room && this.room.on) return;   /* [BG-Room] لا استئناف محلي في الغرفة */
       this.config.mode = d.mode; this.config.level = d.level;
       this.makeGame(d.st.matchTarget || 5);
       this.game.state = Object.assign(Core.newState(d.st.matchTarget || 5), d.st);
@@ -238,6 +253,8 @@
     },
 
     startMatch: function () {
+      /* [BG-Room] جولة غرفة جارية: زر القائمة محجوب في وضع الغرفة أصلاً — سلامة */
+      if (this.room && this.room.on) return;
       this.betPlaced = 0;
       if (this.config.mode === 'ai') {
         const amt = Math.min(this.config.bet, this.walletBalance());
@@ -288,30 +305,38 @@
       this._syncMute();   /* كتم المنصة (ST.mute) يُزامَن عند كل رسم */
       const view = this.game.view();
       const isAI = this.config.mode === 'ai';
+      const isRoom = !!(this.room && this.room.on);   /* [BG-Room] */
       this.$('bwTopScore').textContent = String(view.matchScore[1]);
       this.$('bwBotScore').textContent = String(view.matchScore[0]);
       this.$('bwTopPip').textContent = T('bg.pip') + ': ' + view.pip[1];
       this.$('bwBotPip').textContent = T('bg.pip') + ': ' + view.pip[0];
-      this.$('bwMatchLbl').textContent = R.matchLabel(view) + (isAI ? '' : ' · ' + view.matchScore[0] + ' : ' + view.matchScore[1]);
+      this.$('bwMatchLbl').textContent = R.matchLabel(view) + (isAI || isRoom ? '' : ' · ' + view.matchScore[0] + ' : ' + view.matchScore[1]);
       R.renderChks(this.game.state, view.legal, this.sel);
       R.renderDice(this.$('bwDice'), this.game.state);
-      this.$('bwStatus').textContent = R.statusText(view, isAI ? 'ai' : 'local');
+      this.$('bwStatus').textContent = isRoom
+        ? R.statusText(view, this.room.spec ? 'spec' : 'room')
+        : R.statusText(view, isAI ? 'ai' : 'local');
 
       /* زر الرمي */
       const btn = this.$('bwRollBtn');
       if (btn) {
-        const canRoll = !this.busy && (view.phase === 'opening' ||
-          (view.phase === 'roll' && !view.rolled && view.turn === (isAI ? 0 : view.turn)));
+        const canRoll = !this.busy && (isRoom
+          ? (view.phase === 'opening' ? this.room.mySeat === 0 && !this.room.spec
+             : (view.phase === 'roll' && !view.rolled && view.turn === this.room.mySeat && !this.room.spec))
+          : (view.phase === 'opening' ||
+             (view.phase === 'roll' && !view.rolled && view.turn === (isAI ? 0 : view.turn))));
         btn.hidden = !canRoll;
         btn.classList.toggle('pulse', !!canRoll);
       }
       /* زر التراجع */
       const ub = this.$('bwUndoBtn');
-      if (ub) ub.disabled = !(this.undoStack.length > 0 && !this.busy && (isAI ? view.turn === 0 : true) && view.phase === 'move');
+      if (ub) ub.disabled = isRoom || !(this.undoStack.length > 0 && !this.busy && (isAI ? view.turn === 0 : true) && view.phase === 'move');
     },
 
     /* ═══════════ التدفق ═══════════ */
     continueFlow: function () {
+      /* [BG-Room] وضع الغرفة: السير يديره BG_ROOM (بثّ + انضمام) — نمط ضاما */
+      if (this.room && this.room.on && root.BG_ROOM) { root.BG_ROOM.flow(); return; }
       const s = this.game.state;
       if (s.phase === 'gameEnd' || s.phase === 'matchEnd') { this.showGameEnd(false); return; }
       if (s.phase === 'opening') { this.later(() => this.doOpening(), 450); return; }
@@ -331,6 +356,8 @@
     doOpening: function () {
       const s = this.game.state;
       if (s.phase !== 'opening') return;
+      /* [BG-Room] الغرفة: الافتتاح عبر BG_ROOM (مقعد 0 يبثّ النتيجة) */
+      if (this.room && this.room.on && root.BG_ROOM) { root.BG_ROOM.doOpening(); return; }
       this.busy = true;
       const res = this.game.doOpening();
       this.busy = false;
@@ -343,6 +370,8 @@
     rollClick: function () {
       const s = this.game.state;
       if (this.busy || s.phase === 'gameEnd' || s.phase === 'matchEnd') return;
+      /* [BG-Room] الغرفة: الرمي عبر BG_ROOM (بثّ القيمتين الصريحتين) */
+      if (this.room && this.room.on && root.BG_ROOM) { root.BG_ROOM.roll(); return; }
       if (this.config.mode === 'ai' && s.turn === 1 && !s.opening) return;
       if (s.phase === 'opening') { this.doOpening(); return; }
       if (s.rolled && s.phase === 'move') return;
@@ -354,6 +383,8 @@
     },
 
     passTurn: function () {
+      /* [BG-Room] الغرفة: تمرير الدور عبر BG_ROOM (بثّ endturn) */
+      if (this.room && this.room.on && root.BG_ROOM) { root.BG_ROOM.endTurn(); return; }
       this.sel = null;
       this.undoStack = [];
       this.game.endTurn();
@@ -377,12 +408,22 @@
       this.on(this.$('bwUndoBtn'), 'click', () => this.undo());
       this.on(this.$('bwResignBtn'), 'click', () => {
         SFX.click();
+        /* [BG-Room] الغرفة: الانسحاب عبر BG_ROOM (بثّ + تسوية خادمية) */
+        if (this.room && this.room.on) {
+          if (!this.room.spec && this.game) {
+            this.$('bwResignText').textContent = T('bg.resignAsk');
+            this.showLayer('bwResignLayer', true);
+          }
+          return;
+        }
         if (this.config.mode !== 'ai' || !this.game) { this.toMenu(); return; }
         this.$('bwResignText').textContent = T('bg.resignAsk');
         this.showLayer('bwResignLayer', true);
       });
       this.on(this.$('bwResignYes'), 'click', () => {
         this.showLayer('bwResignLayer', false);
+        /* [BG-Room] الغرفة: الانسحاب بثّ + خسارة عند الجميع */
+        if (this.room && this.room.on && root.BG_ROOM) { root.BG_ROOM.resign(); return; }
         this.finished = true; this.clearSave();
         if (this.config.mode === 'ai' && this.game) {
           const s = this.game.state;
@@ -398,6 +439,8 @@
     colClick: function (idx) {
       const s = this.game.state;
       if (this.busy || s.phase !== 'move') return;
+      /* [BG-Room] الغرفة: اللعب فقط في دوري (المتفرج لا يلعب أصلاً) */
+      if (this.room && this.room.on && !this._roomMyTurn()) return;
       if (this.config.mode === 'ai' && s.turn !== 0) return;
       if (this.config.mode === 'local' && !s.rolled) return;
       const legal = Core.legalMoves(s, s.turn);
@@ -421,6 +464,8 @@
     barClick: function () {
       const s = this.game.state;
       if (this.busy || s.phase !== 'move') return;
+      /* [BG-Room] الغرفة: اللعب فقط في دوري */
+      if (this.room && this.room.on && !this._roomMyTurn()) return;
       if (this.config.mode === 'ai' && s.turn !== 0) return;
       const legal = Core.legalMoves(s, s.turn);
       for (let i = 0; i < legal.length; i++) if (legal[i].from === -1) {
@@ -431,6 +476,8 @@
     trayClick: function (p) {
       const s = this.game.state;
       if (this.busy || s.phase !== 'move' || s.turn !== p) return;
+      /* [BG-Room] الغرفة: الإخراج فقط في دوري (p محلي=0 دائماً في الوضعين) */
+      if (this.room && this.room.on && !this._roomMyTurn()) return;
       if (this.config.mode === 'ai' && p !== 0) return;
       if (this.sel === null) return;
       const legal = Core.legalMoves(s, s.turn);
@@ -449,6 +496,17 @@
       if (!r.ok) { this.undoStack.pop(); return; }
       this.sel = null;
       this.refresh();
+      /* [BG-Room] الغرفة: بثّ الحركة (قفزة واحدة) — التمرير يديره BG_ROOM */
+      if (this.room && this.room.on && root.BG_ROOM) {
+        root.BG_ROOM.emitMove(mv);
+        if (r.ended) { this.later(() => root.BG_ROOM.showEnd(), 650); return; }
+        if (!s.dice.length || !Core.legalMoves(s, s.turn).length) {
+          this.later(() => root.BG_ROOM.endTurn(), 560);
+        } else {
+          this.later(() => this.refresh(), 60);
+        }
+        return;
+      }
       this.saveMatch();
       if (r.ended) { this.later(() => this.showGameEnd(false), 650); return; }
       if (!s.dice.length || !Core.legalMoves(s, s.turn).length) {
@@ -461,6 +519,8 @@
     undo: function () {
       const s = this.game.state;
       if (!this.undoStack.length || this.busy) return;
+      /* [BG-Room] لا تراجع في الغرفة: حركة الخصم على الشبكة لا تُلغى */
+      if (this.room && this.room.on) return;
       if (this.config.mode === 'ai' && s.turn !== 0) return;
       const snap = this.undoStack.pop();
       s.points = snap.points; s.bar = snap.bar; s.off = snap.off;
@@ -559,6 +619,8 @@
 
     overBtn: function () {
       const s = this.game.state;
+      /* [BG-Room] الغرفة: لعبة تالية/مباراة جديدة عبر BG_ROOM (بثّ + تصويت) */
+      if (this.room && this.room.on && root.BG_ROOM) { if (root.BG_ROOM.overBtn()) return; }
       if (s.phase === 'matchEnd' || this.finished) { this.toMenu(); return; }
       this.game.nextGame();
       this.sel = null; this.undoStack = [];
@@ -571,11 +633,30 @@
     toMenu: function () {
       this.clearTimers();
       this.finished = true; this.busy = false; this.sel = null; this.undoStack = [];
+      /* [BG-Room] الخروج من الغرفة الحية = انسحاب (نمط damaToSetup) */
+      if (this.room && this.room.on && root.BG_ROOM) {
+        if (this.game && this.game.state && this.game.state.phase !== 'matchEnd' && this.game.state.phase !== 'gameEnd' && !this.room.spec) {
+          root.BG_ROOM.resign();
+          return;
+        }
+        this.showLayer('bwOverLayer', false);
+        this.showLayer('bwResignLayer', false);
+        this.showScreen('menu');
+        this.refreshResumeBtn();
+        SFX.click();
+        return;
+      }
       this.showLayer('bwOverLayer', false);
       this.showLayer('bwResignLayer', false);
       this.showScreen('menu');
       this.refreshResumeBtn();
       SFX.click();
+    },
+
+    /* [BG-Room] هل الدور الحالي لي في وضع الغرفة؟ (الترقيم مطلق: turn == مقعدي) */
+    _roomMyTurn: function () {
+      if (!this.room || !this.room.on || !root.BG_ROOM) return false;
+      return !!root.BG_ROOM.myTurn();
     }
   };
 

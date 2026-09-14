@@ -16,7 +16,7 @@
     'bg.level':     ['المستوى', 'Difficulté', 'Difficulty', 'المستوى'],
     'bg.level.0':   ['مبتدئ', 'Facile', 'Easy', 'ساهل'],
     'bg.level.1':   ['متوسط', 'Moyen', 'Medium', 'وسط'],
-    'bg.level.2':   ['محترف', 'Expert', 'Expert', 'محترف'],
+    'bg.level.2':   ['خبير', 'Expert', 'Expert', 'خبير'],
     'bg.match':     ['طول المباراة', 'Longueur du match', 'Match length', 'طول الماتش'],
     'bg.pts':       ['نقاط', 'points', 'points', 'نقط'],
     'bg.bet':       ['الرهان', 'Mise', 'Bet', 'الرهان'],
@@ -60,7 +60,11 @@
     'bg.resign':    ['إنهاء وانسحاب', 'Abandonner', 'Resign & exit', 'سالِ وخروج'],
     'bg.resignAsk': ['تنسحب وتخسر المباراة؟', 'Abandonner le match ?', 'Resign the match?', 'بغيتي تسالِ وخروج؟'],
     'bg.yes':       ['نعم، انسحب', 'Oui, abandonner', 'Yes, resign', 'آه، سالِ'],
-    'bg.no':        ['متابعة اللعب', 'Continuer', 'Keep playing', 'كمّل']
+    'bg.no':        ['متابعة اللعب', 'Continuer', 'Keep playing', 'كمّل'],
+
+    /* ── الغرف (bg.room.*) ── */
+    'bg.room.watch':      ['وضع المتفرج — تشاهد المباراة', 'Mode spectateur — vous regardez', 'Spectator mode — watching', 'وضع المتفرج — كتشوف الماتش'],
+    'bg.room.settleNote':  ['الرهان يُسوّى خادمياً', 'La mise est réglée par le serveur', 'The bet is settled by the server', 'الرهان كيتسوّى عند السيرفر']
   };
 
   function langIndex() {
