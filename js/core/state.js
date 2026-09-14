@@ -66,9 +66,18 @@ var __initialLang = sGet('rc_lang', null) || _detectInitialLang();
 /* ثبّت اختيار الكشف الأول في التخزين كي لا يتذبذب بين الأجهزة/الجلسات
    (اختيار المستخدم اللاحق عبر setLang يظل الغالب دائماً) */
 try { sSet('rc_lang', __initialLang); } catch (e) { /* ignore */ }
+
+/* [Decimal 2026-09-13] الرصيد يقبل القيم العشرية (0.00) — قراءة/كتابة بدقة
+   منزلتين (r2num) لدقة توزيع الأرباح والخسائر (طلب المالك) */
+function r2num(v) {
+  var n = parseFloat(v);
+  if (isNaN(n)) n = 1000;
+  return Math.round(n * 100) / 100;
+}
+if (typeof window !== 'undefined') window.r2num = r2num;
 const ST = {
   lang: __initialLang,
-  gold: parseInt(sGet('rc_gold', '1000'), 10) || 1000,
+  gold: r2num(sGet('rc_gold', '1000')),
   streak: 3,
   lastClaim: 0,
   clientSeed: 'Player',
@@ -88,7 +97,7 @@ function save() {
   }
 }
 function loadState() {
-  ST.gold = parseInt(sGet('rc_gold', '1000'), 10) || 1000;
+  ST.gold = r2num(sGet('rc_gold', '1000'));
   ST.lang = sGet('rc_lang', null) || _detectInitialLang();
   ST.mute = sGet('rc_mute', '0') === '1';
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════
-#  DMG → Cloudflare Pages  (dmgames.pages.dev)
+#  DTSG → Cloudflare Pages  (dtsg.pages.dev)
 #  ينشر الملفات الثابتة فقط (html/css/js/assets) — واجهة المنصة تتصل تلقائياً
-#  بالـ Worker (casino-api.dmgames-api.workers.dev) عند استضافة dmgames.pages.dev
+#  بالـ Worker (casino-api.dmgames-api.workers.dev) عند استضافة dtsg.pages.dev
 #
 #  المتطلبات:
 #    * Node ≥ 18 (يستعمل npx لتحميل wrangler مؤقتاً)
@@ -34,7 +34,7 @@ if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "── سأبني من شجرة العمل المحلية (المبنية على $BRANCH_SOURCE مع تعديلات النفق)"
 fi
 OUT="${DMG_DEPLOY_DIR:-/tmp/dmc-deploy}"
-PROJECT="dmgames"                 # يعطي النطاق https://dmgames.pages.dev
+PROJECT="dtsg"                    # [Rebrand] يعطي النطاق https://dtsg.pages.dev (dmgames قديم)
 BRANCH="main"                     # فرع الإنتاج في Pages (تعديل لإنتاج مباشر)
 
 echo "── تجهيز مجلد النشر من $REPO → $OUT"

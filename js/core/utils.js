@@ -24,7 +24,12 @@ function fmt(n) {
     const lang = typeof ST !== 'undefined' ? ST.lang : 'ar';
     const locale = (lang === 'ar' || lang === 'da') ? 'ar-MA' :
                    lang === 'fr' ? 'fr-FR' : 'en-US';
-    return n.toLocaleString(locale);
+    /* [Decimal] أرقام عشرية بدقة منزلتين (0.00) — بلا أصفار زائدة للأعداد الصحيحة */
+    const v = (typeof n === 'number' && isFinite(n)) ? Math.round(n * 100) / 100 : n;
+    const opts = (Number.isFinite(v) && Math.abs(v % 1) > 0.001)
+      ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      : { maximumFractionDigits: 2 };
+    return v.toLocaleString(locale, opts);
   } catch (e) {
     return String(n);
   }

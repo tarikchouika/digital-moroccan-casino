@@ -3,11 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="description" content="ألعاب الدكاء التقليدية الرقمية (DTSG) — ألعاب مجانية. Ronda، Crash، Blackjack، Parchisi والمزيد!">
+  <meta name="description" content="ألعاب الدكاء التقليدية الرقمية (DTSG) — العب مجاناً ألعاب الروندا المغربية، الرامي (طلاح وسامبل)، الطاولة، الضومنة، البارتشي، البلياردو، الشطرنج والضاما عبر المتصفح مباشرة بلا تحميل. غرف لعب جماعية ودردشة حية.">
+  <meta name="keywords" content="ألعاب مغربية, روندا, رامي, طاولة, ضومنة, بارتشي, بلياردو, شطرنج, ضاما, ألعاب تقليدية, ألعاب مجانية, DTSG">
+  <meta name="author" content="DTSG — ألعاب الدكاء التقليدية الرقمية">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://dtsg.pages.dev/">
   <meta name="theme-color" content="#0b1526">
-  <meta property="og:title" content="ألعاب الدكاء التقليدية الرقمية (DTSG)">
-  <meta property="og:description" content="Moroccan Ronda + Parchisi وألعاب أخرى — ترفيه بأفضل الجرافيك">
-  <title>ألعاب الدكاء التقليدية الرقمية (DTSG)</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DTSG — ألعاب الدكاء التقليدية الرقمية">
+  <meta property="og:url" content="https://dtsg.pages.dev/">
+  <meta property="og:title" content="ألعاب الدكاء التقليدية الرقمية (DTSG) — روندا، رامي، طاولة وضومنة مجاناً">
+  <meta property="og:description" content="45 لعبة تقليدية مغربية وعالمية عبر المتصفح — روندا، رامي (طلاح وسامبل)، الطاولة، الضومنة، بارتشي، بلياردو. غرف جماعية ودردشة حية، بلا تحميل.">
+  <meta property="og:image" content="https://dtsg.pages.dev/assets/dtsg/dtsg-og-cover.webp">
+  <meta property="og:locale" content="ar_MA">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ألعاب الدكاء التقليدية الرقمية (DTSG)">
+  <meta name="twitter:description" content="روندا، رامي، طاولة، ضومنة و45 لعبة تقليدية — مجاناً عبر المتصفح">
+  <meta name="twitter:image" content="https://dtsg.pages.dev/assets/dtsg/dtsg-og-cover.webp">
+  <title>ألعاب الدكاء التقليدية الرقمية (DTSG) — روندا، رامي، طاولة وضومنة | العب مجاناً</title>
+  <!-- [SEO] JSON-LD: بيانات منظمة لمحركات البحث -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "DTSG — ألعاب الدكاء التقليدية الرقمية",
+    "alternateName": "DTSG",
+    "url": "https://dtsg.pages.dev/",
+    "description": "45 لعبة تقليدية مغربية وعالمية عبر المتصفح — روندا، رامي، طاولة، ضومنة، بارتشي، بلياردو، شطرنج وضاما. غرف جماعية ودردشة حية.",
+    "inLanguage": ["ar", "fr", "en"],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://dtsg.pages.dev/#games",
+      "query-input": "required name=search_term"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DTSG — ألعاب الدكاء التقليدية الرقمية",
+    "url": "https://dtsg.pages.dev/",
+    "logo": "https://dtsg.pages.dev/assets/dtsg/dtsg-logo-main.webp",
+    "sameAs": []
+  }
+  </script>
   <!-- Icons -->
   <link rel="icon" type="image/png" sizes="32x32" href="assets/dtsg/favicon/dtsg-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/dtsg/favicon/dtsg-16.png">
@@ -28,19 +70,20 @@
   }
   </script>
   <!-- CSS Files -->
-  <link rel="stylesheet" href="css/01-variables.css?v=dtsg1">
-  <link rel="stylesheet" href="css/02-base.css?v=dtsg1">
-  <link rel="stylesheet" href="css/03-components.css?v=dtsg1">
-  <link rel="stylesheet" href="css/04-games.css?v=dtsg1">
-  <link rel="stylesheet" href="css/05-ronda.css?v=dtsg1">
-  <link rel="stylesheet" href="css/06-parchisi.css?v=dtsg1">
-  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg1">
-  <link rel="stylesheet" href="css/08-rami.css?v=dtsg1">
-  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg1">
-  <link rel="stylesheet" href="css/10-dama.css?v=tl1">
-  <link rel="stylesheet" href="css/12-chess.css?v=tl1">
-  <link rel="stylesheet" href="css/11-game-theme.css?v=dtsg1">
-  <link rel="stylesheet" href="css/13-billiards.css?v=dtsg1">
+  <!-- [v2.26-merge] dtsg3: نسخة موحّدة فوق dtsg2 سام + تعديلاتنا (شارات المؤقت tl1 مدموجة في الملفات) -->
+  <link rel="stylesheet" href="css/01-variables.css?v=dtsg3">
+  <link rel="stylesheet" href="css/02-base.css?v=dtsg3">
+  <link rel="stylesheet" href="css/03-components.css?v=dtsg3">
+  <link rel="stylesheet" href="css/04-games.css?v=dtsg3">
+  <link rel="stylesheet" href="css/05-ronda.css?v=dtsg3">
+  <link rel="stylesheet" href="css/06-parchisi.css?v=dtsg3">
+  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg3">
+  <link rel="stylesheet" href="css/08-rami.css?v=dtsg3">
+  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg3">
+  <link rel="stylesheet" href="css/10-dama.css?v=dtsg3">
+  <link rel="stylesheet" href="css/12-chess.css?v=dtsg3">
+  <link rel="stylesheet" href="css/11-game-theme.css?v=dtsg3">
+  <link rel="stylesheet" href="css/13-billiards.css?v=dtsg3">
   <link rel="stylesheet" href="css/14-ronda-classic.css?v=rdc7">
   <!-- [BGDO] الطاولة + الضومنة: هوية المشروعين المستقلين (بادئات bw-/dm-) -->
   <link rel="stylesheet" href="backgammon-game/css/backgammon.css?v=bgdo2">
@@ -171,11 +214,11 @@
           </div>
           <!-- [نقل] حاوية الهيرو انتقلت لصفحة «من نحن» (about.html) بطلب المالك -->
           <h1 id="homeTitle" class="sr-only" data-i18n-html="ui.heroTitle">ألعاب فريدة <b>بجرافيك وصوتيات</b></h1>
-          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-star" aria-hidden="true"></i> <span data-i18n="ui.featured">ألعاب مميزة</span></div></div>
+          <div class="shead" id="sheFeatured"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-star" aria-hidden="true"></i> <span data-i18n="ui.featured">ألعاب مميزة</span></div></div>
           <div class="grid g4" id="rowFeatured"></div>
-          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-rocket" aria-hidden="true"></i> Crash</div></div>
+          <div class="shead" id="sheCrash"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-rocket" aria-hidden="true"></i> Crash</div></div>
           <div class="grid g4" id="rowCrash"></div>
-          <div class="shead"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-bolt" aria-hidden="true"></i> <span data-i18n="ui.instant">فورية</span></div></div>
+          <div class="shead" id="sheInstant"><div class="stitle"><span class="bar"></span> <i class="fa-solid fa-bolt" aria-hidden="true"></i> <span data-i18n="ui.instant">فورية</span></div></div>
           <div class="grid g4" id="rowInstant"></div>
         </section>
         <!-- صفحة الألعاب -->
@@ -412,7 +455,7 @@
             <a href="contact.html" data-i18n="legal.contact.link">تواصل معنا</a>
           </div>
           <div class="foot-brand">
-            <span class="foot-name"><b>DTSG</b> — ألعاب الدكاء التقليدية الرقمية</span>
+            <span class="foot-name"><b>DTSG</b></span>
             <span class="foot-copy">© 2026 — <span data-i18n="ui.footer">جميع الحقوق محفوظة</span></span>
           </div>
         </div>
@@ -544,7 +587,7 @@
         <select class="afinput" id="rsGame"></select>
         <div id="rsGameOpts"></div>
         <label class="aflabel" for="rsBet"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="rs.bet">مبلغ الرهان</span></label>
-        <input class="afinput" id="rsBet" type="number" min="1" placeholder="مبلغ الرهان">
+        <input class="afinput" id="rsBet" type="number" min="0.01" step="0.01" placeholder="مبلغ الرهان" inputmode="decimal">
         <div id="rsMsg" class="authmsg" role="alert" aria-live="polite"></div>
         <div class="crow" style="margin-top:10px">
           <button class="btn full" id="rsSave"><i class="fa-solid fa-check" aria-hidden="true"></i> <span data-i18n="rs.save">إنشاء الغرفة</span></button>
@@ -637,7 +680,7 @@
         <label class="aflabel" for="trTo"><i class="fa-solid fa-user" aria-hidden="true"></i> <span data-i18n="tr.recipient">اسم المستلم</span></label>
         <input class="afinput" id="trTo" maxlength="20" placeholder="...">
         <label class="aflabel" for="trAmt"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="tr.amount">المبلغ</span></label>
-        <input class="afinput" id="trAmt" type="number" min="1" value="100">
+        <input class="afinput" id="trAmt" type="number" min="0.01" step="0.01" value="100" inputmode="decimal">
         <div id="trMsg" class="authmsg" role="alert" aria-live="polite"></div>
         <button class="btn full" onclick="sendCoins()"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> <span data-i18n="tr.send">إرسال</span></button>
         <div class="ctitle" style="margin-top:14px" id="trHistTitle"><i class="fa-solid fa-receipt" aria-hidden="true"></i> <span data-i18n="tr.history">سجل تحويلاتي</span></div>
@@ -682,8 +725,8 @@
     <i class="fa-solid fa-compress" aria-hidden="true"></i>
   </button>
   <!-- ═══════════ Scripts ═══════════ -->
-  <script src="js/core/session.js?v=unified13"></script>
-  <script src="js/core/state.js?v=unified14"></script>
+  <script src="js/core/session.js?v=dtsg2"></script>
+  <script src="js/core/state.js?v=dtsg2"></script>
   <script>
     /* [Dev localhost] جسر WebSocket (Durable Objects) خاص بالإنتاج على Cloudflare Worker.
        عند التشغيل المحلي (server.js يدعم SSE أصلاً ولا يدعم WS) نتجاوز الجسر لنبقى على SSE. */
@@ -691,15 +734,16 @@
       document.write('<script src="js/core/live-ws-bridge.js?v=auto"><\/script>');
     }
   </script>
-  <script src="js/core/api.js?v=unified13"></script>
-  <script src="js/core/auth.js?v=unified18"></script>
-  <script src="js/core/audio.js?v=unified13"></script>
-  <script src="js/core/utils.js?v=unified13"></script>
-  <script src="js/core/fx.js?v=unified13"></script>
-  <script src="js/i18n/translations.js?v=dtsg2"></script>
-  <script src="js/rules/game-rules.js?v=unified18"></script>
-  <script src="js/games/catalog.js?v=unified13"></script>
-  <script src="js/games/blackjack.js?v=unified13"></script>
+  <!-- [v2.26-merge] dtsg4: فوق dtsg3 سام (rami dtsg3/auth dtsg3 مأخوذة) — إصدار موحّد -->
+  <script src="js/core/api.js?v=dtsg4"></script>
+  <script src="js/core/auth.js?v=dtsg4"></script>
+  <script src="js/core/audio.js?v=dtsg4"></script>
+  <script src="js/core/utils.js?v=dtsg4"></script>
+  <script src="js/core/fx.js?v=dtsg4"></script>
+  <script src="js/i18n/translations.js?v=dtsg4"></script>
+  <script src="js/rules/game-rules.js?v=dtsg4"></script>
+  <script src="js/games/catalog.js?v=dtsg4"></script>
+  <script src="js/games/blackjack.js?v=dtsg4"></script>
   <script src="js/games/ronda.js?v=unified13"></script>
   <!-- [RDC] روندا الكلاسيكية: المحرك الأصلي المستورد (ronda-game) حرفياً + الواجهة المنصّية -->
   <script src="ronda-game/js/engine/ronda-core.js?v=rdc6"></script>
@@ -711,39 +755,41 @@
   <script src="js/ronda/rd-app.js?v=rdc6"></script>
   <script src="js/games/rondacard.js?v=rdc6"></script>
   <!-- [BG] الطاولة + [DO] الضومنة: مشروعان مستقلان محكومان بعقد المنصة -->
+  <!-- [BG] الطاولة + [DO] الضومنة: مشروعان مستقلان محكومان بعقد المنصة
+       [v2.26-merge] bgdo3: ملفاتنا المحدثة + غرف bg-room.js/domino-room.js الجديدة مدمجة مع بطاقات سام الغنية -->
   <script src="backgammon-game/js/engine/bg-core.js?v=bgdo3"></script>
   <script src="backgammon-game/js/engine/bg-game.js?v=bgdo3"></script>
-  <script src="backgammon-game/js/ui/bg-audio.js?v=bgdo2"></script>
-  <script src="backgammon-game/js/ui/bg-i18n.js?v=bgdo2"></script>
-  <script src="backgammon-game/js/ui/bg-html.js?v=bgdo2"></script>
-  <script src="backgammon-game/js/ui/bg-renderer.js?v=bgdo2"></script>
-  <script src="backgammon-game/js/ui/bg-app.js?v=bgdo2"></script>
-  <script src="backgammon-game/js/ui/bg-room.js?v=bgdo2"></script>
-  <script src="backgammon-game/backgammon-bridge.js?v=bgdo2"></script>
+  <script src="backgammon-game/js/ui/bg-audio.js?v=bgdo3"></script>
+  <script src="backgammon-game/js/ui/bg-i18n.js?v=bgdo3"></script>
+  <script src="backgammon-game/js/ui/bg-html.js?v=bgdo3"></script>
+  <script src="backgammon-game/js/ui/bg-renderer.js?v=bgdo3"></script>
+  <script src="backgammon-game/js/ui/bg-app.js?v=bgdo3"></script>
+  <script src="backgammon-game/js/ui/bg-room.js?v=bgdo3"></script>
+  <script src="backgammon-game/backgammon-bridge.js?v=bgdo3"></script>
   <script src="dominoes-game/js/engine/domino-core.js?v=bgdo3"></script>
   <script src="dominoes-game/js/engine/domino-game.js?v=bgdo3"></script>
-  <script src="dominoes-game/js/ui/domino-audio.js?v=bgdo2"></script>
-  <script src="dominoes-game/js/ui/domino-i18n.js?v=bgdo2"></script>
-  <script src="dominoes-game/js/ui/domino-html.js?v=bgdo2"></script>
-  <script src="dominoes-game/js/ui/domino-renderer.js?v=bgdo2"></script>
-  <script src="dominoes-game/js/ui/domino-app.js?v=bgdo2"></script>
-  <script src="dominoes-game/js/ui/domino-room.js?v=bgdo2"></script>
-  <script src="dominoes-game/dominoes-bridge.js?v=bgdo2"></script>
-  <script src="js/games/parchisi.js?v=unified13"></script>
-  <script src="js/games/rami.js?v=unified17"></script>
-  <script src="js/games/dama.js?v=tl2"></script>
-  <script src="js/games/chess.js?v=tl2"></script>
-  <script src="js/games/billiards-physics.js?v=unified13"></script>
-  <script src="js/games/billiards-rules.js?v=unified13"></script>
-  <script src="js/games/billiards.js?v=unified13"></script>
-  <script src="js/games/engines.js?v=unified13"></script>
-  <script type="module" src="js/games/crash.js?v=unified13"></script>
-  <script src="js/core/rooms.js?v=unified19"></script>
-  <script src="js/main.js?v=dtsg2"></script>
-  <script src="js/core/live.js?v=unified13"></script>
-  <script src="js/core/fair.js?v=unified13"></script>
-  <script src="js/games/group.js?v=unified13"></script>
-  <script src="js/friends.js?v=unified14"></script>
+  <script src="dominoes-game/js/ui/domino-audio.js?v=bgdo3"></script>
+  <script src="dominoes-game/js/ui/domino-i18n.js?v=bgdo3"></script>
+  <script src="dominoes-game/js/ui/domino-html.js?v=bgdo3"></script>
+  <script src="dominoes-game/js/ui/domino-renderer.js?v=bgdo3"></script>
+  <script src="dominoes-game/js/ui/domino-app.js?v=bgdo3"></script>
+  <script src="dominoes-game/js/ui/domino-room.js?v=bgdo3"></script>
+  <script src="dominoes-game/dominoes-bridge.js?v=bgdo3"></script>
+  <script src="js/games/parchisi.js?v=dtsg4"></script>
+  <script src="js/games/rami.js?v=dtsg4"></script>
+  <script src="js/games/dama.js?v=dtsg4"></script>
+  <script src="js/games/chess.js?v=dtsg4"></script>
+  <script src="js/games/billiards-physics.js?v=dtsg4"></script>
+  <script src="js/games/billiards-rules.js?v=dtsg4"></script>
+  <script src="js/games/billiards.js?v=dtsg4"></script>
+  <script src="js/games/engines.js?v=dtsg4"></script>
+  <script type="module" src="js/games/crash.js?v=dtsg4"></script>
+  <script src="js/core/rooms.js?v=dtsg4"></script>
+  <script src="js/main.js?v=dtsg4"></script>
+  <script src="js/core/live.js?v=dtsg4"></script>
+  <script src="js/core/fair.js?v=dtsg4"></script>
+  <script src="js/games/group.js?v=dtsg4"></script>
+  <script src="js/friends.js?v=dtsg4"></script>
 
   <!-- ═══════════ Mobile Bottom Navigation Bar ═══════════ -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="التنقل السفلي">

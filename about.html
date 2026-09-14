@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="من نحن — ألعاب الدكاء التقليدية الرقمية (DTSG): الشحن، السحب، الإحالة، الغرف الجماعية وقواعد الدردشة">
+    <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://dtsg.pages.dev/about.html">
+<meta name="description" content="من نحن — ألعاب الدكاء التقليدية الرقمية (DTSG): الشحن، السحب، الإحالة، الغرف الجماعية وقواعد الدردشة">
   <meta name="theme-color" content="#0b1526">
   <title>ألعاب الدكاء التقليدية الرقمية — من نحن</title>
   <link rel="icon" type="image/png" sizes="32x32" href="assets/dtsg/favicon/dtsg-32.png">
@@ -13,11 +15,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/01-variables.css?v=dtsg1">
-  <link rel="stylesheet" href="css/02-base.css?v=dtsg1">
-  <link rel="stylesheet" href="css/03-components.css?v=dtsg1">
-  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg1">
-  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg1">
+  <link rel="stylesheet" href="css/01-variables.css?v=dtsg2">
+  <link rel="stylesheet" href="css/02-base.css?v=dtsg2">
+  <link rel="stylesheet" href="css/03-components.css?v=dtsg2">
+  <link rel="stylesheet" href="css/07-responsive.css?v=dtsg2">
+  <link rel="stylesheet" href="css/09-chrome.css?v=dtsg2">
   <!-- تطبيق الثيم قبل الرسم (يمنع الوميض) -->
   <script>
     (function () {
@@ -28,7 +30,7 @@
       }
     })();
   </script>
-  <script src="js/i18n/auto-lang.js?v=dtsg1"></script>
+  <script src="js/i18n/auto-lang.js?v=dtsg2"></script>
   <style>
     /* ── Legal content layout (header/footer provided by legal-ui.js) ── */
     .legal-wrap {
@@ -58,32 +60,6 @@
       background-clip: text;
       color: transparent;
     }
-    .about-hero {
-      background: linear-gradient(160deg, rgba(217, 180, 92, 0.08), rgba(16, 29, 49, 0.35));
-      border: 1px solid rgba(217, 180, 92, 0.25);
-      border-radius: 16px;
-      padding: 22px 20px;
-      margin: 18px 0 6px;
-      text-align: center;
-    }
-    .about-hero .ah-title {
-      margin: 0 0 8px;
-      font-size: 1.25rem;
-      font-weight: 900;
-      border: 0;
-      padding: 0;
-    }
-    .about-hero .ah-title b { color: var(--gold, #d9b45c); }
-    .about-hero p { margin: 6px 0 12px; }
-    .ah-stats {
-      display: flex;
-      justify-content: center;
-      gap: 26px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    .ahs .v { font-weight: 900; font-size: 1.15rem; color: var(--gold, #d9b45c); }
-    .ahs .l { font-size: 0.78rem; opacity: 0.75; }
     .legal-wrap .updated {
       color: var(--t3);
       font-size: 0.78rem;
@@ -161,18 +137,6 @@
     <h1 data-k="a.title">من نحن</h1>
     <div class="updated" data-k="a.updated">آخر تحديث: 12 أغسطس 2026</div>
 
-    <!-- [نُقلت من الرئيسية] حاوية التعريف بالمنصة -->
-    <div class="about-hero">
-      <h2 class="ah-title" data-k="a.heroTitle">44 لعبة فريدة <b>بجرافيك وصوتيات</b></h2>
-      <p data-k="a.heroSub">منصة ألعاب مغربية رقمية بمؤثرات صوتية وبصرية، شرح قواعد مفصل، وجرافيك احترافي — العب واستمتع الآن.</p>
-      <p><a class="btn" href="index.html#pg-games"><i class="fa-solid fa-gamepad" aria-hidden="true"></i> <span data-k="a.heroPlay">العب الآن</span></a></p>
-      <div class="ah-stats">
-        <div class="ahs"><div class="v">12,458</div><div class="l" data-k="a.heroPlayers">لاعب</div></div>
-        <div class="ahs"><div class="v">44</div><div class="l" data-k="a.heroGames">الألعاب</div></div>
-        <div class="ahs"><div class="v">99.9%</div><div class="l" data-k="a.heroUptime">جاهزية</div></div>
-      </div>
-    </div>
-
     <p data-k="a.intro">ألعاب الدكاء التقليدية الرقمية (DTSG) — منصة مغربية تجمع بين المتعة والترفيه والربح. يمكنك شحن حسابك بمال حقيقي، ومبادلة الكوينز بحرية بين اللاعبين، وسحب أرباحك بالطريقة التي تناسبك.</p>
 
     <h2><i class="fa-solid fa-flag" aria-hidden="true"></i> <span data-k="a.missionTitle">ما هي منصتنا</span></h2>
@@ -227,13 +191,13 @@
     </article>
 
   <!-- External JS (same system as index.html: state, audio, utils, TR, legal-ui) -->
-  <script src="js/core/state.js?v=dtsg1"></script>
-  <script src="js/core/audio.js?v=dtsg1"></script>
-  <script src="js/core/utils.js?v=dtsg1"></script>
+  <script src="js/core/state.js?v=dtsg2"></script>
+  <script src="js/core/audio.js?v=dtsg2"></script>
+  <script src="js/core/utils.js?v=dtsg2"></script>
   <script src="js/i18n/translations.js?v=dtsg2"></script>
-  <script src="js/core/api.js?v=dtsg1"></script>
-<script src="js/core/auth.js?v=dtsg1"></script>
-<script src="js/ui/legal-ui.js?v=dtsg1"></script>
+  <script src="js/core/api.js?v=dtsg2"></script>
+<script src="js/core/auth.js?v=dtsg2"></script>
+<script src="js/ui/legal-ui.js?v=lu4"></script>
   <script>
     /* ── محتوى الصفحة (data-k — ترجمة محتوى الصفحة) ── */
     var D = {
@@ -261,22 +225,6 @@
     "fr": "À propos de nous",
     "en": "About Us"
   },
-  "a.heroTitle": {
-    "ar": "44 لعبة فريدة <b>بجرافيك وصوتيات</b>",
-    "da": "44 لعبة متميزة <b>بجرافيك ومؤثرات واعرة</b>",
-    "fr": "44 jeux uniques <b>avec graphismes et sons</b>",
-    "en": "44 Unique Games <b>with Graphics & Audio</b>"
-  },
-  "a.heroSub": {
-    "ar": "منصة ألعاب مغربية رقمية بمؤثرات صوتية وبصرية، شرح قواعد مفصل، وجرافيك احترافي — العب واستمتع الآن.",
-    "da": "منصة ألعاب مغربية رقمية بمؤثرات صوتية وبصرية، شرح القواعد، وجرافيك واعر — قصر ونشط دابا.",
-    "fr": "Plateforme marocaine de jeux digitale avec effets sonores et visuels, règles détaillées et graphismes soignés — jouez dès maintenant.",
-    "en": "DTSG — Digital Traditional Skills Games: rich audio-visual effects, detailed rules, and pro graphics — play and enjoy now."
-  },
-  "a.heroPlay": { "ar": "العب الآن", "da": "قصر دابا", "fr": "Jouer maintenant", "en": "Play now" },
-  "a.heroPlayers": { "ar": "لاعب", "da": "لاعب", "fr": "joueurs", "en": "players" },
-  "a.heroGames": { "ar": "الألعاب", "da": "الألعاب", "fr": "jeux", "en": "games" },
-  "a.heroUptime": { "ar": "جاهزية", "da": "جاهزية", "fr": "disponibilité", "en": "uptime" },
   "a.updated": {
     "ar": "آخر تحديث: 12 أغسطس 2026",
     "da": "آخر تحديث: 12 غشت 2026",
