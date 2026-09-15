@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Visual Effects Engine
+   DTSG — Digital Traditional Skills Games — Visual Effects Engine
    ═══════════════════════════════════════════ */
 "use strict";
 let fxCanvas = null;

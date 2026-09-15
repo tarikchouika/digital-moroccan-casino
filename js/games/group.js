@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   Digital Moroccan casino — Group Rounds Panel (Keno + Crash)
+   DTSG — Digital Traditional Skills Games — Group Rounds Panel (Keno + Crash)
    لوحة الجولة الجماعية: جولات أوتوماتيكية يتحكم بها الخادم،
    رهان جماعي موحّد، سجل حي جماعي، ومدقق Provably Fair لكل جولة.
    يعتمد على: fair.js (sha256 + المولد الحتمي)، live.js (SSE gr:ke/gr:av)
@@ -242,6 +242,7 @@
   /* ═══════════ Hookups — تستدعيها الألعاب (engines.js / crash.js) ═══════════ */
   /* كينو: كشف أرقام الجولة المسحوبة من السيرفر */
   Group.keOnDraw = function (numbers) {
+    if (Group._keRevealed) return; /* حارس التكرار: كشف واحد لكل جولة */
     Group._keRevealed = true;
     if (typeof window.keReveal === 'function') window.keReveal(numbers);
   };
@@ -258,6 +259,8 @@
   };
   /* كراش: الانفجار عند crash_at الحقيقي من السيرفر */
   Group.avOnCrash = function (crashAt) {
+    if (Group._avCrashed) return; /* حارس التكرار: انفجار واحد لكل جولة */
+    Group._avCrashed = true;
     if (typeof window.avCrashNow === 'function') window.avCrashNow(crashAt);
   };
 
