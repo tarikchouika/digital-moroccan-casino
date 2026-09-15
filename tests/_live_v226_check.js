@@ -22,7 +22,8 @@ async function wait(p, fn, t) { t = t || 25000; const s = Date.now(); while (Dat
   await p.evaluate(() => { if (typeof openAuthModal === 'function') { try { openAuthModal(); } catch (e) {} } });
   await p.waitForTimeout(600);
   await p.fill('#authUsername', 'player');
-  await p.fill('#authPassword', 'RoyalCoin@User1');
+  /* [Sec v2.27] كلمة مرور حساب الإنتاج من البيئة DM_LIVE_PW — لا تُودع في المستودع (عام) */
+  await p.fill('#authPassword', process.env.DM_LIVE_PW || '');
   await p.click('#authSubmit');
   const logged = await wait(p, () => window.AUTH && AUTH.user && AUTH.user.username === 'player', 20000);
   console.log('[2] AUTH:', logged ? 'OK — gold=' + AUTH.user.gold : 'FAIL');

@@ -302,10 +302,13 @@ function logTicket(userId, gameId, bet, won, payout, resultTxt) {
   const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
   if (count > 0) return;
   const t = Math.floor(Date.now() / 1000);
+  /* [Sec v2.27] كلمات البذر من البيئة في الإنتاج — القيم الافتراضية للتطوير فقط.
+     المستودع عام: على النشر القائم تدوير كلمات super/admin/player القائمة فوراً
+     (البذر يجري مرة واحدة عند قاعدة فارغة ولا يغيّر كلمات حسابات موجودة). */
   const seeds = [
-    ['super', 'RoyalCoin@Super1', 'super'],
-    ['admin', 'RoyalCoin@Admin1', 'admin'],
-    ['player', 'RoyalCoin@User1', 'user']
+    ['super', process.env.DM_SEED_SUPER_PW || 'RoyalCoin@Super1', 'super'],
+    ['admin', process.env.DM_SEED_ADMIN_PW || 'RoyalCoin@Admin1', 'admin'],
+    ['player', process.env.DM_SEED_USER_PW || 'RoyalCoin@User1', 'user']
   ];
   const ins = db.prepare('INSERT INTO users (username, pass_hash, pass_salt, role, gold, created_at, last_seen) VALUES (?,?,?,?,?,?,?)');
   for (const [name, pass, role] of seeds) {

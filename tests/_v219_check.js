@@ -13,11 +13,13 @@ function bad(l) { fail++; console.log('  ❌ ' + l); }
     const { page, ctx } = await PW.newPage(browser, { width: 412, height: 915 });
     await PW.gotoGamePage(page);
     /* دخول بحساب ثم تفعيل 2FA فعلياً عبر الواجهة */
-    const lg = await page.evaluate(async () => {
-      const r = await fetch('/api/login', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'player', password: 'RoyalCoin@User1' }) });
+    /* [Sec v2.27] كلمة بذر player من البيئة — تُقرأ في Node وتُمرر وسيطاً (لا process في المتصفح) */
+    const SEED_PW = process.env.DM_SEED_USER_PW || 'RoyalCoin@User1';
+    const lg = await page.evaluate(async (pw) => {
+      const r = await fetch('/api/login', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'player', password: pw }) });
       const j = await r.json().catch(() => null);
       return !!(j && j.user);
-    });
+    }, SEED_PW);
     if (!lg) { bad('دخول player فشل — تحقق من الخادم التجريبي'); } else ok('دخول player');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await PW.wait(page, () => !!(window.AUTH && window.AUTH.user), 8000);

@@ -845,7 +845,8 @@ function corsHeaders(req) {
   try {
     const o = new URL(origin);
     const h = o.hostname;
-    if (o.protocol === "https:" && (h === "casino-9xj.pages.dev" || h.endsWith(".casino-9xj.pages.dev") || h === "dmcasino.pages.dev" || h.endsWith(".dmcasino.pages.dev") || h === "casino-api.tarikc.workers.dev")) allowed = origin;
+    /* [v2.27] dtsg.pages.dev هو نطاق الإنتاج منذ v2.24 — كان ناقصاً فيسمح CORS */
+    if (o.protocol === "https:" && (h === "dtsg.pages.dev" || h.endsWith(".dtsg.pages.dev") || h === "casino-9xj.pages.dev" || h.endsWith(".casino-9xj.pages.dev") || h === "dmcasino.pages.dev" || h.endsWith(".dmcasino.pages.dev") || h === "casino-api.tarikc.workers.dev")) allowed = origin;
   } catch (e) {}
   const base = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie",
