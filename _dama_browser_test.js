@@ -111,18 +111,29 @@ async function measureFit(page) {
       });
       results.push([label + ': mandatory capture shown as red ring at (3,4)', !!capHint]);
 
-      /* 6b. [B10] quiet piece: cannot be selected — the obliged piece stays selected with its hints */
+      /* 6b. [v2.27 Souffler] quiet piece: FREELY selectable (owner's rule: capture is
+         obligatory by law, but the player may move any piece — the obliged piece that
+         skips its capture gets blown). Visual obliged-glow persists as the warning. */
       await page.click('#damaBoard .dm-sq[data-r="7"][data-c="1"]');
       await sleep(200);
       const st6b = await page.evaluate(() => ({
         hints: document.querySelectorAll('#damaBoard .dm-sq.hint').length,
         quietSel: !!document.querySelector('#damaBoard .dm-sq.sel[data-r="7"][data-c="1"]'),
-        status: (document.getElementById('damaStatus') || {}).textContent || '',
         obliged: document.querySelectorAll('#damaBoard .dm-pc.obliged').length
       }));
-      results.push([label + ': quiet piece NOT selected; obliged hints persist (' + st6b.hints + ')', !st6b.quietSel && st6b.hints >= 1]);
-      results.push([label + ': must-capture explanation shown in status', st6b.status.indexOf('إلزامي') >= 0 || st6b.status.indexOf('واجب') >= 0]);
+      results.push([label + ': quiet piece freely selectable (souffler rule)', st6b.quietSel]);
+      results.push([label + ': selected quiet piece shows its moves (' + st6b.hints + ')', st6b.hints >= 1]);
       results.push([label + ': obliged piece glows (dm-pc.obliged) (' + st6b.obliged + ')', st6b.obliged >= 1]);
+
+      /* 6b1. [v2.27 Souffler] play the quiet move ⇒ the obliged piece is blown + status explains */
+      await page.click('#damaBoard .dm-sq[data-r="6"][data-c="0"]');
+      await sleep(300);
+      const sfx = await page.evaluate(() => ({
+        status: (document.getElementById('damaStatus') || {}).textContent || '',
+        pcAt52: !!document.querySelector('#damaBoard .dm-sq[data-r="5"][data-c="2"] .dm-pc')
+      }));
+      results.push([label + ': quiet move ⇒ souffle message shown (' + sfx.status.trim().slice(0, 30) + ')', /نفخ|Souffl/i.test(sfx.status)]);
+      results.push([label + ': souffle ⇒ obliged piece removed from (5,2)', !sfx.pcAt52]);
 
       /* 6b2. [B10] bet row removed from the play window — stake chip instead */
       const betUI = await page.evaluate(() => ({
@@ -135,12 +146,15 @@ async function measureFit(page) {
       results.push([label + ': bet row present in setup (settings)', betUI.setupBets]);
       results.push([label + ': static stake chip during play (' + betUI.stake.trim() + ')', !betUI.stakeHidden && betUI.stake.trim().length > 2]);
 
-      /* 6b3. [B10] flip button removed; draw-agreement button present */
-      const btns = await page.evaluate(() => ({
-        flip: [...document.querySelectorAll('#damaPlay .dama-ctrls .dama-mini')].some(b => /تدوير|Pivoter|Flip/.test(b.textContent)),
-        draw: !!document.getElementById('damaDrawBtn'),
-        drawTxt: (document.getElementById('damaDrawBtn') || {}).textContent || ''
-      }));
+      /* 6b3. [B10] flip button removed; draw-agreement button present (icon-only — label lives in title/aria) */
+      const btns = await page.evaluate(() => {
+        const db = document.getElementById('damaDrawBtn');
+        return {
+          flip: [...document.querySelectorAll('#damaPlay .dama-ctrls .dama-mini')].some(b => /تدوير|Pivoter|Flip/.test(b.textContent)),
+          draw: !!db,
+          drawTxt: db ? (db.title || db.getAttribute('aria-label') || db.textContent || '') : ''
+        };
+      });
       results.push([label + ': flip button removed', !btns.flip]);
       results.push([label + ': draw-agreement button present (' + btns.drawTxt.trim() + ')', btns.draw && /تعادل|Nul|Draw/.test(btns.drawTxt)]);
 
@@ -167,18 +181,23 @@ async function measureFit(page) {
           DAMA.sel = null; DAMA.legal = []; DAMA.busy = false;
           damaRender();
           const lm = DAMA.eng.legalMoves(s, 'w');
-          const strictOne = lm.length === 1 && lm[0].to[0] === 0 && lm[0].to[1] === 5;
-          damaHumanMove(lm[0]);
+          /* [v2.27 Souffler] both the capture and quiet moves are offered (freedom);
+             the deferred-promotion capture lands on (0,5) */
+          const capMv = lm.find(m => m.cap && m.to[0] === 0 && m.to[1] === 5);
+          const capTo05 = !!capMv;
+          const quietOffered = lm.some(m => !m.cap);
+          damaHumanMove(capMv);
           await new Promise(rs => setTimeout(rs, 420));
           const pendingVis = !!document.querySelector('#damaBoard .dm-pc.pending');
           const stopped = s.turn === 'b' && s.grid[0][5].pendingKing === true && s.grid[0][5].king === false;
           await new Promise(rs => setTimeout(rs, 3600));   /* رد الذكاء التلقائي */
           const crowned = s.grid[0][5] && s.grid[0][5].king === true;
           const crownVis = !!document.querySelector('#damaBoard .dm-sq[data-r="0"][data-c="5"] .dm-pc.king');
-          return { strictOne, pendingVis, stopped, crowned, crownVis };
+          return { capTo05, quietOffered, pendingVis, stopped, crowned, crownVis };
         } catch (e) { return { err: e.message }; }
       });
-      results.push([label + ': deferred promotion — strict single capture offered', pend.strictOne === true]);
+      results.push([label + ': deferred promotion — capture to (0,5) offered', pend.capTo05 === true]);
+      results.push([label + ': souffler freedom — quiet move offered alongside capture', pend.quietOffered === true]);
       results.push([label + ': deferred promotion — pending marker (⏳) shown', pend.pendingVis === true]);
       results.push([label + ': deferred promotion — piece stopped as man, turn passed', pend.stopped === true]);
       results.push([label + ': deferred promotion — crowned after opponent turn', pend.crowned === true && pend.crownVis === true]);

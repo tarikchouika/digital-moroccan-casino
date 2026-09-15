@@ -439,6 +439,19 @@
   padding: 0 6px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
+/* [B10 v2.27] رقيقة الرهان الجاري أثناء المباراة (ساكنة — التعديل من الإعدادات فقط) */
+.dama-stake {
+  min-height: 0;
+  width: max-content;
+  margin: 0 auto 2px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #f0d98c;
+}
+.dama-stake[hidden] { display: none; }
 .dama-ctrls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .dama-mini {
   padding: 8px 14px;

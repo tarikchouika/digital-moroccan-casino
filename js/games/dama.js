@@ -528,6 +528,7 @@ function eDama(g) {
           '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface"><i class="fa-solid fa-user" aria-hidden="true"></i></span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
         '</div>' +
         '<div class="dama-status" id="damaStatus"></div>' +
+        '<div class="dama-status dama-stake" id="damaStake" hidden></div>' +   /* [B10 v2.27] رقيقة الرهان الجاري — كانت الدالة ترجع عنصراً غير موجود */
         '<div class="dama-ctrls">' +
           '<button class="dama-mini dama-round" id="damaDrawBtn" onclick="damaDrawOffer()" title="' + T('dama.drawBtn') + '" aria-label="' + T('dama.drawBtn') + '"><i class="fa-solid fa-handshake" aria-hidden="true"></i></button>' +   /* [B10] تعادل بالتوافق — مصادقة الطرفين */
           '<button class="dama-mini dama-round" onclick="damaResign()" title="' + T('dama.resignBtn') + '" aria-label="' + T('dama.resignBtn') + '"><i class="fa-solid fa-flag" aria-hidden="true"></i></button>' +
@@ -1086,14 +1087,16 @@ function damaHumanMove(mv) {
   /* turn switched → check outcome */
   var out = DAMA.eng.detectOutcome(s);
   if (out !== null) { damaFinalize(out); return; }
+  /* [Souffler v2.27] قطعتك المُلزَمة التي تركت الأكل نُفخت — اشرح القاعدة بدل الحذف الصامت */
+  if (info.souffled) damaSetStatus(T('dama.souffle'));
   if (DAMA.mode === 'room' && !DAMA.oppBot) {
     /* غرفة ضد بشري: الدور انتقل للخصم — انتظر حركته */
-    damaSetStatus(T('dama.waitOpp'));
+    if (!info.souffled) damaSetStatus(T('dama.waitOpp'));
     damaUpdateTurn();
     return;
   }
-  damaSetStatus('');
-  setTimeout(damaAiTurn, 480);
+  if (!info.souffled) damaSetStatus('');
+  setTimeout(damaAiTurn, info.souffled ? 900 : 480);
 }
 
 /* AI turn — may chain multiple captures, animated step by step. */
@@ -1141,6 +1144,8 @@ function damaApplyAi(mv) {
     return;
   }
   DAMA.busy = false;
+  /* [Souffler v2.27] قطعة الخصم (البوت) التي تركت الأكل نُفخت */
+  if (info.souffled) damaSetStatus(T('dama.souffleOpp'));
   damaAfterAi();
 }
 
@@ -1466,6 +1471,14 @@ function damaApplyRemoteMove(mv) {
   }
   var out = DAMA.eng.detectOutcome(DAMA.state);
   if (out !== null) { damaFinalize(out); return; }
+  /* [Souffler v2.27] قطعة الخصم التي تركت الأكل نُفخت — أوضحها للمشاهد/اللاعب */
+  if (info.souffled) {
+    damaSetStatus((DAMA.isSpectator ? '👁️ ' : '') + T('dama.souffleOpp'));
+    damaUpdateTurn();
+    damaStartTimer();
+    damaAutoHint();
+    return;
+  }
   if (DAMA.isSpectator) { damaSetStatus('👁️ ' + T('dama.spec')); damaUpdateTurn(); return; }
   damaUpdateTurn();
   damaStartTimer();

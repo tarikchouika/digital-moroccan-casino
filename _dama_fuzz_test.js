@@ -1,6 +1,8 @@
 /* ═══ اختبار ضبابي شامل لمنطق ضاما: 400 مباراة عشوائية + 40 مباراة AI ═══
    يتحقق من الثوابت: شرعية كل حركة، عدم تكرار القطع، سلاسل الأسر المتصلة،
-   [B9] إلزامية الأكل والسلسلة الكبرى (لا حركة هادئة مع وجود أسر)، ونتائج صحيحة. */
+   [B9 v2.27] قاعدة النفخ كما قررها المالك: الأكل إلزامي قانوناً + اللاعب حر في
+   تحريك أي قطعة؛ دورٌ انتهى والالتزام غير مُبرَّأ ⇒ نفخ القطعة المُلزَمة حتمي،
+   ونتائج صحيحة. */
 'use strict';
 const fs = require('fs');
 const src = fs.readFileSync(__dirname + '/js/games/dama.js', 'utf8');
@@ -40,6 +42,7 @@ let games = 0, capturesTotal = 0, soufflesTotal = 0, chains = 0;
 for (let g = 0; g < 400; g++) {
   const s = damaNewState();
   let guard = 0, bad = false;
+  let turnObId = null, turnObDone = false;   /* [v2.27] تتبّع التزام الدور الجاري (قاعدة النفخ) */
   while (!s.over && guard++ < 400) {
     const moves = eng.legalMoves(s, s.turn);
     if (!moves.length) { s.over = true; s.outcome = eng.opponent(s.turn); break; }
@@ -48,7 +51,19 @@ for (let g = 0; g < 400; g++) {
     const mv = moves[Math.floor(Math.random() * moves.length)];
     const pc = s.grid[mv.from[0]][mv.from[1]];
     if (!pc || pc.owner !== s.turn) { bad = true; break; }
+    /* [v2.27] بداية دور: سجّل القطعة المُلزَمة بالأكل (نفس دالة المحرك) */
+    if (!s.cont) {
+      const ob = eng.obligationPiece(s);
+      turnObId = ob ? s.grid[ob[0]][ob[1]].id : null;
+      turnObDone = false;
+    }
     const info = eng.applyMove(s, mv);
+    if (mv.cap && pc.id === turnObId) turnObDone = true;   /* الأكل بالمُلزَم نفسه يبرّئ الالتزام */
+    if (!s.cont) {
+      /* [v2.27] الدور انتهى: التزام غير مُبرَّأ ⇒ نفخ حتمي؛ وبلا التزام ⇒ لا نفخ أبداً */
+      const mustSouffle = turnObId != null && !turnObDone;
+      if (mustSouffle !== (info.souffled !== null)) { bad = true; break; }
+    }
     capturesTotal += info.captured.length;
     if (info.souffled) soufflesTotal++;
     if (info.continued) chains++;
@@ -72,7 +87,7 @@ for (let g = 0; g < 400; g++) {
 }
 ok('400 مباراة عشوائية اكتملت', games === 400);
 ok('أسر واقعي (>200)', capturesTotal > 200);
-ok('[B9] لا نفخ إطلاقاً — الأكل إلزامي بنيوياً', soufflesTotal === 0);
+ok('[B9 v2.27] النفخ نافذ — حدث نفخ عند تجاهل الأكل (>0)', soufflesTotal > 0);
 ok('سلاسل أسر متصلة حدثت (>20)', chains > 20);
 
 /* ── 2) AI ضد AI: لا انهيارات ونتائج منطقية ── */
@@ -130,22 +145,31 @@ ok('40 مباراة AI اكتملت', aiGames === 40);
   const info = eng.applyMove(s, { from: [1, 2], to: [0, 1], cap: false, captured: [], pieceId: 70 });
   ok('الترقية فورية عند الصف الأخير', info.promoted === true && s.grid[0][1].king === true);
 }
-/* [B9] إلزامية الأكل: لا حركة هادئة تُعرض مع وجود أسر — والقائمة الصارمة أسر فقط */
+/* [B9 v2.27] قاعدة النفخ: حرية اللاعب + إلزام قانوني — الهادئة معروضة، وتجاهل الالتزام ⇒ نفخ المُلزَمة */
 {
-  const s = damaNewState();
-  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) s.grid[r][c] = null;
-  s.grid[4][4] = { owner: WHITE, king: false, id: 60 };
-  s.grid[3][3] = { owner: BLACK, king: false, id: 61 };
-  s.grid[5][1] = { owner: WHITE, king: false, id: 62 };
-  s.turn = WHITE;
+  const mk = () => {
+    const s = damaNewState();
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) s.grid[r][c] = null;
+    s.grid[4][4] = { owner: WHITE, king: false, id: 60 };   /* المُلزَمة: تأكل (3,3) */
+    s.grid[3][3] = { owner: BLACK, king: false, id: 61 };
+    s.grid[5][1] = { owner: WHITE, king: false, id: 62 };   /* الهادئة */
+    s.turn = WHITE;
+    return s;
+  };
+  const s = mk();
   const lm = eng.legalMoves(s, WHITE);
-  ok('[B9] القائمة الصارمة: أسر فقط (لا هادئة)', lm.length > 0 && lm.every(m => m.cap));
-  ok('[B9] القطعة الهادئة بلا حركات', eng.legalMovesForPiece(s, 5, 1).length === 0);
-  ok('[B9] القطعة الآسرة وحدها تتحرك', lm.every(m => m.from[0] === 4 && m.from[1] === 4));
-  /* تطبيق حركة هادئة مباشرة عبر applyMove لم يعد ينفّخ (القاعدة ملغاة بنيوياً) */
+  ok('[B9] الأكل معروض في القائمة (4,4 فوق 3,3)', lm.some(m => m.cap));
+  ok('[B9] حرية النفخ: الحركات الهادئة معروضة أيضاً مع وجود أكل', lm.some(m => !m.cap));
+  ok('[B9] القطعة الهادئة قابلة للتحريك (اللاعب حر)', eng.legalMovesForPiece(s, 5, 1).length > 0);
+  /* حرّك الهادئة متجاهلاً الأكل ⇒ تُنفخ المُلزَمة (4,4) */
   const info = eng.applyMove(s, { from: [5, 1], to: [4, 2], cap: false, captured: [], pieceId: 62 });
-  ok('[B9] لا نفخ — القاعدة معطّلة مع الإلزام الهيكلي', !info.souffled && s.grid[4][4] !== null);
+  ok('[B9] النفخ وقع: المُلزَمة حُذفت من (4,4)', !!info.souffled && info.souffled[0] === 4 && info.souffled[1] === 4 && s.grid[4][4] === null);
   ok('الدور انتقل للخصم', s.turn === BLACK);
+  /* الأكل بالمُلزَمة نفسها ⇒ لا نفخ */
+  const s2 = mk();
+  const capMv = eng.legalMoves(s2, WHITE).find(m => m.cap);
+  const info2 = eng.applyMove(s2, capMv);
+  ok('[B9] الأكل بالمُلزَمة ⇒ لا نفخ وأسر صحيح', info2.souffled === null && info2.captured.length === 1);
 }
 
 console.log('\\nDAMA FUZZ: ' + pass + ' passed, ' + fail + ' failed');
