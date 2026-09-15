@@ -139,7 +139,10 @@
   /* polyfill: استبدال EventSource للـ '/api/live' فقط */
   var OrigES = window.EventSource;
   window.EventSource = function (url) {
-    if (isSSEMode) return new OrigES(API_BASE + '/api/live');
+    /* [SSE-Cookie 2026-09-15] عبر الووركر الوسيط (نطاق مغاير لصفحة dtsg) يجب
+       withCredentials: true وإلا فلن يُرسل كوكي sid → getUser=null في الخادم
+       → broadcastRoom يستثني هذا العميل فلا تصل room:update (جاهز/بدء/حركات). */
+    if (isSSEMode) return new OrigES(API_BASE + '/api/live', { withCredentials: true });
     if (url === '/api/live' || url === (API_BASE + '/api/live')) {
       return new LiveWS('global');
     }
