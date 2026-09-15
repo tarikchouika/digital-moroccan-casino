@@ -970,6 +970,13 @@ const ParchisiApp = {
       if (rp && rp.history && rp.history.length) this.applyReplay(rp);
       /* [PR-Sync] لا إعادة معلقة → اطلبها من الخادم (إعادة اتصال WS تبث room:replay) */
       else if (typeof Rooms.requestReplay === 'function') Rooms.requestReplay();
+      return;
+    }
+    /* [PR-Resume] جولة محلية محفوظة ضد الآلي → استئناف فوري بلا خصم جديد
+       (الرهان خُصم عند البدء الأصلي — الاستئناف لا يعيد خصمه) */
+    if (!this.gameActive && this._prRestore()) {
+      try { toast(T('parchisi.resumed', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ'), 'ok'); } catch (e) {}
+      return;
     }
   },
 
@@ -1267,8 +1274,11 @@ const ParchisiApp = {
     if (!this._replaying) {
       for (const n of ns) this.toastNotice(n);
     }
+    /* [PR-Resume] حفظ الجولة بعد كل تغيّر محرك (محلي ضد الآلي فقط) */
+    if (!this.roomMode && this.gameActive) this._prSave();
     if (this.engine.gameOver) {
       this.stopTimer();
+      this._prClear();          /* انتهت الجولة → لا استئناف بعدها */
       if (!this._replaying) this.handleGameOver();
       return;
     }
@@ -1825,10 +1835,26 @@ const ParchisiApp = {
     }
     let paid = 0;
     if (win && !this.roomMode) {
-      const mult = { 2: 1.9, 3: 2.85, 4: 3.8 }[this.playerCount] || 1.9;
-      paid = Math.floor(this.bet * mult);
-      give(paid);
+      /* [Payout 2026-09-14] عقد المنصة ضد الآلي (توضيح المالك 09-14):
+         رصيد الآلي = أرباح/خسائر المنصة — المنصة تضع رهاناً معادلاً لكل مقعد
+         آلي. الفائز يستلم رهانَه + رهان كل خصم (stake = playerCount × bet)
+         ناقص رسوم المنصة 5% — نفس عقد الغرف الرسمي (البرية تدفع للمائدة).
+         أمثلة: 1v1 → ×1.9، 1v2 → ×2.85، 1v3 → ×3.8 (كان الكود القديم
+         صحيحاً لكن بلا خصم رسوم — جرّدناه من Math.floor وأضفنا العشرية). */
+      const seats = Math.max(2, this.playerCount || 2);
+      const stake = seats * this.bet;
+      const fee = Math.round(stake * 0.05 * 100) / 100;
+      paid = Math.round(Math.max(0, stake - fee) * 100) / 100;
+      if (typeof giveWin === 'function') giveWin(paid);
+      else if (typeof give === 'function') { give(paid); if (typeof window.SessionResume !== 'undefined') { try { window.SessionResume.onResolve(); } catch (e) {} } }
       winFX(paid);
+    }
+    /* [BotsLedger] المنصة دفعت للفائز البشري (−) أو قبضت رهان الخاسر (+) */
+    if (!this.roomMode && this.opponentType !== 'hotseat' && this.bet > 0) {
+      const botDelta = win ? -paid : this.bet;
+      if (typeof window !== 'undefined' && window.BotsLedger) {
+        try { window.BotsLedger.record('pr', botDelta); } catch (e) {}
+      }
     }
     if (typeof recordRound === 'function') {
       recordRound(win, paid, win
@@ -1953,6 +1979,131 @@ const ParchisiApp = {
     if (m) m.classList.remove('show');
   },
 
+  /* ═══ [PR-Resume 2026-09-14] استمرارية الجولة المحلية ضد الآلي ═══
+     بلاغ المالك: الخروج من البارتشي كان = ضياع الرهان بلا تسجيل.
+     تسلسل كامل لحالة الجولة (غير roomMode) في localStorage وإعادة بنائها
+     عند فتح اللعبة — نفس فلسفة رامي (ramiSerializeGame). الرهان خُصم عند
+     البدء فالاستئناف بلا خصم جديد. */
+  RESUME_KEY: 'rc_parchisi_active_round',
+  _prSerialize() {
+    try {
+      const e = this.engine;
+      if (!e || !this.gameActive || this.roomMode) return null;
+      if (this.opponentType === 'hotseat') return null;
+      return {
+        savedAt: Date.now(),
+        playerCount: this.playerCount,
+        modeKey: this.mode,
+        teams: !!this.teams,
+        difficulty: this.difficulty,
+        bet: this.bet,
+        turnTimer: this.turnTimer,
+        humanPlayerIndex: this.humanPlayerIndex,
+        eng: {
+          players: e.players.map(p => ({
+            type: p.type,
+            pieces: p.pieces.map(pc => ({ id: pc.id, state: pc.state, pos: pc.pos }))
+          })),
+          current: e.current,
+          dice: e.dice.slice(),
+          used: e.used.slice(),
+          phase: e.phase,
+          bonus: e.bonus ? { dist: e.bonus.dist, kind: e.bonus.kind } : null,
+          bonusLegal: e.bonus ? e.bonusLegal.map(pc => ({ id: pc.id, owner: pc.owner })) : [],
+          doublesStreak: e.doublesStreak,
+          mustBreak: e.mustBreak,
+          gameOver: e.gameOver,
+          winner: e.winner,
+          winnerTeam: e.winnerTeam,
+          boardRotation: e.boardRotation,
+          rollCount: (e.rollCount || []).slice()
+        }
+      };
+    } catch (er) { return null; }
+  },
+  _prSave() {
+    const d = this._prSerialize();
+    try {
+      if (d) localStorage.setItem(this.RESUME_KEY, JSON.stringify(d));
+      else localStorage.removeItem(this.RESUME_KEY);
+    } catch (e) {}
+  },
+  _prClear() { try { localStorage.removeItem(this.RESUME_KEY); } catch (e) {} },
+  _prRestore() {
+    /* إعادة بناء المحرك من الحفظ — يعيد true إن استُأنفت جولة حية */
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(this.RESUME_KEY) || 'null'); } catch (e) { return false; }
+    if (!raw || !raw.eng || raw.eng.gameOver) { this._prClear(); return false; }
+    try {
+      const window0 = 2 * 60 * 60 * 1000;
+      if (Date.now() - (raw.savedAt || 0) > window0) { this._prClear(); return false; }
+      this.playerCount = raw.playerCount || 4;
+      this.mode = raw.modeKey || 'classic';
+      this.teams = !!raw.teams;
+      this.difficulty = raw.difficulty || 'hard';
+      this.bet = raw.bet || 0;
+      this.turnTimer = (typeof raw.turnTimer === 'number') ? raw.turnTimer : this.turnTimer;
+      this.humanPlayerIndex = raw.humanPlayerIndex || 0;
+      this.opponentType = 'ai';
+      this.roomMode = false;
+      const eng = raw.eng;
+      const types = eng.players.map(p => p.type);
+      const e2 = new ParchisiEngine(this.playerCount, types, this.difficulty, this.mode, { teams: this.teams && this.playerCount === 4, timer: this.turnTimer });
+      for (let i = 0; i < this.playerCount && i < eng.players.length; i++) {
+        const sp = eng.players[i];
+        if (!e2.players[i]) continue;
+        e2.players[i].type = sp.type;
+        for (let k = 0; k < 4 && k < sp.pieces.length; k++) {
+          e2.players[i].pieces[k].state = sp.pieces[k].state;
+          e2.players[i].pieces[k].pos = sp.pieces[k].pos;
+        }
+      }
+      e2.current = eng.current || 0;
+      e2.dice = (eng.dice || []).slice();
+      e2.used = (eng.used || []).slice();
+      e2.phase = eng.phase || 'WAIT_ROLL';
+      e2.bonus = eng.bonus ? { dist: eng.bonus.dist, kind: eng.bonus.kind } : null;
+      e2.bonusLegal = [];
+      e2.doublesStreak = eng.doublesStreak || 0;
+      e2.mustBreak = !!eng.mustBreak;
+      e2.gameOver = false;
+      e2.rollCount = (eng.rollCount || []).slice();
+      /* مرحلة MOVING مع بيدق مرئي في bonusLegal محفوظ: أعِد ربط الكائنات الفعلية */
+      if (e2.phase === 'BONUS' && eng.bonusLegal && eng.bonusLegal.length) {
+        const legal = [];
+        for (const b of eng.bonusLegal) {
+          const pl = e2.players[b.owner];
+          const pc = pl && pl.pieces.find(x => x.id === b.id);
+          if (pc) legal.push(pc);
+        }
+        e2.bonusLegal = legal;
+      }
+      this.engine = e2;
+      e2.onStateChange = () => this.onEngineChange();
+      this.gameActive = true;
+      this._autoTurn = false;
+      this._lastBadges = '';
+      this._animXY = new Map();
+      this._prLog = new Map();
+      this._walkFifo = [];
+      this._votes = null;
+      document.getElementById('parchisiSetup').style.display = 'none';
+      document.getElementById('parchisiGame').style.display = 'flex';
+      var _gb = document.getElementById('gamePageBody');
+      if (_gb) { _gb.classList.remove('parchisi-setup'); _gb.classList.add('parchisi-playing'); }
+      this.hideOverModal();
+      this.setupBoardFit();
+      this.startLoop();
+      this.startClock();
+      this.onEngineChange();
+      /* جلسة الاستئناف + حماية الرهان */
+      if (typeof window.SessionResume !== 'undefined') {
+        try { window.SessionResume.markRoundStart({ gameId: 'pr', bet: this.bet }); } catch (e) {}
+      }
+      return true;
+    } catch (er) { this._prClear(); return false; }
+  },
+
   close() {
     this.gameActive = false;
     this._autoTurn = false;
@@ -1961,6 +2112,9 @@ const ParchisiApp = {
     this.stopClock();
     this.hideOverModal();
     this.stopLoop();
+    /* [PR-Resume] الخروج بلا نهاية جولة: الحفظ يبقى (يُستأنف عند العودة) —
+       الجولة المنتهية مسحت نفسها في onEngineChange. زر الخروج من نافذة
+       النهاية (overExit) يمر هنا بعد gameOver فلا حفظ أصلاً. */
     if (typeof closeGamePage === 'function') {
       closeGamePage();
     }

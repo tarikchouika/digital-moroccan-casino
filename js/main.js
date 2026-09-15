@@ -1302,6 +1302,7 @@ function renderAdmin() {
       '<button class="atab' + (ADMIN_TAB === 'games' ? ' active' : '') + '" role="tab" onclick="adminTab(\'games\')">' + T('admin.gamesTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'rewards' ? ' active' : '') + '" role="tab" onclick="adminTab(\'rewards\')">' + T('admin.rewardsTab') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'fin' ? ' active' : '') + '" role="tab" onclick="adminTab(\'fin\')">' + T('admin.finTab') + '</button>' +
+      '<button class="atab' + (ADMIN_TAB === 'botpl' ? ' active' : '') + '" role="tab" onclick="adminTab(\'botpl\')">📊 ' + T('admin.botPL') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'logs' ? ' active' : '') + '" role="tab" id="logs" onclick="adminTab(\'logs\')"><i class="fa-solid fa-receipt" aria-hidden="true"></i> ' + T('admin.logsTab') + '</button>'
     : '<button class="atab' + (ADMIN_TAB === 'users' ? ' active' : '') + '" role="tab" onclick="adminTab(\'users\')">👥 ' + T('admin.myPlayers') + '</button>' +
       '<button class="atab' + (ADMIN_TAB === 'coord' ? ' active' : '') + '" role="tab" onclick="adminTab(\'coord\')">💬 ' + T('admin.coordTab') + '</button>' +
@@ -1314,6 +1315,7 @@ function renderAdmin() {
   else if (ADMIN_TAB === 'tourneys') adminLoadTourneys();
   else if (ADMIN_TAB === 'games') adminLoadGames();
   else if (ADMIN_TAB === 'rewards') adminLoadRewards();
+  else if (ADMIN_TAB === 'botpl') adminLoadBotPL();
   else if (ADMIN_TAB === 'logs') adminLoadTransactions();
   else adminLoadFinance();
 }
@@ -1915,7 +1917,50 @@ function adminLoadFinance() {
     c.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
   });
 }
-/* ═══════════ تنسيق المشرفين (admin ⇄ super) ═══════════ */
+/* ═══ [BotPL 2026-09-14] مؤشر أرباح/خسائر المنصة من اللاعب الآلي (سوبر فقط) ═══
+   رصيد الآلي = مؤشر نسبي لأرباح/خسائر المنصة (توضيح المالك): كل دفع للاعب
+   الفائز ضد الآلي = خسارة منصة (−)، وكل رهان خاسر = ربح منصة (+).
+   المصدر: BotsLedger (state.js) — localStorage rc_bots_pl. */
+function adminLoadBotPL() {
+  const c = document.getElementById('adminContent');
+  if (!c) return;
+  if (!window.BotsLedger) {
+    c.innerHTML = '<div class="note">' + T('auth.error') + '</div>';
+    return;
+  }
+  const st = window.BotsLedger.stats();
+  const cur = function (v) { return '<span style="color:' + (v >= 0 ? 'var(--ok, #22c55e)' : 'var(--err, #ef4444)') + ';font-weight:700">' + (v >= 0 ? '+' : '') + fmt(v) + '</span>'; };
+  const rows = st.rows.length
+    ? '<div class="atable-wrap"><table class="atable">' +
+      '<thead><tr><th>' + T('admin.game') + '</th><th>' + T('admin.platWin') + '</th><th>' + T('admin.platLose') + '</th><th>Net</th><th>' + T('admin.rounds') + '</th></tr></thead><tbody>' +
+      st.rows.map(function (r) {
+        const name = (typeof gname === 'function' && typeof GAMES !== 'undefined')
+          ? (GAMES.filter(function (g) { return g.id === r.gid; }).map(function (g) { return gname(g); })[0] || r.gid)
+          : r.gid;
+        return '<tr><td><b>' + esc(name) + '</b></td><td>🪙 ' + fmt(r.win) + '</td><td>🪙 ' + fmt(r.lose) + '</td><td>' + cur(r.net) + '</td><td>' + fmt(r.count) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>'
+    : '<div class="note">' + T('admin.noData') + '</div>';
+  c.innerHTML =
+    '<div class="grid g3" style="margin-bottom:14px">' +
+      '<div class="stat"><div class="si">📈</div><div><div class="sv">' + cur(st.net) + '</div><div class="sl">' + T('admin.platNet') + '</div></div></div>' +
+      '<div class="stat"><div class="si">🪙</div><div><div class="sv">' + fmt(st.winSum) + '</div><div class="sl">' + T('admin.platWinSum') + '</div></div></div>' +
+      '<div class="stat"><div class="si">🎮</div><div><div class="sv">' + fmt(st.rounds) + '</div><div class="sl">' + T('admin.rounds') + '</div></div></div>' +
+    '</div>' +
+    rows +
+    '<div style="margin-top:12px;text-align:' + (ST.lang === 'ar' ? 'right' : 'left') + '">' +
+      '<button class="abtn" onclick="adminResetBotPL()">🗑️ ' + T('admin.resetPL') + '</button>' +
+    '</div>';
+}
+
+function adminResetBotPL() {
+  if (!window.BotsLedger) return;
+  SND.click();
+  window.BotsLedger.reset();
+  adminLoadBotPL();
+}
+
+
 /* [Auth] قناة مراسلة مباشرة مخصّصة للمشرفين — لا يراها اللاعبون */
 function adminLoadCoordination() {
   const c = document.getElementById('adminContent');
@@ -2077,6 +2122,19 @@ function initApp() {
   renderAll();
   /* Hash routing: activate the section matching the URL hash (e.g. index.html#games) */
   navFromHash();
+  /* [Legal-Fix] قادم من صفحة قانونية ببند حساب: افتح موداله مباشرة
+     (#tr = إرسال الرصيد — البنود الأخرى صفحات spa عالجها navFromHash).
+     يُنفَّذ بعد استعادة الجلسة (authRestore غير متزامن) كي لا يرفض
+     openTrModal المستخدمَ الذي جلسته كوكي صالح لكنها لم تُطبَّق بعد. */
+  if (window.location.hash === '#tr') {
+    var openTrWhenReady = function (tries) {
+      if (typeof openTrModal !== 'function') return;
+      if (AUTH.user) { try { openTrModal(); } catch (e) {} return; }
+      if (tries > 20) return;
+      setTimeout(function () { openTrWhenReady(tries + 1); }, 300);
+    };
+    openTrWhenReady(0);
+  }
   /* أرقام المتصلين والدردشة الحية تأتي الآن من SSE (js/core/live.js) */
   /* زر ملء الشاشة: نص أولي + تزامن مع تغيير الوضع */
   syncGameFsBtn();

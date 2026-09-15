@@ -324,15 +324,42 @@ const RamiExpertAI = {
     /* 3) مفتوح: تصلح للإدراج الفوري في مجموعات الطاولة (بيد ≥ 4 فقط —
        أقل من ذلك لا يفرّغ اليد بل يقود للحصار)
        [DRAW-CONSISTENT] بنفس صرامة التنفيذ: canLayOff (يحترم حماية
-       المجموعة الحرة _justOpened) لا doesCardFitAnyTableMeld المتساهلة */
-    if (allowLayoffTake && player.hand.length >= 4) {
+       المجموعة الحرة _justOpened) لا doesCardFitAnyTableMeld المتساهلة.
+       [LAYOUT-FIX] الإدراج في طاولة موجودة يجب أن يترك اليد ≥ 3 بعد
+       السحب: يد 3 + مسحوبة = 4 أوراق، إدراج واحدة يبقي 3 قانونياً،
+       لكن إن كانت اليد كلها (مع المسحوبة) مجموعةً واحدة كاملة فالإدراج
+       يقود لحصار/جزاء — يُرفض إلا إذا كانت المسحوبة هي المدرجة (إلزام
+       طالاجي يُحل بأولوية الإدراج المباشر للمسحوبة في _runBotTurn) */
+    if (allowLayoffTake && player.hand.length >= 3) {
       let fits = false;
       for (const meld of rm.tableMelds) { if (this.canLayOff(game.rules, meld, top, top)) { fits = true; break; } }
-      if (fits) return 'draw_discard';
+      if (fits) {
+        /* [TRAP-GUARD] يد صغيرة: كل اليد+المسحوبة مجموعة واحدة كاملة →
+           الإدراج يستنزف اليد، والباقي لا يرمى بلا جزاء DISCARD_DRAW.
+           المسموح فقط: المسحوبة نفسها تُدرج (إلزام طالاج، ولها أولوية
+           داخل _runBotTurn قبل الرمي) — أو اليد ≥ 4 (إدراج آمن دائماً) */
+        const testHand = player.hand.concat([top]);
+        const hm = partitionSelectedCards(testHand, game.rules);
+        const ids = new Set(hm && hm.length ? hm.flatMap(m => m.cards.map(c => c.id)) : []);
+        const leftovers = testHand.length - ids.size;
+        const fullPartition = (ids.size === testHand.length);
+        if (!fullPartition || player.hand.length >= 4) return 'draw_discard';
+        /* ورقة التضحية موجودة (leftovers ≥ 1) والإدراج للمسحوبة نفسها:
+           خطة الإنزال المحفوظة تشمل المجموعة كاملة فتُنزّل بأمان بلا جزاء */
+        if (leftovers >= 1 && ids.has(top.id)) {
+          player._drawPlanIds = Array.from(ids);
+          return 'draw_discard';
+        }
+        return 'draw_deck';
+      }
     }
     /* 4) مفتوح: تُكمل مجموعة جديدة تُنزَّل فعلاً هذا الدور —
        [DRAW-CONSISTENT] بنفس حرّاس التنفيذ (dump>=3 وليس leftovers==2):
-       وإلا سحب المرموق يلزم بالإنزال ويرتدّ جزاء 71 عند التأجيل */
+       وإلا سحب المرموق يلزم بالإنزال ويرتدّ جزاء 71 عند التأجيل.
+       [TRAP-GUARD] يد كاملة القسمة (بقايا 0) بعد الضم: الإنزال يترك
+       0 ورقة (لا ورقة إنهاء) — فيفشل الإنزال ويرتدّ جزاء DISCARD_DRAW.
+       يُقبل فقط إذا أمكن اقتطاع ورقة من مجموعة 4+ (تسقط لـ3 وتبقى
+       صالحة) فتبقى ورقة الإنهاء = إنزال 3+ ورمي واحدة = فوز قانوني */
     if (this.completesNewMeld(player.hand, top, game.rules)) {
       const testHand = player.hand.concat([top]);
       const hm = partitionSelectedCards(testHand, game.rules);
@@ -340,6 +367,32 @@ const RamiExpertAI = {
         const ids = new Set(hm.flatMap(m => m.cards.map(c => c.id)));
         const leftovers = testHand.length - ids.size;
         if (ids.has(top.id) && ids.size >= 3 && leftovers !== 2) {
+          if (leftovers === 0) {
+            /* بقايا 0: ابحث مجموعة 4+ قابلة للاقتطاع (كما في _shrinkForFinish)؛
+               إن وُجدت تُحفظ الخطة مُقلَّصة (المجموعة-1) فتتبقى ورقة الإنهاء —
+               إنزال 3+ ورمي واحدة = فوز قانوني بلا جزاء */
+            let shrinkId = null;
+            for (const m of hm) {
+              if (!m.cards || m.cards.length < 4) continue;
+              let candidates;
+              if (m.type === MELD_TYPE.SET) candidates = m.cards.slice();
+              else {
+                const ordered = ramiOrderSequenceCards(m.cards.slice(), c => game.rules.isWildCard(c));
+                candidates = [ordered[0], ordered[ordered.length - 1]];
+              }
+              for (const drop of candidates) {
+                if (!drop) continue;
+                const kept = m.cards.filter(c => c.id !== drop.id);
+                const okMeld = (m.type === MELD_TYPE.SET) ? game.rules.isValidSet(kept, true) : game.rules.isValidSequence(kept, true);
+                if (okMeld) { shrinkId = drop.id; break; }
+              }
+              if (shrinkId != null) break;
+            }
+            if (shrinkId == null) return 'draw_deck';
+            /* [DRAW-PLAN] الخطة المقلَّصة: المجموعات كاملة عدا ورقة الاقتطاع */
+            player._drawPlanIds = Array.from(ids).filter(id => id !== shrinkId);
+            return 'draw_discard';
+          }
           /* [DRAW-PLAN] احفظ خطة الإنزال الملزمة — تنفذ حرفياً بعد السحب */
           player._drawPlanIds = Array.from(ids);
           return 'draw_discard';
@@ -661,6 +714,130 @@ const RamiExpertAI = {
     /* احتياط: آخر ورقة غير محظورة (تفادي جزاء رمي المسحوبة نفس الدور) */
     for (let i = hand.length - 1; i >= 0; i--) if (!banned.has(hand[i].id)) return hand[i].id;
     return hand[hand.length - 1].id;
+  },
+
+  /* ═══ [DECIDER] قرار الدور الكامل الخفيف — تسلسل الخبير القياسي ═══
+     البوت (أو أي مستدعٍ خارجي مثل السائق المتزامن في الاختبارات) يستدعي
+     decideMove فيحصل على حركة واحدة جاهزة للتنفيذ عبر executeMove،
+     بنفس ترتيب _runBotTurn: السحب ← الافتتاح/الإنزال ← الإدراج ← الإنهاء ← الرمي.
+     يعيد {move, done} — done=true انتهى الدور (لا حركات أخرى)؛ أو null عند التعذر.
+     لا يغيّر أي حالة بنفسه (قرار فقط) باستثناء خطط السحب المحفوظة
+     (_openPlanMove/_drawPlanIds) وهي نفس آلية _runBotTurn الموجودة. */
+  decideMove(game, player, allowLayoffTake) {
+    if (!game || !player) return null;
+    const rm = game.roundManager;
+    if (!rm || game.gamePhase !== 'PLAYING') return null;
+
+    /* مرحلة السحب */
+    if (rm.turnPhase === 'WAITING_DRAW') {
+      if (player.hand.length < game.rules.playHandSize) {
+        const drawType = this.chooseDraw(game, player, allowLayoffTake !== false);
+        return { move: { type: drawType, playerId: player.id }, done: false };
+      }
+      /* يد ممتلئة: تخطَّ للرمي مباشرة */
+    }
+
+    /* الافتتاح (لمن لم يفتتح): الخطة المحفوظة أولاً ثم expertOpening */
+    if (!player.hasOpened) {
+      if (player._openPlanMove) {
+        const pm = player._openPlanMove;
+        player._openPlanMove = null;
+        if (pm.cardIds.every(id => player.hand.some(c => c.id === id))) {
+          return { move: pm, done: false };
+        }
+      }
+      const open = this.expertOpening(game, player);
+      if (open) return { move: open, done: false };
+    }
+
+    /* إنزال المجموعات المكتمّلة بعد الافتتاح (بخطة السحب إن وجدت) */
+    if (player.hasOpened && rm.turnPhase !== 'WAITING_DRAW') {
+      if (player._drawPlanIds && player._drawPlanIds.length) {
+        const planIds = player._drawPlanIds.filter(id => player.hand.some(c => c.id === id));
+        player._drawPlanIds = null;
+        if (planIds.length >= 3) {
+          return { move: { type: 'open', playerId: player.id, cardIds: planIds }, done: false };
+        }
+      }
+      const handMelds = partitionSelectedCards(player.hand.slice(), game.rules);
+      if (handMelds && handMelds.length > 0) {
+        let dumpIds = handMelds.flatMap(m => m.cards.map(c => c.id));
+        /* [R15-FIX] يد كاملة القسمة: اقتطاع ورقة من مجموعة 4+ يترك ورقة الإنهاء */
+        if (player.hand.length - dumpIds.length === 0) {
+          let dropId = null;
+          for (const m of handMelds) {
+            if (m.cards.length < 4) continue;
+            if (m.type === MELD_TYPE.SET) { dropId = m.cards[m.cards.length - 1].id; break; }
+            const ordSeq = ramiOrderSequenceCards(m.cards.slice(), c => game.rules.isWildCard(c));
+            const keptSeq = ordSeq.slice(0, -1);
+            if (game.rules.isValidSequence(keptSeq, true)) { dropId = ordSeq[ordSeq.length - 1].id; break; }
+            const keptSeq2 = ordSeq.slice(1);
+            if (game.rules.isValidSequence(keptSeq2, true)) { dropId = ordSeq[0].id; break; }
+          }
+          if (dropId != null) dumpIds = dumpIds.filter(id => id !== dropId);
+        }
+        const leftovers = player.hand.length - dumpIds.length;
+        if (dumpIds.length >= 3 && (leftovers === 1 || leftovers >= 3)) {
+          return { move: { type: 'open', playerId: player.id, cardIds: dumpIds }, done: false };
+        }
+      }
+    }
+
+    /* الإدراج في الطاولة (layoff عبر canLayOff) — أولوية المسحوبة المطابقة */
+    if (player.hasOpened && rm.tableMelds.length > 0) {
+      const drawnCard = player.drawnDiscardCard || player.drawnLaTourCard;
+      const fitsMeld = (card) => {
+        for (const meld of rm.tableMelds) {
+          if (this.canLayOff(game.rules, meld, card, drawnCard)) return meld;
+        }
+        return null;
+      };
+      if (drawnCard) {
+        const meld = fitsMeld(drawnCard);
+        if (meld) {
+          return { move: { type: 'layoff', playerId: player.id, cardId: drawnCard.id, meld: meld }, done: false };
+        }
+      }
+      for (const card of player.hand) {
+        if (player.hand.length <= 3) break;
+        const meld = fitsMeld(card);
+        if (meld) {
+          return { move: { type: 'layoff', playerId: player.id, cardId: card.id, meld: meld }, done: false };
+        }
+      }
+      /* إنقاذ من 3: ورقتان تدخلان الطاولة → إدراجهما يترك ورقة الإنهاء = فوز */
+      if (player.hand.length === 3) {
+        const fitting = player.hand.filter(c => fitsMeld(c));
+        if (fitting.length >= 2) {
+          return { move: { type: 'layoff', playerId: player.id, cardId: fitting[0].id, meld: fitsMeld(fitting[0]) }, done: false };
+        }
+      }
+      /* إنقاذ من ورقتين: إدراج إحداهما ثم رمي الأخيرة = فوز */
+      if (player.hand.length === 2) {
+        for (let ci = 0; ci < 2; ci++) {
+          const card = player.hand[ci];
+          if (!card) break;
+          const meld = fitsMeld(card);
+          if (meld) {
+            return { move: { type: 'layoff', playerId: player.id, cardId: card.id, meld: meld }, done: false };
+          }
+        }
+      }
+    }
+
+    /* الإنهاء إن أمكن (السامبل يسمح من اليد الكاملة) */
+    if ((player.hasOpened || game.rules.mode !== 'talaj') && game.canFinish(player)) {
+      return { move: { type: 'finish', playerId: player.id }, done: true };
+    }
+
+    /* الرمي الخبير (أو الاحتياطي القانوني عند تعذّره) */
+    const discardMoves = game.getLegalMoves(player.id).filter(m => m.type === 'discard');
+    if (discardMoves.length > 0) {
+      const expertId = this.chooseDiscard(game, player);
+      const discardMove = discardMoves.find(m => m.cardId === expertId) || discardMoves[0];
+      return { move: discardMove, done: true };
+    }
+    return null;
   }
 };
 if (typeof window !== 'undefined') window.RamiExpertAI = RamiExpertAI;
@@ -2518,8 +2695,14 @@ function initRami() {
         adapter.game = RAMI_STATE;
         adapter.selectedCards.clear();
         adapter.handSlots = [[], [], [], [], []];
+        /* [ClockCatchup] الجولة «استمرت» أثناء غيابك: الأدوار التي انقضى
+           مؤقتها لُعبت آلياً (نفس العدالة) — ثم تكمل من مؤقت دورك الحالي */
+        var __savedAt = Date.now();
+        try { var __raw = JSON.parse(localStorage.getItem(RAMI_PERSIST_KEY) || 'null'); if (__raw && __raw.savedAt) __savedAt = __raw.savedAt; } catch (e) {}
+        var caught = (typeof ramiCatchupOnResume === 'function') ? ramiCatchupOnResume(RAMI_STATE, __savedAt) : 0;
         adapter._renderGame();
-        _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ'), 'ok');
+        _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ' + (caught > 0 ? ' · تقدّمت ' + caught + ' دوراً آلياً' : '')), 'ok');
+        ramiAutoSave();
         adapter._processTurn();
       } else if (res) {
         /* حالة غير PLAYING (ROUND_END مثلاً) — شاشة الإعدادات كالمعتاد */
@@ -4509,6 +4692,62 @@ function ramiDeserializeGame() {
   }
 }
 
+/* [ClockCatchup 2026-09-14] محرك اللحاق بالوقت — جوهر بلاغ المالك:
+   «الجولة تستمر في الخلفية؛ عند انتهاء المؤقت يُلعب الدور آلياً».
+   عند الاستئناف بعد غياب (إغلاق/تحديث/خلفية): نحسب الأدوار التي انقضى
+   مؤقتها (90 ث لكل دور) وننفذ حركة آلية قانونية لكل واحد منها — نفس
+   عدالة اللعب المحلي: السحب من الكومة + رمي ورقة لا تخدم المجموعات
+   (نفس منطق انتهاء المؤقت _doAutoPlay). البشري والبوت سواسية؛ ثم يلعب
+   المستخدم دوره الحالي من بقية المؤقت. أي عدم اتساق في الطاولة يُعالج
+   بالتنفيذ الحتمي عبر executeMove لا بالقفز فوق الحالة. */
+function ramiCatchupOnResume(game, savedAt) {
+  try {
+    if (!game || game.gamePhase !== 'PLAYING') return 0;
+    const rm = game.roundManager;
+    if (!rm) return 0;
+    const turnSecs = Math.max(15, game.rules.turnSeconds || 90);
+    const elapsed = Math.max(0, Date.now() - (savedAt || Date.now()));
+    let turnsDue = Math.floor(elapsed / (turnSecs * 1000));
+    if (turnsDue > 400) turnsDue = 400;   /* سقف أمان */
+    if (turnsDue < 1) {
+      /* أقل من دور: قصّ المؤقت المتبقي للدور الحالي */
+      const rem = Math.ceil((turnSecs * 1000 - (elapsed % (turnSecs * 1000))) / 1000);
+      rm.turnSecondsRemaining = Math.min(rm.turnSecondsRemaining || turnSecs, rem);
+      return 0;
+    }
+    let played = 0;
+    for (let i = 0; i < turnsDue; i++) {
+      if (game.gamePhase !== 'PLAYING') break;
+      const curP = rm.getCurrentPlayer();
+      if (!curP) break;
+      /* تنفيذ الحركة الآلية (سحب+رمي) — عبر نفس منطق _doAutoPlay بلا واجهة */
+      try {
+        if (rm.turnPhase === 'WAITING_DRAW' && curP.hand.length < game.rules.playHandSize) {
+          const r = game.executeMove({ type: 'draw_deck', playerId: curP.id });
+          if (!(r && (r.success || r.penaltyApplied))) { rm.nextPlayer(); played++; continue; }
+        }
+        if (rm.turnPhase === 'WAITING_DISCARD' && curP.hand.length > 0) {
+          const hand = curP.hand.slice();
+          let card = hand.find(function (c) { return !game.doesCardFitAnyTableMeld(c); });
+          if (!card) card = hand[hand.length - 1];
+          game.executeMove({ type: 'discard', playerId: curP.id, cardId: card.id });
+        }
+      } catch (e) { try { rm.nextPlayer(); } catch (e2) {} }
+      /* تقدّم الدور (إن لم يكن الرمي قد نقل الدور عبر _endTurn) */
+      if (game.gamePhase === 'PLAYING' && rm.getCurrentPlayer() && rm.getCurrentPlayer().id === curP.id) {
+        try { rm.nextPlayer(); } catch (e) {}
+      }
+      played++;
+    }
+    /* المؤقت الحالي: دور كامل جديد (بدأ الآن) */
+    rm.turnSecondsRemaining = turnSecs;
+    rm._turnStartedAt = Date.now();
+    if (typeof clearRamiPartitionCache === 'function') clearRamiPartitionCache();
+    return played;
+  } catch (e) { return 0; }
+}
+if (typeof window !== 'undefined') window.ramiCatchupOnResume = ramiCatchupOnResume;
+
 /* حفظ تلقائي: يُستدعى من نقاط تغيّر الحالة كلها (بعد أي executeMove /
    نهاية شوط / تقدّم دور) — رخيص (تسلسل ~KB قليلة) */
 function ramiAutoSave() {
@@ -4559,6 +4798,10 @@ function ramiStartGame() {
         _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك السابقة — رهانك محفوظ'), 'ok');
         /* البوت يكمل إن كان دوره */
         if (window.RamiAdapter && window.RamiAdapter._processTurn) {
+          var __sa = (_savedRaw && _savedRaw.savedAt) ? _savedRaw.savedAt : Date.now();
+          var __c = (typeof ramiCatchupOnResume === 'function') ? ramiCatchupOnResume(RAMI_STATE, __sa) : 0;
+          if (__c > 0) _ramiToast(_ramiT('rami.resumedRound', '↩️ استؤنفت جولتك — تقدّمت ' + __c + ' دوراً آلياً أثناء غيابك'), 'ok');
+          if (typeof ramiAutoSave === 'function') ramiAutoSave();
           try { window.RamiAdapter._processTurn(); } catch (e) {}
         }
         return;

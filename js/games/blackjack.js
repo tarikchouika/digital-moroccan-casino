@@ -745,7 +745,58 @@ function bjScheduleEndBet() {
     }
   }, 4000);
 }
-/* مهلة الدور: 30ث للبشري → stand تلقائي؛ البوت يلعب فوراً (≥17 وقوف، وإلا سحب)
+/* ── [Bot] استراتيجية الآلي الأساسية — Basic Strategy قياسي (لاس فيغاس، S17) ──
+   الجدول الكامل (الموزع يقف على 17):
+   • hard: ≤8 hit | 9 double×3-6 | 10 double×2-9 | 11 double×2-10 (hit vs A)
+     | 12 stand×4-6 وhit vs 2-3/7+ | 13-16 stand×2-6 وhit×7+ | 17+ stand
+   • soft: 13-14 double×5-6 | 15-16 double×4-6 | 17 double×3-6
+     | 18 hit×9-10-A وstand×2/7/8 وdouble×3-6 | 19+ stand
+   • أزواج: A,A و 8,8 = Split مثالي لكن split غير مدعوم في محرك BJMP →
+     تسقط لقاعدة المجموع (soft 12 → hit دائماً، hard 16 → جدول hard)؛
+     5,5 لا تُقسّم أبداً (hard 10)، 9,9 → hard 18، 10,10 → hard 20.
+   BJMP جماعي بلا موزع → dealerUp=null يُفترض 10 (أشيع قيمة ورقة) فتتحقق
+   القواعد: 16 vs 10 = Hit، 12 vs 2-3 = Hit، soft 18 vs 9-10-A = Hit.
+   الصادر حركات المحرك المدعومة فقط: hit/stand/double (بلا split). */
+function bjBotHandInfo(cards) {
+  var v = 0, aces = 0;
+  for (var i = 0; i < cards.length; i++) {
+    v += cv2(cards[i]);
+    if (String(cards[i].r) === 'A') aces++;
+  }
+  while (v > 21 && aces > 0) { v -= 10; aces--; }
+  return { total: v, soft: aces > 0 };
+}
+function bjBotBasicAct(cards, dealerUp, canDouble) {
+  var d = (dealerUp >= 2 && dealerUp <= 11) ? dealerUp : 10;   /* بلا موزع → 10 */
+  var hi = d >= 7;
+  var info = bjBotHandInfo(cards);
+  var t = info.total;
+  var soft = info.soft;
+  var dbl = !!canDouble;
+  if (t >= 21) return 'stand';                                  /* 21 = وقوف */
+  if (!soft) {
+    /* hard totals — أزواج بلا split تُقيَّم بمجموعها (8,8→16، 5,5→10، 9,9→18، 10,10→20) */
+    if (t >= 17) return 'stand';
+    if (t >= 13) return hi ? 'hit' : 'stand';                   /* 13-16: hit×7+ */
+    if (t === 12) return (d >= 4 && d <= 6) ? 'stand' : 'hit';  /* 12 vs 2-3 = Hit */
+    if (t === 11) return (dbl && d <= 10) ? 'double' : 'hit';
+    if (t === 10) return (dbl && d <= 9) ? 'double' : 'hit';
+    if (t === 9) return (dbl && d >= 3 && d <= 6) ? 'double' : 'hit';
+    return 'hit';                                                /* ≤ 8 */
+  }
+  /* soft totals — A,A (soft 12) بلا split → hit */
+  if (t >= 19) return 'stand';
+  if (t === 18) {
+    if (d >= 9) return 'hit';                                   /* soft 18 vs 9-10-A = Hit */
+    if (dbl && d >= 3 && d <= 6) return 'double';
+    return 'stand';                                             /* soft 18 vs 2/7/8 */
+  }
+  if (t === 17) return (dbl && d >= 3 && d <= 6) ? 'double' : 'hit';
+  if (t >= 15) return (dbl && d >= 4 && d <= 6) ? 'double' : 'hit';
+  if (t >= 13) return (dbl && d >= 5 && d <= 6) ? 'double' : 'hit';
+  return 'hit';                                                  /* soft 12 */
+}
+/* مهلة الدور: 30ث للبشري → stand تلقائي؛ البوت يلعب بالاستراتيجية الأساسية
    (السائق فقط — إلغاء سلس عند تغيّر الدور) */
 function bjArmTurnTimer() {
   if (!bjIsDriver() || !bjRoom.snap || bjRoom.snap.phase !== 'play') return;
@@ -757,13 +808,15 @@ function bjArmTurnTimer() {
   var pEntry = room && room.players ? room.players.filter(function (p) { return String(p.id) === String(cur.id); })[0] : null;
   var pid = cur.id;
   if (pEntry && pEntry.isBot) {
-    /* البوت الآلي: يلعب بعد 800ms (أنيميشن إدراك) — stand عند ≥17 وإلا hit */
+    /* البوت الآلي: يلعب بعد 800ms (أنيميشن إدراك) بالاستراتيجية الأساسية
+       bjBotBasicAct — double متاح بالورقتين الأوليتين فقط (شرط المحرك) */
     bjRoom.turnTimer = setTimeout(function () {
       bjRoom.turnTimer = null;
       if (!bjRoom.snap || bjRoom.snap.phase !== 'play') return;
       var c = bjRoom.snap.players[bjRoom.snap.turnIdx];
       if (!c || String(c.id) !== String(pid)) return;
-      bjApplyAct(String(pid), (c.total >= 17) ? 'stand' : 'hit', true);
+      var canDouble = c.cards.length === 2;
+      bjApplyAct(String(pid), bjBotBasicAct(c.cards, null, canDouble), true);
     }, 800);
     return;
   }

@@ -88,7 +88,10 @@ function gFrame(inner, g) {
   const rulesContent = R ? (R[langIndex()] || R[0]).map((r, i) =>
     '<div class="rline"><b>' + (i + 1) + '.</b> ' + r + '</div>'
   ).join('') : '';
-  const gbg = (typeof GAME_IMG !== 'undefined' && GAME_IMG[g.id])
+  /* [GFrame-BG] خلفية فقط للألعاب التي لديها background.webp فعلياً
+     (chess/dama/billiards/rami بلا خلفية — منع طلبات 404) */
+  const GAME_BG = { andar_bahar: 1, baccarat: 1, backgammon: 1, blackjack: 1, 'coin-flip': 1, crabbin: 1, crash: 1, dice: 1, dominoes: 1, dragon: 1, fishing: 1, football: 1, gates: 1, 'hi-lo': 1, keno: 1, lightning: 1, lottery: 1, 'lucky-7': 1, mahjong: 1, mines: 1, money: 1, olympus: 1, parchisi: 1, plinko: 1, poker: 1, 'rock-paper': 1, ronda: 1, rose: 1, roulette: 1, scratch: 1, 'sic-bo': 1, 'slot-spin': 1, 'sweet-bonanza': 1, wheel: 1, wingo: 1 };
+  const gbg = (typeof GAME_IMG !== 'undefined' && GAME_IMG[g.id] && GAME_BG[GAME_IMG[g.id]])
     ? '<div class="gstage-bg" style="background-image:url(assets/games/' + GAME_IMG[g.id] + '/background.webp)"></div>'
     : '';
   return '<div class="stage">' + gbg +

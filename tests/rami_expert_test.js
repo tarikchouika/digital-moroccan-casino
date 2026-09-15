@@ -13,44 +13,81 @@ vm.createContext(ctx);
 vm.runInContext(code + '\n;globalThis.__X = { RamiGame, RamiExpertAI, partitionSelectedCards, MELD_TYPE };', ctx);
 const { RamiGame, RamiExpertAI, partitionSelectedCards, MELD_TYPE } = ctx.__X;
 
-/* ── سائق دور الخبير (نفس تسلسل _runBotTurn المتزامن) ── */
+/* ── سائق دور الخبير (نفس تسلسل _runBotTurn المتزامن) ──
+   [Driver-Parity 2026-09-14] كان السائق يختلف عن البوت الحقيقي في 3 نقاط
+   فتعلق ألعاب نادرة (1/12) بينما البوت الحقيقي ينهيها كلها:
+   1) أول دور طالاج = WAITING_DISCARD بيد 15 (توزيع) → رمي فوراً
+   2) خطتا chooseDraw المحفوظتان (_openPlanMove/_drawPlanIds) تُنفَّذان
+   3) حارس الحصار الكامل: leftovers 1 أو ≥3 فقط (0 و2 ممنوعتان) + R15-FIX
+   4) إدراج المسحوبة يستخدم canLayOff (يحترم حماية المجموعة الحرة) */
 function expertTurn(game, player) {
   const rm = game.roundManager;
+  /* طالاج: أول دور توزيع (يد 15) = مرحلة رمي مباشرة */
+  if (rm.turnPhase === 'WAITING_DISCARD' && player.hand.length > game.rules.playHandSize - 1) {
+    const dm0 = game.getLegalMoves(player.id).filter(m => m.type === 'discard');
+    if (dm0.length) { game.executeMove(dm0[0]); return; }
+  }
   if (rm.turnPhase === 'WAITING_DRAW') {
     let drawType = RamiExpertAI.chooseDraw(game, player, true);
-    void 0;
     let res = game.executeMove({ type: drawType, playerId: player.id });
     if (!(res && (res.success || res.penaltyApplied))) {
-      const alt = drawType === 'draw_deck' ? 'draw_discard' : 'draw_deck';
+      const alt = drawType === 'draw_deck' ? 'draw_deck' : 'draw_discard';
       res = game.executeMove({ type: alt, playerId: player.id });
       if (!(res && (res.success || res.penaltyApplied))) { rm.nextPlayer(); return; }
     }
   }
   if (game.gamePhase !== 'PLAYING') return;
-  const legal = game.getLegalMoves(player.id);
-  /* الافتتاح الخبير (يتجنّب حصار الورقتين) */
+  /* الافتتاح الخبير — خطة chooseDraw المحفوظة أولاً (PLAN-EXACT) */
   if (!player.hasOpened) {
-    const open = RamiExpertAI.expertOpening(game, player);
+    let open = null;
+    if (player._openPlanMove) {
+      const pm = player._openPlanMove; player._openPlanMove = null;
+      if (pm.cardIds.every(id => player.hand.some(c => c.id === id))) open = pm;
+    }
+    if (!open) open = RamiExpertAI.expertOpening(game, player);
     if (open) game.executeMove(open);
     if (game.gamePhase !== 'PLAYING') return;
   }
-  /* إنزال المجموعات المكتمّلة بعد الافتتاح (مع حارس الحصار: لا يترك ورقتين) */
-  if (player.hasOpened) {
+  /* إنزال المجموعات المكتمّلة بعد الافتتاح — خطة الرسم أولاً ثم الحارس الكامل */
+  if (player.hasOpened && rm.turnPhase !== 'WAITING_DRAW') {
+    if (player._drawPlanIds && player._drawPlanIds.length) {
+      const planIds = player._drawPlanIds.filter(id => player.hand.some(c => c.id === id));
+      player._drawPlanIds = null;
+      if (planIds.length >= 3) {
+        const pr = game.executeMove({ type: 'open', playerId: player.id, cardIds: planIds });
+        if (pr && pr.success && game.gamePhase !== 'PLAYING') return;
+      }
+    }
     const melds = partitionSelectedCards(player.hand.slice(), game.rules);
     if (melds && melds.length > 0) {
-      const ids = melds.flatMap(m => m.cards.map(c => c.id));
+      let ids = melds.flatMap(m => m.cards.map(c => c.id));
+      /* R15-FIX: يد كاملة القسمة → اقتطاع ورقة من مجموعة 4+ يترك ورقة الإنهاء */
+      if (player.hand.length - ids.length === 0) {
+        let dropId = null;
+        for (const m of melds) {
+          if (m.cards.length < 4) continue;
+          if (m.type === MELD_TYPE.SET) { dropId = m.cards[m.cards.length - 1].id; break; }
+          const ordSeq = (typeof ramiOrderSequenceCards === 'function')
+            ? ramiOrderSequenceCards(m.cards.slice(), c => game.rules.isWildCard(c))
+            : m.cards.slice();
+          if (game.rules.isValidSequence(ordSeq.slice(0, -1), true)) { dropId = ordSeq[ordSeq.length - 1].id; break; }
+          if (game.rules.isValidSequence(ordSeq.slice(1), true)) { dropId = ordSeq[0].id; break; }
+        }
+        if (dropId != null) ids = ids.filter(id => id !== dropId);
+      }
       const leftovers = player.hand.length - ids.length;
-      if (ids.length >= 3 && leftovers !== 2) game.executeMove({ type: 'open', playerId: player.id, cardIds: ids });
-      if (game.gamePhase !== 'PLAYING') return;
+      if (ids.length >= 3 && (leftovers === 1 || leftovers >= 3)) {
+        game.executeMove({ type: 'open', playerId: player.id, cardIds: ids });
+        if (game.gamePhase !== 'PLAYING') return;
+      }
     }
   }
-  /* الإدراج في طاولة الجميع (محلي) */
-  if (player.hasOpened && game.roundManager.tableMelds.length > 0) {
+  /* الإدراج في طاولة الجميع (canLayOff: يطابق البوت الحقيقي) */
+  if (player.hasOpened && rm.tableMelds.length > 0) {
+    const botDrawn = player.drawnDiscardCard || player.drawnLaTourCard || null;
     const fitsMeld = (card) => {
       for (const meld of rm.tableMelds) {
-        const temp = meld.cards.concat([card]);
-        if (meld.type === MELD_TYPE.SET && game.rules.isValidSet(temp, true)) return meld;
-        if (meld.type === MELD_TYPE.SEQUENCE && game.rules.isValidSequence(temp, true)) return meld;
+        if (RamiExpertAI.canLayOff(game.rules, meld, card, botDrawn)) return meld;
       }
       return null;
     };
@@ -66,23 +103,29 @@ function expertTurn(game, player) {
       const meld = fitsMeld(card);
       if (meld) { player.removeCard(card.id); meld.cards.push(card); }
     }
+    /* إنقاذ من 3: ورقتان تدخلان الطاولة = فوز فوري */
+    if (player.hand.length === 3) {
+      const fitting = player.hand.filter(c => fitsMeld(c));
+      if (fitting.length >= 2) {
+        for (let fi = 0; fi < fitting.length && player.hand.length > 1; fi++) {
+          const card = fitting[fi];
+          const meld3 = fitsMeld(card);
+          if (meld3) { player.removeCard(card.id); meld3.cards.push(card); }
+        }
+      }
+    }
     /* إنقاذ من ورقتين: إدراج إحداهما ثم رمي الأخيرة = فوز */
     if (player.hand.length === 2) {
       for (let ci = 0; ci < 2 && player.hand.length === 2; ci++) {
         const card = player.hand[ci];
         if (!card) break;
-        for (const meld of rm.tableMelds) {
-          const temp = meld.cards.concat([card]);
-          let can = false;
-          if (meld.type === MELD_TYPE.SET && game.rules.isValidSet(temp, true)) can = true;
-          if (meld.type === MELD_TYPE.SEQUENCE && game.rules.isValidSequence(temp, true)) can = true;
-          if (can) { player.removeCard(card.id); meld.cards.push(card); break; }
-        }
+        const meld = fitsMeld(card);
+        if (meld) { player.removeCard(card.id); meld.cards.push(card); }
       }
     }
   }
-  /* الإنهاء */
-  if (player.hasOpened && game.canFinish(player)) {
+  /* الإنهاء (السامبل: الإنهاء دون افتتاح مسموح) */
+  if ((player.hasOpened || game.rules.mode !== 'talaj') && game.canFinish(player)) {
     const fr = game.executeMove({ type: 'finish', playerId: player.id });
     if (fr && (fr.success || fr.penaltyApplied)) return;
   }
@@ -91,7 +134,14 @@ function expertTurn(game, player) {
   if (dm.length > 0) {
     const id = RamiExpertAI.chooseDiscard(game, player);
     const mv = dm.find(m => m.cardId === id) || dm[0];
-    game.executeMove(mv);
+    const dr = game.executeMove(mv);
+    /* رمي فشل + يد فوق الحد → ورقة قسرية (منع بقاء 15) */
+    if (!(dr && (dr.success || dr.penaltyApplied)) && game.gamePhase === 'PLAYING' && player.hand.length > 0) {
+      const maxHand = game.rules.playHandSize;
+      if (player.hand.length > maxHand - 1 && rm.turnPhase === 'WAITING_DISCARD') {
+        game.executeMove({ type: 'discard', playerId: player.id, cardId: player.hand[player.hand.length - 1].id });
+      }
+    }
   }
 }
 

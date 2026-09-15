@@ -152,6 +152,48 @@ function initState() {
   wallet();
 }
 
+/* ── [BotsLedger 2026-09-14] مؤشر أرباح/خسائر المنصة من اللاعب الآلي ──
+   رصيد الآلي = مؤشر نسبي لأرباح/خسائر المنصة (توضيح المالك 09-14):
+   كل لعبة ضد الآلي تُسجَّل هنا — record(gid, delta) حيث delta موجب =
+   المنصة ربحت (اللاعب خسر/الرسوم)، سالب = المنصة دفعت للفائز البشري.
+   التخزين localStorage (rc_bots_pl) — المقروء للسوبر أدمن فقط عبر
+   BotsLedger.stats() في لوحة الإدارة (تبويب مؤشر المنصة). العقدة:
+   الألعاب تستدعي window.BotsLedger.record(gid, delta) عند التسوية —
+   اختياري بصيغة typeof فغيابه لا يكسر شيئاً. */
+const BotsLedger = {
+  KEY: 'rc_bots_pl',
+  _read() {
+    try { return JSON.parse(sGet(this.KEY, '{}')) || {}; } catch (e) { return {}; }
+  },
+  _write(d) { sSet(this.KEY, JSON.stringify(d)); },
+  /* gid: معرف اللعبة (rn/pr/rami/chess/bg/do/dama/bj…) • delta: +ربح منصة / −دفع للاعب */
+  record(gid, delta) {
+    try {
+      const num = r2num(delta);
+      if (!isFinite(num) || num === 0) return;
+      const d = this._read();
+      if (!d[gid]) d[gid] = { win: 0, lose: 0, count: 0 };
+      if (num > 0) d[gid].win = r2num(d[gid].win) + num;
+      else d[gid].lose = r2num(d[gid].lose) + (-num);
+      d[gid].count = (d[gid].count || 0) + 1;
+      this._write(d);
+    } catch (e) {}
+  },
+  stats() {
+    const d = this._read();
+    const rows = [];
+    let winSum = 0, loseSum = 0, rounds = 0;
+    for (const gid of Object.keys(d)) {
+      const w = r2num(d[gid].win), l = r2num(d[gid].lose);
+      winSum += w; loseSum += l; rounds += (d[gid].count || 0);
+      rows.push({ gid, win: w, lose: l, net: r2num(w - l), count: d[gid].count || 0 });
+    }
+    rows.sort((a, b) => b.net - a.net);
+    return { rows, winSum: r2num(winSum), loseSum: r2num(loseSum), net: r2num(winSum - loseSum), rounds };
+  },
+  reset() { try { this._write({}); } catch (e) {} }
+};
+
 /* ── Export to global ────────────────── */
 window.ST = ST;
 window.save = save;
@@ -165,4 +207,5 @@ window.newSeeds = newSeeds;
 window.initState = initState;
 window.sGet = sGet;
 window.sSet = sSet;
+window.BotsLedger = BotsLedger;
 window.sRemove = sRemove;

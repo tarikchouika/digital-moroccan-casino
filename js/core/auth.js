@@ -206,10 +206,22 @@ function authLogout() {
 }
 
 /* ── تغيير كلمة المرور ── */
+/* [Legal-Fix 2026-09-14] الصفحات القانونية لا تحمّل main.js ولا تحوي
+   مودالات الحساب (trModal/pg-account…) — البنود كانت ميتة هناك.
+   المعرّفات أدناه تُقيَّم في auth.js (المحمّل في كل مكان): إن وُجدت
+   التعريفات الغنية (main.js في الرئيسية) تُستعمل؛ وإلا فتوجيه للرئيسية
+   بهاش الهدف حيث تُفتح الميزة فوراً عبر navFromHash. */
+function authGoHome(hash) {
+  var p = window.location.pathname;
+  var onIndex = p === '/' || p === '' || /(^|\/)index\.html$/i.test(p);
+  if (onIndex) return false;          /* في الرئيسية: دع التعريف الأصلي يعمل */
+  window.location.href = 'index.html#' + hash;
+  return true;
+}
 function openPwModal() {
   if (!AUTH.user) return;
   const m = document.getElementById('pwModal');
-  if (!m) return;
+  if (!m) { authGoHome('account'); return; }
   setAuthMsg('', document.getElementById('pwMsg'), false);
   const oldEl = document.getElementById('pwOld');
   const newEl = document.getElementById('pwNew');
@@ -267,10 +279,35 @@ function authRestore() {
   });
 }
 
+/* [Legal-Fix] تعريفات ضمنية للبنود التي تملكها main.js — في الصفحات
+   القانونية (بلا main.js) تعرّفها auth.js هنا وتوجّه للرئيسية بالهاش.
+   في الرئيسية يُعرّفها main.js لاحقاً فيطغى التعريف الغني (المصادر
+   تُحمّل قبل auth.js في index.html؟ لا — main.js يُحمّل بعدها فيطغى). */
+if (typeof window.openTrModal === 'undefined') {
+  window.openTrModal = function () {
+    if (!AUTH.user) { if (typeof toast === 'function') toast(T('tr.needLogin'), 'warn'); return; }
+    authGoHome('tr');
+  };
+}
+if (typeof window.openTransactionHistory === 'undefined') {
+  window.openTransactionHistory = function () {
+    if (!AUTH.user) { if (typeof toast === 'function') toast(T('tr.needLogin'), 'warn'); return; }
+    authGoHome('transactions');
+  };
+}
+if (typeof window.openAccountLog === 'undefined') {
+  window.openAccountLog = function () {
+    if (!AUTH.user) { if (typeof toast === 'function') toast(T('tr.needLogin'), 'warn'); return; }
+    authGoHome('account');
+  };
+}
+
 /* ═══════════ المصادقة الثنائية (2FA) ═══════════ */
 /* فتح صفحة الحساب + الكشف عن بطاقة الأمان وتشغيل إعداد 2FA */
 function openSecurity() {
   if (!AUTH.user) { toast(T('auth.sessionExpired'), 'warn'); if (typeof openAuthModal === 'function') openAuthModal(); return; }
+  /* [Legal-Fix] صفحة قانونية (لا pg-account): وجّه للرئيسية */
+  if (!document.getElementById('pg-account')) { authGoHome('account'); return; }
   if (typeof nav === 'function') nav('account', null);
   setTimeout(function () {
     if (typeof init2fa === 'function') init2fa();
