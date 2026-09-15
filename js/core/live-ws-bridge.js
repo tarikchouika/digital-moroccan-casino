@@ -56,6 +56,13 @@
     _connect: function () {
       var self = this;
       if (self.closed) return;
+      /* [BASE-Guard 2026-09-15] API_BASE لم يُحل بعد (وعد api-url2.json قيد
+         المعالجة) — أعد المحاولة عند الجاهزية بدل رمي toWs(null).
+         يغطي كل مسارات الإنشاء (polyfill EventSource/watchRoom/غرفة لعب) */
+      if (!API_BASE) {
+        basePromise.then(function () { if (!self.closed) self._connect(); });
+        return;
+      }
       self._ws = new WebSocket(toWs(API_BASE) + '/api/rooms/' + encodeURIComponent(self.rid) + '/ws?uid=' + encodeURIComponent(getUid()));
       self._ws.onopen = function () {
         for (var i = 0; i < self.facades.length; i++) {
