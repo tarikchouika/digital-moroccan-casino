@@ -1488,7 +1488,7 @@ const TR = {
   'bg.level': ["المستوى", "Difficulté", "Difficulty", "المستوى"],
   'bg.level.0': ["مبتدئ", "Facile", "Easy", "ساهل"],
   'bg.level.1': ["متوسط", "Moyen", "Medium", "وسط"],
-  'bg.level.2': ["محترف", "Expert", "Expert", "محترف"],
+  'bg.level.2': ["خبير", "Expert", "Expert", "خبير"],
   'bg.match': ["طول المباراة", "Longueur du match", "Match length", "طول الماتش"],
   'bg.pts': ["نقاط", "points", "points", "نقط"],
   'bg.bet': ["الرهان", "Mise", "Bet", "الرهان"],
@@ -1530,6 +1530,9 @@ const TR = {
   'bg.resignAsk': ["تنسحب وتخسر المباراة؟", "Abandonner le match ?", "Resign the match?", "بغيتي تسالِ وخروج؟"],
   'bg.yes': ["نعم، انسحب", "Oui, abandonner", "Yes, resign", "آه، سالِ"],
   'bg.no': ["متابعة اللعب", "Continuer", "Keep playing", "كمّل"],
+  /* [BGDO-rooms] مفاتيح وضع الغرفة للطاولة */
+  'bg.room.watch': ["وضع المتفرج — تشاهد المباراة", "Mode spectateur — vous regardez", "Spectator mode — watching", "وضع المتفرج — كتشوف الماتش"],
+  'bg.room.settleNote': ["الرهان يُسوّى خادمياً", "La mise est réglée par le serveur", "The bet is settled by the server", "الرهان كيتسوّى عند السيرفر"],
   /* ── [DO] الضومنة (dm.*) ──
      منسوخ حرفياً من dominoes-game/js/ui/domino-i18n.js (53 مفتاحاً × 4 لغات) —
      مفاتيح dm.* مستقلة عن dama.* (لا تصادم — دُقق آلياً) */
@@ -1541,7 +1544,7 @@ const TR = {
   'dm.level': ["المستوى", "Difficulté", "Difficulty", "المستوى"],
   'dm.level.0': ["مبتدئ", "Facile", "Easy", "ساهل"],
   'dm.level.1': ["متوسط", "Moyen", "Medium", "وسط"],
-  'dm.level.2': ["محترف", "Expert", "Expert", "محترف"],
+  'dm.level.2': ["خبير", "Expert", "Expert", "خبير"],
   'dm.target': ["نقاط الفوز", "Score cible", "Target score", "النقط ديال الربح"],
   'dm.drawRule': ["قاعدة السحب", "Règle de pioche", "Drawing rule", "قاعدة السحب"],
   'dm.draw.classic': ["كلاسيكي — اسحب حتى تلعب", "Classique : piocher jusqu’à jouer", "Classic — draw until playable", "كلاسيكي — جرب حتى تلعب"],
@@ -1586,6 +1589,9 @@ const TR = {
   'dm.yes': ["نعم، انسحب", "Oui, abandonner", "Yes, resign", "آه، سالِ"],
   'dm.no': ["متابعة اللعب", "Continuer", "Keep playing", "كمّل"],
   'dm.noMoves': ["لا توجد حركة قانونية", "Aucun coup légal", "No legal move", "ما كاين حتى حركة"],
+  /* [BGDO-rooms] مفاتيح وضع الغرفة للضومنة */
+  'dm.room.watch': ["وضع المتفرج — تشاهد المباراة", "Mode spectateur — vous regardez", "Spectator mode — watching", "وضع المتفرج — كتشوف الماتش"],
+  'dm.room.settleNote': ["الرهان يُسوّى خادمياً", "La mise est réglée par le serveur", "The bet is settled by the server", "الرهان كيتسوّى عند السيرفر"],
 
   /* ── Security / 2FA (sec.*) ── */
   'sec.title': [ 'الأمان والمصادقة الثنائية', 'Sécurité et 2FA', 'Security & 2FA', 'الأمان والمصادقة الثنائية' ],
@@ -1670,6 +1676,7 @@ const TR = {
   'sec.secret': [ 'السر', 'Clé secrète', 'Secret', 'السر' ],
   'sec.verify': [ 'تأكيد وتفعيل', 'Vérifier', 'Verify', 'تحقّق' ],
   'sec.disable': [ 'تعطيل 2FA', 'Désactiver la 2FA', 'Disable 2FA', 'عطّل 2FA' ],
+  'sec.disable2faPwd': [ 'كلمة المرور (لتعطيل 2FA)', 'Mot de passe (pour désactiver la 2FA)', 'Password (to disable 2FA)', 'كلمة السر (باش تعطّل 2FA)' ],
 };
 
 /* ── Export to window and module ── */

@@ -4,9 +4,11 @@
  * ============================================================================
  *  BgGame : متحكم المباراة (افتتاح → رمي → حركات → نهاية لعبة → لعبة تالية)
  *           بأحداث onEvent للواجهة.
- *  BgAI   : ثلاثة مستويات — تقييم كل play من enumeratePlays
- *           0 مبتدئ: تقييم بضجيج واسع · 1 متوسط: الأفضل (تنويع دقيق فقط)
- *           2 محترف: + خصم متوسط أفضل ردّين محاكيين للخصم.
+ *  BgAI   : ثلاثة مستويات — تعداد التتابعات + دالة تقييم
+ *           0 مبتدئ: عشوائي · 1 متوسط: أفضل تقييم بضجيج
+ *           2 خبير: + متوسط أفضل ردّ للخصم عبر رميات النرد الـ21
+ *           موزونةً باحتمالها (دبل 1/36 · سواها 2/36) — حتميّ بلا
+ *           عشوائية وبميزانية تفكير زمنية.
  * ============================================================================
  */
 (function (root, factory) {
@@ -101,6 +103,30 @@
 
   /* ══════════════ BgAI ══════════════ */
 
+  /* [AI-MAX] كتاب الافتتاح — أفضل افتتاحيات النظرية المعتمدة عالمياً
+     (ترقيم النقاط التقليدي من منظور اللاعب: 24 أبعد نقطة عن بيته).
+     تُترجم إلى فهارس اللوحة حسب اتجاه كل لاعب. الدبل مستحيل في الافتتاح
+     (التعادل يُعاد) — 15 رمية غير مزدوجة، أشهرها الست المؤكدة أدناه. */
+  var BG_OPENINGS = {
+    '2-1': [[13, 11], [6, 5]],      /* 13/11 6/5 — نقطة الخمسة */
+    '3-1': [[8, 5], [6, 5]],        /* 8/5 6/5 — صناعة نقطة الخمسة */
+    '4-2': [[8, 4], [6, 4]],        /* 8/4 6/4 — صناعة نقطة الأربعة */
+    '5-3': [[8, 3], [6, 3]],        /* 8/3 6/3 — صناعة نقطة الثلاثة */
+    '6-1': [[13, 7], [8, 7]],       /* 13/7 8/7 — صناعة نقطة الحاجز */
+    '6-5': [[24, 18], [18, 13]]     /* 24/13 — الجري بالمؤخرة (رقمين) */
+  };
+  var BG_INIT_POINTS = null;
+
+  function tradToIdx(p, trad) { return p === 0 ? trad - 1 : 24 - trad; }
+
+  /** هل الموقع هو الافتتاح تماماً (لم تُلعب حركة بعد)؟ */
+  function isOpeningPos(st) {
+    if (!BG_INIT_POINTS) BG_INIT_POINTS = Core.initialPoints();
+    if (st.bar[0] || st.bar[1] || st.off[0] || st.off[1]) return false;
+    for (let i = 0; i < 24; i++) if (st.points[i] !== BG_INIT_POINTS[i]) return false;
+    return true;
+  }
+
   function BgAI(game, level) {
     this.game = game;
     this.level = level === undefined ? 1 : level;
@@ -121,21 +147,37 @@
     let madeHome = 0, anchor = 0, prime = 0, run = 0;
     const hm = Core.homeMin(p), hx = Core.homeMax(p);
     const om = Core.homeMin(o), ox = Core.homeMax(o);
+    /* توزيع نقاط البيت: القيمة التربيعية (نقطتان بجوار متتاليتين أثمن من متفرقتين) */
+    let homeRow = 0, homeRowBest = 0;
     for (let i = 0; i < 24; i++) {
       const c = Core.ownCount(st, p, i);
       if (c > 0) {
-        if (i >= hm && i <= hx) madeHome += Math.min(c, 4) * 1.2;
+        if (i >= hm && i <= hx) {
+          madeHome += Math.min(c, 4) * 1.2;
+          if (c >= 2) { homeRow++; if (homeRow > homeRowBest) homeRowBest = homeRow; }
+          else homeRow = 0;
+        }
         if (i >= om && i <= ox && c >= 2) anchor += 5;
         if (c >= 2) { run += 1 + Math.min(c - 2, 2) * 0.3; prime += run; }
         else { run = 0; myBlots.push(i); }
-      } else run = 0;
+      } else { run = 0; homeRow = 0; }
     }
-    score += madeHome + anchor + Math.min(prime, 26);
+    score += madeHome + anchor + Math.min(prime, 26) + homeRowBest * homeRowBest * 0.9;
 
     for (let b = 0; b < myBlots.length; b++) {
       const shots = this._directShots(st, p, myBlots[b]);
       const d = Core.dist(p, myBlots[b]);
       score -= (6 + shots * 2.4) * (0.5 + Math.min(d, 18) / 18) * (contact ? 1 : 0.15);
+    }
+
+    /* [AI-MAX] سباق بلا تلامس: كفاءة الإخراج (الأحجار الخارجة أولى بأي تعادل) */
+    if (!contact) {
+      score += st.off[p] * 1.4;
+      /* إهدار النقاط في البيت: حشو 5+ على نقطة واحدة أثناء السباق خسارة كفاءة */
+      for (let i = hm; i <= hx; i++) {
+        const c = Core.ownCount(st, p, i);
+        if (c > 4) score -= (c - 4) * 0.35;
+      }
     }
     return score;
   };
@@ -152,7 +194,47 @@
     return n;
   };
 
+  /** [AI-MAX] كتاب الافتتاح: يرجع play جاهزاً إن كان الموقع افتتاحياً وبرمية معروفة
+      (ترجمة نقاط النظرية 24..1 إلى فهارس 0..23 حسب اتجاه اللاعب)، وإلا null. */
+  BgAI.prototype._openingBook = function (st, p) {
+    if (st.phase !== 'move' || !isOpeningPos(st)) return null;
+    const d = st.dice.slice().sort(function (x, y) { return y - x; });
+    const key = d[0] + '-' + d[1];
+    const seqs = BG_OPENINGS[key];
+    if (!seqs) return null;
+    /* بناء الحركات من الأزواج التقليدية — تُتحقق قانونيتها ثم تُبنى الحالة النهائية */
+    const sim = Core.cloneState(st);
+    const moves = [];
+    for (let s = 0; s < seqs.length; s++) {
+      const pair = seqs[s];
+      const from = tradToIdx(p, pair[0]), to = tradToIdx(p, pair[1]);
+      const die = Math.abs(pair[0] - pair[1]);
+      const legal = Core.legalMoves(sim, p);
+      const mv = legal.filter(function (m) { return m.from === from && m.to === to; })[0]
+        || legal.filter(function (m) { return m.from === from && m.die === die; })[0]
+        || legal.filter(function (m) { return m.die === die; })[0];
+      if (!mv) return null;
+      moves.push(mv);
+      Core.applyMove(sim, p, mv);
+    }
+    /* استيفاء باقي النردات إن بقي شيء (حسنة الترتيب لا تحتاج عادة) */
+    while (sim.dice.length) {
+      const legal = Core.legalMoves(sim, p);
+      if (!legal.length) break;
+      moves.push(legal[0]);
+      Core.applyMove(sim, p, legal[0]);
+    }
+    return { state: sim, moves: moves };
+  };
+
   BgAI.prototype.choosePlay = function (p) {
+    /* [AI-MAX] كتاب الافتتاح: الافتتاحيات الست المؤكدة تُلعب نظرياً فوراً
+       (يحفف التفكير ويضمن أفضل افتتاح معروف — يتحقق قبل التعداد كله) */
+    if (this.level === 2) {
+      const book = this._openingBook(this.game.state, p);
+      if (book) return book;
+    }
+
     const plays = Core.enumeratePlays(this.game.state, p);
     if (!plays.length) return null;
 
@@ -168,21 +250,42 @@
       return plays[Math.random() < 0.25 && plays.length > 1 ? 1 : 0];
     }
 
-    /* محترف: أفضل 24 موضعًا × أفضل ردّ للخصم (رمي محاكى) */
-    const top = plays.slice(0, Math.min(24, plays.length));
+    /* [AI-MAX] خبير: متوسط أفضل ردّ للخصم عبر رميات النرد الـ21 موزونةً
+       باحتمالها (الدبل 1/36 · كل سواه 2/36) — ردّ الخصم الأقوى عقوبة تُطرح،
+       بلا أي عشوائية (حتمي كامل) وضمن ميزانية زمنية تحمي واجهة اللعب. */
+    const top = plays.slice(0, Math.min(plays.length <= 16 ? plays.length : 24, plays.length));
+    const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     let best = top[0], bestV = -Infinity;
     for (let t = 0; t < top.length; t++) {
-      const replyV = this._bestReply(top[t].state, 1 - p);
-      const total = top[t].ev + replyV * 0.45;
+      const replyV = this._expectedReply(top[t].state, 1 - p, start, 2200);
+      const total = top[t].ev - replyV * 0.45;
       if (total > bestV) { bestV = total; best = top[t]; }
     }
     return best;
   };
 
-  BgAI.prototype._bestReply = function (stAfter, opp) {
+  /** متوسط أفضل ردّ للخصم عبر النرد الـ21 (قيمة موجبة = وضع جيد للخصم) */
+  BgAI.prototype._expectedReply = function (stAfter, opp, start, budgetMs) {
+    let sum = 0, w = 0;
+    for (let a = 1; a <= 6; a++) {
+      for (let b = a; b <= 6; b++) {
+        const prob = (a === b) ? 1 / 36 : 2 / 36;
+        sum += prob * this._bestReply(stAfter, opp, a, b);
+        w += prob;
+        /* الميزانية: إن نفدت نكمل المتوسط بأوزان ما حسبناه فقط (تقدير جزئي) */
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (budgetMs && start && now - start > budgetMs) { if (!w) w = 1; break; }
+      }
+      const now2 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      if (budgetMs && start && now2 - start > budgetMs) break;
+    }
+    return sum / w;
+  };
+
+  /** أفضل ردّ للخصم برمية محددة (قيمة موجبة = وضع جيد للخصم) */
+  BgAI.prototype._bestReply = function (stAfter, opp, dieA, dieB) {
     const st = Core.cloneState(stAfter);
-    const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
-    st.dice = (a === b) ? [a, a, a, a] : [a, b];
+    st.dice = (dieA === dieB) ? [dieA, dieA, dieA, dieA] : [dieA, dieB];
     st.turn = opp;
     const plays = Core.enumeratePlays(st, opp, { seq: 900, nodes: 16000 });
     if (!plays.length) return this.evaluate(st, opp);

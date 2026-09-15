@@ -40,8 +40,8 @@ function tileHTML(g) {
         'onerror="var p=this.parentNode;this.remove();if(p)p.classList.remove(\'hasimg\');">' +
       '</div>'
     : '<div class="art ' + g.art + '" aria-hidden="true">' + g.em + '</div>';
-  const networkIndicator = [ 'rp', 'pn', 'pr', 'rn', 'rm' ].includes(g.id) ? '<span class="net-indicator net-enabled">🔌 ' + (T('g.multi') || 'P2P') + '</span>' : '';
-  const playButton = [ 'rp', 'pn', 'pr', 'rn', 'rm' ].includes(g.id)
+  const networkIndicator = [ 'rp', 'pn', 'pr', 'rn', 'rm', 'bg', 'do' ].includes(g.id) ? '<span class="net-indicator net-enabled">🔌 ' + (T('g.multi') || 'P2P') + '</span>' : '';
+  const playButton = [ 'rp', 'pn', 'pr', 'rn', 'rm', 'bg', 'do' ].includes(g.id)
     ? '<button class="playbtn net-btn" onclick="Rooms.toggleFromGame()" aria-label="' + T('g.play') + ' →">' + T('g.play') + ' →</button>'
     : '<button class="playbtn" onclick="openGame(\'' + g.id + '\')" aria-label="' + T('g.play') + ' →">' + T('g.play') + ' →</button>';
   return '<div class="tile" onclick="openGame(\'' + g.id + '\')" ' +

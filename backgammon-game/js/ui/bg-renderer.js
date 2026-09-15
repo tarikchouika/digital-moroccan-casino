@@ -130,6 +130,9 @@
   function statusText(view, mode) {
     if (view.phase === 'opening') return T('bg.opening');
     if (view.phase === 'gameEnd' || view.phase === 'matchEnd') return '';
+    /* [BG-Room] وضع الغرفة: المتفرج يشاهد · اللاعب حسب الدور المطلق */
+    if (mode === 'spec') return T('bg.room.watch') || 'وضع المتفرج — تشاهد المباراة';
+    if (mode === 'room') return view.turn === 0 ? T('bg.turn.p1') : T('bg.turn.p2');
     const iPlay = mode === 'ai' ? view.turn === 0 : true;
     if (!iPlay) return T(mode === 'ai' ? 'bg.turn.opp' : (view.turn === 1 ? 'bg.turn.p2' : 'bg.turn.p1'));
     if (view.bar[view.turn] > 0 && view.phase === 'move') return T('bg.enterBar');

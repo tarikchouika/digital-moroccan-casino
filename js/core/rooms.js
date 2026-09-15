@@ -28,7 +28,7 @@
   var Rooms = {
     state: null,
     /* الألعاب المدعومة للغرف: id -> أقصى عدد لاعبين */
-    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, rd: 4, bj: 4, dm: 2, ch: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً + [BJMP] بلاك جاك جماعي 2-4 بلا بانكر */
+    roomGameIds: { rp: 2, pn: 2, pr: 4, rn: 4, rm: 4, rd: 4, bj: 4, dm: 2, ch: 2, bg: 2, do: 2, bl8: 2, blbb: 2, blgv: 2, blsn: 2, blca: 2 }, /* [إصلاح] البلياردو كانت غائبة — زر «غرفة أونلاين» كان صامتاً + [BJMP] بلاك جاك جماعي 2-4 بلا بانكر + [BGDO] الطاولة والضومنة غرفتان ثنائيتان */
 
     isGameSupported: function (id) { return !!Rooms.roomGameIds[id]; },
     /* [Persist] طلب إعادة بناء الجولة: إعادة فتح قناة WS للغرفة — الخادم يعيد
@@ -111,6 +111,9 @@
       }
       /* بدأت اللعبة للتو → إبلاغ اللعبة (تغلق المودال وتبدأ محلياً) */
       if (room && room.status === 'playing' && prevStatus !== 'playing') {
+        /* [RoomGold] بدء جولة غرفة: الرهان اقتُطع خادمياً — حدّث رصيد الواجهة
+           (الجميع: المالك من الاستجابة والضيوف من هذا البث) */
+        Rooms._refreshGold();
         /* [RS-GameOpts] إعدادات اللعبة المخزنة في الغرفة تُطبق عند كل العملاء قبل البدء */
         if (room.game_opts) { try { Rooms._applyGameOpts(room.game_id, room.game_opts); } catch (e) {} }
         Rooms.closeModal();
@@ -485,6 +488,15 @@
       if (gid === 'pn') return [
         { key: 'rounds', label: T('pn.rounds') || 'عدد الركلات', opts: [[5, '5'], [7, '7'], [9, '9']], def: 5 }
       ];
+      /* [BGDO] الطاولة: طول المباراة (1/3/5 نقاط) — يعتمده السائق عند البدء */
+      if (gid === 'bg') return [
+        { key: 'len', label: T('bg.match') || 'طول المباراة', opts: [[1, '1'], [3, '3'], [5, '5']], def: 3 }
+      ];
+      /* [BGDO] الضومنة: هدف النقاط + قاعدة السحب (كلاسيكي/Block) */
+      if (gid === 'do') return [
+        { key: 'target', label: T('dm.target') || 'نقاط الفوز', opts: [[50, '50'], [100, '100'], [150, '150'], [200, '200']], def: 100 },
+        { key: 'draw', label: T('dm.drawRule') || 'قاعدة السحب', opts: [[1, T('dm.draw.classic') || 'كلاسيكي'], [0, T('dm.draw.block') || 'Block']], def: 1 }
+      ];
       if (gid === 'dm' || gid === 'ch') return [timer];
       if (gid === 'blca') return [
         { key: 'disc', label: T('bl.caDisc') || 'الاختصاص', opts: [['FREE', T('bl.caFree') || 'حرة'], ['ONE', T('bl.caOne') || 'وسادة'], ['THREE', T('bl.caThree') || '3 وسائد']], def: 'THREE' },
@@ -575,7 +587,22 @@
           }
         }
         else if (gid === 'rd') { window.RD_ROOM_CFG = o; }
-        else if (gid === 'dm') {
+        else if (gid === 'bg') {
+          /* [BGDO] إعدادات غرفة الطاولة: طول المباراة (يبثّه السائق في init) */
+          window.BG_ROOM_CFG = o;
+          if (typeof window.BackgammonApp !== 'undefined' && window.BackgammonApp && o.len) {
+            try { window.BackgammonApp.config.len = Math.max(1, Math.min(5, parseInt(o.len, 10) || 3)); } catch (e) {}
+          }
+        } else if (gid === 'do') {
+          /* [BGDO] إعدادات غرفة الضومنة: الهدف + قاعدة السحب (يبثّها السائق في init) */
+          window.DO_ROOM_CFG = o;
+          if (typeof window.DominoApp !== 'undefined' && window.DominoApp) {
+            try {
+              if (o.target) window.DominoApp.config.target = Math.max(50, Math.min(200, parseInt(o.target, 10) || 100));
+              if (typeof o.draw === 'number') window.DominoApp.config.drawUntilPlayable = !!o.draw;
+            } catch (e) {}
+          }
+        } else if (gid === 'dm') {
           window.DM_ROOM_TIMER = o.timer || 0;
           if (typeof DAMA !== 'undefined' && DAMA) DAMA.timeLimit = o.timer || 0;
         } else if (gid === 'ch') {
@@ -836,7 +863,19 @@
         if (!r.ok) { toast((r.data && r.data.message) || T('ui.roomError'), 'err'); return; }
         /* [RoomFix] إطلاق فوري عند المالك من الاستجابة (البث يغطي الآخرين) */
         if (r.data && r.data.room) Rooms._onUpdate(r.data.room);
+        /* [RoomGold] الرهان اقتُطع خادمياً عند البدء — مزامنة رصيد الواجهة
+           فوراً (ST.gold محلي كان يبقى قديماً فتطمسه authSync عند الإغلاق) */
+        Rooms._refreshGold();
       });
+    },
+    /* [RoomGold] سحب الرصيد الحقيقي من الخادم إلى الواجهة (غرف اللعب) */
+    _refreshGold: function () {
+      API.get('/api/me').then(function (r) {
+        if (r.ok && r.data && r.data.user && typeof r.data.user.gold === 'number') {
+          if (typeof AUTH !== 'undefined' && AUTH.user) AUTH.user.gold = r.data.user.gold;
+          if (typeof ST !== 'undefined') { ST.gold = r.data.user.gold; if (typeof wallet === 'function') wallet(); }
+        }
+      }).catch(function () {});
     },
     sendMove: function (action, data, state) {
       if (!Rooms.state) return false;

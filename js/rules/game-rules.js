@@ -2034,8 +2034,8 @@ rn: {
       ]
     },
     payouts: {
-      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
-      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
+      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — خبير</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — خبير</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
       fr: '<tr><td>Match gagné — Facile</td><td>Mise ×1,5</td></tr><tr><td>Match gagné — Moyen</td><td>Mise ×2</td></tr><tr><td>Match gagné — Expert</td><td>Mise ×3</td></tr><tr><td>Défaite ou abandon</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Match won — Easy</td><td>Bet ×1.5</td></tr><tr><td>Match won — Medium</td><td>Bet ×2</td></tr><tr><td>Match won — Expert</td><td>Bet ×3</td></tr><tr><td>Loss or resign</td><td>Bet lost</td></tr>'
     },
@@ -2089,8 +2089,8 @@ rn: {
       ]
     },
     payouts: {
-      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
-      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — محترف</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
+      ar: '<tr><td>فوز المباراة — مبتدئ</td><td>الرهان ×1.5</td></tr><tr><td>فوز المباراة — متوسط</td><td>الرهان ×2</td></tr><tr><td>فوز المباراة — خبير</td><td>الرهان ×3</td></tr><tr><td>خسارة أو انسحاب</td><td>خسارة الرهان</td></tr>',
+      da: '<tr><td>ربح الماتش — ساهل</td><td>الرهان ×1.5</td></tr><tr><td>ربح الماتش — وسط</td><td>الرهان ×2</td></tr><tr><td>ربح الماتش — خبير</td><td>الرهان ×3</td></tr><tr><td>خسارة ولا انسحاب</td><td>خسارة الرهان</td></tr>',
       fr: '<tr><td>Match gagné — Facile</td><td>Mise ×1,5</td></tr><tr><td>Match gagné — Moyen</td><td>Mise ×2</td></tr><tr><td>Match gagné — Expert</td><td>Mise ×3</td></tr><tr><td>Défaite ou abandon</td><td>Perte de la mise</td></tr>',
       en: '<tr><td>Match won — Easy</td><td>Bet ×1.5</td></tr><tr><td>Match won — Medium</td><td>Bet ×2</td></tr><tr><td>Match won — Expert</td><td>Bet ×3</td></tr><tr><td>Loss or resign</td><td>Bet lost</td></tr>'
     },

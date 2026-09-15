@@ -31,8 +31,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     await page.evaluate(() => openGame('bg'));
     await PW.wait(page, () => !!document.querySelector('#bwStage #bwMenu'), 8000);
 
-    /* كالمستخدم: زر الطول 1 ثم ابدأ */
+    /* كالمستخدم: زر الطول 1 + المستوى 1 (متوسط — أساس توقع المضاعف ×2) ثم ابدأ */
     await page.click('#bwLenSeg .bw-segbtn[data-len="1"]');
+    await page.click('#bwLevelSeg .bw-segbtn[data-level="1"]');
     const gold0 = await page.evaluate(() => ST.gold);
     await page.click('#bwStartBtn');
     const inPlay = await PW.wait(page, () => getComputedStyle(document.getElementById('bwPlay')).display !== 'none', 8000);
@@ -97,8 +98,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     });
     await page.evaluate(() => openGame('do'));
     await PW.wait(page, () => !!document.querySelector('#dmStage #dmMenu'), 8000);
-    /* أقصر مباراة: هدف 50 */
+    /* أقصر مباراة: هدف 50 — والمستوى 1 (متوسط — أساس توقع المضاعف ×2) */
     await page.click('#dmTargetSeg .dm-segbtn[data-target="50"]');
+    await page.click('#dmLevelSeg .dm-segbtn[data-level="1"]');
     const gold0 = await page.evaluate(() => ST.gold);
     await page.click('#dmStartBtn');
     const inPlay = await PW.wait(page, () => getComputedStyle(document.getElementById('dmPlay')).display !== 'none', 8000);

@@ -9,6 +9,7 @@
      • dominoes-game/js/ui/domino-html.js        (بنية الشاشات — DMN_HTML)
      • dominoes-game/js/ui/domino-renderer.js    (العرض — DominoRenderer)
      • dominoes-game/js/ui/domino-app.js         (المتحكم — DominoApp)
+     • dominoes-game/js/ui/domino-room.js        (وضع الغرفة — DOMINO_ROOM)
    عقد الدمج نفسه الذي تعرفه المنصة من روندا:
      eDominoes(g) يبني المسرح · initDominoes() يربط اللعبة ·
      cleanupDominoes() ينظّف عند الخروج (يستدعيه closeGamePage).

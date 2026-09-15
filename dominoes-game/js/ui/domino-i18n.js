@@ -18,7 +18,7 @@
     'dm.level':     ['المستوى', 'Difficulté', 'Difficulty', 'المستوى'],
     'dm.level.0':   ['مبتدئ', 'Facile', 'Easy', 'ساهل'],
     'dm.level.1':   ['متوسط', 'Moyen', 'Medium', 'وسط'],
-    'dm.level.2':   ['محترف', 'Expert', 'Expert', 'محترف'],
+    'dm.level.2':   ['خبير', 'Expert', 'Expert', 'خبير'],
     'dm.target':    ['نقاط الفوز', 'Score cible', 'Target score', 'النقط ديال الربح'],
     'dm.drawRule':  ['قاعدة السحب', 'Règle de pioche', 'Drawing rule', 'قاعدة السحب'],
     'dm.draw.classic': ['كلاسيكي — اسحب حتى تلعب', 'Classique : piocher jusqu’à jouer', 'Classic — draw until playable', 'كلاسيكي — جرب حتى تلعب'],
@@ -66,7 +66,11 @@
     'dm.resignAsk': ['تنسحب وتخسر المباراة؟', 'Abandonner le match ?', 'Resign the match?', 'بغيتي تسالِ وخروج؟'],
     'dm.yes':       ['نعم، انسحب', 'Oui, abandonner', 'Yes, resign', 'آه، سالِ'],
     'dm.no':        ['متابعة اللعب', 'Continuer', 'Keep playing', 'كمّل'],
-    'dm.noMoves':   ['لا توجد حركة قانونية', 'Aucun coup légal', 'No legal move', 'ما كاين حتى حركة']
+    'dm.noMoves':   ['لا توجد حركة قانونية', 'Aucun coup légal', 'No legal move', 'ما كاين حتى حركة'],
+
+    /* ── الغرف (dm.room.*) ── */
+    'dm.room.watch':      ['وضع المتفرج — تشاهد المباراة', 'Mode spectateur — vous regardez', 'Spectator mode — watching', 'وضع المتفرج — كتشوف الماتش'],
+    'dm.room.settleNote': ['الرهان يُسوّى خادمياً', 'La mise est réglée par le serveur', 'The bet is settled by the server', 'الرهان كيتسوّى عند السيرفر']
   };
 
   function langIndex() {

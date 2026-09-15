@@ -410,6 +410,10 @@ function damaOrderMoves(moves) {
 /* Negamax with alpha-beta (ported from AI/Minimax.cs).
    القيمة عند الأوراق نسبيةٌ لجهة الدور (rel) كي يتطابق التقليب مع negamax. */
 DamaEngine.prototype.search = function (s, ai, depth, alpha, beta) {
+  /* [AI-MAX] فحص مهلة كل 64 عقدة (شبكة cloneState ثقيلة نسبياً) — التكرار
+     العميق الواحد يُقطع عند الموعد لا بعده؛ القفزة يلتقطها aiPick */
+  if ((++DAMA_SEARCH_NODES & 63) === 0 && DAMA_SEARCH_DEADLINE !== Infinity &&
+      performance.now() > DAMA_SEARCH_DEADLINE) throw { damaAbort: true };
   var rel = (s.turn === ai) ? 1 : -1;
   if (s.over) return rel * this.evaluate(s, ai);
   if (depth <= 0) return rel * this.evaluate(s, ai);
@@ -455,17 +459,34 @@ DamaEngine.prototype.findBestMove = function (s, ai, depth) {
   return pool[Math.floor(Math.random() * pool.length)] || scored[0].m;
 };
 
+/* [AI-MAX] عدّاد العقد وموعد المهلة النهائي للبحث الداخلي (Deadline حقيقي) */
+var DAMA_SEARCH_NODES = 0;
+var DAMA_SEARCH_DEADLINE = Infinity;
+
 /* Iterative-deepening driver with a wall-clock budget (never freezes the UI). */
 DamaEngine.prototype.aiPick = function (s, ai, maxDepth, budgetMs) {
   var moves = this.legalMoves(s, s.turn);
   if (!moves.length) return null;
   var start = performance.now();
   var best = moves[Math.floor(Math.random() * moves.length)];
+  var have = false;   /* [AI-MAX] هل حصلنا على نتيجة تكرار كاملة واحدة على الأقل؟ */
   for (var d = 1; d <= maxDepth; d++) {
-    var m = this.findBestMove(s, ai, d);
-    if (m) best = m;
+    /* [AI-MAX] مهلة داخلية 92% من الميزانية (هامش أمان لفترة الفحص التالية) */
+    DAMA_SEARCH_DEADLINE = start + Math.floor((budgetMs || 800) * 0.92);
+    DAMA_SEARCH_NODES = 0;
+    try {
+      var m = this.findBestMove(s, ai, d);
+      if (m) { best = m; have = true; }
+    } catch (e) {
+      if (!e || !e.damaAbort) { DAMA_SEARCH_DEADLINE = Infinity; throw e; }
+      break;   /* الموعد انتهى داخل التكرار — آخر نتيجة كاملة تكفي */
+    } finally {
+      DAMA_SEARCH_DEADLINE = Infinity;
+    }
     if (performance.now() - start > budgetMs) break;
   }
+  /* لم تكتمل أي نتيجة (ميزانية شبه صفرية): شملة سطحية فورية بلا مهلة */
+  if (!have) { DAMA_SEARCH_DEADLINE = Infinity; best = this.findBestMove(s, ai, 1) || best; }
   return best;
 };
 
@@ -492,7 +513,7 @@ function eDama(g) {
         '<div class="dama-field"><div class="dama-flab">' + T('dama.difficulty') + '</div>' +
           '<div class="dama-pick" id="damaDiff">' +
             DAMA_LEVELS.map(function (lv, i) {
-              return '<button class="dama-chip' + (i === 0 ? ' on' : '') + '" data-i="' + i + '" onclick="damaSetDiff(' + i + ')">' + damaLevelName(lv) + '</button>';
+              return '<button class="dama-chip' + (i === DAMA_LEVELS.length - 1 ? ' on' : '') + '" data-i="' + i + '" onclick="damaSetDiff(' + i + ')">' + damaLevelName(lv) + '</button>';
             }).join('') +
           '</div>' +
         '</div>' +
@@ -524,8 +545,8 @@ function eDama(g) {
         '<div class="dama-spectators" id="damaSpectators" aria-hidden="true"></div>' +   /* [Owner] شريط متفرجين شفاف 100% — فارغ بلا متفرجين */
         '<div class="dama-timer" id="damaTimer"></div>' +
         '<div class="dama-boardbox" id="damaBoardBox"><div class="dama-board" id="damaBoard"></div>' +
-          '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface"><i class="fa-solid fa-robot" aria-hidden="true"></i></span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة */
-          '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface"><i class="fa-solid fa-user" aria-hidden="true"></i></span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة */
+          '<div class="dama-seat dama-seat-top"><div class="dama-picon" id="damaOppIcon"><span class="dama-pface"><i class="fa-solid fa-robot" aria-hidden="true"></i></span><span class="dama-ptimer" id="damaOppTimer" hidden>⏱</span></div></div>' +   /* [Owner] أيقونة الخصم فوق حافة اللوحة + مؤقت الدور بجانبها [Timer-Seat] */
+          '<div class="dama-seat dama-seat-bottom"><div class="dama-picon" id="damaMainIcon"><span class="dama-pface"><i class="fa-solid fa-user" aria-hidden="true"></i></span><span class="dama-ptimer" id="damaMainTimer" hidden>⏱</span></div></div>' +   /* [Owner] أيقونة اللاعب الأساسي تحت حافة اللوحة + مؤقت الدور بجانبها [Timer-Seat] */
         '</div>' +
         '<div class="dama-status" id="damaStatus"></div>' +
         '<div class="dama-status dama-stake" id="damaStake" hidden></div>' +   /* [B10 v2.27] رقيقة الرهان الجاري — كانت الدالة ترجع عنصراً غير موجود */
@@ -593,7 +614,8 @@ function damaFitBoard() {
 function damaInit() {
   DAMA = {
     eng: new DamaEngine(), state: null, human: WHITE, ai: BLACK,
-    level: 0, sel: null, legal: [], busy: false, flipped: false,
+    /* [AI-MAX] الافتراضي خبير (طلب المالك: أعلى مستوى في جميع الألعاب) */
+    level: DAMA_LEVELS.length - 1, sel: null, legal: [], busy: false, flipped: false,
     lastFrom: null, lastTo: null,
     mode: 'ai', oppBot: false, isSpectator: false, _seq: 0, roomOrder: [],
     timeLimit: 0, _turnTi: null, _turnLeft: 0,
@@ -646,26 +668,49 @@ function damaStartTimer() {
   if (DAMA.state.turn !== DAMA.human) return;
   damaStopTimer();
   DAMA._turnLeft = DAMA.timeLimit;
-  damaRenderTimer();
   DAMA._turnTi = setInterval(function () {
     if (!DAMA || !DAMA.state || DAMA.state.over) { damaStopTimer(); return; }
     DAMA._turnLeft--;
     damaRenderTimer();
     if (DAMA._turnLeft <= 0) damaAutoMove();
   }, 1000);
+  damaRenderTimer();   /* [Timer-Seat] أول رسم بعد تجهيز _turnTi — تظهر الشارة فور البدء */
 }
 function damaStopTimer() {
   if (!DAMA) return;
   if (DAMA._turnTi) { clearInterval(DAMA._turnTi); DAMA._turnTi = null; }
   DAMA._turnLeft = 0;
   var el = document.getElementById('damaTimer'); if (el) { el.textContent = ''; el.className = 'dama-timer'; }
+  /* [Timer-Seat] إخفاء شارتي المؤقت الجانبيتين عند توقف العد */
+  damaPaintSeatTimers('', '');
+}
+/* [Timer-Seat] شارة المؤقت بجانب أيقونة اللاعب صاحب الدور (نمط روندا):
+   تظهر بجوار الأيقونة فقط — لا تحت الأزرار ولا خلف أي عنصر. */
+function damaPaintSeatTimers(txt, whose) {
+  var low = !!(txt && DAMA && DAMA._turnLeft <= 10);
+  var opp = document.getElementById('damaOppTimer');
+  var main = document.getElementById('damaMainTimer');
+  if (opp) {
+    opp.hidden = !((whose === 'opp') && !!txt);
+    opp.textContent = (whose === 'opp') ? txt : '';
+    opp.className = 'dama-ptimer' + ((whose === 'opp' && low) ? ' low' : '');
+  }
+  if (main) {
+    main.hidden = !((whose === 'me') && !!txt);
+    main.textContent = (whose === 'me') ? txt : '';
+    main.className = 'dama-ptimer' + ((whose === 'me' && low) ? ' low' : '');
+  }
 }
 function damaRenderTimer() {
   if (!DAMA) return;
-  var el = document.getElementById('damaTimer'); if (!el) return;
-  if (!DAMA._turnTi || DAMA._turnLeft <= 0) { el.textContent = ''; el.className = 'dama-timer'; return; }
-  el.textContent = '\u23f1 ' + DAMA._turnLeft + T('dama.seconds');
-  el.className = 'dama-timer' + (DAMA._turnLeft <= 10 ? ' low' : '');
+  var el = document.getElementById('damaTimer');
+  var txt = (DAMA._turnTi && DAMA._turnLeft > 0) ? ('\u23f1 ' + DAMA._turnLeft + T('dama.seconds')) : '';
+  if (el) {
+    el.textContent = txt;
+    el.className = 'dama-timer' + (txt && DAMA._turnLeft <= 10 ? ' low' : '');
+  }
+  /* [Timer-Seat] الشارة الجانبية على أيقونة صاحب الدور الحالي */
+  damaPaintSeatTimers(txt, (DAMA.state && DAMA.state.turn === DAMA.ai) ? 'opp' : 'me');
 }
 function damaAutoMove() {
   if (!DAMA || !DAMA.state || DAMA.state.over) return;
@@ -1396,7 +1441,8 @@ function damaStartRoom(myColor, oppBot, spec, broadcastNew) {
 /* بثّ حركة (قفزة واحدة) للخصم — تُخزَّن في moveHistory للسجل */
 function damaEmitMove(mv) {
   DAMA._seq = (DAMA._seq || 0) + 1;
-  damaEmit('move', { mv: mv, dedup: 'dm-' + DAMA._seq });
+  /* [dedup] مفتاح بمعرّف المُرسِل — كلا الطرفين يبدأ seq من 0 (تصادم الرسالة الأولى) */
+  damaEmit('move', { mv: mv, dedup: 'dm-' + damaMeId() + '-' + DAMA._seq });
 }
 function damaEmit(action, data) {
   if (typeof Rooms === 'undefined' || !Rooms || typeof Rooms.sendMove !== 'function') return;

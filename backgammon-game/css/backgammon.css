@@ -105,6 +105,9 @@
   box-shadow: 0 5px 18px rgba(192, 120, 48, 0.32);
   transition: transform 0.14s ease, box-shadow 0.2s;
 }
+/* [Polish] أيقونات FA داخل الأزرار — مسافة موحدة مثل أزرار المنصة */
+.bw-go > .fa-solid, .bw-resume > .fa-solid, .bw-tool > .fa-solid, .bw-rollbtn > .fa-solid { margin-inline-end: 7px; }
+.bw-go:disabled, .bw-resume:disabled { opacity: 0.5; cursor: default; transform: none; }
 .bw-go:hover { transform: translateY(-1px); box-shadow: 0 7px 24px rgba(192, 120, 48, 0.45); }
 .bw-go:active { transform: translateY(1px); }
 .bw-go.danger { background: linear-gradient(135deg, #b4523f, #8c3324); color: #ffe9dd; }
@@ -350,5 +353,19 @@
   .bw-menu-card { margin-top: 2vh; }
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  .bw-menu-card { max-width: 520px; }
+  /* [Polish] لاندسكيب: قائمة أعرض بعمودين — كل الإعدادات مرئية بلا تمرير */
+  .bw-menu-card { max-width: 640px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 16px; padding: 10px 16px 12px; margin-top: 6px; }
+  .bw-menu-card > .bw-logo { grid-column: 1 / -1; margin-bottom: 0; height: 34px; gap: 6px; }
+  .bw-menu-card > .bw-logo .bw-logo-die { width: 26px; height: 26px; padding: 12%; }
+  .bw-menu-card > .bw-title { font-size: 17px; margin: 0; }
+  .bw-menu-card > .bw-tagline { margin: 0 0 2px; font-size: 10px; }
+  .bw-menu-card > .bw-field { margin: 2px 0; }
+  .bw-menu-card > .bw-flabel { font-size: 10px; margin-bottom: 2px; }
+  .bw-menu-card > .bw-segbtn { padding: 5px 6px; font-size: 10.5px; min-width: 54px; }
+  .bw-menu-card > .bw-betrow { gap: 6px; }
+  .bw-menu-card > .bw-betbtn { width: 30px; height: 30px; font-size: 15px; }
+  .bw-menu-card > .bw-bethint { display: none; }
+  .bw-menu-card > #bwStartBtn { grid-column: 1 / -1; margin-top: 4px; padding: 8px 12px; font-size: 13px; }
+  .bw-menu-card > #bwResumeBtn { grid-column: 1 / -1; margin-top: 4px; padding: 7px 12px; font-size: 12px; }
+  .bw-menu-card > .bw-ruleslink { grid-column: 1 / -1; margin-top: 2px; font-size: 10px; }
 }

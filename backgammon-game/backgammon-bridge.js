@@ -9,6 +9,7 @@
      • backgammon-game/js/ui/bg-html.js         (بنية الشاشات — BWG_HTML)
      • backgammon-game/js/ui/bg-renderer.js     (العرض — BgRenderer)
      • backgammon-game/js/ui/bg-app.js          (المتحكم — BackgammonApp)
+     • backgammon-game/js/ui/bg-room.js         (وضع الغرفة — BG_ROOM)
    عقد الدمج: eBackgammon(g) · initBackgammon() · cleanupBackgammon()
    ═══════════════════════════════════════════════════════════════════════ */
 'use strict';
@@ -27,6 +28,7 @@ function initBackgammon() {
   }
   try { app.detach(); } catch (e) { /* تجاهل */ }
   try { app.attach(); } catch (e) { console.error('الطاولة init error:', e); }
+  /* [BG-Room] تسجيل معالجات الغرفة بعد الربط (attach يستدعي BG_ROOM.register) */
   setTimeout(function () {
     try { if (typeof window.dispatchEvent === 'function') window.dispatchEvent(new Event('resize')); } catch (e) {}
   }, 120);

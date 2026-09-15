@@ -58,6 +58,22 @@ function chessCloneState(s) {
   };
 }
 
+/* [AI-MAX] نسخة بحث خفيفة: البحث يقرأ الرقعة والدور والحقوق فقط — بلا
+   نسخ log/captured/rep (وفر مخصصات هائلة في كل عقدة = ضغط GC أقل بكثير).
+   تُستعمل حصراً داخل الذكاء؛ الواجهة والفروع الحقيقية تستعمل chessCloneState. */
+function chessCloneSearch(s) {
+  var b = [s.board[0].slice(), s.board[1].slice(), s.board[2].slice(), s.board[3].slice(),
+           s.board[4].slice(), s.board[5].slice(), s.board[6].slice(), s.board[7].slice()];
+  return {
+    board: b, turn: s.turn,
+    castling: { K: s.castling.K, Q: s.castling.Q, k: s.castling.k, q: s.castling.q },
+    ep: s.ep ? [s.ep[0], s.ep[1]] : null,
+    half: s.half, full: s.full,
+    over: s.over, outcome: s.outcome, endReason: s.endReason,
+    log: null, captured: null, rep: null
+  };
+}
+
 function chessInB(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
 function chessIsWhite(p) { return !!p && p === p.toUpperCase(); }
 function chessType(p) { return p ? p.toUpperCase() : null; }
@@ -262,7 +278,7 @@ function chessLegalMoves(s) {
     var pseudo = chessPseudoMoves(s, r, c);
     for (var i = 0; i < pseudo.length; i++) {
       var mv = pseudo[i];
-      var s2 = chessCloneState(s);
+      var s2 = chessCloneSearch(s);   /* [AI-MAX] نسخة خفيفة — الفحص يقرأ الرقعة فقط */
       chessApplyPseudo(s2, mv);
       if (!chessInCheck(s2, s.turn === 'w')) out.push(mv);
     }
@@ -348,7 +364,7 @@ function chessMakeMove(s, mv) {
   /* تعادلات */
   if (!s.over) {
     if (s.half >= 100) { s.over = true; s.outcome = 'draw'; s.endReason = '50move'; info.draw = true; }
-    else {
+    else if (s.rep) {   /* [AI-MAX] نسخة البحث الخفيفة بلا rep — التكرار يُحكم في اللعب الحقيقي فقط */
       var key = chessPosKey(s);
       s.rep[key] = (s.rep[key] || 0) + 1;
       if (s.rep[key] >= 3) { s.over = true; s.outcome = 'draw'; s.endReason = 'rep'; info.draw = true; }
@@ -391,7 +407,7 @@ function chessPerft(s, depth) {
   if (depth === 1) return moves.length;
   var n = 0;
   for (var i = 0; i < moves.length; i++) {
-    var s2 = chessCloneState(s);
+    var s2 = chessCloneSearch(s);   /* [AI-MAX] perft بلا نسخ السجل/الأسرى — أسرع بكثير */
     chessMakeMove(s2, moves[i]);
     n += chessPerft(s2, depth - 1);
   }
@@ -1268,9 +1284,9 @@ function eChess(g) {
           '</div>' +
         '</div>' +
         '<div class="ch-boardbox" id="chessBoardBox">' +
-          /* أيقونتا اللاعبين: فوق/تحت في البورتريه، يمين/يسار في اللاندسكيه */
-          '<div class="ch-seat ch-seat-top"><div class="ch-picon" id="chessTopIcon"><span class="ch-pface">♚</span></div></div>' +
-          '<div class="ch-seat ch-seat-bot"><div class="ch-picon" id="chessBotIcon"><span class="ch-pface">♔</span></div></div>' +
+          /* أيقونتا اللاعبين: فوق/تحت في البورتريه، يمين/يسار في اللاندسكيه — ومؤقت الدور بجانب صاحبه [Timer-Seat] */
+          '<div class="ch-seat ch-seat-top"><div class="ch-picon" id="chessTopIcon"><span class="ch-pface">♚</span><span class="ch-ptimer" id="chessTopTimer" hidden>⏱</span></div></div>' +
+          '<div class="ch-seat ch-seat-bot"><div class="ch-picon" id="chessBotIcon"><span class="ch-pface">♔</span><span class="ch-ptimer" id="chessBotTimer" hidden>⏱</span></div></div>' +
           '<div class="ch-board" id="chessBoard"></div>' +
         '</div>' +
         /* اختيار الترقية */
@@ -1609,11 +1625,31 @@ function chessBotTurn() {
   else chessFinalize();
 }
 
-/* ── المؤقت (وجه لوجه) ── */
+/* ── المؤقت ── */
 function chessStopTimer() {
   if (CHESS && CHESS._turnTi) { clearInterval(CHESS._turnTi); CHESS._turnTi = null; }
   var el = document.getElementById('chessTimer');
   if (el) el.textContent = '';
+  /* [Timer-Seat] إخفاء شارتي المؤقت الجانبيتين عند توقف العد */
+  chessPaintSeatTimers('', '');
+}
+/* [Timer-Seat] شارة المؤقت بجانب أيقونة اللاعب صاحب الدور (نمط روندا):
+   الأيقونات تمثّل الألوان دائماً — أعلى ♚ الأسود، أسفل ♔ الأبيض —
+   فالشارة تتبع لون صاحب الدور في النمطين بلا التفات لقلب اللوحة */
+function chessPaintSeatTimers(txt, whose) {
+  var low = !!(txt && CHESS && CHESS._turnLeft <= 10);
+  var top = document.getElementById('chessTopTimer');
+  var bot = document.getElementById('chessBotTimer');
+  if (top) {
+    top.hidden = !((whose === 'top') && !!txt);
+    top.textContent = (whose === 'top') ? txt : '';
+    top.className = 'ch-ptimer' + ((whose === 'top' && low) ? ' low' : '');
+  }
+  if (bot) {
+    bot.hidden = !((whose === 'bot') && !!txt);
+    bot.textContent = (whose === 'bot') ? txt : '';
+    bot.className = 'ch-ptimer' + ((whose === 'bot' && low) ? ' low' : '');
+  }
 }
 function chessStartTimer() {
   chessStopTimer();
@@ -1625,7 +1661,6 @@ function chessStartTimer() {
     if (CHESS.isSpectator || CHESS.state.turn !== CHESS.myColor) return;
   } else if (CHESS.mode !== 'local') return;
   CHESS._turnLeft = CHESS.timer;
-  chessRenderTimer();
   CHESS._turnTi = setInterval(function () {
     if (!CHESS || !CHESS.state || CHESS.state.over) { chessStopTimer(); return; }
     CHESS._turnLeft--;
@@ -1635,6 +1670,7 @@ function chessStartTimer() {
       else chessTimeout();
     }
   }, 1000);
+  chessRenderTimer();   /* [Timer-Seat] أول رسم بعد تجهيز _turnTi — تظهر الشارة فور البدء */
 }
 /* [RS-GameOpts] انتهاء مؤقت دورك في الغرفة: حركة قانونية آلية تُبث للجميع */
 function chessRoomAutoMove() {
@@ -1650,10 +1686,14 @@ function chessRoomAutoMove() {
 }
 function chessRenderTimer() {
   var el = document.getElementById('chessTimer');
-  if (!el) return;
+  if (!CHESS || !CHESS.state || !el) return;
   var s = CHESS.state;
   var name = s.turn === 'w' ? T('chess.white') : T('chess.black');
-  el.textContent = name + ' · ' + Math.max(0, CHESS._turnLeft) + 's';
+  var txt = name + ' · ' + Math.max(0, CHESS._turnLeft) + 's';
+  el.textContent = txt;
+  /* [Timer-Seat] الشارة على أيقونة صاحب الدور الحالي — الأيقونات تمثّل الألوان
+     دائماً (أعلى ♚ الأسود، أسفل ♔ الأبيض) في النمطين وبلا التفات لقلب اللوحة */
+  chessPaintSeatTimers('\u23f1 ' + Math.max(0, CHESS._turnLeft), (s.turn === 'w') ? 'bot' : 'top');
 }
 function chessTimeout() {
   chessStopTimer();
@@ -1847,7 +1887,8 @@ function chessMeId() {
 }
 function chessEmitMove(mv) {
   CHESS._seq = (CHESS._seq || 0) + 1;
-  chessEmit('move', { mv: { from: mv.from, to: mv.to, promo: mv.promo || null, piece: mv.piece, capture: mv.capture || null, castle: mv.castle || null, ep: !!mv.ep }, dedup: 'ch-' + CHESS._seq });
+  /* [dedup] مفتاح بمعرّف المُرسِل — كلا الطرفين يبدأ seq من 0 (تصادم الرسالة الأولى) */
+  chessEmit('move', { mv: { from: mv.from, to: mv.to, promo: mv.promo || null, piece: mv.piece, capture: mv.capture || null, castle: mv.castle || null, ep: !!mv.ep }, dedup: 'ch-' + chessMeId() + '-' + CHESS._seq });
 }
 function chessEmit(action, data) {
   if (typeof Rooms === 'undefined' || !Rooms || typeof Rooms.sendMove !== 'function') return;

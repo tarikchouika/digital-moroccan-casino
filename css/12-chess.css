@@ -40,12 +40,48 @@
   font-size: 18px; line-height: 1;
   color: #fff;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;   /* [Timer-Seat] مرجع تموضع شارة المؤقت الجانبية */
 }
 /* صاحب الدور: حلقة ذهبية محيطة بالأيقونة */
 .ch-picon.on {
   border-color: #ffd75e;
   box-shadow: 0 0 0 3px #ffd75e, 0 2px 12px rgba(255,215,94,0.6);
 }
+/* [Timer-Seat] مؤقت الدور بجانب أيقونة اللاعب صاحب الدور (نمط روندا rd-turn-timer):
+   كبسولة ذهبية على حافة الأيقونة — بورتريه ولاندسكيه — لا تحت الأزرار ولا خلف عنصر.
+   عدّاد التشغيل النصي القديم (#chessTimer) يُخفى بصرياً — العنصر يبقى للنص (توافق الاختبارات) */
+#chessTimer { display: none; }
+.ch-ptimer {
+  position: absolute;
+  top: -8px;
+  inset-inline-end: -14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 40px;
+  height: 21px;
+  border-radius: 999px;
+  padding: 0 7px;
+  background: linear-gradient(160deg, #ffd75e, #d9b45c);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  color: #241305;
+  font-size: 11px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  animation: chTimerBlink 1s steps(2) infinite;
+  z-index: 7;
+}
+.ch-ptimer.low {
+  background: linear-gradient(160deg, #ff8f6a, #d95f38);
+  color: #2a0d02;
+  border-color: rgba(255, 255, 255, 0.6);
+  animation: chTimerBlink 0.55s steps(2) infinite;
+}
+.ch-ptimer[hidden] { display: none; }
+@keyframes chTimerBlink { 50% { opacity: 0.85; } }
 /* لوحة المعلومات/التحكم مغلّفة في .ch-side — مضغوطة في البورتريه
    لأقصى مساحة للوحة (الضلعان الأيمن والأيسر يلتقيان مع الحدين الذهبيين) */
 .ch-side {

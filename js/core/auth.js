@@ -382,6 +382,7 @@ function init2fa() {
   var oaEl = document.getElementById('twofaOtpauth');
   var hint = document.getElementById('twofaHint');
   var disable = document.getElementById('twofaDisable');
+  var acctDisable = document.getElementById('btnDisable2fa');   /* [2FA-Off] زر التعطيل المرئي بصفحة الحساب */
   var loginVerify = document.getElementById('twofaLoginVerify');
   var loginInp = document.getElementById('twofaLoginCode');
 
@@ -390,6 +391,8 @@ function init2fa() {
     if (statusLine) statusLine.textContent = enabled ? T('sec.enabled') : (T('sec.status') + ': —');
     if (enable) enable.style.display = enabled ? 'none' : '';
     if (disable) disable.style.display = enabled ? '' : 'none';
+    /* [2FA-Off] صفحة الحساب: زر التعطيل يظهر فقط عند التفعيل — عكس زر التفعيل */
+    if (acctDisable) acctDisable.style.display = enabled ? '' : 'none';
     /* [2FA-Modal] الحالة المرئية داخل النافذة: مفعّلة = زر تعطيل + شارة،
        وغير مفعّلة = نموذج التفعيل (QR/سر/رمز) — لا يظهران معاً أبداً */
     if (enabled) {
@@ -454,9 +457,9 @@ function init2fa() {
   });
 
   /* تعطيل 2FA (يتطلب كلمة المرور) */
-  if (disable) disable.addEventListener('click', function () {
+  function disable2faFlow() {
     if (!AUTH.user || !AUTH.user.twofaEnabled) return;
-    var pwd = window.prompt('كلمة المرور (لتعطيل 2FA)');
+    var pwd = window.prompt(T('sec.disable2faPwd') || 'كلمة المرور (لتعطيل 2FA)');
     if (pwd == null) return;
     API.post('/api/2fa/disable', { password: pwd }).then(function (r) {
       if (!r.ok) { toast((r.data && r.data.message) || T('auth.error'), 'err'); return; }
@@ -464,7 +467,10 @@ function init2fa() {
       refreshStatus();
       toast(T('sec.disable2fa') + ' ✔', 'ok');
     });
-  });
+  }
+  if (disable) disable.addEventListener('click', disable2faFlow);
+  /* [2FA-Off] زر التعطيل المرئي بصفحة الحساب — نفس مسار زر المودال */
+  if (acctDisable) acctDisable.addEventListener('click', disable2faFlow);
 
   if (loginVerify) loginVerify.addEventListener('click', submit2faLogin);
   if (loginInp) loginInp.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit2faLogin(); });

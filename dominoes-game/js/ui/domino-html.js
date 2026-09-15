@@ -41,8 +41,8 @@ window.DMN_HTML = (function () {
           '<div class="dm-flabel" data-i18n="dm.level">المستوى</div>' +
           '<div class="dm-seg" id="dmLevelSeg">' +
             '<button type="button" class="dm-segbtn" data-level="0" data-i18n="dm.level.0">مبتدئ</button>' +
-            '<button type="button" class="dm-segbtn selected" data-level="1" data-i18n="dm.level.1">متوسط</button>' +
-            '<button type="button" class="dm-segbtn" data-level="2" data-i18n="dm.level.2">محترف</button>' +
+            '<button type="button" class="dm-segbtn" data-level="1" data-i18n="dm.level.1">متوسط</button>' +
+            '<button type="button" class="dm-segbtn selected" data-level="2" data-i18n="dm.level.2">خبير</button>' +
           '</div>' +
         '</div>' +
 
@@ -75,9 +75,9 @@ window.DMN_HTML = (function () {
           '<div class="dm-bethint" id="dmBetHint" data-i18n="dm.bet.hint"></div>' +
         '</div>' +
 
-        '<button type="button" class="dm-go" id="dmStartBtn" data-i18n="dm.start">ابدأ المباراة</button>' +
-        '<button type="button" class="dm-resume" id="dmResumeBtn" hidden data-i18n="dm.resume">استئناف المباراة</button>' +
-        '<button type="button" class="dm-ruleslink" id="dmRulesBtn" data-i18n="dm.rules">قواعد اللعبة</button>' +
+        '<button type="button" class="dm-go" id="dmStartBtn"><i class="fa-solid fa-trophy" aria-hidden="true"></i> <span data-i18n="dm.start">ابدأ المباراة</span></button>' +
+        '<button type="button" class="dm-resume" id="dmResumeBtn" hidden><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span data-i18n="dm.resume">استئناف المباراة</span></button>' +
+        '<button type="button" class="dm-ruleslink" id="dmRulesBtn"><i class="fa-solid fa-book-open" aria-hidden="true"></i> <span data-i18n="dm.rules">قواعد اللعبة</span></button>' +
       '</div>' +
 
       /* طبقة القواعد */
@@ -131,8 +131,8 @@ window.DMN_HTML = (function () {
       '<div class="dm-handwrap">' +
         '<div class="dm-hand" id="dmHand"></div>' +
         '<div class="dm-tools">' +
-          '<button type="button" class="dm-tool" id="dmPassBtn" hidden data-i18n="dm.mustPass">مرّر</button>' +
-          '<button type="button" class="dm-tool danger" id="dmResignBtn" data-i18n="dm.resign">انسحاب</button>' +
+          '<button type="button" class="dm-tool" id="dmPassBtn" hidden><i class="fa-solid fa-forward" aria-hidden="true"></i> <span data-i18n="dm.mustPass">مرّر</span></button>' +
+          '<button type="button" class="dm-tool danger" id="dmResignBtn"><i class="fa-solid fa-flag" aria-hidden="true"></i> <span data-i18n="dm.resign">انسحاب</span></button>' +
         '</div>' +
       '</div>' +
 
@@ -142,7 +142,7 @@ window.DMN_HTML = (function () {
           '<div class="dm-sheet-em" id="dmRoundEm">🁫</div>' +
           '<h2 class="dm-sheet-title" id="dmRoundTitle"></h2>' +
           '<div class="dm-scorerows" id="dmRoundRows"></div>' +
-          '<button type="button" class="dm-go" id="dmNextRoundBtn" data-i18n="dm.nextRound">الجولة التالية</button>' +
+          '<button type="button" class="dm-go" id="dmNextRoundBtn"><i class="fa-solid fa-forward" aria-hidden="true"></i> <span data-i18n="dm.nextRound">الجولة التالية</span></button>' +
         '</div>' +
       '</div>' +
 
@@ -153,7 +153,7 @@ window.DMN_HTML = (function () {
           '<h2 class="dm-sheet-title" id="dmMatchTitle"></h2>' +
           '<div class="dm-amount" id="dmMatchAmt"></div>' +
           '<div class="dm-scorerows" id="dmMatchRows"></div>' +
-          '<button type="button" class="dm-go" id="dmNewMatchBtn" data-i18n="dm.newMatch">مباراة جديدة</button>' +
+          '<button type="button" class="dm-go" id="dmNewMatchBtn"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> <span data-i18n="dm.newMatch">مباراة جديدة</span></button>' +
         '</div>' +
       '</div>' +
 
