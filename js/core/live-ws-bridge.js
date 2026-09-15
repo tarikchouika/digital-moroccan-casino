@@ -155,6 +155,9 @@
   var gameConn = null;
   function watchRoom(force) {
     if (isSSEMode) return; /* [PhoneLink] خادم الهاتف: الغرف عبر SSE، بلا WS */
+    /* [BASE-Guard 2026-09-15] API_BASE لم يُحل بعد (وعد api-url2.json) —
+       toWs(null) كان يرمي "Cannot read properties of null" عند أول watchRoom قبل الجاهزية */
+    if (!API_BASE) return;
     var rid = getCurrentRoomId();
     if (rid && rid !== 'global' && (force || !gameConn || gameConn._rid !== rid)) {
       if (gameConn) { try { gameConn.close(); } catch (e) { } }
