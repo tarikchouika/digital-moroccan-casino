@@ -1768,6 +1768,7 @@ const server = http.createServer((req, res) => {
             return;
           }
           room.players = room.players.filter(function (p) { return p.id !== (me && me.id); });
+          delete room.blindPicks;   /* [v2.27] مغادرة أثناء زوج أعمى ⇒ تُبطل الاختيارات المعلقة كلها */
           /* إزالة أي طلب انضمام خاص بالمغادر */
           if (room.joinQueue) room.joinQueue = room.joinQueue.filter(function (r) { return r.id !== (me && me.id); });
           if (room.players.length === 0 || room.owner_id === (me && me.id)) {
@@ -2127,6 +2128,28 @@ const server = http.createServer((req, res) => {
       if (pathname === '/api/rooms/move') {
         const room = rooms[data.room_id];
         if (room) {
+          /* [v2.27 blindResult] اختيار أعمى زوجي (pn/rp): القيمة لا تُبث أبداً.
+             كل مختار يستقبل 'blind' بلا قيمة (الخصم اختار)، وعند اكتمال زوج
+             اللاعبين النشطين يُبث 'blindResult' بخريطة dirs معاً — عدالة وجهاً لوجه.
+             (كانت القيمة تُبث فوراً فيقرأها الخصم قبل اختياره — الفجوة الموثقة في GITHUB_SYNC) */
+          if (data.action === 'blind') {
+            if (!me) { json({ ok: false, message: 'يلزم تسجيل الدخول' }, 401); return; }
+            const inRoom = room.players.some(function (p) { return p.id === me.id && !p.spectate; });
+            if (!inRoom) { json({ ok: false, message: 'لست لاعباً نشطاً في الغرفة' }, 403); return; }
+            if (!room.blindPicks) room.blindPicks = {};
+            const pv = (data.data && data.data.d !== undefined) ? data.data.d : (data.data || {});
+            room.blindPicks[me.id] = pv;
+            broadcastRoom(room, 'room:move', { room_id: room.id, action: 'blind', data: {}, from_id: me.id });
+            const active = room.players.filter(function (p) { return !p.spectate; });
+            if (active.length >= 2 && active.every(function (p) { return room.blindPicks[p.id] !== undefined; })) {
+              const dirs = {};
+              active.forEach(function (p) { dirs[p.id] = room.blindPicks[p.id]; });
+              delete room.blindPicks;   /* الجولة التالية تبدأ نظيفة */
+              broadcastRoom(room, 'room:move', { room_id: room.id, action: 'blindResult', data: { dirs: dirs }, from_id: null });
+            }
+            json({ ok: true, room: serializeRoom(room) });
+            return;
+          }
           if (data.state !== undefined && data.state !== null) room.room_state = data.state;
           const payload = data.data || {};
           /* [Resilience] تسجيل تاريخ الحركات لإعادة بناء حالة العائد */
