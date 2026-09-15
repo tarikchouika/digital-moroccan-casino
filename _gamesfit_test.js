@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const BASE='http://localhost:3000/';
 async function wait(p,fn,t=12000,a){const s=Date.now();let e;while(Date.now()-s<t){try{const r=await p.evaluate(fn,a);if(r)return r;}catch(x){e=x;}await p.waitForTimeout(150);}throw new Error('timeout'+(e?' '+e.message:''));}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function setup(ctx,u){const rr=await ctx.request.post(BASE+'api/register',{data:{username:u,password:'pw123'}});const p=await ctx.newPage();const er=[];p.on('pageerror',e=>er.push(e.message.slice(0,80)));p._er=er;await p.goto(BASE,{waitUntil:'domcontentloaded'});await wait(p,()=>!!(typeof AUTH!=='undefined'&&AUTH.user&&typeof ST!=='undefined'));await p.evaluate(()=>{if(typeof ST!=='undefined')ST.gold=50000;});return p;}
+async function setup(ctx,u){const rr=await ctx.request.post(BASE+'api/register',{data:{username:u,password:'pw123456'}});const p=await ctx.newPage();const er=[];p.on('pageerror',e=>er.push(e.message.slice(0,80)));p._er=er;await p.goto(BASE,{waitUntil:'domcontentloaded'});await wait(p,()=>!!(typeof AUTH!=='undefined'&&AUTH.user&&typeof ST!=='undefined'));await p.evaluate(()=>{if(typeof ST!=='undefined')ST.gold=50000;});return p;}
 // ألعاب تمثيلية تغطي المحركات المختلفة (كانفاس، ورق، ثلاثية الأبعاد، شبكة)
 const GAMES=['pl','wf','hl','mn','dc','cf','ke','bj','sb','rl'];
 async function measureFit(page, gid){

@@ -38,7 +38,8 @@ async function newUser(name) {
   const P4 = await newUser('rnsq_' + tag);   /* will spectate + queue */
 
   /* create room rn, max 3 (so owner+p2+p3 fills it; p4 spectates) */
-  const cr = await req('POST', '/api/rooms', { game_id: 'rn', max_players: 3 }, OWNER.cookie);
+  /* [v2.27] الرهان إلزامي منذ 08-31 — بدونه يرفض الخادم (bet_required) */
+  const cr = await req('POST', '/api/rooms', { game_id: 'rn', max_players: 3, bet: 10 }, OWNER.cookie);
   const code = cr.json.room.code;
   const roomId = cr.json.room.id;
   ok('room created (rn, max3)', !!roomId);
@@ -89,9 +90,10 @@ async function newUser(name) {
   ok('queued spectator promoted to active seat', order.some(id => id === P4.id));
   ok('queue emptied after promotion', (to.json.room.joinQueue || []).length === 0);
 
-  /* settle records a transfer entry */
-  const tl = await req('GET', '/api/transfers', null, OWNER.cookie);
-  const recorded = (tl.json && tl.json.transfers || []).some(t => t.from_name === P2.name && t.to_name === P3.name);
+  /* settle records a transfer entry — [v2.27] /api/transfers يعيد معاملات صاحب الجلسة فقط؛
+     التسوية تُسجَّل في سجل كل طرف: الفائز (P3) يرى win من الخاسر (P2) */
+  const tl = await req('GET', '/api/transfers', null, P3.cookie);
+  const recorded = (tl.json && tl.json.transfers || []).some(t => t.type === 'win' && t.from_name === P2.name && t.to_name === P3.name);
   ok('settlement recorded in transfers', recorded);
 
   const passed = results.filter(r => r[1]).length;
